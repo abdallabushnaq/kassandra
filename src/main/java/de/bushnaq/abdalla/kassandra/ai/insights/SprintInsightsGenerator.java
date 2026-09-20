@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.insights;
 
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
@@ -117,13 +118,13 @@ public class SprintInsightsGenerator {
 
     private OpenAiChatOptions buildChatOptions() {
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
-        String                    insightsModel  = value("kassandra.ai.insights-model", "");
+        String                    insightsModel  = value(Keys.AI_INSIGHTS_MODEL, "");
         if (insightsModel != null && !insightsModel.isBlank()) {
             optionsBuilder.model(insightsModel);
         }
-        optionsBuilder.temperature(decimal("kassandra.ai.temperature", 0));
-        optionsBuilder.maxTokens(integer("kassandra.ai.max-tokens", 20480));
-        optionsBuilder.seed(integer("kassandra.ai.seed", 42));
+        optionsBuilder.temperature(decimal(Keys.AI_TEMPERATURE, 0));
+        optionsBuilder.maxTokens(integer(Keys.AI_MAX_TOKENS, 20480));
+        optionsBuilder.seed(integer(Keys.AI_SEED, 42));
         return optionsBuilder.build();
     }
 

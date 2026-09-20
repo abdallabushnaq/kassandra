@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.lmstudio;
 
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -63,10 +64,10 @@ public class LmStudioService {
 
     private WebClient webClient() {
         WebClient.Builder builder = WebClient.builder()
-                .baseUrl(value("kassandra.lm-studio.api-url", "http://localhost:1234"))
+                .baseUrl(value(Keys.LM_STUDIO_API_URL))
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-        String apiKey = serverSettingsService.secretValue("kassandra.lm-studio.api-key");
+        String apiKey = serverSettingsService.secretValue(Keys.LM_STUDIO_API_KEY);
         if (!apiKey.isBlank()) {
             builder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey);
         }
@@ -97,7 +98,7 @@ public class LmStudioService {
         List<LmStudioModel> models = listModels();
         if (models == null) {
             log.warn("LM Studio is not reachable at {} – skipping model management",
-                    value("kassandra.lm-studio.api-url", "http://localhost:1234"));
+                    value(Keys.LM_STUDIO_API_URL));
             return false;
         }
 
@@ -165,7 +166,7 @@ public class LmStudioService {
                     .uri(MODELS)
                     .retrieve()
                     .bodyToMono(LmStudioModelsResponse.class)
-                    .block(Duration.ofSeconds(integer("kassandra.lm-studio.timeout-seconds", 300)));
+                    .block(Duration.ofSeconds(integer(Keys.LM_STUDIO_TIMEOUT_SECONDS)));
 
             if (response == null || response.models() == null) {
                 log.warn("LM Studio returned an empty model list");
@@ -183,7 +184,7 @@ public class LmStudioService {
             return null;
         } catch (Exception e) {
             log.warn("Could not reach LM Studio at {}: {}",
-                    value("kassandra.lm-studio.api-url", "http://localhost:1234"), e.getMessage());
+                    value(Keys.LM_STUDIO_API_URL), e.getMessage());
             return null;
         }
     }
@@ -198,13 +199,13 @@ public class LmStudioService {
 
         Map<String, Object> body = new HashMap<>();
         body.put("model", modelId);
-        int contextLength = integer("kassandra.lm-studio.context-length", 0);
+        int contextLength = integer(Keys.LM_STUDIO_CONTEXT_LENGTH);
         if (contextLength > 0) {
             body.put("context_length", contextLength);
         }
         body.put("echo_load_config", true);
-        body.put("flash_attention", bool("kassandra.lm-studio.flash-attention", true));
-        body.put("offload_kv_cache_to_gpu", bool("kassandra.lm-studio.offload-kv-cache-to-gpu", true));
+        body.put("flash_attention", bool(Keys.LM_STUDIO_FLASH_ATTENTION));
+        body.put("offload_kv_cache_to_gpu", bool(Keys.LM_STUDIO_OFFLOAD_KV_CACHE_TO_GPU));
 
         try {
             LmStudioLoadResponse response = webClient().post()
@@ -212,7 +213,7 @@ public class LmStudioService {
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(LmStudioLoadResponse.class)
-                    .block(Duration.ofSeconds(integer("kassandra.lm-studio.timeout-seconds", 300)));
+                    .block(Duration.ofSeconds(integer(Keys.LM_STUDIO_TIMEOUT_SECONDS)));
 
             if (response != null && "loaded".equals(response.status())) {
                 log.info("Model '{}' loaded successfully in {}s {}", modelId, response.loadTimeSeconds(), response);
@@ -248,7 +249,7 @@ public class LmStudioService {
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(LmStudioUnloadResponse.class)
-                    .block(Duration.ofSeconds(integer("kassandra.lm-studio.timeout-seconds", 300)));
+                    .block(Duration.ofSeconds(integer(Keys.LM_STUDIO_TIMEOUT_SECONDS)));
 
             if (response != null && response.instanceId() != null) {
                 log.info("Model instance '{}' unloaded successfully: {}", instanceId, response);
@@ -267,17 +268,16 @@ public class LmStudioService {
         }
     }
 
-    private boolean bool(String key, boolean fallback) {
-        return Boolean.parseBoolean(value(key, Boolean.toString(fallback)));
+    private boolean bool(String key) {
+        return Boolean.parseBoolean(value(key));
     }
 
-    private int integer(String key, int fallback) {
-        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    private int integer(String key) {
+        return Integer.parseInt(value(key));
     }
 
-    private String value(String key, String fallback) {
-        return serverSettingsService.value(key, fallback);
+    private String value(String key) {
+        return serverSettingsService.value(key);
     }
 }
-
 

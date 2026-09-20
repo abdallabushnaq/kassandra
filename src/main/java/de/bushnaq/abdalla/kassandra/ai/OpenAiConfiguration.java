@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai;
 
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.chat.observation.ChatModelObservationConvention;
 import org.springframework.ai.model.tool.DefaultToolExecutionEligibilityPredicate;
@@ -42,11 +43,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class OpenAiConfiguration {
 
-    private static final String DEFAULT_ASSISTANT_MODEL = "ministral-3-8b-reasoning-2512";
-    private static final String DEFAULT_BASE_URL        = "http://localhost:1234";
-    private static final int    DEFAULT_MAX_TOKENS      = 20480;
-    private static final int    DEFAULT_SEED            = 42;
-
     @Autowired
     private ServerSettingsService serverSettingsService;
 
@@ -63,8 +59,8 @@ public class OpenAiConfiguration {
                                ObjectProvider<WebClient.Builder> webClientBuilderProvider,
                                ObjectProvider<ResponseErrorHandler> responseErrorHandler) {
         return OpenAiApi.builder()
-                .baseUrl(value("kassandra.openai.base-url", DEFAULT_BASE_URL))
-                .apiKey(serverSettingsService.secretValue("kassandra.openai.api-key"))
+                .baseUrl(value(Keys.OPENAI_BASE_URL))
+                .apiKey(serverSettingsService.secretValue(Keys.OPENAI_API_KEY))
                 .restClientBuilder(restClientBuilderProvider.getIfAvailable(RestClient::builder))
                 .webClientBuilder(webClientBuilderProvider.getIfAvailable(WebClient::builder))
                 .responseErrorHandler(responseErrorHandler.getIfAvailable(() -> RetryUtils.DEFAULT_RESPONSE_ERROR_HANDLER))
@@ -103,18 +99,18 @@ public class OpenAiConfiguration {
 
     private OpenAiChatOptions defaultChatOptions() {
         return OpenAiChatOptions.builder()
-                .model(value("kassandra.ai.mcp-model", DEFAULT_ASSISTANT_MODEL))
-                .temperature(Double.parseDouble(value("kassandra.ai.temperature", "0")))
-                .maxTokens(integer("kassandra.ai.max-tokens", DEFAULT_MAX_TOKENS))
-                .seed(integer("kassandra.ai.seed", DEFAULT_SEED))
+                .model(value(Keys.AI_MCP_MODEL))
+                .temperature(Double.parseDouble(value(Keys.AI_TEMPERATURE)))
+                .maxTokens(integer(Keys.AI_MAX_TOKENS))
+                .seed(integer(Keys.AI_SEED))
                 .build();
     }
 
-    private int integer(String key, int fallback) {
-        return Integer.parseInt(value(key, Integer.toString(fallback)));
+    private int integer(String key) {
+        return Integer.parseInt(value(key));
     }
 
-    private String value(String key, String fallback) {
-        return serverSettingsService.value(key, fallback);
+    private String value(String key) {
+        return serverSettingsService.value(key);
     }
 }

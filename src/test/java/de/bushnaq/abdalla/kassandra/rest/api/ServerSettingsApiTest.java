@@ -18,7 +18,10 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.ServerSetting;
+import de.bushnaq.abdalla.kassandra.dto.ServerSettingTestResult;
 import de.bushnaq.abdalla.kassandra.dto.ServerSettingUpdateRequest;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -58,7 +61,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void administratorGetsSafeSettingMetadata() {
         ServerSetting secret = serverSettingsApi.getAll().stream()
-                .filter(setting -> "kassandra.openai.api-key".equals(setting.getKey()))
+                .filter(setting -> Keys.OPENAI_API_KEY.equals(setting.getKey()))
                 .findFirst()
                 .orElseThrow();
 
@@ -74,7 +77,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void administratorGetsOpenAiConnectionDefaults() {
         ServerSetting baseUrl = serverSettingsApi.getAll().stream()
-                .filter(setting -> "kassandra.openai.base-url".equals(setting.getKey()))
+                .filter(setting -> Keys.OPENAI_BASE_URL.equals(setting.getKey()))
                 .findFirst()
                 .orElseThrow();
 
@@ -89,7 +92,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void administratorCanUpdateAssistantModelWithoutRestart() {
         ServerSetting assistantModel = serverSettingsApi.getAll().stream()
-                .filter(setting -> "kassandra.ai.mcp-model".equals(setting.getKey()))
+                .filter(setting -> Keys.AI_MCP_MODEL.equals(setting.getKey()))
                 .findFirst()
                 .orElseThrow();
 
@@ -106,7 +109,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
         request.setValue("VERBOSE");
 
         assertThrows(Exception.class, () -> serverSettingsApi.update(
-                "logging.level.de.bushnaq.abdalla.kassandra.ai.mcp.ContextPropagatingToolCallbackProvider", request));
+                Keys.MCP_TOOL_CALLBACK_LOGGING_LEVEL, request));
     }
 
     /**
@@ -118,7 +121,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
         ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
         request.setValue("12");
 
-        ServerSetting updated = serverSettingsApi.update("kassandra.undo-redo.history-limit", request);
+        ServerSetting updated = serverSettingsApi.update(Keys.UNDO_REDO_HISTORY_LIMIT, request);
 
         assertEquals("12", updated.getValue());
     }
@@ -132,7 +135,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
         ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
         request.setValue("0");
 
-        assertThrows(Exception.class, () -> serverSettingsApi.update("kassandra.undo-redo.history-limit", request));
+        assertThrows(Exception.class, () -> serverSettingsApi.update(Keys.UNDO_REDO_HISTORY_LIMIT, request));
     }
 
     /**
@@ -145,7 +148,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
         request.setValue("");
         serverSettingsApi.updateCategoryEnabled("lm-studio", true);
 
-        ServerSetting updated = serverSettingsApi.update("kassandra.lm-studio.context-length", request);
+        ServerSetting updated = serverSettingsApi.update(Keys.LM_STUDIO_CONTEXT_LENGTH, request);
 
         assertEquals("20480", updated.getValue());
     }
@@ -157,7 +160,7 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void administratorEnablesOptionalCategoryBeforeUpdatingItsSettings() {
         ServerSetting lmStudio = serverSettingsApi.getAll().stream()
-                .filter(setting -> "kassandra.lm-studio.context-length".equals(setting.getKey()))
+                .filter(setting -> Keys.LM_STUDIO_CONTEXT_LENGTH.equals(setting.getKey()))
                 .findFirst()
                 .orElseThrow();
         ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
@@ -170,6 +173,38 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
         serverSettingsApi.updateCategoryEnabled(lmStudio.getCategoryKey(), true);
 
         assertEquals("4096", serverSettingsApi.update(lmStudio.getKey(), request).getValue());
+    }
+
+    /**
+     * Delegates connectivity testing to the selected setting definition.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void administratorTestsConnectionUsingSettingDefinition() {
+        ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
+        request.setValue("http://127.0.0.1:1");
+        serverSettingsApi.updateCategoryEnabled("lm-studio", true);
+        serverSettingsApi.updateCategoryEnabled("stable-diffusion", true);
+
+        ServerSettingTestResult lmStudioResult        = serverSettingsApi.test(Keys.LM_STUDIO_API_URL, request);
+        ServerSettingTestResult stableDiffusionResult = serverSettingsApi.test(Keys.STABLE_DIFFUSION_API_URL, request);
+
+        assertFalse(lmStudioResult.isSuccessful());
+        assertFalse(stableDiffusionResult.isSuccessful());
+    }
+
+    /**
+     * Runs a setting's runtime update callback after persisting its value.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void administratorUpdatesHolidayLookAheadRuntimeValue() {
+        ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
+        request.setValue("36");
+
+        serverSettingsApi.update(Keys.HOLIDAY_LOOK_AHEAD_MONTHS, request);
+
+        assertEquals(36, KassandraProperties.getHolidayLookAheadMonths());
     }
 
     /**

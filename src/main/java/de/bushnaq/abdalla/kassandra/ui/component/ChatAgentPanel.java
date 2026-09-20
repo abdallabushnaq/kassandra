@@ -38,6 +38,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContext;
@@ -403,7 +404,7 @@ public class ChatAgentPanel extends VerticalLayout {
         final String    username                = SecurityUtils.getUserEmail();
 
         getUI().ifPresent(ui -> {
-            String mcpModel = serverSettingsService.value("kassandra.ai.mcp-model", "");
+            String mcpModel = serverSettingsService.value(Keys.AI_MCP_MODEL);
             if (mcpModel != null && !mcpModel.isBlank()) {
                 lmStudioService.ensureModelLoaded(mcpModel);
             }

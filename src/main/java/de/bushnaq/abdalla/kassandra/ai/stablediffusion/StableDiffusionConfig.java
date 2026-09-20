@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
 import lombok.Data;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -96,7 +97,7 @@ public class StableDiffusionConfig {
      * @return current API URL
      */
     public String getApiUrl() {
-        return value("stable-diffusion.api-url", apiUrl);
+        return value(Keys.STABLE_DIFFUSION_API_URL, apiUrl);
     }
 
     /**
@@ -105,7 +106,7 @@ public class StableDiffusionConfig {
      * @return CSS hex colour
      */
     public String getAvatarDarkBackgroundColor() {
-        return value("stable-diffusion.avatar-dark-background-color", avatarDarkBackgroundColor);
+        return value(Keys.STABLE_DIFFUSION_AVATAR_DARK_BACKGROUND_COLOR, avatarDarkBackgroundColor);
     }
 
     /**
@@ -114,7 +115,7 @@ public class StableDiffusionConfig {
      * @return CSS hex colour
      */
     public String getAvatarLightBackgroundColor() {
-        return value("stable-diffusion.avatar-light-background-color", avatarLightBackgroundColor);
+        return value(Keys.STABLE_DIFFUSION_AVATAR_LIGHT_BACKGROUND_COLOR, avatarLightBackgroundColor);
     }
 
     /**
@@ -123,7 +124,7 @@ public class StableDiffusionConfig {
      * @return output size in pixels
      */
     public int getAvatarOutputSize() {
-        return integer("stable-diffusion.avatar-output-size", avatarOutputSize);
+        return integer(Keys.STABLE_DIFFUSION_AVATAR_OUTPUT_SIZE, avatarOutputSize);
     }
 
     /**
@@ -132,7 +133,7 @@ public class StableDiffusionConfig {
      * @return configured CFG scale
      */
     public double getCfgScale() {
-        return decimal("stable-diffusion.cfg-scale", cfgScale);
+        return decimal(Keys.STABLE_DIFFUSION_CFG_SCALE, cfgScale);
     }
 
     /**
@@ -141,7 +142,7 @@ public class StableDiffusionConfig {
      * @return configured denoising strength
      */
     public double getDefaultDenoisingStrength() {
-        return decimal("stable-diffusion.default-denoising-strength", defaultDenoisingStrength);
+        return decimal(Keys.STABLE_DIFFUSION_DEFAULT_DENOISING_STRENGTH, defaultDenoisingStrength);
     }
 
     /**
@@ -150,7 +151,7 @@ public class StableDiffusionConfig {
      * @return configured sampler
      */
     public String getDefaultSampler() {
-        return value("stable-diffusion.default-sampler", defaultSampler);
+        return value(Keys.STABLE_DIFFUSION_DEFAULT_SAMPLER, defaultSampler);
     }
 
     /**
@@ -159,7 +160,7 @@ public class StableDiffusionConfig {
      * @return configured sampling steps
      */
     public int getDefaultSteps() {
-        return integer("stable-diffusion.default-steps", defaultSteps);
+        return integer(Keys.STABLE_DIFFUSION_DEFAULT_STEPS, defaultSteps);
     }
 
     /**
@@ -168,7 +169,7 @@ public class StableDiffusionConfig {
      * @return generation size in pixels
      */
     public int getGenerationSize() {
-        return integer("stable-diffusion.generation-size", generationSize);
+        return integer(Keys.STABLE_DIFFUSION_GENERATION_SIZE, generationSize);
     }
 
     /**
@@ -177,7 +178,7 @@ public class StableDiffusionConfig {
      * @return timeout in seconds
      */
     public int getModelLoadTimeoutSeconds() {
-        return integer("stable-diffusion.model-load-timeout-seconds", modelLoadTimeoutSeconds);
+        return integer(Keys.STABLE_DIFFUSION_MODEL_LOAD_TIMEOUT_SECONDS, modelLoadTimeoutSeconds);
     }
 
     /**
@@ -186,7 +187,7 @@ public class StableDiffusionConfig {
      * @return configured model name
      */
     public String getModelName() {
-        return value("stable-diffusion.model-name", modelName);
+        return value(Keys.STABLE_DIFFUSION_MODEL_NAME, modelName);
     }
 
     /**
@@ -195,7 +196,7 @@ public class StableDiffusionConfig {
      * @return output size in pixels
      */
     public int getOutputSize() {
-        return integer("stable-diffusion.output-size", outputSize);
+        return integer(Keys.STABLE_DIFFUSION_OUTPUT_SIZE, outputSize);
     }
 
     /**
@@ -204,7 +205,7 @@ public class StableDiffusionConfig {
      * @return timeout in seconds
      */
     public int getTimeoutSeconds() {
-        return integer("stable-diffusion.timeout-seconds", timeoutSeconds);
+        return integer(Keys.STABLE_DIFFUSION_TIMEOUT_SECONDS, timeoutSeconds);
     }
 
     private double decimal(String key, double fallback) {

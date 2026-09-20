@@ -52,6 +52,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
@@ -129,7 +130,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         this.userApi               = userApi;
         this.themeSessionState     = themeSessionState;
         this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> historyProductIds,
-                Integer.parseInt(serverSettingsService.value("kassandra.undo-redo.history-limit", "5")),
+                Integer.parseInt(serverSettingsService.value(Keys.UNDO_REDO_HISTORY_LIMIT)),
                 this::closeHistoryDrawer,
                 () -> UI.getCurrent().getPage().reload(),
                 this::resolveProductAvatarUrl,

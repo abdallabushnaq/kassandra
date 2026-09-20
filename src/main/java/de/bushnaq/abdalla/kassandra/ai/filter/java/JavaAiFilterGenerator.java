@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ai.filter.java;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterGenerator;
 import de.bushnaq.abdalla.kassandra.ai.filter.FilterPromptRegistry;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import org.slf4j.Logger;
@@ -96,13 +97,13 @@ public class JavaAiFilterGenerator implements AiFilterGenerator {
 
     private OpenAiChatOptions buildChatOptions() {
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
-        String                    filterModel    = value("kassandra.ai.filter-model", "");
+        String                    filterModel    = value(Keys.AI_FILTER_MODEL, "");
         if (filterModel != null && !filterModel.isBlank()) {
             optionsBuilder.model(filterModel);
         }
-        optionsBuilder.temperature(decimal("kassandra.ai.temperature", 0));
-        optionsBuilder.maxTokens(integer("kassandra.ai.max-tokens", 20480));
-        optionsBuilder.seed(integer("kassandra.ai.seed", 42));
+        optionsBuilder.temperature(decimal(Keys.AI_TEMPERATURE, 0));
+        optionsBuilder.maxTokens(integer(Keys.AI_MAX_TOKENS, 20480));
+        optionsBuilder.seed(integer(Keys.AI_SEED, 42));
         return optionsBuilder.build();
     }
 

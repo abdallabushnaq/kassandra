@@ -18,26 +18,19 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.dao.ServerSettingDAO;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.ServerSetting;
 import de.bushnaq.abdalla.kassandra.dto.ServerSettingTestResult;
 import de.bushnaq.abdalla.kassandra.repository.ServerSettingRepository;
 import de.bushnaq.abdalla.kassandra.security.SecuritySecretService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.logging.LogLevel;
-import org.springframework.boot.logging.LoggingSystem;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Validates, persists, and safely exposes administrator-managed server settings.
@@ -45,13 +38,10 @@ import java.util.Locale;
 @Service
 public class ServerSettingsService {
 
-    private static final Duration TEST_TIMEOUT                = Duration.ofSeconds(10);
-    private static final String   CATEGORY_ENABLED_KEY_PREFIX = "kassandra.server-settings.category.";
+    private static final String CATEGORY_ENABLED_KEY_PREFIX = "kassandra.server-settings.category.";
 
     @Autowired
     private Environment             environment;
-    @Autowired
-    private LoggingSystem           loggingSystem;
     @Autowired
     private SecuritySecretService   securitySecretService;
     @Autowired
@@ -71,13 +61,15 @@ public class ServerSettingsService {
                 continue;
             }
             String value = environment.getProperty(definition.key(), definition.defaultValue());
-            validate(definition, value);
+            definition.validate(value);
             ServerSettingDAO setting = newSetting(definition);
             setting.setEncrypted(definition.secret() && !value.isBlank());
             setting.setValue(setting.isEncrypted() ? securitySecretService.encrypt(value) : value);
             serverSettingRepository.save(setting);
         }
-        applyLoggingLevels();
+        serverSettingsCatalogue.list().stream()
+                .filter(definition -> !definition.secret())
+                .forEach(definition -> definition.update(value(definition.key(), definition.defaultValue())));
     }
 
     /**
@@ -115,6 +107,19 @@ public class ServerSettingsService {
     }
 
     /**
+     * Gets a current non-secret setting value using the catalogue default when it is not persisted.
+     *
+     * @param key setting key
+     * @return persisted setting value or the catalogue default
+     * @throws IllegalArgumentException when the setting is unknown or secret
+     */
+    @Transactional
+    public String value(String key) {
+        ServerSettingsCatalogue.Definition definition = serverSettingsCatalogue.get(key);
+        return value(key, definition.defaultValue());
+    }
+
+    /**
      * Gets a current secret setting value for an application integration.
      *
      * @param key secret setting key
@@ -145,24 +150,11 @@ public class ServerSettingsService {
     public ServerSettingTestResult test(String key, String candidateValue) {
         ServerSettingsCatalogue.Definition definition = serverSettingsCatalogue.get(key);
         requireEnabledCategory(definition.category());
-        if (!definition.testable()) {
-            throw new IllegalArgumentException("This setting does not support a connection test");
-        }
         String value = candidateValue == null || candidateValue.isBlank()
                 ? value(key, definition.defaultValue())
                 : candidateValue;
-        validate(definition, value);
-        String path = "stable-diffusion.api-url".equals(key) ? "/sdapi/v1/options" : "/api/v1/models";
-        try {
-            HttpStatusCode status = WebClient.create(value).get().uri(path).exchangeToMono(response -> {
-                HttpStatusCode responseStatus = response.statusCode();
-                return response.releaseBody().thenReturn(responseStatus);
-            }).block(TEST_TIMEOUT);
-            return testResult(status != null && status.is2xxSuccessful(),
-                    status == null ? "The server did not return a response." : "Server returned HTTP " + status.value() + ".");
-        } catch (Exception e) {
-            return testResult(false, "Connection failed: " + e.getMessage());
-        }
+        definition.validate(value);
+        return definition.test(value);
     }
 
     /**
@@ -184,17 +176,12 @@ public class ServerSettingsService {
             setting.setValue("");
         } else if (!definition.secret() || (value != null && !value.isBlank())) {
             value = value == null || value.isBlank() ? definition.defaultValue() : value;
-            validate(definition, value);
+            definition.validate(value);
             setting.setEncrypted(definition.secret());
             setting.setValue(definition.secret() ? securitySecretService.encrypt(value) : value.trim());
         }
         serverSettingRepository.saveAndFlush(setting);
-        if ("kassandra.holidays.look-ahead-months".equals(key)) {
-            KassandraProperties.setHolidayLookAheadMonths(Long.parseLong(setting.getValue()));
-        }
-        if (definition.type() == ServerSettingsCatalogue.Type.LOG_LEVEL) {
-            applyLoggingLevel(definition.key(), setting.getValue());
-        }
+        definition.update(setting.getValue());
         return toDto(definition, setting);
     }
 
@@ -221,17 +208,6 @@ public class ServerSettingsService {
         return CATEGORY_ENABLED_KEY_PREFIX + category.key() + ".enabled";
     }
 
-    private void applyLoggingLevel(String key, String value) {
-        String loggerName = key.substring("logging.level.".length());
-        loggingSystem.setLogLevel(loggerName, LogLevel.valueOf(value.toUpperCase(Locale.ROOT)));
-    }
-
-    private void applyLoggingLevels() {
-        serverSettingsCatalogue.list().stream()
-                .filter(definition -> definition.type() == ServerSettingsCatalogue.Type.LOG_LEVEL)
-                .forEach(definition -> applyLoggingLevel(definition.key(), value(definition.key(), definition.defaultValue())));
-    }
-
     private boolean categoryEnabled(ServerSettingsCatalogue.Category category) {
         return serverSettingRepository.findById(categoryEnabledKey(category))
                 .map(ServerSettingDAO::getValue)
@@ -252,13 +228,6 @@ public class ServerSettingsService {
         setting.setKey(definition.key());
         setting.setValue(definition.defaultValue());
         return setting;
-    }
-
-    private ServerSettingTestResult testResult(boolean successful, String message) {
-        ServerSettingTestResult result = new ServerSettingTestResult();
-        result.setMessage(message);
-        result.setSuccessful(successful);
-        return result;
     }
 
     private ServerSetting toDto(ServerSettingsCatalogue.Definition definition) {
@@ -293,52 +262,4 @@ public class ServerSettingsService {
         }
     }
 
-    private void validate(ServerSettingsCatalogue.Definition definition, String value) {
-        if (value == null || value.isBlank() && !definition.secret() && definition.type() != ServerSettingsCatalogue.Type.TEXT) {
-            throw new IllegalArgumentException(definition.label() + " is required");
-        }
-        try {
-            switch (definition.type()) {
-                case BOOLEAN -> {
-                    if (!"true".equalsIgnoreCase(value) && !"false".equalsIgnoreCase(value)) {
-                        throw new IllegalArgumentException(definition.label() + " must be true or false");
-                    }
-                }
-                case COLOUR -> {
-                    if (!value.matches("^#[0-9a-fA-F]{6}$")) {
-                        throw new IllegalArgumentException(definition.label() + " must be a six-digit CSS hex colour");
-                    }
-                }
-                case DECIMAL -> range(definition, Double.parseDouble(value));
-                case INTEGER -> range(definition, Long.parseLong(value));
-                case LOG_LEVEL -> {
-                    if (!definition.options().contains(value.toUpperCase(Locale.ROOT))) {
-                        throw new IllegalArgumentException(definition.label() + " must be one of " + String.join(", ", definition.options()));
-                    }
-                }
-                case PASSWORD, TEXT -> maximumLength(definition, value);
-                case URL -> {
-                    maximumLength(definition, value);
-                    if (!value.matches("^https?://[^\\s]+$")) {
-                        throw new IllegalArgumentException(definition.label() + " must be an HTTP or HTTPS URL");
-                    }
-                }
-            }
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(definition.label() + " must be a number", e);
-        }
-    }
-
-    private void maximumLength(ServerSettingsCatalogue.Definition definition, String value) {
-        if (definition.maximum() != null && value.length() > definition.maximum()) {
-            throw new IllegalArgumentException(definition.label() + " is too long");
-        }
-    }
-
-    private void range(ServerSettingsCatalogue.Definition definition, double value) {
-        if (!Double.isFinite(value) || definition.minimum() != null && value < definition.minimum()
-                || definition.maximum() != null && value > definition.maximum()) {
-            throw new IllegalArgumentException(definition.label() + " is outside the allowed range");
-        }
-    }
 }

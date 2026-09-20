@@ -24,6 +24,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.AclSecurityService;
 import de.bushnaq.abdalla.kassandra.service.PlanningChangeService;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,7 +85,7 @@ public class UndoRedoController {
         }
         UndoRedoHistory history = new UndoRedoHistory();
         int operationLimit = limit == null
-                ? Integer.parseInt(serverSettingsService.value("kassandra.undo-redo.history-limit", "5"))
+                ? Integer.parseInt(serverSettingsService.value(Keys.UNDO_REDO_HISTORY_LIMIT))
                 : limit;
         if (operationLimit < 1) {
             throw new IllegalArgumentException("History limit must be at least one");
