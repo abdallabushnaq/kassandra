@@ -68,6 +68,8 @@ test that need the service are
 ## Add Audit support
 
 1. Add admin page Audit that lists all changes in the database: Who did what and when.
+2. Needs to support filtering by user, date and action.
+3. Needs to support search by user name, email, action and date.
 2. Most important changes to track are:
     1. ID provider creation, update and deletion.
     2. User creation, update and deletion.
