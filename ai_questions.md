@@ -35,6 +35,7 @@
 2. mention the database, ID server, stable diffusion, LM Studio, Chatterbox.
 3. visualize the backend and the UI portal and how the portal talks with the backend using the apis.
 4. API first is our motto.
+5. please visualize the PMC server and what ai systems it interacts with.
 
 ## Server Settings Design
 
@@ -63,3 +64,32 @@ test that need the service are
 2. Demo
 3. GenerateScreenshotsIT
 4. all tests in the de.bushnaq.abdalla.kassandra.ui.view package
+
+## Add Audit support
+
+1. Add admin page Audit that lists all changes in the database: Who did what and when.
+2. Most important changes to track are:
+    1. ID provider creation, update and deletion.
+    2. User creation, update and deletion.
+    3. User group creation, update and deletion.
+    4. server setting updates.
+
+## Add GDPR support
+
+To add GDPR support we need several intermediate steps:
+
+1. Add settings to control GDPR:
+    1. Number of months until a disabled user gets automatically anonymized.
+    2. Number of months until an anonymized user gets automatically deleted .
+    3. Number of months until an abandoned sprint gets automatically closed.
+    4. Number of months until a closed sprint gets automatically deleted.
+    5. Number of months until an abandoned feature gets automatically closed.
+    6. Number of months until a closed feature gets automatically deleted.
+    7. Number of months until an abandoned version gets automatically closed.
+    8. Number of months until a closed version gets automatically deleted.
+    9. Number of months until an abandoned project gets automatically closed.
+    10. Number of months until a closed project gets automatically deleted.
+2. Implement sprint, feature, version and project closing support. Can be reopened by a user with access.
+3. Implement user anonymization. User name and email address should be replaced with a random string.
+4. Implement a background job that will run every night and check for users, sprints, features, versions and projects
+   that need to be anonymized, closed or deleted.

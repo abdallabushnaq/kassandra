@@ -21,6 +21,58 @@ Open [http://localhost:8080/ui/](http://localhost:8080/ui/) and sign in with **d
 curated, disposable data snapshot on its first start and retains changes in its Docker volume. The public demo image is
 pulled automatically; no GitHub Packages credentials are required.
 
+## Architecture
+
+Kassandra is **API first**: the Vaadin portal is a client of the same secured REST API that integrations and the AI
+assistant use. This keeps the business capabilities available beyond the UI and makes every API operation independently
+testable and reusable.
+
+```mermaid
+flowchart LR
+    User([User]) --> Portal
+    Portal -->|OIDC sign - in| IdP[Identity server<br/>Keycloak]
+    IdP -->|access token| Portal
+
+    subgraph Kassandra["Kassandra"]
+        direction TB
+        Portal[Vaadin UI portal]
+        Backend[Backend<br/>Spring Boot REST API]
+        Mcp[MCP server]
+        Portal -->|secured REST API| Backend
+        Backend --> Mcp
+    end
+
+    Backend -->|validates access token| IdP
+    Backend <--> Database[(H2 database)]
+    Backend -->|WebUI API| StableDiffusion[Stable Diffusion]
+    Mcp -->|OpenAI - compatible API| LmStudio[LM Studio]
+    Backend -->|text - to - speech API| Chatterbox[Chatterbox]
+    classDef user fill: #fef3c7, stroke: #d97706, color: #78350f
+    classDef portal fill: #dbeafe, stroke: #2563eb, color: #1e3a8a
+    classDef backend fill: #dcfce7, stroke: #16a34a, color: #14532d
+    classDef mcp fill: #f3e8ff, stroke: #9333ea, color: #581c87
+    classDef data fill: #fee2e2, stroke: #dc2626, color: #7f1d1d
+    classDef external fill: #ffedd5, stroke: #ea580c, color: #7c2d12
+    class User user
+    class Portal portal
+    class Backend backend
+    class Mcp mcp
+    class Database data
+    class IdP external
+    class StableDiffusion external
+    class LmStudio external
+    class Chatterbox external
+    style Kassandra fill: #f8fafc, stroke: #475569, stroke-width: 3px, color: #0f172a
+
+```
+
+### AI assistant and MCP server
+
+The MCP server is part of the Kassandra backend. It gives the language model a controlled set of project-management
+tools, while those tools call Kassandra's own secured REST API rather than bypassing its authorization rules or
+accessing the database directly. See the [MCP design](https://github.com/abdallabushnaq/kassandra/wiki/mcp-design) for
+the detailed interaction flow.
+
 # What makes Kassandra different?
 
 1. Self-sufficient project planning and progress tracking in one tiny server.
@@ -33,7 +85,8 @@ pulled automatically; no GitHub Packages credentials are required.
 
 ## Server settings
 
-Administrators manage runtime server settings from **Manage Settings** in the user menu. Kassandra stores those values in
+Administrators manage runtime server settings from **Manage Settings** in the user menu. Kassandra stores those values
+in
 its database, validates each value against its documented type and limits, and applies supported AI and Stable Diffusion
 settings immediately. Settings that require a Spring-managed client restart are labelled accordingly.
 
