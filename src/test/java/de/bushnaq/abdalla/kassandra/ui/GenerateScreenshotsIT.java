@@ -129,25 +129,24 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(3,
-                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),
-                        LocalDate.parse("2025-08-04"),
-                        Duration.ofDays(10),
-                        2, 2,
-                        2, 2,
-                        2, 2,
-                        1, 5,
-                        5, 8, 8, 8, 6, 7)//official demo data
-//                new RandomCase(
-//                        1,
+//                new RandomCase(3,
 //                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),
 //                        LocalDate.parse("2025-08-04"),
 //                        Duration.ofDays(10),
-//                        4, 4,
-//                        1, 3,
-//                        1, 3,
-//                        1, 4,
-//                        6, 8, 8, 6, 13)//
+//                        2, 2,
+//                        2, 2,
+//                        2, 2,
+//                        1, 5,
+//                        5, 8, 8, 8, 6, 7)//official demo data
+                new RandomCase(3,
+                        OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
+                        LocalDate.parse("2026-02-01"),
+                        Duration.ofDays(10),
+                        6, 6,
+                        1, 3,
+                        1, 3,
+                        1, 3,
+                        5, 8, 8, 4, 6, 7)//official screenshot data
         };
         return Arrays.stream(randomCases).toList();
     }
@@ -285,7 +284,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(DependencyDialog.CANCEL_BUTTON);
         seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
         seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
     }
 
     /**
@@ -442,7 +441,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //SprintListView
         //-----------------
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.SPRINTS_OVERVIEW_CHART);
+        seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
         seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
         takeSprintDialogScreenshots(folder);
         sprintListViewTester.selectSprint(sprintName);
@@ -451,10 +450,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //QualityBoard
         //-----------------
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
         seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "Lisbon");
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
 
         //-----------------
@@ -477,7 +476,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         backlogTester.switchToBacklog();
         seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
         seleniumHandler.takeScreenShot(folder + "/backlog.png");
         takeDependencyDialogScreenshots(folder);
 

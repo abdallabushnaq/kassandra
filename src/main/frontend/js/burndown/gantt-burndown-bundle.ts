@@ -138,6 +138,7 @@ function mountGanttBurndownChart(
             {
                 bundleUrl: '/js/generated/burndown/gantt-burndown-bundle.js',
                 containerId: elementId,
+                chartIds: ['burndown-chart', 'gantt-burndown-chart'],
                 factoryExportName: 'createGanttBurndownChart',
                 factory: createGanttBurndownChart,
                 title: 'Gantt and burndown chart',

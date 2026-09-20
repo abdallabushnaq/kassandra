@@ -58,6 +58,7 @@ function mountGanttChart(containerId: string, injectedData: GanttChartDto, title
             {
                 bundleUrl: '/js/generated/gantt/gantt-bundle.js',
                 containerId: elementId,
+                chartIds: ['gantt-chart'],
                 factoryExportName: 'createGanttChart',
                 factory: createGanttChart,
                 title: 'Gantt chart',

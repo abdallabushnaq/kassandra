@@ -367,7 +367,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo09IT extends Abs
         logHeader(" Tasks Page");
         //---------------------------------------------------------------------------------------
         paul.narrate(NORMAL, "This is the page where you plan your sprint including the gantt chart.").pause();
-        seleniumHandler.waitForElementToBeClickable(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
 
         paul.pauseIfDisabled(5000);
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);

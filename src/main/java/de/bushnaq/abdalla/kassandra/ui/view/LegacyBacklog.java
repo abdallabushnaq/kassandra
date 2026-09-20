@@ -73,6 +73,7 @@ import java.util.concurrent.ExecutionException;
 @PermitAll // When security is enabled, allow all authenticated users
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Log4j2
+@Deprecated
 public class LegacyBacklog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
     public static final String                       BACKLOG_PAGE_TITLE_ID      = "legacy-backlog-page-title";
     public static final String                       CANCEL_BUTTON_ID           = "legacy-cancel-tasks-button";
@@ -1659,21 +1660,6 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
         exitEditMode();
     }
 
-    private void updateUndoRedoProductContext() {
-        if (sprint == null) {
-            return;
-        }
-        if (productId == null) {
-            Feature feature = featureApi.getById(sprint.getFeatureId());
-            Version version = versionApi.getById(feature.getVersionId());
-            productId = version.getProductId();
-        }
-        MainLayout.findParent(this)
-                .filter(MainLayout.class::isInstance)
-                .map(MainLayout.class::cast)
-                .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));
-    }
-
     /**
      * Toggle expansion/collapse of all stories in both grids.
      * Updates the expandInitially setting and forces immediate expansion/collapse.
@@ -1746,6 +1732,21 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
                     selectedSprint = s;
                     sprintSelector.setValue(s);
                 });
+    }
+
+    private void updateUndoRedoProductContext() {
+        if (sprint == null) {
+            return;
+        }
+        if (productId == null) {
+            Feature feature = featureApi.getById(sprint.getFeatureId());
+            Version version = versionApi.getById(feature.getVersionId());
+            productId = version.getProductId();
+        }
+        MainLayout.findParent(this)
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(mainLayout -> mainLayout.setActiveProductId(productId));
     }
 
     /**

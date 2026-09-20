@@ -517,7 +517,7 @@
 | kassandra.ui.introduction            | AbstractIntroductionVideo.java                               | src      |       19 |       49 |       16 |      128 |      212 |
 | kassandra.ui.introduction            | InitialSetupIntroductionVideo15IT.java                       | src      |       43 |       18 |       27 |      401 |      489 |
 | kassandra.ui.introduction            | KassandraAgentIntroductionVideo14IT.java                     | src      |       37 |        0 |       54 |      189 |      280 |
-| kassandra.ui.introduction            | KassandraIntroductionVideo01IT.java                          | src      |       39 |       33 |       57 |      210 |      339 |
+| kassandra.ui.introduction            | KassandraIntroductionVideo01IT.java                          | src      |       38 |       33 |       57 |      210 |      338 |
 | kassandra.ui.introduction            | LoggingWorkIntroductionVideo13IT.java                        | src      |       96 |        0 |       82 |      284 |      462 |
 | kassandra.ui.introduction            | ManagingUserGroupsIntroductionVideo03IT.java                 | src      |       45 |       13 |       69 |      118 |      245 |
 | kassandra.ui.introduction            | ManagingUsersIntroductionVideo02IT.java                      | src      |       43 |        0 |       72 |      124 |      239 |
@@ -533,7 +533,7 @@
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui.util.selenium           | HumanizedSeleniumHandler.java                                | src      |      155 |      211 |      175 |      839 |     1380 |
 | kassandra.ui.util.selenium           | ScreenShotCreator.java                                       | src      |       15 |        7 |       35 |       80 |      137 |
-| kassandra.ui.util.selenium           | SeleniumHandler.java                                         | src      |      143 |      215 |      100 |     1029 |     1487 |
+| kassandra.ui.util.selenium           | SeleniumHandler.java                                         | src      |      144 |      220 |      100 |     1037 |     1501 |
 | kassandra.ui.util.selenium           | SeleniumTestResultExtension.java                             | src      |        9 |        0 |       17 |       42 |       68 |
 | kassandra.ui.util.selenium           | VideoRecorder.java                                           | src      |       48 |       32 |       56 |      479 |      615 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -607,7 +607,7 @@
 | kassandra.ui.view                    | WorkWeekListViewIT.java                                      | src      |       17 |       80 |       20 |       85 |      202 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ui                         | Demo.java                                                    | src      |       15 |        3 |       87 |       99 |      204 |
-| kassandra.ui                         | GenerateScreenshotsIT.java                                   | src      |       81 |       65 |      141 |      511 |      798 |
+| kassandra.ui                         | GenerateScreenshotsIT.java                                   | src      |       81 |       65 |      140 |      511 |      797 |
 | kassandra.ui                         | HtmlColor.java                                               | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                         | MainErrorHandler.java                                        | src      |        5 |        0 |       16 |       28 |       49 |
 | kassandra.ui                         | MainLayout.java                                              | src      |      102 |       77 |       47 |      684 |      910 |
@@ -705,5 +705,5 @@
 | util                                 | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
 | util                                 | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 72 package(s)                        | 632 file(s)                                                  | java     |    13493 |    14668 |    18141 |    75631 |   121933 |
+| 72 package(s)                        | 632 file(s)                                                  | java     |    13493 |    14673 |    18140 |    75639 |   121945 |
 +--------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

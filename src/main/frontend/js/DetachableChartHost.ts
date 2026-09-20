@@ -3,11 +3,13 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
+import {markChartRendered, markChartRendering} from './ChartRenderState.js';
 import type {ChartHandle} from './InteractiveTimelineChart.js';
 
 export interface DetachableChartOptions<T> {
     bundleUrl: string;
     containerId: string;
+    chartIds: readonly string[];
     factoryExportName: string;
     factory: (container: HTMLElement, data: T, options: { containerId: string }) => ChartHandle;
     title: string;
@@ -47,12 +49,13 @@ class DetachableChartHost<T> {
 
     public mount(container: HTMLElement, data: T, title: string): void {
         if (activeDetachedHost && activeDetachedHost !== this)
-            activeDetachedHost.transferTo(this);
+            activeDetachedHost.transferTo(this as DetachableChartHost<unknown>);
 
         const containerChanged = this.container !== container;
         this.container = container;
         this.data = data;
         this.options.title = title;
+        markChartRendering(container);
         if (this.isDetached()) {
             if (containerChanged) {
                 this.originalDisplay = container.style.display;
@@ -190,6 +193,7 @@ class DetachableChartHost<T> {
             return;
         this.normalHandle?.destroy();
         this.normalHandle = this.options.factory(this.container, this.data, {containerId: this.options.containerId});
+        markChartRendered(this.container, this.options.chartIds);
     }
 
     private sendPopupRender(): void {

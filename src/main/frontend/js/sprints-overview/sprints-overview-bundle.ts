@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
+import {markChartRendered, markChartRendering} from '../ChartRenderState.js';
 import {DateUtils} from '../DateUtils.js';
 import {ChartHandle, InteractiveTimelineChart} from '../InteractiveTimelineChart.js';
 import {Theme} from '../theme/Theme.js';
@@ -67,9 +68,11 @@ function mountSprintsOverviewChart(containerId: string, injectedData: SprintOver
 
     currentChartInstance?.destroy();
     currentChartInstance = null;
+    markChartRendering(containerElement);
 
     if (injectedData) {
         currentChartInstance = createChart(containerElement, injectedData, {containerId: elementId});
+        markChartRendered(containerElement, ['sprints-overview-chart']);
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No chart data provided.</div>';
     }

@@ -79,6 +79,7 @@ import java.util.stream.Collectors;
 @Menu(order = 12, icon = "vaadin:chart-3d", title = "Legacy Quality Board")
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
+@Deprecated
 public class LegacyQualityBoard extends Main implements AfterNavigationObserver {
     public static final String                  MENU_ITEM_ID            = "/quality-board";
     public static final String                  SPRINT_GRID_NAME_PREFIX = "sprint-grid-name-";
@@ -275,46 +276,46 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
      * @return a {@link HorizontalLayout} containing the two download anchors
      */
     private HorizontalLayout createDownloadToolbar() {
-       Sprint sprintSnapshot = sprint; // capture before async use
+        Sprint sprintSnapshot = sprint; // capture before async use
 
-       DownloadHandler jsonHandler = DownloadHandler.fromInputStream(event -> {
-           try {
-               byte[] data = sprintExportService.exportToJson(sprintSnapshot);
-               return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + ".json", "application/json", data.length);
-           } catch (Exception e) {
-               log.error("Error generating JSON export for sprint {}", sprintSnapshot.getName(), e);
-               return DownloadResponse.error(500, "Failed to generate JSON export", e);
-           }
-       });
-       Anchor jsonAnchor = new Anchor(jsonHandler, "");
-       jsonAnchor.getElement().setAttribute("download", true);
-       Button jsonButton = new Button("JSON", new Icon(VaadinIcon.DOWNLOAD));
-       jsonButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-       jsonButton.getElement().setAttribute("title", "Download sprint data as JSON");
-       jsonAnchor.add(jsonButton);
+        DownloadHandler jsonHandler = DownloadHandler.fromInputStream(event -> {
+            try {
+                byte[] data = sprintExportService.exportToJson(sprintSnapshot);
+                return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + ".json", "application/json", data.length);
+            } catch (Exception e) {
+                log.error("Error generating JSON export for sprint {}", sprintSnapshot.getName(), e);
+                return DownloadResponse.error(500, "Failed to generate JSON export", e);
+            }
+        });
+        Anchor jsonAnchor = new Anchor(jsonHandler, "");
+        jsonAnchor.getElement().setAttribute("download", true);
+        Button jsonButton = new Button("JSON", new Icon(VaadinIcon.DOWNLOAD));
+        jsonButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        jsonButton.getElement().setAttribute("title", "Download sprint data as JSON");
+        jsonAnchor.add(jsonButton);
 
-       DownloadHandler xmlHandler = DownloadHandler.fromInputStream(event -> {
-           try {
-               byte[] data = sprintExportService.exportToMspdiXml(sprintSnapshot);
-               return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + ".xml", "application/xml", data.length);
-           } catch (Exception e) {
-               log.error("Error generating XML export for sprint {}", sprintSnapshot.getName(), e);
-               return DownloadResponse.error(500, "Failed to generate XML export", e);
-           }
-       });
-       Anchor xmlAnchor = new Anchor(xmlHandler, "");
-       xmlAnchor.getElement().setAttribute("download", true);
-       Button xmlButton = new Button("XML", new Icon(VaadinIcon.DOWNLOAD));
-       xmlButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-       xmlButton.getElement().setAttribute("title", "Download sprint data as Microsoft Project XML (MSPDI)");
-       xmlAnchor.add(xmlButton);
+        DownloadHandler xmlHandler = DownloadHandler.fromInputStream(event -> {
+            try {
+                byte[] data = sprintExportService.exportToMspdiXml(sprintSnapshot);
+                return new DownloadResponse(new ByteArrayInputStream(data), sprintSnapshot.getName() + ".xml", "application/xml", data.length);
+            } catch (Exception e) {
+                log.error("Error generating XML export for sprint {}", sprintSnapshot.getName(), e);
+                return DownloadResponse.error(500, "Failed to generate XML export", e);
+            }
+        });
+        Anchor xmlAnchor = new Anchor(xmlHandler, "");
+        xmlAnchor.getElement().setAttribute("download", true);
+        Button xmlButton = new Button("XML", new Icon(VaadinIcon.DOWNLOAD));
+        xmlButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+        xmlButton.getElement().setAttribute("title", "Download sprint data as Microsoft Project XML (MSPDI)");
+        xmlAnchor.add(xmlButton);
 
-       HorizontalLayout toolbar = new HorizontalLayout(jsonAnchor, xmlAnchor);
-       toolbar.getStyle()
-               .set("margin-top", "var(--lumo-space-s)")
-               .set("padding-left", "var(--lumo-space-xs)");
-       toolbar.setSpacing(true);
-       return toolbar;
+        HorizontalLayout toolbar = new HorizontalLayout(jsonAnchor, xmlAnchor);
+        toolbar.getStyle()
+                .set("margin-top", "var(--lumo-space-s)")
+                .set("padding-left", "var(--lumo-space-xs)");
+        toolbar.setSpacing(true);
+        return toolbar;
     }
 
     private Div createFieldDisplay(String label, String value, String status) {
