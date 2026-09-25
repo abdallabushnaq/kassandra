@@ -48,18 +48,14 @@ public class RequestLoggingFilter implements Filter {
         if (request instanceof HttpServletRequest httpRequest) {
             String contentType = httpRequest.getContentType();
             if (contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/")) {
-                logger.info("RequestLoggingFilter: skipping multipart upload for {} {} contentType={}",
-                        httpRequest.getMethod(), httpRequest.getRequestURI(), contentType);
+//                logger.info("RequestLoggingFilter: skipping multipart upload for {} {} contentType={}", httpRequest.getMethod(), httpRequest.getRequestURI(), contentType);
                 chain.doFilter(request, response);
                 return;
             }
 
             byte[] rawBody    = readBytes(httpRequest.getInputStream());
             String requestURL = httpRequest.getRequestURL().toString();
-            logger.info("RequestLoggingFilter: {} {} contentType={}",
-                    httpRequest.getMethod(),
-                    requestURL,
-                    contentType);
+//            logger.info("RequestLoggingFilter: {} {} contentType={}", httpRequest.getMethod(), requestURL, contentType);
 
             chain.doFilter(new CachedBodyHttpServletRequest(httpRequest, rawBody), response);
             return;

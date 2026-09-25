@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.rest.api;
 
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
 import de.bushnaq.abdalla.kassandra.security.SecurityConfig;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +49,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -96,6 +96,16 @@ public class AbstractApi {
     protected AbstractApi() {
     }
 
+    private void copySessionCookie(HttpHeaders headers) {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            String cookie = attributes.getRequest().getHeader(HttpHeaders.COOKIE);
+            if (cookie != null) {
+                headers.set(HttpHeaders.COOKIE, cookie);
+            }
+        }
+    }
+
     /**
      * Creates HTTP headers with authentication using either OIDC token or Basic Auth.
      * This ensures API calls made from the UI have proper authentication.
@@ -103,8 +113,8 @@ public class AbstractApi {
      * The OIDC token already contains the role information, so roles are handled automatically.
      */
     protected HttpHeaders createAuthHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        UUID operationId = PlanningOperationContext.getOperationId();
+        HttpHeaders headers     = new HttpHeaders();
+        UUID        operationId = PlanningOperationContext.getOperationId();
         if (operationId != null) {
             headers.set(PlanningOperationContext.HEADER_NAME, operationId.toString());
         }
@@ -275,16 +285,6 @@ public class AbstractApi {
         return headers;
     }
 
-    private void copySessionCookie(HttpHeaders headers) {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes != null) {
-            String cookie = attributes.getRequest().getHeader(HttpHeaders.COOKIE);
-            if (cookie != null) {
-                headers.set(HttpHeaders.COOKIE, cookie);
-            }
-        }
-    }
-
     /**
      * Creates an HttpEntity with authentication headers for use with RestTemplate
      */
@@ -310,7 +310,7 @@ public class AbstractApi {
             if (e.getContentType().getType().startsWith("text/html"))
                 logger.error("Server returned HTML error page instead of JSON. Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
             else
-                logger.error("Server returned unknown content type. Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+                logger.error("Server returned unknown content type. Status: {}, Body: {}", e.getStatusCode(), e.getResponseHeaders().getAccessControlRequestMethod());
             throw new ServerErrorException("Failed to execute REST API call due to unknown content type", e);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

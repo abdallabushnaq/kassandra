@@ -61,6 +61,10 @@ public class KassandraProperties {
      * Bound from {@code kassandra.undo-redo.*}.
      */
     private        UndoRedo undoRedo               = new UndoRedo();
+    /**
+     * Bound from {@code kassandra.ui.*}.
+     */
+    private        Ui       ui                     = new Ui();
 
     /**
      * Copies the bound instance values into static fields after Spring has set them.
@@ -154,6 +158,22 @@ public class KassandraProperties {
          * Maximum number of operations displayed in the planning history panel.
          */
         private int historyLimit = 5;
+    }
+
+    @Data
+    public static class Ui {
+        /**
+         * Bound from {@code kassandra.ui.legacy-prototype-pages.*}.
+         */
+        private LegacyPrototypePages legacyPrototypePages = new LegacyPrototypePages();
+    }
+
+    @Data
+    public static class LegacyPrototypePages {
+        /**
+         * Whether legacy and prototype pages are displayed in the main navigation.
+         */
+        private boolean enabled = false;
     }
 
     /**

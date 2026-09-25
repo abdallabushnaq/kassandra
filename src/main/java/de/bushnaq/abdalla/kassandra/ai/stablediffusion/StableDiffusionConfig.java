@@ -17,9 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
-import lombok.Data;
-import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -32,8 +32,6 @@ import org.springframework.context.annotation.Configuration;
 @Data
 public class StableDiffusionConfig {
 
-    @Autowired(required = false)
-    private ServerSettingsService serverSettingsService;
     /**
      * Base URL of the Stable Diffusion WebUI API
      */
@@ -81,15 +79,21 @@ public class StableDiffusionConfig {
      * to cover the full load time. Configurable via {@code stable-diffusion.model-load-timeout-seconds}.
      */
     private int                   modelLoadTimeoutSeconds    = 400;
-    private String                modelName                  = "realisticVisionV60B1_v51HyperVAE.safetensors";
+    private String                modelName                  = "xl/bonoboXL_v20.safetensors"; //            "realisticVisionV60B1_v51HyperVAE.safetensors";
     /**
      * Final output size for avatars/icons
      */
     private int                   outputSize                 = 64;
+    @Autowired(required = false)
+    private ServerSettingsService serverSettingsService;
     /**
      * Timeout in seconds for API requests
      */
     private int                   timeoutSeconds             = 120;
+
+    private double decimal(String key, double fallback) {
+        return Double.parseDouble(value(key, Double.toString(fallback)));
+    }
 
     /**
      * Gets the current Stable Diffusion API URL.
@@ -206,10 +210,6 @@ public class StableDiffusionConfig {
      */
     public int getTimeoutSeconds() {
         return integer(Keys.STABLE_DIFFUSION_TIMEOUT_SECONDS, timeoutSeconds);
-    }
-
-    private double decimal(String key, double fallback) {
-        return Double.parseDouble(value(key, Double.toString(fallback)));
     }
 
     private int integer(String key, int fallback) {

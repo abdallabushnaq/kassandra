@@ -227,7 +227,7 @@ public class EntityGenerator {
             parent.addChildTask(saved);
         }
         getTasks().add(saved);
-        System.out.printf("Adding Task ID: %s, Task Name: %s resource id: %s%n", saved.getId(), saved.getName(), saved.getResourceId());
+//        System.out.printf("Adding Task ID: %s, Task Name: %s resource id: %s%n", saved.getId(), saved.getName(), saved.getResourceId());
         return saved;
     }
 

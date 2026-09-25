@@ -270,24 +270,30 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
         peg.random.setSeed(randomCase.getSeed());
+        PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates the persistent work week
         WorkWeek ww = peg.persistWorkWeek("western 5x7.5", "Monday-Friday 8:00 - 12:00, 13:00 - 16:30", LocalTime.of(8, 0), LocalTime.of(12, 0), LocalTime.of(13, 0), LocalTime.of(16, 30), false, false, true, true, true, true, true);
         peg.getUsers().clear();
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             peg.addRandomUsers(randomCase.getMaxNumberOfUsers(), ww);
         }
+
+        PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates all the user groups as admin
         UserGroup group = peg.userGroupApi.create("Team", "Dev team", new HashSet<>(peg.getUsers().stream().map(User::getId).toList()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
         {
             int numberOfProducts = generateRandomValue(randomCase.getMinNumberOfProducts(), randomCase.getMaxNumberOfProducts());
             try (Profiler pc = new Profiler(SampleType.JPA)) {
                 for (int p = 0; p < numberOfProducts; p++) {
+                    PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the products
                     Product product = peg.addProduct(peg.nameGenerator.generateProductName(peg.getProductIndex()));
                     peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
                     int numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
                     for (int v = 0; v < numberOfVersions; v++) {
+                        PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the versions
                         Version version          = peg.addVersion(product, peg.nameGenerator.generateVersionName(v));
                         int     numberOfFeatures = generateRandomValue(randomCase.getMinNumberOfFeatures(), randomCase.getMaxNumberOfFeatures());
                         for (int f = 0; f < numberOfFeatures; f++) {
+                            PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the features
                             Feature feature         = peg.addFeature(version, peg.nameGenerator.generateFeatureName(peg.getFeatureIndex()));
                             int     numberOfSprints = generateRandomValue(randomCase.getMinNumberOfSprints(), randomCase.getMaxNumberOfSprints());
                             for (int s = 0; s < numberOfSprints; s++) {
@@ -331,23 +337,26 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
 //        System.out.println("Number of users=" + numberOfUsers);
         try (Profiler pc1 = new Profiler(SampleType.JPA)) {
             // Capture current sprint index before creating the sprint
-            int    currentSprintIndex = peg.getCurrentSprintIndex();
-            Sprint generatedSprint    = peg.addRandomSprint(project);
-            Sprint sprint             = generatedSprint;//sprintApi.getById(generatedSprint.getId());
+            int currentSprintIndex = peg.getCurrentSprintIndex();
+            PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates teh story of every sprint
+            Sprint generatedSprint = peg.addRandomSprint(project);
+            Sprint sprint          = generatedSprint;//sprintApi.getById(generatedSprint.getId());
             sprint.initialize();
             if (randomCase.getMaxNumberOfStories() > 0) {
                 int           numberOfStories = peg.random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
                 LocalDateTime startDateTime   = randomCase.getStartDate().atStartOfDay().plusHours(8);
                 startDateTime = sprint.getCalendar().getNextWorkStart(startDateTime);
+                PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the milestone of every sprint
                 Task startMilestone = peg.addTask(sprint, null, "Start", startDateTime, Duration.ZERO, null, null, null, TaskMode.MANUALLY_SCHEDULED, true);
 
                 // Get shuffled story names for this sprint to ensure variety
                 List<String> sprintStoryNames = peg.nameGenerator.getShuffledStoryNames(currentSprintIndex, numberOfStories);
 
                 for (int f = 0; f < numberOfStories; f++) {
-                    String storyName     = sprintStoryNames.get(f);
-                    Task   story         = peg.addParentTask(storyName, sprint, null, startMilestone);
-                    int    numberOfTasks = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
+                    String storyName = sprintStoryNames.get(f);
+                    PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates teh story of every sprint
+                    Task story         = peg.addParentTask(storyName, sprint, null, startMilestone);
+                    int  numberOfTasks = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
                     for (int t = 0; t < numberOfTasks; t++) {
                         int userIndex = peg.random.nextInt(sprintUsers.size());
 //                    System.out.println("User index=" + userIndex);
@@ -371,6 +380,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                             }
                             while (depenedenycyTask == null && tries > 0);
                         }
+                        PersistingEntityGenerator.setUser(user.getEmail(), "ROLE_USER");//Task is created by the users who own it
                         peg.addTask(workName, minWork, maxWork, notes, user, sprint, story, depenedenycyTask);
                     }
                 }

@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.debug;
 
 import de.bushnaq.abdalla.kassandra.rest.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import tools.jackson.databind.json.JsonMapper;
 
 @ControllerAdvice
+@Slf4j
 public class JsonResponseLogger implements ResponseBodyAdvice<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonResponseLogger.class);
@@ -39,22 +41,26 @@ public class JsonResponseLogger implements ResponseBodyAdvice<Object> {
 
 
     @Override
-    public Object beforeBodyWrite(Object body, MethodParameter returnType, org.springframework.http.MediaType selectedContentType,
-                                  Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
+    public Object beforeBodyWrite(Object body, MethodParameter returnType, org.springframework.http.MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType, ServerHttpRequest request, ServerHttpResponse response) {
         try {
             int status = ((ServletServerHttpResponse) response).getServletResponse().getStatus();
-            if (status != 200) {
-                if (body instanceof ErrorResponse errorResponse) {
-                    if (DebugUtil.DEBUG)
-                        System.out.format("Error Response: %s\n", errorResponse.getMessage());
-                } else {
-                    if (DebugUtil.DEBUG)
-                        System.out.format("Error Response: %d\n", status);
+            if (status == 200) {
+                if (DebugUtil.LOG_RESPONSE) {
+                    String responseJsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    String requestJsonString  = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    log.trace("Response JSON: {} for request {}", responseJsonString, requestJsonString);
                 }
-            } else {
-                if (DebugUtil.DEBUG) {
-                    String jsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
-                    System.out.format("Response JSON: %s\n", jsonString);
+            } else if (status == 404) {
+                log.error("404 for {}", request.getURI());
+            } else if (DebugUtil.LOG_ERRORS) {
+                if (body instanceof ErrorResponse errorResponse) {
+                    String responseJsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    String requestJsonString  = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    log.error("Error Response JSON: {} for request {}", responseJsonString, requestJsonString);
+                } else {
+                    String responseJsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    String requestJsonString  = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(body);
+                    log.error("Response JSON: {} for request {}", responseJsonString, request.getURI());
                 }
             }
         } catch (Exception e) {

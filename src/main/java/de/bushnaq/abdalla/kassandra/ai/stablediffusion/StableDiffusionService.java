@@ -86,9 +86,7 @@ public class StableDiffusionService {
                 throw new StableDiffusionException("Failed to read generated image for header crop");
             }
             if (image.getWidth() != expectedWidth || image.getHeight() < targetHeight) {
-                throw new StableDiffusionException(String.format(
-                        "Generated image dimensions %dx%d cannot produce a %dx%d header",
-                        image.getWidth(), image.getHeight(), expectedWidth, targetHeight));
+                throw new StableDiffusionException(String.format("Generated image dimensions %dx%d cannot produce a %dx%d header", image.getWidth(), image.getHeight(), expectedWidth, targetHeight));
             }
             BufferedImage croppedImage = image.getSubimage(0, (image.getHeight() - targetHeight) / 2,
                     expectedWidth, targetHeight);
@@ -570,7 +568,7 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
-        log.info("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
+        log.trace("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
         try {
             selectModel(config.getModelName());
             String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
@@ -613,7 +611,7 @@ public class StableDiffusionService {
                 byte[] originalImage = java.util.Base64.getDecoder().decode(base64Image);
                 byte[] resizedImage  = resizeImage(originalImage, outputSize);
                 long   actualSeed    = parseSeedFromInfo(response.getInfo());
-                log.info("Successfully generated and resized image-to-image to {}x{} with seed {}", outputSize, outputSize, actualSeed);
+                log.trace("Successfully generated and resized image-to-image to {}x{} with seed {}", outputSize, outputSize, actualSeed);
                 GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, actualSeed);
                 result.setNegativePrompt(resolvedNegativePrompt);
                 return result;
@@ -790,7 +788,7 @@ public class StableDiffusionService {
      */
     public boolean selectModel(String modelName) {
         try {
-            log.info("Loading Stable Diffusion model '{}' (timeout: {}s) …", modelName, config.getModelLoadTimeoutSeconds());
+            log.trace("Loading Stable Diffusion model '{}' (timeout: {}s) …", modelName, config.getModelLoadTimeoutSeconds());
             var requestBody = java.util.Map.of("sd_model_checkpoint", modelName);
             webClient.post()
                     .uri("/sdapi/v1/options")
@@ -799,7 +797,7 @@ public class StableDiffusionService {
                     .bodyToMono(Void.class)
                     .timeout(Duration.ofSeconds(config.getModelLoadTimeoutSeconds()))
                     .block();
-            log.info("Model '{}' loaded successfully.", modelName);
+            log.trace("Model '{}' loaded successfully.", modelName);
             return true;
         } catch (Exception e) {
             log.error("Failed to select model '{}': {}", modelName, e.getMessage());
@@ -830,7 +828,7 @@ public class StableDiffusionService {
      */
     public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputWidth, int outputHeight,
                                                      ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
-        log.info("Generating image with prompt '{}' at {}x{}", prompt, outputWidth, outputHeight);
+        log.trace("Generating image with prompt '{}' at {}x{}", prompt, outputWidth, outputHeight);
         try {
             selectModel(config.getModelName());
             String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
@@ -916,8 +914,7 @@ public class StableDiffusionService {
      * @throws StableDiffusionException if generation fails
      */
     public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
-        log.info("Generating image with prompt '{}' at original size {}x{} and resized to {}x{}", prompt,
-                Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize);
+        log.trace("Generating image with prompt '{}' at original size {}x{} and resized to {}x{}", prompt, Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize);
 
         try {
             selectModel(config.getModelName());
@@ -965,7 +962,8 @@ public class StableDiffusionService {
                 byte[] resizedImage = resizeImage(originalImage, outputSize);
 
                 long responseSeed = parseSeedFromInfo(response.getInfo());
-                log.info("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}", Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize, responseSeed);
+                log.trace("Successfully generated original ({}x{}) and resized ({}x{}) images with seed {}", Math.max(config.getGenerationSize(), outputSize), Math.max(config.getGenerationSize(), outputSize), outputSize, outputSize, responseSeed);
+                log.trace("---");
 
                 GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, responseSeed);
                 result.setNegativePrompt(resolvedNegativePrompt);

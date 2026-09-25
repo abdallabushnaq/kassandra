@@ -23,7 +23,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Component
 public class DebugUtil {
-    public static boolean DEBUG = false;
+    public static boolean LOG_ERRORS   = true;
+    public static boolean LOG_RESPONSE = false;
     @Autowired
     JsonMapper jsonMapper;
 

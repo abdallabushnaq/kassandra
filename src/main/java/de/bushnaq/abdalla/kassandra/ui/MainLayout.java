@@ -45,6 +45,7 @@ import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
@@ -112,6 +113,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final HorizontalLayout            navbarLayout;
     private final Div                         pageHeaderBackground;
     private final ProductApi                  productApi;
+    private final KassandraProperties         kassandraProperties;
     private final Map<Tab, String>            tabToPathMap              = new HashMap<>();
     private       Tabs                        tabs;
     private final ThemeSessionState           themeSessionState;
@@ -124,10 +126,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Map<String, Optional<User>> usersByEmail              = new HashMap<>();
 
     MainLayout(ProductApi productApi, UserApi userApi, ThemeSessionState themeSessionState, UndoRedoApi undoRedoApi,
+               KassandraProperties kassandraProperties,
                ServerSettingsService serverSettingsService) {
         this.authenticationContext = authenticationContext;
         this.productApi            = productApi;
         this.userApi               = userApi;
+        this.kassandraProperties   = kassandraProperties;
         this.themeSessionState     = themeSessionState;
         this.undoHistoryPanel      = new UndoHistoryPanel(undoRedoApi, () -> historyProductIds,
                 Integer.parseInt(serverSettingsService.value(Keys.UNDO_REDO_HISTORY_LIMIT)),
@@ -404,7 +408,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         tabs.setOrientation(Tabs.Orientation.HORIZONTAL);
 
         // Create tabs from menu configuration
-        MenuConfiguration.getMenuEntries().forEach(entry -> {
+        MenuConfiguration.getMenuEntries().stream().filter(this::isVisibleMenuEntry).forEach(entry -> {
             Tab tab = createTab(entry);
             tab.setId(entry.path());
             tabs.add(tab);
@@ -427,6 +431,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         });
 
         return tabs;
+    }
+
+    private boolean isVisibleMenuEntry(MenuEntry entry) {
+        if (kassandraProperties.getUi().getLegacyPrototypePages().isEnabled()) {
+            return true;
+        }
+        return !Set.of("legacy-backlog", "legacy-quality-board", "legacy-sprint-list", "insights").contains(entry.path());
     }
 
     /**

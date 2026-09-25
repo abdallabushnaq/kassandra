@@ -1,17 +1,19 @@
 # TODO
 
-1. test should not create default user with avatar to speed up test execution.
-2. rename all mcp tpo IDs
-3. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-4. add better error handling in api.
-5. remove default test password from AbstractApi.
-6. make sure getAll will filter via alc in db, not in memory.
-7. make all entities client side id generated
+1. fix GenerateScreenshotsIT.
+2. PersistingEntityGenerator should generate entities with correct user logged in.
+3. test should not create default user with avatar to speed up test execution.
+4. rename all mcp tpo IDs
+5. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+6. add better error handling in api.
+7. remove default test password from AbstractApi.
+8. make sure getAll will filter via alc in db, not in memory.
+9. make all entities client side id generated
     1. dto and dao need default constructors that set the id
     2. remove the generator annotation
     3. use entitymanager to persist
-8. sort db printout
-9. remove fallback parameter in ColorUtils.intToHex
+10. sort db printout
+11. remove fallback parameter in ColorUtils.intToHex
 
 ## Feature
 

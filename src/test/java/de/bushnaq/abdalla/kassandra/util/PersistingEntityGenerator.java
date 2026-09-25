@@ -58,6 +58,7 @@ import java.util.function.UnaryOperator;
 public class PersistingEntityGenerator {
     public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
     public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
+    public static final String                 INITIAL_ADMIN             = "christopher.paul@kassandra.org";
     public              AvailabilityApi        availabilityApi;
     @Autowired
     protected           AvatarService          avatarService;
@@ -114,7 +115,7 @@ public class PersistingEntityGenerator {
                     darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                     lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
                     lightHeader.getResizedImage(), darkHeader.getResizedImage());
-            System.out.println("Generated lightImage for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            log.trace("Generated lightImage for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             return saved;
         });
     }
@@ -169,7 +170,7 @@ public class PersistingEntityGenerator {
                     darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                     lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
                     lightHeader.getResizedImage(), darkHeader.getResizedImage());
-            System.out.println("Generated lightImage for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            log.trace("Generated lightImage for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             return saved;
         });
     }
@@ -275,11 +276,13 @@ public class PersistingEntityGenerator {
             String    email     = nameGenerator.generateUserEmail(getUserIndex());
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
             User      saved;
-            if (email.equalsIgnoreCase("christopher.paul@kassandra.org"))
+            if (email.equalsIgnoreCase(INITIAL_ADMIN)) {
                 saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f, workWeek);
-            else
+            } else {
+                PersistingEntityGenerator.setUser(INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates all the users as admin
                 saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f + ((float) random.nextInt(6)) / 10f, workWeek);
-            System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
+            }
+//            System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
             time = System.currentTimeMillis();
             //TODO off-days need to be generated after planning
@@ -328,7 +331,7 @@ public class PersistingEntityGenerator {
                     darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                     lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
                     lightHeader.getResizedImage(), darkHeader.getResizedImage());
-            System.out.println("Generated lightImage for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            log.trace("Generated lightImage for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
             return saved;
         });
     }
@@ -386,7 +389,7 @@ public class PersistingEntityGenerator {
             // User doesn't exist, which is fine - we'll create a new one
         }
         if (existingUser != null) {
-            System.out.println("User with email " + email + " already exists, ensuring avatar data");
+            log.trace("User with email " + email + " already exists, ensuring avatar data");
             ensureUserAvatar(existingUser, name);
             getUsers().add(existingUser);
             eg.setUserIndex(eg.getUserIndex() + 1);
@@ -429,7 +432,7 @@ public class PersistingEntityGenerator {
             addWorkWeek(saved, defaultWorkWeek, start);
         }
 
-        System.out.println("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+        log.trace("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
 
         return saved;
     }
@@ -527,7 +530,7 @@ public class PersistingEntityGenerator {
                 darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                 lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
         userApi.update(user);
-        System.out.println("Generated missing avatar for existing user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+        log.trace("Generated missing avatar for existing user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
         return user;
     }
 
