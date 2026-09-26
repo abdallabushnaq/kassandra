@@ -1,42 +1,5 @@
 # AI Questions
 
-## Narration Design
-
-1. create a markdown file docs/design/narration-design.md explaining how narrator class works
-2. include functionality of chatterbox, CacheManager.
-3. explain where wav files are cached.
-4. explain about narrator voices and voice synchronization.
-5. use mermaid to visualize the flow of narration and caching process or class relations.
-
-## AI Filter Design
-
-1. create a markdown file docs/design/ai-filter-design.md explaining how AI filter works
-2. include both java and js implementation.
-3. explain the basic idea.
-4. use mermaid to visualize the flow of narration and caching process or class relations.
-
-## Stable Diffusion Design
-
-1. create a markdown file docs/design/stable-diffusion-design.md explaining how Stable Diffusion works
-2. include the user avatar generation and project/feature/sprint header image generation.
-3. explain light/dark mode
-4. use mermaid to visualize the flow of image generation and caching process or class relations.
-
-## MCP Design
-
-1. create a markdown file docs/design/mcp-design.md explaining how MCP works
-2. explain features of ChatAgentPanel, ChatPanelSessionState
-3. explain the basic idea.
-4. use mermaid to visualize the flow of MCP and/or class relations.
-
-## Improve kassandra readme.md
-
-1. use mermaid to visualize the systems kassandra interacts with.
-2. mention the database, ID server, stable diffusion, LM Studio, Chatterbox.
-3. visualize the backend and the UI portal and how the portal talks with the backend using the apis.
-4. API first is our motto.
-5. please visualize the PMC server and what ai systems it interacts with.
-
 ## Server Settings Design
 
 1. create a markdown file docs/design/server-settings-design.md explaining how server settings work
@@ -67,23 +30,6 @@ test that need the service are
 
 # Audit Log
 
-## Add Audit support
-
-We already added Hibernate envers to implement undo/redo.
-Please see ../kassandra.wiki/undo-redo-design.md for details.
-
-Now we want to add audit capability.
-
-1. Add admin page Audit that lists all changes in the database: Who did what and when.
-2. Must support filtering by user, date, action and specific timeframe.
-3. Must support search by user name, email, action and date.
-4. Must support pagination.
-5. Most important events to track are:
-    1. ID provider creation, update and deletion.
-    2. User creation, update and deletion.
-    3. User group creation, update and deletion.
-    4. server setting updates.
-
 ## Add GDPR support
 
 To add GDPR support we need several intermediate steps:
@@ -104,11 +50,19 @@ To add GDPR support we need several intermediate steps:
 4. Implement a background job that will run every night and check for users, sprints, features, versions and projects
    that need to be anonymized, closed or deleted.
 
-## Audit Design
+# Update Audit Log
 
-1. create a markdown file ../kassandra.wiki/audit-design.md explaining how the auditing works
-2. explain the basic idea.
-3. explain the filter and search features
-4. explain what is covered and what not.
-5. explain how we prevent secrets from showing up in the audit log.
-6. use mermaid to visualize concepts or flows when needed.
+1. I now noticed that if the detailed vie wopens, the list gets a horiuontal scol bar, although no text needs scrolling.
+   can we try to prevent that?
+2. secret values should be encrypted in the database, so instead of trying to guess if a value is a secret or not, we
+   could just show the encrypted values.
+3. updated server settings shoud show oldvalue-newvalue.
+
+# Better Pagination Menu
+
+lets add a much elaborate pagination menu below the Audit page. Similar to google, we want to show:
+Previous 1 2 3 4 5 6 7 8 9 10 Next
+We show 10 page numbers max
+If we show the first page, Previous is not shown.
+If we show the last page, Next is not shown.
+

@@ -39,15 +39,27 @@ import java.util.List;
 public class ServerSettingsService {
 
     private static final String CATEGORY_ENABLED_KEY_PREFIX = "kassandra.server-settings.category.";
-
+    @Autowired
+    private DatabaseDebugService    databaseDebugService;
     @Autowired
     private Environment             environment;
     @Autowired
     private SecuritySecretService   securitySecretService;
     @Autowired
-    private ServerSettingsCatalogue serverSettingsCatalogue;
-    @Autowired
     private ServerSettingRepository serverSettingRepository;
+    @Autowired
+    private ServerSettingsCatalogue serverSettingsCatalogue;
+
+    private boolean categoryEnabled(ServerSettingsCatalogue.Category category) {
+        return serverSettingRepository.findById(categoryEnabledKey(category))
+                .map(ServerSettingDAO::getValue)
+                .map(Boolean::parseBoolean)
+                .orElse(category.enabledByDefault());
+    }
+
+    private String categoryEnabledKey(ServerSettingsCatalogue.Category category) {
+        return CATEGORY_ENABLED_KEY_PREFIX + category.key() + ".enabled";
+    }
 
     /**
      * Creates values for catalogue entries which have not yet been persisted.
@@ -68,6 +80,7 @@ public class ServerSettingsService {
             setting.setAuditValue(definition.secret() ? null : value);
             serverSettingRepository.save(setting);
         }
+        databaseDebugService.printTables(new String[]{"SERVER_SETTINGS"});
         serverSettingsCatalogue.list().stream()
                 .filter(definition -> !definition.secret())
                 .forEach(definition -> definition.update(value(definition.key(), definition.defaultValue())));
@@ -87,37 +100,26 @@ public class ServerSettingsService {
                 .toList();
     }
 
-    /**
-     * Gets a current non-secret setting value.
-     *
-     * @param key          setting key
-     * @param defaultValue fallback value
-     * @return persisted setting value
-     * @throws IllegalArgumentException when the setting is unknown or secret
-     */
-    @Transactional
-    public String value(String key, String defaultValue) {
-        ServerSettingsCatalogue.Definition definition = serverSettingsCatalogue.get(key);
-        if (definition.secret()) {
-            throw new IllegalArgumentException("Secret settings cannot be read as plain text");
-        }
-        return serverSettingRepository.findById(key)
-                .map(ServerSettingDAO::getValue)
-                .filter(value -> !value.isBlank())
-                .orElse(defaultValue);
+    private ServerSettingDAO newCategorySetting(String key) {
+        ServerSettingDAO setting = new ServerSettingDAO();
+        setting.setEncrypted(false);
+        setting.setKey(key);
+        return setting;
     }
 
-    /**
-     * Gets a current non-secret setting value using the catalogue default when it is not persisted.
-     *
-     * @param key setting key
-     * @return persisted setting value or the catalogue default
-     * @throws IllegalArgumentException when the setting is unknown or secret
-     */
-    @Transactional
-    public String value(String key) {
-        ServerSettingsCatalogue.Definition definition = serverSettingsCatalogue.get(key);
-        return value(key, definition.defaultValue());
+    private ServerSettingDAO newSetting(ServerSettingsCatalogue.Definition definition) {
+        ServerSettingDAO setting = new ServerSettingDAO();
+        setting.setEncrypted(false);
+        setting.setKey(definition.key());
+        setting.setValue(definition.defaultValue());
+        setting.setAuditValue(definition.secret() ? null : definition.defaultValue());
+        return setting;
+    }
+
+    private void requireEnabledCategory(ServerSettingsCatalogue.Category category) {
+        if (!categoryEnabled(category)) {
+            throw new IllegalArgumentException(category.label() + " is disabled");
+        }
     }
 
     /**
@@ -156,6 +158,32 @@ public class ServerSettingsService {
                 : candidateValue;
         definition.validate(value);
         return definition.test(value);
+    }
+
+    private ServerSetting toDto(ServerSettingsCatalogue.Definition definition) {
+        return toDto(definition, serverSettingRepository.findById(definition.key()).orElseGet(() -> newSetting(definition)));
+    }
+
+    private ServerSetting toDto(ServerSettingsCatalogue.Definition definition, ServerSettingDAO setting) {
+        ServerSetting result = new ServerSetting();
+        result.setCategoryIcon(definition.category().icon());
+        result.setCategoryAllowDisable(definition.category().allowDisable());
+        result.setCategoryEnabled(categoryEnabled(definition.category()));
+        result.setCategoryKey(definition.category().key());
+        result.setCategoryLabel(definition.category().label());
+        result.setConfigured(!setting.getValue().isBlank());
+        result.setDescription(definition.description());
+        result.setKey(definition.key());
+        result.setLabel(definition.label());
+        result.setMaximum(definition.maximum());
+        result.setMinimum(definition.minimum());
+        result.setOptions(definition.options());
+        result.setRestartRequired(definition.restartRequired());
+        result.setSecret(definition.secret());
+        result.setTestable(definition.testable());
+        result.setType(definition.type().name());
+        result.setValue(definition.secret() ? null : setting.getValue().isBlank() ? definition.defaultValue() : setting.getValue());
+        return result;
     }
 
     /**
@@ -207,63 +235,37 @@ public class ServerSettingsService {
         serverSettingRepository.saveAndFlush(setting);
     }
 
-    private String categoryEnabledKey(ServerSettingsCatalogue.Category category) {
-        return CATEGORY_ENABLED_KEY_PREFIX + category.key() + ".enabled";
-    }
-
-    private boolean categoryEnabled(ServerSettingsCatalogue.Category category) {
-        return serverSettingRepository.findById(categoryEnabledKey(category))
-                .map(ServerSettingDAO::getValue)
-                .map(Boolean::parseBoolean)
-                .orElse(category.enabledByDefault());
-    }
-
-    private ServerSettingDAO newCategorySetting(String key) {
-        ServerSettingDAO setting = new ServerSettingDAO();
-        setting.setEncrypted(false);
-        setting.setKey(key);
-        return setting;
-    }
-
-    private ServerSettingDAO newSetting(ServerSettingsCatalogue.Definition definition) {
-        ServerSettingDAO setting = new ServerSettingDAO();
-        setting.setEncrypted(false);
-        setting.setKey(definition.key());
-        setting.setValue(definition.defaultValue());
-        setting.setAuditValue(definition.secret() ? null : definition.defaultValue());
-        return setting;
-    }
-
-    private ServerSetting toDto(ServerSettingsCatalogue.Definition definition) {
-        return toDto(definition, serverSettingRepository.findById(definition.key()).orElseGet(() -> newSetting(definition)));
-    }
-
-    private ServerSetting toDto(ServerSettingsCatalogue.Definition definition, ServerSettingDAO setting) {
-        ServerSetting result = new ServerSetting();
-        result.setCategoryIcon(definition.category().icon());
-        result.setCategoryAllowDisable(definition.category().allowDisable());
-        result.setCategoryEnabled(categoryEnabled(definition.category()));
-        result.setCategoryKey(definition.category().key());
-        result.setCategoryLabel(definition.category().label());
-        result.setConfigured(!setting.getValue().isBlank());
-        result.setDescription(definition.description());
-        result.setKey(definition.key());
-        result.setLabel(definition.label());
-        result.setMaximum(definition.maximum());
-        result.setMinimum(definition.minimum());
-        result.setOptions(definition.options());
-        result.setRestartRequired(definition.restartRequired());
-        result.setSecret(definition.secret());
-        result.setTestable(definition.testable());
-        result.setType(definition.type().name());
-        result.setValue(definition.secret() ? null : setting.getValue().isBlank() ? definition.defaultValue() : setting.getValue());
-        return result;
-    }
-
-    private void requireEnabledCategory(ServerSettingsCatalogue.Category category) {
-        if (!categoryEnabled(category)) {
-            throw new IllegalArgumentException(category.label() + " is disabled");
+    /**
+     * Gets a current non-secret setting value.
+     *
+     * @param key          setting key
+     * @param defaultValue fallback value
+     * @return persisted setting value
+     * @throws IllegalArgumentException when the setting is unknown or secret
+     */
+    @Transactional
+    public String value(String key, String defaultValue) {
+        ServerSettingsCatalogue.Definition definition = serverSettingsCatalogue.get(key);
+        if (definition.secret()) {
+            throw new IllegalArgumentException("Secret settings cannot be read as plain text");
         }
+        return serverSettingRepository.findById(key)
+                .map(ServerSettingDAO::getValue)
+                .filter(value -> !value.isBlank())
+                .orElse(defaultValue);
+    }
+
+    /**
+     * Gets a current non-secret setting value using the catalogue default when it is not persisted.
+     *
+     * @param key setting key
+     * @return persisted setting value or the catalogue default
+     * @throws IllegalArgumentException when the setting is unknown or secret
+     */
+    @Transactional
+    public String value(String key) {
+        ServerSettingsCatalogue.Definition definition = serverSettingsCatalogue.get(key);
+        return value(key, definition.defaultValue());
     }
 
 }
