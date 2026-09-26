@@ -219,7 +219,8 @@ public class OffDayGenerator {
             return;
         }
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            long         time  = System.currentTimeMillis();
+            long time = System.currentTimeMillis();
+            PersistingEntityGenerator.setUser(user.getEmail(), "ROLE_USER");//Christopher creates the features
             List<OffDay> saved = offDayApi.persistBatch(pending, user.getId());
             log.debug("Batch-persisted {} off days for user '{}' in {} ms", saved.size(), user.getName(), System.currentTimeMillis() - time);
             // Replace in-memory temp objects with the saved ones (which carry server-assigned IDs).

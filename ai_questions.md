@@ -65,12 +65,20 @@ test that need the service are
 3. GenerateScreenshotsIT
 4. all tests in the de.bushnaq.abdalla.kassandra.ui.view package
 
+# Audit Log
+
 ## Add Audit support
 
+We already added Hibernate envers to implement undo/redo.
+Please see ../kassandra.wiki/undo-redo-design.md for details.
+
+Now we want to add audit capability.
+
 1. Add admin page Audit that lists all changes in the database: Who did what and when.
-2. Needs to support filtering by user, date and action.
-3. Needs to support search by user name, email, action and date.
-2. Most important changes to track are:
+2. Must support filtering by user, date, action and specific timeframe.
+3. Must support search by user name, email, action and date.
+4. Must support pagination.
+5. Most important events to track are:
     1. ID provider creation, update and deletion.
     2. User creation, update and deletion.
     3. User group creation, update and deletion.
@@ -95,3 +103,4 @@ To add GDPR support we need several intermediate steps:
 3. Implement user anonymization. User name and email address should be replaced with a random string.
 4. Implement a background job that will run every night and check for users, sprints, features, versions and projects
    that need to be anonymized, closed or deleted.
+

@@ -338,7 +338,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         try (Profiler pc1 = new Profiler(SampleType.JPA)) {
             // Capture current sprint index before creating the sprint
             int currentSprintIndex = peg.getCurrentSprintIndex();
-            PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates teh story of every sprint
+            PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the story of every sprint
             Sprint generatedSprint = peg.addRandomSprint(project);
             Sprint sprint          = generatedSprint;//sprintApi.getById(generatedSprint.getId());
             sprint.initialize();

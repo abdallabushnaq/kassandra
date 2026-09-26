@@ -172,9 +172,33 @@ public class SecurityConfig {
                 .roles("USER")  // Only USER role, no ADMIN privileges
                 .build();
 
+        UserDetails user4 = User.builder()
+                .username("jennifer.holleman@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
+        UserDetails user5 = User.builder()
+                .username("mark.moen@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
+        UserDetails user6 = User.builder()
+                .username("bessie.richardson@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
+        UserDetails user7 = User.builder()
+                .username("grace.martin@kassandra.org")
+                .password(passwordEncoder().encode(TEST_PASSWORD))
+                .roles("USER")  // Only USER role, no ADMIN privileges
+                .build();
+
         logger.info("Created default test user/admin users.");
 
-        return new InMemoryUserDetailsManager(adminUser, user, admin1, user1, user2, user3);
+        return new InMemoryUserDetailsManager(adminUser, user, admin1, user1, user2, user3, user4, user5, user6, user7);
     }
 
     /**

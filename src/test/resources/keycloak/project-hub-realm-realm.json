@@ -13,8 +13,8 @@
       "username": "christopher.paul@kassandra.org",
       "enabled": true,
       "emailVerified": true,
-      "firstName": "Test",
-      "lastName": "User",
+      "firstName": "christopher",
+      "lastName": "paul",
       "email": "christopher.paul@kassandra.org",
       "credentials": [
         {
@@ -34,8 +34,103 @@
       "enabled": true,
       "emailVerified": true,
       "firstName": "jennifer",
-      "lastName": "kassandra",
+      "lastName": "holleman",
       "email": "jennifer.holleman@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "offline_access"
+      ]
+    },
+    {
+      "username": "kristen.hubbell@kassandra.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "kristen",
+      "lastName": "hubbell",
+      "email": "kristen.hubbell@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "offline_access"
+      ]
+    },
+    {
+      "username": "claudine.fick@kassandra.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "claudine",
+      "lastName": "fick",
+      "email": "claudine.fick@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "offline_access"
+      ]
+    },
+    {
+      "username": "randy.asmus@kassandra.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "randy",
+      "lastName": "asmus",
+      "email": "randy.asmus@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "offline_access"
+      ]
+    },
+    {
+      "username": "mark.moen@kassandra.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "mark",
+      "lastName": "moen",
+      "email": "mark.moen@kassandra.org",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "offline_access"
+      ]
+    },
+    {
+      "username": "bessie.richardson@kassandra.org",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "bessie",
+      "lastName": "richardson",
+      "email": "bessie.richardson@kassandra.org",
       "credentials": [
         {
           "type": "password",

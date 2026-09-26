@@ -291,7 +291,7 @@ public class PersistingEntityGenerator {
 //                offDayGenerator.addRandomOffDays(saved, firstDate);
 //            }
 //            Profiler.log("generateRandomOffDays");
-//            System.out.println("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDayGenerator.getOffDaysIterations() + " iterations");
+            log.trace("Adding off days for user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms, and " + offDayGenerator.getOffDaysIterations() + " iterations");
         }
 //        printTables();
         testUsers();
@@ -370,7 +370,7 @@ public class PersistingEntityGenerator {
         return eg.addTask(sprint, parent, name, start, minWork, maxWork, user, dependency, taskMode, milestone, task -> {
             task.setNotes(notes);
             Task saved = taskApi.persist(task);
-            System.out.printf("Adding %s%n", saved.toString());
+//            System.out.printf("Adding %s%n", saved.toString());
             return saved;
         });
     }
