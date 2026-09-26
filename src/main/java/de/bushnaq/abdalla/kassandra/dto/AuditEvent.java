@@ -17,19 +17,21 @@
 package de.bushnaq.abdalla.kassandra.dto;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Safe display metadata for one audited entity change.
  *
- * @param revision   revision number
- * @param timestamp  time of the change
- * @param actor      authenticated email or system identity
- * @param action     create, update, or delete
- * @param entityType changed entity type
- * @param entityId   changed entity identifier
- * @param label      display name at the time of the change, when available
- * @param replay     whether this change was made by undo or redo
+ * @param revision     revision number
+ * @param timestamp    time of the change
+ * @param actor        authenticated email or system identity
+ * @param action       create, update, or delete
+ * @param entityType   changed entity type
+ * @param entityId     changed entity identifier
+ * @param label        display name at the time of the change, when available
+ * @param replay       whether this change was made by undo or redo
+ * @param fieldChanges safe field-level differences for updates
  */
 public record AuditEvent(int revision, Instant timestamp, String actor, String action, String entityType,
-                         String entityId, String label, boolean replay) {
+                         String entityId, String label, boolean replay, List<String> fieldChanges) {
 }

@@ -65,6 +65,7 @@ public class ServerSettingsService {
             ServerSettingDAO setting = newSetting(definition);
             setting.setEncrypted(definition.secret() && !value.isBlank());
             setting.setValue(setting.isEncrypted() ? securitySecretService.encrypt(value) : value);
+            setting.setAuditValue(definition.secret() ? null : value);
             serverSettingRepository.save(setting);
         }
         serverSettingsCatalogue.list().stream()
@@ -180,6 +181,7 @@ public class ServerSettingsService {
             setting.setEncrypted(definition.secret());
             setting.setValue(definition.secret() ? securitySecretService.encrypt(value) : value.trim());
         }
+        setting.setAuditValue(definition.secret() ? null : setting.getValue());
         serverSettingRepository.saveAndFlush(setting);
         definition.update(setting.getValue());
         return toDto(definition, setting);
@@ -201,6 +203,7 @@ public class ServerSettingsService {
         String           key     = categoryEnabledKey(category);
         ServerSettingDAO setting = serverSettingRepository.findById(key).orElseGet(() -> newCategorySetting(key));
         setting.setValue(Boolean.toString(enabled));
+        setting.setAuditValue(setting.getValue());
         serverSettingRepository.saveAndFlush(setting);
     }
 
@@ -227,6 +230,7 @@ public class ServerSettingsService {
         setting.setEncrypted(false);
         setting.setKey(definition.key());
         setting.setValue(definition.defaultValue());
+        setting.setAuditValue(definition.secret() ? null : definition.defaultValue());
         return setting;
     }
 

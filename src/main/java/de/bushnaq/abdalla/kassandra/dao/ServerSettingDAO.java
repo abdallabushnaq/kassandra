@@ -41,6 +41,8 @@ import org.hibernate.envers.NotAudited;
 @EqualsAndHashCode(of = {"key"}, callSuper = false)
 public class ServerSettingDAO extends AbstractTimeAwareDAO {
 
+    @Column(name = "audit_value", length = 8192)
+    private String  auditValue;
     @Column(nullable = false)
     private boolean encrypted;
     @Id

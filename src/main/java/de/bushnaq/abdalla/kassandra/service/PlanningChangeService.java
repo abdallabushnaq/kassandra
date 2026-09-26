@@ -509,8 +509,8 @@ public class PlanningChangeService {
 
     private void replayRedo(UndoableOperationDAO operation) {
         logOperation("Redoing", operation);
-        AuditOperationContextHolder.setReplayOperationId(operation.getId());
         try {
+            beginReplay(operation);
             operation.getEntries().stream()
                     .sorted(Comparator.comparingInt(UndoableOperationEntryDAO::getRevisionNumber)
                             .thenComparingInt(UndoableOperationEntryDAO::getRestoreOrder))
@@ -524,8 +524,8 @@ public class PlanningChangeService {
 
     private void replayUndo(UndoableOperationDAO operation) {
         logOperation("Undoing", operation);
-        AuditOperationContextHolder.setReplayOperationId(operation.getId());
         try {
+            beginReplay(operation);
             operation.getEntries().stream()
                     .sorted(Comparator.<UndoableOperationEntryDAO>comparingInt(UndoableOperationEntryDAO::getRevisionNumber)
                             .reversed()
@@ -536,6 +536,12 @@ public class PlanningChangeService {
         } finally {
             AuditOperationContextHolder.clear();
         }
+    }
+
+    private void beginReplay(UndoableOperationDAO operation) {
+        AuditOperationContextHolder.setReplayOperationId(operation.getId());
+        // Envers creates the revision at transaction completion unless it is reserved while replay is active.
+        enversPlanningStateService.currentRevisionNumber();
     }
 
     private int indexOfOperation(List<UndoableOperationDAO> operations, UUID operationId) {
@@ -630,17 +636,7 @@ public class PlanningChangeService {
             return List.of();
         }
         try {
-            Map<String, Object>   beforeValues = values(before);
-            Map<String, Object>   afterValues  = values(after);
-            java.util.Set<String> fieldNames   = new java.util.TreeSet<>();
-            fieldNames.addAll(beforeValues.keySet());
-            fieldNames.addAll(afterValues.keySet());
-            return fieldNames.stream()
-                    .filter(fieldName -> !java.util.Objects.equals(normalizeHistoryValue(beforeValues.get(fieldName)),
-                            normalizeHistoryValue(afterValues.get(fieldName))))
-                    .map(fieldName -> fieldName + ": " + normalizeHistoryValue(beforeValues.get(fieldName)) + " -> "
-                            + normalizeHistoryValue(afterValues.get(fieldName)))
-                    .toList();
+            return HistoricalFieldChanges.between(values(before), values(after));
         } catch (JacksonException exception) {
             log.warn("Could not calculate field changes from Envers state", exception);
             return List.of();
@@ -655,24 +651,6 @@ public class PlanningChangeService {
             entity = taskWithoutPredecessors;
         }
         return objectMapper.readValue(objectMapper.writeValueAsString(entity), Map.class);
-    }
-
-    private Object normalizeHistoryValue(Object value) {
-        if (value instanceof Map<?, ?> map) {
-            Map<String, Object> normalized = new java.util.TreeMap<>();
-            map.forEach((key, nestedValue) -> {
-                if (!"id".equals(key)) {
-                    normalized.put(String.valueOf(key), normalizeHistoryValue(nestedValue));
-                }
-            });
-            return normalized;
-        }
-        if (value instanceof Collection<?> collection) {
-            return collection.stream().map(this::normalizeHistoryValue)
-                    .sorted(Comparator.comparing(String::valueOf))
-                    .toList();
-        }
-        return value;
     }
 
     private String worklogDisplayName(Map<?, ?> values, UUID entityId) {

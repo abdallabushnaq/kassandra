@@ -60,6 +60,8 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     @Autowired
     private PlanningChangeService       planningChangeService;
     @Autowired
+    private AuditLogService             auditLogService;
+    @Autowired
     private ProductRepository           productRepository;
     @Autowired
     private VersionRepository           versionRepository;
@@ -111,6 +113,10 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
         assertFalse(planningChangeService.canRedo(productId));
         assertEquals(3, planningChangeService.history(productId).size());
         assertTrue(((Number) entityManager.createNativeQuery("SELECT COUNT(*) FROM audit_revisions").getSingleResult()).intValue() >= 5);
+        var auditEvents = auditLogService.find(null, null, "History product", null, null, 0, 50).items();
+        assertTrue(auditEvents.stream()
+                .anyMatch(event -> event.replay() && event.fieldChanges().stream()
+                        .anyMatch(change -> change.startsWith("deleted:"))), auditEvents.toString());
     }
 
     /**
@@ -226,6 +232,39 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
         planningChangeService.update(child, "Deleted relation");
         planningChangeService.undo(data.product().getId());
         assertEquals(1, taskRepository.findById(child.getId()).orElseThrow().getPredecessors().size());
+    }
+
+    /**
+     * Displays historical relation endpoints before and after task renaming.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void auditUsesHistoricalRelationNames() {
+        PlanningData data     = createPlanningData();
+        RelationDAO  relation = new RelationDAO();
+        relation.setPredecessorId(data.task().getId());
+        relation.setVisible(true);
+        data.childTask().getPredecessors().add(relation);
+        planningChangeService.update(data.childTask(), "Added relation");
+        TaskDAO child = taskRepository.findById(data.childTask().getId()).orElseThrow();
+        child.getPredecessors().getFirst().setVisible(false);
+        planningChangeService.update(child, "Changed relation visibility");
+        assertTrue(auditLogService.find(null, "UPDATE", "Relation", null, null, 0, 50).items().stream()
+                .filter(event -> relation.getId().toString().equals(event.entityId()))
+                .anyMatch(event -> event.fieldChanges().stream()
+                        .anyMatch(change -> change.contains("visible: true -> false"))));
+
+        data.task().setName("Renamed task");
+        planningChangeService.update(data.task(), "Renamed task");
+        child = taskRepository.findById(data.childTask().getId()).orElseThrow();
+        child.getPredecessors().clear();
+        planningChangeService.update(child, "Removed relation");
+
+        var history = auditLogService.find(null, null, "Relation", null, null, 0, 50).items().stream()
+                .filter(event -> relation.getId().toString().equals(event.entityId())).toList();
+        assertTrue(history.stream().anyMatch(event -> "Task -> Child task".equals(event.label())));
+        assertTrue(history.stream().anyMatch(event -> "Renamed task -> Child task".equals(event.label())));
+
     }
 
     /**

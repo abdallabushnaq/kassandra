@@ -76,7 +76,7 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
     @Autowired
     private ServerSettingsService  settingsService;
     @Autowired
-    private UserGroupService groupService;
+    private UserGroupService       groupService;
 
     /**
      * Starts each test with a clean database and a client aimed at its random port.
@@ -118,6 +118,8 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         assertTrue(changes.items().stream().anyMatch(event -> "DELETE".equals(event.action())));
         assertTrue(changes.items().stream().anyMatch(event -> "DELETE".equals(event.action())
                 && "Audit provider".equals(event.label())));
+        assertTrue(changes.items().stream().anyMatch(event -> "UPDATE".equals(event.action())
+                && event.fieldChanges().stream().anyMatch(change -> change.contains("enabled: false -> true"))));
         assertTrue(changes.items().stream().allMatch(event -> "christopher.paul@kassandra.org".equals(event.actor())));
         assertFalse(changes.toString().contains("secret-ciphertext"));
         assertTrue(entityManager.createNativeQuery("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS"
@@ -145,6 +147,9 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         assertEquals(1, second.items().size());
         assertNotEquals(first.items().getFirst().revision(), second.items().getFirst().revision());
         assertEquals(1, auditLogApi.getPage(null, "UPDATE", "Audited team", null, null, 0, 50).total());
+        assertTrue(first.items().stream().anyMatch(event -> event.fieldChanges().stream()
+                .anyMatch(change -> change.contains("description: null -> Updated description"))));
+        assertTrue(first.items().stream().allMatch(event -> !event.replay()));
         AuditPage dated = auditLogApi.getPage(null, null, Instant.now().toString().substring(0, 10),
                 null, null, 0, 50);
         assertTrue(dated.total() >= 2);
@@ -169,9 +174,26 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         assertTrue(changes.items().stream().anyMatch(event -> "UPDATE".equals(event.action())));
         assertFalse(changes.toString().contains("very-sensitive-test-key"));
         assertFalse(changes.toString().contains("another-sensitive-test-key"));
+        assertTrue(changes.items().stream().allMatch(event -> event.fieldChanges().stream()
+                .noneMatch(change -> change.toLowerCase().contains("value"))));
         assertTrue(entityManager.createNativeQuery("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS"
                         + " WHERE table_name = 'SERVER_SETTINGS_AUD' AND column_name = 'SETTING_VALUE'")
                 .getResultList().isEmpty());
+    }
+
+    /**
+     * Exposes old and new values only for non-secret server settings.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void settingsAuditShowsSafeValueChanges() {
+        settingsService.update(Keys.OPENAI_BASE_URL, "https://first.example.org", false);
+        settingsService.update(Keys.OPENAI_BASE_URL, "https://second.example.org", false);
+
+        AuditPage changes = auditLogApi.getPage("admin-user", "UPDATE", Keys.OPENAI_BASE_URL,
+                null, null, 0, 50);
+        assertTrue(changes.items().stream().anyMatch(event -> event.fieldChanges().stream()
+                .anyMatch(change -> change.contains("https://first.example.org -> https://second.example.org"))));
     }
 
     /**
@@ -202,6 +224,8 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         assertTrue(userChanges.items().stream().anyMatch(event -> "DELETE".equals(event.action())));
         AuditPage groupChanges = auditLogApi.getPage(null, null, "Membership audit", null, null, 0, 50);
         assertEquals(3, groupChanges.total());
+        assertTrue(groupChanges.items().stream().anyMatch(event -> "UPDATE".equals(event.action())
+                && event.fieldChanges().stream().anyMatch(change -> change.startsWith("memberIds:"))));
         assertTrue(groupChanges.items().stream().anyMatch(event -> "DELETE".equals(event.action())
                 && "Membership audit".equals(event.label())));
     }

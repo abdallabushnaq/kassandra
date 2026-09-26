@@ -25,7 +25,9 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import de.bushnaq.abdalla.kassandra.dto.AuditEvent;
@@ -51,23 +53,25 @@ public class AuditLogView extends VerticalLayout {
     public static final  String ROUTE     = "audit";
     private static final int    PAGE_SIZE = 50;
 
-    private final Select<String>   action    = new Select<>();
+    private final Select<String>   action     = new Select<>();
     private final AuditLogApi      auditLogApi;
-    private final DateTimePicker   from      = new DateTimePicker("From");
-    private final Grid<AuditEvent> grid      = new Grid<>(AuditEvent.class, false);
-    private final Span             pageLabel = new Span();
+    private final DateTimePicker   from       = new DateTimePicker("From");
+    private final Grid<AuditEvent> grid       = new Grid<>(AuditEvent.class, false);
+    private final Span             pageLabel  = new Span();
+    private final IntegerField     pageNumber = new IntegerField("Page number");
+    private       long             pageCount  = 1;
     private       int              page;
-    private final Button           next      = new Button("Next", event -> {
+    private final Button           next       = new Button("Next", event -> {
         page++;
         refresh();
     });
-    private final Button           previous  = new Button("Previous", event -> {
+    private final Button           previous   = new Button("Previous", event -> {
         page--;
         refresh();
     });
-    private final TextField        search    = new TextField("Search");
-    private final DateTimePicker   to        = new DateTimePicker("To (exclusive)");
-    private final TextField        user      = new TextField("User name or email");
+    private final TextField        search     = new TextField("Search");
+    private final DateTimePicker   to         = new DateTimePicker("To (exclusive)");
+    private final TextField        user       = new TextField("User name or email");
 
     /**
      * Creates the admin audit page.
@@ -81,7 +85,7 @@ public class AuditLogView extends VerticalLayout {
         action.setItems("All", "CREATE", "UPDATE", "DELETE");
         action.setValue("All");
         search.setPlaceholder("Name, email, action, or YYYY-MM-DD");
-        Button           apply   = new Button("Apply", event -> {
+        Button apply = new Button("Apply", event -> {
             page = 0;
             refresh();
         });
@@ -95,9 +99,37 @@ public class AuditLogView extends VerticalLayout {
         grid.addColumn(AuditEvent::action).setHeader("Action").setAutoWidth(true);
         grid.addColumn(AuditEvent::entityType).setHeader("Type").setAutoWidth(true);
         grid.addColumn(event -> event.label() == null ? event.entityId() : event.label()).setHeader("What").setFlexGrow(1);
-        grid.addColumn(event -> event.replay() ? "Undo/redo" : "").setHeader("Source").setAutoWidth(true);
+        grid.addColumn(event -> event.replay() ? "Undo/redo" : "Change").setHeader("Origin").setAutoWidth(true);
+        grid.setItemDetailsRenderer(new ComponentRenderer<>(event -> {
+            VerticalLayout details = new VerticalLayout();
+            details.setPadding(false);
+            if (event.fieldChanges().isEmpty()) {
+                details.add(new Span("No changed fields available."));
+            } else {
+                event.fieldChanges().forEach(change -> details.add(new Span(change)));
+            }
+            return details;
+        }));
+        grid.setDetailsVisibleOnClick(false);
+        grid.addItemClickListener(event -> {
+            if ("UPDATE".equals(event.getItem().action())) {
+                grid.setDetailsVisible(event.getItem(), !grid.isDetailsVisible(event.getItem()));
+            }
+        });
         grid.setSizeFull();
-        HorizontalLayout paging = new HorizontalLayout(previous, pageLabel, next);
+        pageNumber.setMin(1);
+        pageNumber.setStepButtonsVisible(false);
+        pageNumber.setWidth("8em");
+        Button go = new Button("Go", event -> {
+            Integer requested = pageNumber.getValue();
+            if (requested == null || requested < 1 || requested > pageCount) {
+                Notification.show("Enter a page number between 1 and " + pageCount);
+                return;
+            }
+            page = requested - 1;
+            refresh();
+        });
+        HorizontalLayout paging = new HorizontalLayout(previous, pageLabel, next, pageNumber, go);
         paging.setAlignItems(Alignment.CENTER);
         add(new H1("Audit"), filters, grid, paging);
         refresh();
@@ -115,7 +147,9 @@ public class AuditLogView extends VerticalLayout {
         grid.setItems(result.items());
         previous.setEnabled(page > 0);
         next.setEnabled((long) (page + 1) * PAGE_SIZE < result.total());
-        pageLabel.setText("Page " + (page + 1) + " of " + Math.max(1, (result.total() + PAGE_SIZE - 1) / PAGE_SIZE)
+        pageCount = Math.max(1, (result.total() + PAGE_SIZE - 1) / PAGE_SIZE);
+        pageNumber.setValue(page + 1);
+        pageLabel.setText("Page " + (page + 1) + " of " + pageCount
                 + " (" + result.total() + " changes)");
     }
 }
