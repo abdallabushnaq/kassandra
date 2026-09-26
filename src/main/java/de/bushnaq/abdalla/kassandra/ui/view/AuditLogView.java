@@ -57,6 +57,7 @@ public class AuditLogView extends VerticalLayout {
     private final AuditLogApi      auditLogApi;
     private final DateTimePicker   from       = new DateTimePicker("From");
     private final Grid<AuditEvent> grid       = new Grid<>(AuditEvent.class, false);
+    private       AuditEvent       openDetails;
     private final Span             pageLabel  = new Span();
     private final IntegerField     pageNumber = new IntegerField("Page number");
     private       long             pageCount  = 1;
@@ -102,20 +103,40 @@ public class AuditLogView extends VerticalLayout {
         grid.addColumn(event -> event.replay() ? "Undo/redo" : "Change").setHeader("Origin").setAutoWidth(true);
         grid.setItemDetailsRenderer(new ComponentRenderer<>(event -> {
             VerticalLayout details = new VerticalLayout();
-            details.setPadding(false);
+            details.setWidthFull();
+            details.getStyle().set("box-sizing", "border-box")
+                    .set("background", "var(--lumo-contrast-5pct)")
+                    .set("font-size", "var(--lumo-font-size-m)");
+            Span heading = new Span(formatter.format(event.timestamp()) + " UTC | " + event.actor() + " | "
+                    + event.action() + " " + event.entityType() + ": "
+                    + (event.label() == null ? event.entityId() : event.label()));
+            heading.getStyle().set("font-weight", "600").set("overflow-wrap", "anywhere");
+            details.add(heading);
             if (event.fieldChanges().isEmpty()) {
                 details.add(new Span("No changed fields available."));
             } else {
-                event.fieldChanges().forEach(change -> details.add(new Span(change)));
+                event.fieldChanges().forEach(change -> {
+                    Span field = new Span(change);
+                    field.getStyle().set("overflow-wrap", "anywhere").set("white-space", "pre-wrap");
+                    details.add(field);
+                });
             }
             return details;
         }));
         grid.setDetailsVisibleOnClick(false);
         grid.addItemClickListener(event -> {
-            if ("UPDATE".equals(event.getItem().action())) {
-                grid.setDetailsVisible(event.getItem(), !grid.isDetailsVisible(event.getItem()));
+            AuditEvent selected = event.getItem();
+            if (openDetails != null) {
+                grid.setDetailsVisible(openDetails, false);
+            }
+            boolean expand = "UPDATE".equals(selected.action()) && !selected.equals(openDetails);
+            grid.setDetailsVisible(selected, expand);
+            openDetails = expand ? selected : null;
+            if (expand) {
+                grid.scrollToItem(selected);
             }
         });
+        grid.addClassName("audit-log-grid");
         grid.setSizeFull();
         pageNumber.setMin(1);
         pageNumber.setStepButtonsVisible(false);
@@ -144,6 +165,10 @@ public class AuditLogView extends VerticalLayout {
         AuditPage result = auditLogApi.getPage(user.getValue(), "All".equals(action.getValue()) ? null : action.getValue(),
                 search.getValue(), from.getValue() == null ? null : from.getValue().atZone(zone).toInstant(),
                 to.getValue() == null ? null : to.getValue().atZone(zone).toInstant(), page, PAGE_SIZE);
+        if (openDetails != null) {
+            grid.setDetailsVisible(openDetails, false);
+        }
+        openDetails = null;
         grid.setItems(result.items());
         previous.setEnabled(page > 0);
         next.setEnabled((long) (page + 1) * PAGE_SIZE < result.total());

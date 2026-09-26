@@ -31,7 +31,7 @@ vaadin-grid::part(row) {
   background: transparent;
 }
 
-vaadin-grid::part(body-row) {
+vaadin-grid:not(.audit-log-grid)::part(body-row) {
   padding-block: 2px;
 }
 
