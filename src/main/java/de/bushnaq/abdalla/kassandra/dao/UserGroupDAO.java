@@ -22,6 +22,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.envers.Audited;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -34,6 +35,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "user_groups")
+@Audited
 @Getter
 @Setter
 @NoArgsConstructor
@@ -74,6 +76,7 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
         memberIds.add(userId);
     }
 
+
     /**
      * Get the number of members in this group
      *
@@ -94,4 +97,3 @@ public class UserGroupDAO extends AbstractTimeAwareDAO {
         memberIds.remove(userId);
     }
 }
-

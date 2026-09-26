@@ -25,6 +25,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.util.UUID;
 
@@ -33,6 +35,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "oidc_providers")
+@Audited
 @Getter
 @Setter
 @ToString(callSuper = true, exclude = "clientSecretEncrypted")
@@ -43,6 +46,7 @@ public class OidcProviderDAO extends AbstractTimeAwareDAO {
     private String  clientId;
 
     @Column(name = "client_secret_encrypted", length = 4096)
+    @NotAudited
     private String  clientSecretEncrypted;
 
     @Column(nullable = false)

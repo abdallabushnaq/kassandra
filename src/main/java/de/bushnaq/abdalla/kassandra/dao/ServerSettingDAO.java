@@ -26,12 +26,15 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 /**
  * Stores one administrator-managed server setting value.
  */
 @Entity
 @Table(name = "server_settings")
+@Audited
 @Getter
 @Setter
 @ToString(callSuper = true, exclude = "value")
@@ -44,6 +47,7 @@ public class ServerSettingDAO extends AbstractTimeAwareDAO {
     @Column(name = "setting_key", nullable = false, updatable = false)
     private String  key;
     @Column(name = "setting_value", nullable = false, length = 8192)
+    @NotAudited
     private String  value;
     @Version
     @Column(nullable = false)

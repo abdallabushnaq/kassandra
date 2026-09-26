@@ -104,3 +104,11 @@ To add GDPR support we need several intermediate steps:
 4. Implement a background job that will run every night and check for users, sprints, features, versions and projects
    that need to be anonymized, closed or deleted.
 
+## Audit Design
+
+1. create a markdown file ../kassandra.wiki/audit-design.md explaining how the auditing works
+2. explain the basic idea.
+3. explain the filter and search features
+4. explain what is covered and what not.
+5. explain how we prevent secrets from showing up in the audit log.
+6. use mermaid to visualize concepts or flows when needed.

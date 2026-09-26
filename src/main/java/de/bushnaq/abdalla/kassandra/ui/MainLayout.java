@@ -59,6 +59,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryPanel;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
+import de.bushnaq.abdalla.kassandra.ui.view.AuditLogView;
 import de.bushnaq.abdalla.kassandra.ui.view.OidcProviderManagementView;
 import de.bushnaq.abdalla.kassandra.ui.view.ServerSettingsView;
 import jakarta.annotation.security.RolesAllowed;
@@ -85,6 +86,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String             ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
     public static final String             ID_USER_MENU                    = "main-layout-user-menu";
     public static final String             ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
+    public static final String             ID_USER_MENU_AUDIT              = "main-layout-user-menu-audit";
     public static final String             ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
     public static final String             ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
     public static final String             ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
@@ -555,6 +557,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
             var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings", e -> UI.getCurrent().navigate(ServerSettingsView.class));
             manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
+
+            var auditItem = userMenuItem.getSubMenu().addItem("Audit", e -> UI.getCurrent().navigate(AuditLogView.class));
+            auditItem.setId(ID_USER_MENU_AUDIT);
         }
 
         if (SecurityUtils.isAdmin()) {

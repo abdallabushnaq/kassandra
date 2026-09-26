@@ -26,6 +26,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.awt.*;
 import java.time.LocalDate;
@@ -40,6 +42,7 @@ import java.util.stream.Collectors;
  */
 @Entity
 @Table(name = "users")
+@Audited
 @Getter
 @Setter
 @ToString(callSuper = true)
@@ -49,6 +52,7 @@ import java.util.stream.Collectors;
 public class UserDAO extends AbstractTimeAwareDAO {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @NotAudited
     @JsonManagedReference
     private List<AvailabilityDAO> availabilities = new ArrayList<>();
     @Column(nullable = false)
@@ -67,17 +71,20 @@ public class UserDAO extends AbstractTimeAwareDAO {
     @Column(name = "light_avatar_hash", length = 16)
     private String                lightAvatarHash;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @NotAudited
     @OrderBy("start ASC")
     @JsonManagedReference
     private List<LocationDAO>     locations      = new ArrayList<>();
     @Column(nullable = false, unique = true)
     private String                name;
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @NotAudited
     @JsonManagedReference
     private List<OffDayDAO>       offDays        = new ArrayList<>();
     @Column(nullable = false)
     private String                roles          = "USER"; // Default role for new users
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @NotAudited
     @OrderBy("start ASC")
     @JsonManagedReference
     private List<UserWorkWeekDAO> userWorkWeeks  = new ArrayList<>();
