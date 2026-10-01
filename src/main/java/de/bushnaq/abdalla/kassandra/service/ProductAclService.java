@@ -46,22 +46,11 @@ public class ProductAclService {
     @Autowired
     private ProductRepository         productRepository;
     @Autowired
+    private PlanningChangeService     planningChangeService;
+    @Autowired
     private UserGroupRepository       userGroupRepository;
     @Autowired
     private UserRepository            userRepository;
-
-    /**
-     * Delete all ACL entries for a product
-     * This should be called when a product is deleted
-     *
-     * @param productId the product ID
-     */
-    @Transactional
-    @CacheEvict(value = "productAcl", allEntries = true)
-    public void deleteProductAcl(UUID productId) {
-        aclRepository.deleteByProductId(productId);
-        log.info("Deleted all ACL entries for product {}", productId);
-    }
 
     /**
      * Get all product IDs accessible by user
@@ -91,13 +80,12 @@ public class ProductAclService {
      * @param creatorUserId the user ID of the creator
      */
     @Transactional
-    @CacheEvict(value = "productAcl", allEntries = true)
     public void grantCreatorAccess(UUID productId, UUID creatorUserId) {
         if (!aclRepository.existsByProductIdAndUserId(productId, creatorUserId)) {
             ProductAclEntryDAO entry = new ProductAclEntryDAO();
             entry.setProductId(productId);
             entry.setUserId(creatorUserId);
-            aclRepository.save(entry);
+            planningChangeService.persist(entry, "Granted creator access");
             log.info("Granted creator access to product {} for user {}", productId, creatorUserId);
         }
     }
@@ -112,20 +100,8 @@ public class ProductAclService {
      * @throws IllegalArgumentException if group already has access
      */
     @Transactional
-    @CacheEvict(value = "productAcl", allEntries = true)
     public ProductAclEntryDAO grantGroupAccess(UUID productId, UUID groupId) {
-        validateProductExists(productId);
-        validateGroupExists(groupId);
-
-        if (aclRepository.existsByProductIdAndGroupId(productId, groupId)) {
-            throw new IllegalArgumentException("Group already has access to this product");
-        }
-
-        ProductAclEntryDAO entry = new ProductAclEntryDAO();
-        entry.setProductId(productId);
-        entry.setGroupId(groupId);
-
-        ProductAclEntryDAO savedEntry = aclRepository.save(entry);
+        ProductAclEntryDAO savedEntry = planningChangeService.persist(groupEntry(productId, groupId), "Granted group access");
         log.info("Granted group {} access to product {}", groupId, productId);
         return savedEntry;
     }
@@ -140,7 +116,6 @@ public class ProductAclService {
      * @throws IllegalArgumentException if user already has access
      */
     @Transactional
-    @CacheEvict(value = "productAcl", allEntries = true)
     public ProductAclEntryDAO grantUserAccess(UUID productId, UUID userId) {
         validateProductExists(productId);
         validateUserExists(userId);
@@ -153,9 +128,23 @@ public class ProductAclService {
         entry.setProductId(productId);
         entry.setUserId(userId);
 
-        ProductAclEntryDAO savedEntry = aclRepository.save(entry);
+        ProductAclEntryDAO savedEntry = planningChangeService.persist(entry, "Granted user access");
         log.info("Granted user {} access to product {}", userId, productId);
         return savedEntry;
+    }
+
+    /**
+     * Audits the default product's bootstrap permission without adding user-visible history.
+     *
+     * @param productId the default product ID
+     * @param groupId   the all-users group ID
+     * @throws EntityNotFoundException  if the product or group does not exist
+     * @throws IllegalArgumentException if the group already has access
+     */
+    @Transactional
+    @CacheEvict(value = "productAcl", allEntries = true)
+    public void initializeDefaultGroupAccess(UUID productId, UUID groupId) {
+        aclRepository.save(groupEntry(productId, groupId));
     }
 
     /**
@@ -190,9 +179,9 @@ public class ProductAclService {
      * @param groupId   the group ID
      */
     @Transactional
-    @CacheEvict(value = "productAcl", allEntries = true)
     public void revokeGroupAccess(UUID productId, UUID groupId) {
-        aclRepository.deleteByProductIdAndGroupId(productId, groupId);
+        aclRepository.findByProductIdAndGroupId(productId, groupId)
+                .ifPresent(entry -> planningChangeService.delete(ProductAclEntryDAO.class, entry.getId(), "Revoked group access"));
         log.info("Revoked group {} access to product {}", groupId, productId);
     }
 
@@ -203,9 +192,9 @@ public class ProductAclService {
      * @param userId    the user ID
      */
     @Transactional
-    @CacheEvict(value = "productAcl", allEntries = true)
     public void revokeUserAccess(UUID productId, UUID userId) {
-        aclRepository.deleteByProductIdAndUserId(productId, userId);
+        aclRepository.findByProductIdAndUserId(productId, userId)
+                .ifPresent(entry -> planningChangeService.delete(ProductAclEntryDAO.class, entry.getId(), "Revoked user access"));
         log.info("Revoked user {} access to product {}", userId, productId);
     }
 
@@ -213,6 +202,18 @@ public class ProductAclService {
         if (!userGroupRepository.existsById(groupId)) {
             throw new EntityNotFoundException("Group not found: " + groupId);
         }
+    }
+
+    private ProductAclEntryDAO groupEntry(UUID productId, UUID groupId) {
+        validateProductExists(productId);
+        validateGroupExists(groupId);
+        if (aclRepository.existsByProductIdAndGroupId(productId, groupId)) {
+            throw new IllegalArgumentException("Group already has access to this product");
+        }
+        ProductAclEntryDAO entry = new ProductAclEntryDAO();
+        entry.setProductId(productId);
+        entry.setGroupId(groupId);
+        return entry;
     }
 
     private void validateProductExists(UUID productId) {
@@ -227,4 +228,3 @@ public class ProductAclService {
         }
     }
 }
-

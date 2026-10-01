@@ -19,6 +19,9 @@ package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
+import de.bushnaq.abdalla.kassandra.repository.ProductAclEntryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
@@ -59,12 +62,16 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureTestRestTemplate
 @AutoConfigureMockMvc
 public class ProductApiTest extends AbstractUiTestUtil {
-    private static final UUID   FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    private static final String SECOND_NAME = "SECOND_NAME";
-    private              User   admin1;
-    private              User   user1;
-    private              User   user2;
-    private              User   user3;
+    private static final UUID                      FAKE_ID     = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final String                    SECOND_NAME = "SECOND_NAME";
+    private              User                      admin1;
+    private              User                      user1;
+    private              User                      user2;
+    private              User                      user3;
+    @Autowired
+    private              ProductAclEntryRepository aclRepository;
+    @Autowired
+    private              UndoRedoApi               undoRedoApi;
 
     @Test
     public void anonymousSecurity() {
@@ -256,6 +263,7 @@ public class ProductApiTest extends AbstractUiTestUtil {
 
         // Delete product
         peg.removeProduct(product.getId());
+        assertTrue(aclRepository.findByProductId(product.getId()).isEmpty());
 
         // Product should no longer exist
         assertThrows(AccessDeniedException.class, () -> {
@@ -340,6 +348,39 @@ public class ProductApiTest extends AbstractUiTestUtil {
         assertThrows(AccessDeniedException.class, () -> {
             peg.productApi.getById(product1.getId());
         });
+    }
+
+    /**
+     * Replays product creation and its creator permission as one operation.
+     *
+     * @param randomCase test fixture configuration
+     * @param testInfo   current test metadata
+     * @throws Exception if fixture generation fails
+     */
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void testCreationUndoRedoIncludesCreatorAcl(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        Product         product    = peg.addProduct("Undoable creator access");
+        ProductAclEntry permission = peg.productAclApi.getAcl(product.getId()).getFirst();
+        var             creation   = undoRedoApi.history(product.getId()).getOperations();
+        assertEquals(1, creation.size());
+        assertEquals(2, creation.getFirst().getEntityChanges().size());
+
+        undoRedoApi.undo(product.getId());
+        assertTrue(aclRepository.findByProductId(product.getId()).isEmpty());
+        assertThrows(AccessDeniedException.class, () -> peg.productApi.getById(product.getId()));
+        assertTrue(undoRedoApi.historyProductIds().contains(product.getId()));
+        assertTrue(undoRedoApi.history(List.of(product.getId()), 10).isCanRedo());
+
+        undoRedoApi.redo(product.getId());
+        assertEquals(product.getName(), peg.productApi.getById(product.getId()).getName());
+        ProductAclEntry restored = peg.productAclApi.getAcl(product.getId()).getFirst();
+        assertEquals(permission.getId(), restored.getId());
+        assertEquals(permission.getUserId(), restored.getUserId());
+        assertEquals(permission.getCreated(), restored.getCreated());
+        assertEquals(permission.getUpdated(), restored.getUpdated());
     }
 
     @Test

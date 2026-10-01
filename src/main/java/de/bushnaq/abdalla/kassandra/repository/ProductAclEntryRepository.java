@@ -23,6 +23,7 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -78,6 +79,24 @@ public interface ProductAclEntryRepository extends ListCrudRepository<ProductAcl
      * @return list of ACL entries
      */
     List<ProductAclEntryDAO> findByProductId(UUID productId);
+
+    /**
+     * Finds a group's direct permission for a product.
+     *
+     * @param productId the product ID
+     * @param groupId   the group ID
+     * @return the permission when present
+     */
+    Optional<ProductAclEntryDAO> findByProductIdAndGroupId(UUID productId, UUID groupId);
+
+    /**
+     * Finds a user's direct permission for a product.
+     *
+     * @param productId the product ID
+     * @param userId    the user ID
+     * @return the permission when present
+     */
+    Optional<ProductAclEntryDAO> findByProductIdAndUserId(UUID productId, UUID userId);
 
     /**
      * Find all product IDs that a user has access to (either directly or through groups)

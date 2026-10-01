@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.service;
 import de.bushnaq.abdalla.kassandra.audit.AuditOperationContextHolder;
 import de.bushnaq.abdalla.kassandra.dao.FeatureDAO;
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
+import de.bushnaq.abdalla.kassandra.dao.ProductAclEntryDAO;
 import de.bushnaq.abdalla.kassandra.dao.RelationDAO;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dao.TaskDAO;
@@ -30,9 +31,12 @@ import de.bushnaq.abdalla.kassandra.dao.WorklogDAO;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
+import de.bushnaq.abdalla.kassandra.repository.ProductAclEntryRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
 import de.bushnaq.abdalla.kassandra.repository.UndoableOperationRepository;
+import de.bushnaq.abdalla.kassandra.repository.UserRepository;
+import de.bushnaq.abdalla.kassandra.repository.UserGroupRepository;
 import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
 import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -43,7 +47,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.envers.RevisionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -51,6 +60,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +75,8 @@ import java.util.function.Consumer;
 @Slf4j
 public class PlanningChangeService {
     @Autowired
+    private CacheManager                cacheManager;
+    @Autowired
     private EntityManager               entityManager;
     @Autowired
     private EnversPlanningStateService  enversPlanningStateService;
@@ -75,11 +87,17 @@ public class PlanningChangeService {
     @Autowired
     private ProductRepository           productRepository;
     @Autowired
+    private ProductAclEntryRepository   productAclEntryRepository;
+    @Autowired
     private SprintRepository            sprintRepository;
     @Autowired
     private TaskRepository              taskRepository;
     @Autowired
     private UndoableOperationRepository undoableOperationRepository;
+    @Autowired
+    private UserRepository              userRepository;
+    @Autowired
+    private UserGroupRepository         userGroupRepository;
     @Autowired
     private VersionRepository           versionRepository;
     @Autowired
@@ -237,6 +255,52 @@ public class PlanningChangeService {
      */
     public List<UUID> historyProductIds() {
         return undoableOperationRepository.findDistinctProductIds();
+    }
+
+    /**
+     * Loads the permissions captured by the lifecycle operation making a product absent.
+     * Live products must use their current ACL instead.
+     *
+     * @param productId absent product whose history access is checked
+     * @return complete lifecycle permissions, or an empty list when no trustworthy boundary exists
+     */
+    @Transactional
+    public List<ProductAclEntryDAO> historicalProductAcl(UUID productId) {
+        if (productRepository.existsById(productId)) {
+            return List.of();
+        }
+        List<UndoableOperationEntryDAO> boundaries = undoableOperationRepository
+                .findAppliedProductEntries(productId, ProductDAO.class.getName(), PageRequest.of(0, 1));
+        RevisionType expectedType = RevisionType.DEL;
+        if (boundaries.isEmpty()) {
+            boundaries   = undoableOperationRepository
+                    .findUndoneProductEntries(productId, ProductDAO.class.getName(), PageRequest.of(0, 1));
+            expectedType = RevisionType.ADD;
+        }
+        if (boundaries.isEmpty()) {
+            return List.of();
+        }
+        UndoableOperationEntryDAO boundary = boundaries.getFirst();
+        Optional<EnversPlanningStateService.HistoricalState> productState = enversPlanningStateService
+                .findAtRevision(ProductDAO.class, productId, boundary.getRevisionNumber());
+        if (productState.isEmpty() || productState.get().revisionType() != expectedType) {
+            log.warn("No trustworthy lifecycle boundary for absent product {}", productId);
+            return List.of();
+        }
+        List<ProductAclEntryDAO> permissions = new ArrayList<>();
+        for (UndoableOperationEntryDAO entry : undoableOperationRepository.findLifecycleAclEntries(
+                boundary.getOperation().getId(), boundary.getRevisionNumber(), ProductAclEntryDAO.class.getName())) {
+            Optional<EnversPlanningStateService.HistoricalState> state = enversPlanningStateService
+                    .findAtRevision(ProductAclEntryDAO.class, entry.getEntityId(), entry.getRevisionNumber());
+            if (state.isEmpty() || state.get().revisionType() != expectedType
+                    || !(state.get().entity() instanceof ProductAclEntryDAO permission)
+                    || !completeAclState(permission, entry.getEntityId()) || !productId.equals(permission.getProductId())) {
+                log.warn("Incomplete lifecycle ACL evidence for product {} and entry {}", productId, entry.getEntityId());
+                return List.of();
+            }
+            permissions.add(permission);
+        }
+        return List.copyOf(permissions);
     }
 
     /**
@@ -517,6 +581,7 @@ public class PlanningChangeService {
                     .forEach(this::restoreAtRevision);
             operation.setUndone(false);
             entityManager.flush();
+            invalidateAclCache(operation);
         } finally {
             AuditOperationContextHolder.clear();
         }
@@ -533,6 +598,7 @@ public class PlanningChangeService {
                     .forEach(this::restoreBeforeRevision);
             operation.setUndone(true);
             entityManager.flush();
+            invalidateAclCache(operation);
         } finally {
             AuditOperationContextHolder.clear();
         }
@@ -558,6 +624,31 @@ public class PlanningChangeService {
         pendingEntries.stream()
                 .forEach(entry -> addEntry(operation, entry, revisionNumber));
         entityManager.flush();
+        if (pendingEntries.stream().anyMatch(entry -> entry.entityType() == ProductAclEntryDAO.class)) {
+            invalidateAclCacheAfterCommit();
+        }
+    }
+
+    private void invalidateAclCache(UndoableOperationDAO operation) {
+        if (operation.getEntries().stream().anyMatch(entry -> entry.getEntityType().equals(ProductAclEntryDAO.class.getName()))) {
+            invalidateAclCacheAfterCommit();
+        }
+    }
+
+    private void invalidateAclCacheAfterCommit() {
+        Cache cache = cacheManager.getCache("productAcl");
+        if (cache == null) {
+            throw new IllegalStateException("Product ACL cache is unavailable");
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            /**
+             * Invalidates permission reads after the enclosing transaction commits.
+             */
+            @Override
+            public void afterCommit() {
+                cache.clear();
+            }
+        });
     }
 
     private void addEntry(UndoableOperationDAO operation, PendingEntry pendingEntry, int revisionNumber) {
@@ -599,6 +690,9 @@ public class PlanningChangeService {
         Object displayState = state != null && state.revisionType() == RevisionType.DEL
                 ? previousState.map(EnversPlanningStateService.HistoricalState::entity).orElse(null)
                 : state == null ? previousState.map(EnversPlanningStateService.HistoricalState::entity).orElse(null) : state.entity();
+        if (entityType == ProductAclEntryDAO.class && state != null) {
+            displayState = state.entity();
+        }
         UndoRedoHistory.EntityChange change = new UndoRedoHistory.EntityChange();
         change.setAction(state == null ? "Updated" : action(state.revisionType()));
         change.setEntityType(entityType.getSimpleName().replace("DAO", ""));
@@ -606,6 +700,10 @@ public class PlanningChangeService {
                 state == null ? null : state.entity(), state == null ? null : state.revisionType()));
         if (displayState == null) {
             change.setDisplayName(entry.getEntityId().toString());
+            return change;
+        }
+        if (displayState instanceof ProductAclEntryDAO permission) {
+            change.setDisplayName(aclDisplayName(permission));
             return change;
         }
         try {
@@ -629,6 +727,18 @@ public class PlanningChangeService {
             case DEL -> "Deleted";
             case MOD -> "Updated";
         };
+    }
+
+    private String aclDisplayName(ProductAclEntryDAO permission) {
+        if (permission.getUserId() != null) {
+            return "User " + userRepository.findById(permission.getUserId())
+                    .map(user -> user.getName()).orElse(permission.getUserId().toString());
+        }
+        if (permission.getGroupId() != null) {
+            return "Group " + userGroupRepository.findById(permission.getGroupId())
+                    .map(group -> group.getName()).orElse(permission.getGroupId().toString());
+        }
+        return "Incomplete ACL " + permission.getId();
     }
 
     private List<String> fieldChanges(Object before, Object after, RevisionType revisionType) {
@@ -678,11 +788,31 @@ public class PlanningChangeService {
     }
 
     private void restoreAtRevision(UndoableOperationEntryDAO entry) {
+        if (entry.getEntityType().equals(ProductAclEntryDAO.class.getName())) {
+            EnversPlanningStateService.HistoricalState state = requiredAclState(entry);
+            if (state.revisionType() == RevisionType.DEL) {
+                remove(entry);
+            } else {
+                restoreAcl(entry, state);
+            }
+            return;
+        }
         enversPlanningStateService.findAtRevision(entityType(entry.getEntityType()), entry.getEntityId(), entry.getRevisionNumber())
                 .ifPresent(state -> restore(entry, state, entry.getRevisionNumber()));
     }
 
     private void restoreBeforeRevision(UndoableOperationEntryDAO entry) {
+        if (entry.getEntityType().equals(ProductAclEntryDAO.class.getName())) {
+            EnversPlanningStateService.HistoricalState source = requiredAclState(entry);
+            switch (source.revisionType()) {
+                case ADD -> remove(entry);
+                case DEL -> restoreAcl(entry, source);
+                case MOD -> restoreAcl(entry, enversPlanningStateService
+                        .findBeforeRevision(ProductAclEntryDAO.class, entry.getEntityId(), entry.getRevisionNumber())
+                        .orElseThrow(() -> new IllegalStateException("Missing preceding ACL state: " + entry.getEntityId())));
+            }
+            return;
+        }
         if (enversPlanningStateService.findAtRevision(entityType(entry.getEntityType()), entry.getEntityId(),
                 entry.getRevisionNumber()).isEmpty()) {
             return;
@@ -694,6 +824,40 @@ public class PlanningChangeService {
             return;
         }
         restore(entry, state.get(), entry.getRevisionNumber() - 1);
+    }
+
+    private EnversPlanningStateService.HistoricalState requiredAclState(UndoableOperationEntryDAO entry) {
+        EnversPlanningStateService.HistoricalState state = enversPlanningStateService
+                .findAtRevision(ProductAclEntryDAO.class, entry.getEntityId(), entry.getRevisionNumber())
+                .orElseThrow(() -> new IllegalStateException("Missing ACL source revision: " + entry.getEntityId()));
+        if (!(state.entity() instanceof ProductAclEntryDAO permission) || !completeAclState(permission, entry.getEntityId())
+                || !entry.getOperation().getProductId().equals(permission.getProductId())) {
+            throw new IllegalStateException("Incomplete ACL source state: " + entry.getEntityId());
+        }
+        return state;
+    }
+
+    private boolean completeAclState(ProductAclEntryDAO permission, UUID id) {
+        return id.equals(permission.getId()) && permission.getProductId() != null
+                && (permission.getUserId() == null) != (permission.getGroupId() == null)
+                && permission.getCreated() != null && permission.getUpdated() != null;
+    }
+
+    private void restoreAcl(UndoableOperationEntryDAO entry, EnversPlanningStateService.HistoricalState state) {
+        if (!(state.entity() instanceof ProductAclEntryDAO permission) || !completeAclState(permission, entry.getEntityId())
+                || !entry.getOperation().getProductId().equals(permission.getProductId())) {
+            throw new IllegalStateException("Incomplete ACL source state: " + entry.getEntityId());
+        }
+        // Flush revocations before inserts occupying the same unique permission slot.
+        entityManager.flush();
+        ProductAclEntryDAO current = entityManager.find(ProductAclEntryDAO.class, entry.getEntityId());
+        if (current == null) {
+            ProductAclEntryDAO restored = new ProductAclEntryDAO();
+            BeanUtils.copyProperties(permission, restored);
+            entityManager.persist(restored);
+        } else {
+            BeanUtils.copyProperties(permission, current);
+        }
     }
 
     private void restore(UndoableOperationEntryDAO entry, EnversPlanningStateService.HistoricalState state,
@@ -807,6 +971,9 @@ public class PlanningChangeService {
     }
 
     private UUID resolveProductId(Object entity) {
+        if (entity instanceof ProductAclEntryDAO permission) {
+            return permission.getProductId();
+        }
         if (entity instanceof ProductDAO product) {
             return product.getId();
         }
@@ -834,6 +1001,9 @@ public class PlanningChangeService {
     }
 
     private UUID entityId(Object entity) {
+        if (entity instanceof ProductAclEntryDAO permission) {
+            return permission.getId();
+        }
         if (entity instanceof ProductDAO product) {
             return product.getId();
         }
@@ -872,6 +1042,7 @@ public class PlanningChangeService {
     private void collectPlanningTree(Object root, List<Object> entities) {
         entities.add(root);
         if (root instanceof ProductDAO product) {
+            entities.addAll(productAclEntryRepository.findByProductId(product.getId()));
             versionRepository.findByProductId(product.getId())
                     .forEach(version -> collectPlanningTree(version, entities));
         } else if (root instanceof VersionDAO version) {
@@ -901,6 +1072,7 @@ public class PlanningChangeService {
 
     private Class<?> entityType(String entityType) {
         return switch (entityType) {
+            case "de.bushnaq.abdalla.kassandra.dao.ProductAclEntryDAO" -> ProductAclEntryDAO.class;
             case "de.bushnaq.abdalla.kassandra.dao.ProductDAO" -> ProductDAO.class;
             case "de.bushnaq.abdalla.kassandra.dao.VersionDAO" -> VersionDAO.class;
             case "de.bushnaq.abdalla.kassandra.dao.FeatureDAO" -> FeatureDAO.class;

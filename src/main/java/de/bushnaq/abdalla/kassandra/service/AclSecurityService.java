@@ -38,19 +38,23 @@ import java.util.UUID;
 public class AclSecurityService {
 
     @Autowired
-    private FeatureRepository featureRepository;
+    private FeatureRepository     featureRepository;
     @Autowired
-    private ProductAclService productAclService;
+    private ProductAclService     productAclService;
     @Autowired
-    private ProductRepository productRepository;
+    private ProductRepository     productRepository;
     @Autowired
-    private SprintRepository  sprintRepository;
+    private PlanningChangeService planningChangeService;
     @Autowired
-    private TaskRepository    taskRepository;
+    private UserGroupRepository   userGroupRepository;
     @Autowired
-    private UserRepository    userRepository;
+    private SprintRepository      sprintRepository;
     @Autowired
-    private VersionRepository versionRepository;
+    private TaskRepository        taskRepository;
+    @Autowired
+    private UserRepository        userRepository;
+    @Autowired
+    private VersionRepository     versionRepository;
 
     /**
      * Check if current user can manage ACL for a product
@@ -79,6 +83,41 @@ public class AclSecurityService {
         return userRepository.findByEmail(userEmail)
                 .map(user -> productAclService.getAccessibleProductIds(user.getId()))
                 .orElseGet(List::of);
+    }
+
+    /**
+     * Gets recorded product histories accessible through live or lifecycle-scoped permissions.
+     *
+     * @return authorized product history IDs
+     */
+    public List<UUID> getAccessibleHistoryProductIds() {
+        return planningChangeService.historyProductIds().stream().filter(this::hasProductHistoryAccess).toList();
+    }
+
+    /**
+     * Checks current permissions for live products and lifecycle permissions for absent products.
+     * Historical group grants require current group membership.
+     *
+     * @param productId product whose history is requested
+     * @return true when the current user may inspect or replay the product history
+     */
+    public boolean hasProductHistoryAccess(UUID productId) {
+        String userEmail = SecurityUtils.getUserEmail();
+        if (SecurityUtils.GUEST.equals(userEmail)) {
+            return false;
+        }
+        if (SecurityUtils.isAdmin()) {
+            return true;
+        }
+        if (productRepository.existsById(productId)) {
+            return hasProductAccess(productId);
+        }
+        return userRepository.findByEmail(userEmail).map(user -> {
+            List<UUID> groupIds = userGroupRepository.findGroupsByUserId(user.getId()).stream()
+                    .map(group -> group.getId()).toList();
+            return planningChangeService.historicalProductAcl(productId).stream()
+                    .anyMatch(permission -> user.getId().equals(permission.getUserId()) || groupIds.contains(permission.getGroupId()));
+        }).orElse(false);
     }
 
     /**
@@ -168,7 +207,8 @@ public class AclSecurityService {
 
         // Check ACL
         Optional<UserDAO> user = userRepository.findByEmail(userEmail);
-        return user.isPresent() && productAclService.hasUserAccess(productId, user.get().getId());
+        return user.isPresent() && productRepository.existsById(productId)
+                && productAclService.hasUserAccess(productId, user.get().getId());
     }
 
     /**

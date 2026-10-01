@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.rest.controller;
 import de.bushnaq.abdalla.kassandra.dao.ProductAvatarDAO;
 import de.bushnaq.abdalla.kassandra.dao.ProductAvatarGenerationDataDAO;
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
+import de.bushnaq.abdalla.kassandra.dao.ProductAclEntryDAO;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.AvatarWrapper;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
@@ -41,6 +42,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -87,8 +89,6 @@ public class ProductController {
         if (!SecurityUtils.isAdmin() && !productAclService.hasAccess(id, SecurityUtils.getUserEmail())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        // Delete ACL entries first
-        productAclService.deleteProductAcl(id);
         // Delete avatars
         productAvatarRepository.deleteByProductId(id);
         productAvatarGenerationDataRepository.deleteByProductId(id);
@@ -277,23 +277,18 @@ public class ProductController {
             throw new UniqueConstraintViolationException("Product", "name", product.getName());
         }
 
-        // Save the product
-        planningChangeService.persist(product, "Created product");
-//        ProductDAO savedProduct = productRepository.save(product);
-
-        // Grant creator access to the product
+        List<Object> entities = new ArrayList<>();
+        entities.add(product);
         String userEmail = SecurityUtils.getUserEmail();
-
         if (!SecurityUtils.GUEST.equals(userEmail)) {
             userRepository.findByEmail(userEmail).ifPresent(user -> {
-                try {
-                    productAclService.grantCreatorAccess(product.getId(), user.getId());
-                    log.info("Granted creator access to product {} for user {}", product.getId(), user.getName());
-                } catch (Exception e) {
-                    log.error("Failed to grant creator access to product {} for user {}", product.getId(), user.getName(), e);
-                }
+                ProductAclEntryDAO permission = new ProductAclEntryDAO();
+                permission.setProductId(product.getId());
+                permission.setUserId(user.getId());
+                entities.add(permission);
             });
         }
+        planningChangeService.persistBatch(entities, "Created product");
 
         return ResponseEntity.ok(product);
     }

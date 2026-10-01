@@ -21,6 +21,8 @@ import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.ProductAclEntry;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
+import de.bushnaq.abdalla.kassandra.repository.ProductAclEntryRepository;
+import de.bushnaq.abdalla.kassandra.service.ProductAclService;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.access.AccessDeniedException;
@@ -62,10 +65,192 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureMockMvc
 public class ProductAclApiTest extends AbstractUiTestUtil {
 
-    private User admin1;
-    private User user1;
-    private User user2;
-    private User user3;
+    private User                      admin1;
+    private User                      user1;
+    private User                      user2;
+    private User                      user3;
+    @Autowired
+    private ProductAclEntryRepository aclRepository;
+    @Autowired
+    private ProductAclService         productAclService;
+    @Autowired
+    private UndoRedoApi               undoRedoApi;
+
+    /**
+     * Replays direct and group permissions, preserving their identity and invalidating primed caches.
+     *
+     * @param randomCase test fixture configuration
+     * @param testInfo   current test metadata
+     * @throws Exception if fixture generation fails
+     */
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void testPermissionGrantRevokeUndoRedo(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        Product   product = peg.addProduct("Permission replay");
+        UserGroup group   = peg.userGroupApi.create("Replay team", "History permissions", Set.of(user1.getId()));
+        for (boolean groupPermission : List.of(false, true)) {
+            assertFalse(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            assertFalse(productAclService.getAccessibleProductIds(user1.getId()).contains(product.getId()));
+            ProductAclEntry permission = groupPermission
+                    ? peg.productAclApi.grantGroupAccess(product.getId(), group.getId())
+                    : peg.productAclApi.grantUserAccess(product.getId(), user1.getId());
+            var original = aclRepository.findById(permission.getId()).orElseThrow();
+            assertTrue(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            assertTrue(productAclService.getAccessibleProductIds(user1.getId()).contains(product.getId()));
+            var change = undoRedoApi.history(product.getId()).getOperations().getFirst().getEntityChanges().getFirst();
+            assertEquals("ProductAclEntry", change.getEntityType());
+            assertEquals(groupPermission ? "Group " + group.getName() : "User " + user1.getName(), change.getDisplayName());
+
+            undoRedoApi.undo(product.getId());
+            assertFalse(aclRepository.existsById(permission.getId()));
+            assertFalse(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            assertFalse(productAclService.getAccessibleProductIds(user1.getId()).contains(product.getId()));
+            undoRedoApi.redo(product.getId());
+            assertEquals(original.getCreated(), aclRepository.findById(permission.getId()).orElseThrow().getCreated());
+            assertTrue(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            if (groupPermission) {
+                peg.productAclApi.revokeGroupAccess(product.getId(), group.getId());
+            } else {
+                peg.productAclApi.revokeUserAccess(product.getId(), user1.getId());
+            }
+            assertFalse(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            undoRedoApi.undo(product.getId());
+            assertTrue(aclRepository.existsById(permission.getId()));
+            assertTrue(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            undoRedoApi.redo(product.getId());
+            assertFalse(aclRepository.existsById(permission.getId()));
+            assertFalse(productAclService.hasUserAccess(product.getId(), user1.getId()));
+        }
+    }
+
+    /**
+     * Authorizes deleted-product history from its deletion ACL, and undone creation only from its creator ACL.
+     *
+     * @param randomCase test fixture configuration
+     * @param testInfo   current test metadata
+     * @throws Exception if fixture generation fails
+     */
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    public void testDeletedProductHistoryAuthorization(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        for (boolean byName : List.of(false, true)) {
+            PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+            Product product  = peg.addProduct("Recover product " + byName);
+            var     creation = undoRedoApi.history(product.getId()).getOperations().getFirst();
+            peg.productAclApi.grantUserAccess(product.getId(), user2.getId());
+            peg.productAclApi.revokeUserAccess(product.getId(), user2.getId());
+            peg.productAclApi.grantUserAccess(product.getId(), user3.getId());
+            var originalIds = peg.productAclApi.getAcl(product.getId()).stream().map(ProductAclEntry::getId).sorted().toList();
+            assertTrue(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            if (byName) {
+                peg.productApi.deleteByName(product.getName());
+            } else {
+                peg.productApi.deleteById(product.getId());
+            }
+            assertTrue(aclRepository.findByProductId(product.getId()).isEmpty());
+            assertFalse(productAclService.hasUserAccess(product.getId(), user1.getId()));
+            assertThrows(AccessDeniedException.class, () -> peg.productApi.getById(product.getId()));
+            var deletion = undoRedoApi.history(product.getId()).getOperations().getFirst();
+            assertEquals(3, deletion.getEntityChanges().size());
+            assertTrue(undoRedoApi.historyProductIds().contains(product.getId()));
+            assertFalse(undoRedoApi.history(List.of(product.getId()), 10).getOperations().isEmpty());
+            assertEquals(deletion.getId(), undoRedoApi.replayPreview(product.getId(), deletion.getId(), true)
+                    .getOperations().getFirst().getId());
+
+            PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+            assertHistoryDenied(product.getId(), deletion.getId());
+            PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
+            undoRedoApi.undoThrough(product.getId(), deletion.getId());
+            assertEquals(originalIds, peg.productAclApi.getAcl(product.getId()).stream().map(ProductAclEntry::getId).sorted().toList());
+            undoRedoApi.redoThrough(product.getId(), deletion.getId());
+
+            PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+            undoRedoApi.undoThrough(product.getId(), creation.getId());
+            assertTrue(aclRepository.findByProductId(product.getId()).isEmpty());
+            assertTrue(undoRedoApi.historyProductIds().contains(product.getId()));
+            PersistingEntityGenerator.setUser(user3.getEmail(), "ROLE_USER");
+            assertHistoryDenied(product.getId(), creation.getId());
+            PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+            undoRedoApi.redoThrough(product.getId(), deletion.getId());
+            undoRedoApi.undo(product.getId());
+            assertEquals(originalIds, peg.productAclApi.getAcl(product.getId()).stream().map(ProductAclEntry::getId).sorted().toList());
+        }
+    }
+
+    /**
+     * Uses current membership when authorizing historical group permissions.
+     *
+     * @param randomCase test fixture configuration
+     * @param testInfo   current test metadata
+     * @throws Exception if fixture generation fails
+     */
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void testHistoricalGroupAccessUsesCurrentMembership(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        Product   product = peg.addProduct("Historical group access");
+        UserGroup group   = peg.userGroupApi.create("Recovery team", "History access", Set.of(user1.getId()));
+        peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
+        peg.productApi.deleteById(product.getId());
+        UUID deletionId = undoRedoApi.history(product.getId()).getOperations().getFirst().getId();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        assertTrue(undoRedoApi.historyProductIds().contains(product.getId()));
+        assertFalse(undoRedoApi.history(product.getId()).getOperations().isEmpty());
+
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        peg.userGroupApi.removeMember(group.getId(), user1.getId());
+        peg.userGroupApi.addMember(group.getId(), user2.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        assertHistoryDenied(product.getId(), deletionId);
+        PersistingEntityGenerator.setUser(user2.getEmail(), "ROLE_USER");
+        undoRedoApi.undo(product.getId());
+        assertNotNull(peg.productApi.getById(product.getId()));
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        assertHistoryDenied(product.getId(), deletionId);
+    }
+
+    /**
+     * Completes an authorized replay even when it removes the caller's own live permission.
+     *
+     * @param randomCase test fixture configuration
+     * @param testInfo   current test metadata
+     * @throws Exception if fixture generation fails
+     */
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void testReplayRemovingCallerAccessReturnsNormally(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        init(randomCase, testInfo);
+        Product product = peg.addProduct("Self permission replay");
+        peg.productAclApi.grantUserAccess(product.getId(), user1.getId());
+        UUID grantId = undoRedoApi.history(product.getId()).getOperations().getFirst().getId();
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        assertTrue(undoRedoApi.undo(product.getId()).isCanRedo());
+        assertHistoryDenied(product.getId(), grantId);
+        PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
+        undoRedoApi.redo(product.getId());
+        peg.productAclApi.revokeUserAccess(product.getId(), user1.getId());
+        undoRedoApi.undo(product.getId());
+        PersistingEntityGenerator.setUser(user1.getEmail(), "ROLE_USER");
+        assertFalse(undoRedoApi.redo(product.getId()).isCanRedo());
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.history(product.getId()));
+    }
+
+    private void assertHistoryDenied(UUID productId, UUID operationId) {
+        assertFalse(undoRedoApi.historyProductIds().contains(productId));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.history(productId));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.history(List.of(productId), 10));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.replayPreview(productId, operationId, true));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.undo(productId));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.redo(productId));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.undoThrough(productId, operationId));
+        assertThrows(AccessDeniedException.class, () -> undoRedoApi.redoThrough(productId, operationId));
+        assertThrows(AccessDeniedException.class, () -> peg.productAclApi.getAcl(productId));
+    }
 
     private void init(RandomCase randomCase, TestInfo testInfo) throws Exception {
         Authentication roleAdmin = PersistingEntityGenerator.setUser("admin-user", "ROLE_ADMIN");
@@ -540,4 +725,3 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
         });
     }
 }
-

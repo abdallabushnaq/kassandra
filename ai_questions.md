@@ -66,3 +66,8 @@ We show 10 page numbers max
 If we show the first page, Previous is not shown.
 If we show the last page, Next is not shown.
 
+# Run Instruction Videos as Tests in Headless Mode
+
+In headless mode we currently do not run the instruction videos, as they are not needed for testing.
+However, we should run them in headless mode , as they are a good test of the video player and the video files.
+

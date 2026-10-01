@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.dao;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.envers.Audited;
 
 import java.util.UUID;
 
@@ -29,6 +29,7 @@ import java.util.UUID;
  * Each entry grants access to either a user or a group (but not both).
  */
 @Entity
+@Audited
 @Table(
         name = "product_acl_entries",
         uniqueConstraints = {
@@ -47,9 +48,8 @@ public class ProductAclEntryDAO extends AbstractTimeAwareDAO {
     @Column(name = "group_id")
     private UUID groupId;
     @Id
-    @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private UUID id;
+    private UUID id = UUID.randomUUID();
     @Column(name = "product_id", nullable = false)
     private UUID productId;
     @Column(name = "user_id")
@@ -86,4 +86,3 @@ public class ProductAclEntryDAO extends AbstractTimeAwareDAO {
         }
     }
 }
-

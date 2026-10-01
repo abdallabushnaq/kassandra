@@ -59,9 +59,9 @@ public class UndoRedoController {
      * @return product undo/redo availability and operations, newest first
      */
     @GetMapping("/product/{productId}/history")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasProductHistoryAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory history(@PathVariable UUID productId) {
-        return history(List.of(productId), null);
+        return authorizedHistory(List.of(productId), null);
     }
 
     /**
@@ -75,13 +75,18 @@ public class UndoRedoController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public UndoRedoHistory history(@org.springframework.web.bind.annotation.RequestParam Collection<UUID> productIds,
                                    @org.springframework.web.bind.annotation.RequestParam(required = false) Integer limit) {
+        if (!SecurityUtils.isAdmin() && productIds.stream().anyMatch(productId -> !aclSecurityService.hasProductHistoryAccess(productId))) {
+            throw new org.springframework.security.access.AccessDeniedException("Access to product history is denied");
+        }
+        return authorizedHistory(productIds, limit);
+    }
+
+    // Replay may revoke the caller's permission, but its response remains authorized by request entry.
+    private UndoRedoHistory authorizedHistory(Collection<UUID> productIds, Integer limit) {
         if (productIds.isEmpty()) {
             UndoRedoHistory emptyHistory = new UndoRedoHistory();
             emptyHistory.setOperations(List.of());
             return emptyHistory;
-        }
-        if (!SecurityUtils.isAdmin() && productIds.stream().anyMatch(productId -> !aclSecurityService.hasProductAccess(productId))) {
-            throw new org.springframework.security.access.AccessDeniedException("Access to product history is denied");
         }
         UndoRedoHistory history = new UndoRedoHistory();
         int operationLimit = limit == null
@@ -107,7 +112,7 @@ public class UndoRedoController {
         if (SecurityUtils.isAdmin()) {
             return planningChangeService.historyProductIds();
         }
-        return aclSecurityService.getAccessibleProductIds();
+        return aclSecurityService.getAccessibleHistoryProductIds();
     }
 
     /**
@@ -117,10 +122,10 @@ public class UndoRedoController {
      * @return updated product undo/redo availability and history
      */
     @PostMapping("/product/{productId}/redo")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasProductHistoryAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory redo(@PathVariable UUID productId) {
         planningChangeService.redo(productId);
-        return history(productId);
+        return authorizedHistory(List.of(productId), null);
     }
 
     /**
@@ -131,10 +136,10 @@ public class UndoRedoController {
      * @return updated product undo/redo availability and history
      */
     @PostMapping("/product/{productId}/redo/{operationId}")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasProductHistoryAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory redoThrough(@PathVariable UUID productId, @PathVariable UUID operationId) {
         planningChangeService.redoThrough(productId, operationId);
-        return history(productId);
+        return authorizedHistory(List.of(productId), null);
     }
 
     /**
@@ -144,10 +149,10 @@ public class UndoRedoController {
      * @return updated product undo/redo availability and history
      */
     @PostMapping("/product/{productId}/undo")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasProductHistoryAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory undo(@PathVariable UUID productId) {
         planningChangeService.undo(productId);
-        return history(productId);
+        return authorizedHistory(List.of(productId), null);
     }
 
     /**
@@ -158,10 +163,10 @@ public class UndoRedoController {
      * @return updated product undo/redo availability and history
      */
     @PostMapping("/product/{productId}/undo/{operationId}")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasProductHistoryAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory undoThrough(@PathVariable UUID productId, @PathVariable UUID operationId) {
         planningChangeService.undoThrough(productId, operationId);
-        return history(productId);
+        return authorizedHistory(List.of(productId), null);
     }
 
     /**
@@ -173,7 +178,7 @@ public class UndoRedoController {
      * @return operations that will be replayed
      */
     @GetMapping("/product/{productId}/history/{operationId}/preview")
-    @PreAuthorize("@aclSecurityService.hasProductAccess(#productId) or hasRole('ADMIN')")
+    @PreAuthorize("@aclSecurityService.hasProductHistoryAccess(#productId) or hasRole('ADMIN')")
     public UndoRedoHistory replayPreview(@PathVariable UUID productId, @PathVariable UUID operationId,
                                          @org.springframework.web.bind.annotation.RequestParam boolean undo) {
         UndoRedoHistory history = new UndoRedoHistory();

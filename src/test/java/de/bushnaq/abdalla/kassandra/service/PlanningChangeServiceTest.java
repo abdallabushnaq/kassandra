@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
 import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
+import de.bushnaq.abdalla.kassandra.repository.ProductAclEntryRepository;
 import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
 import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
 import de.bushnaq.abdalla.kassandra.repository.UndoableOperationRepository;
@@ -37,6 +38,7 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
@@ -48,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests product-scoped planning history and its soft-delete replay behavior.
@@ -77,6 +80,175 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     private WorklogRepository           worklogRepository;
     @Autowired
     private JsonMapper                  jsonMapper;
+    @Autowired
+    private ProductAclEntryRepository   aclRepository;
+    @Autowired
+    private EnversPlanningStateService  enversPlanningStateService;
+    @Autowired
+    private ProductAclService           productAclService;
+
+    /**
+     * Physically removes and recreates permissions while retaining the planning tree's tombstones.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void productTreeDeletionRestoresCompleteAcl() {
+        PlanningData       data            = createPlanningData();
+        ProductAclEntryDAO userPermission  = permission(data.product().getId(), UUID.randomUUID());
+        ProductAclEntryDAO groupPermission = new ProductAclEntryDAO();
+        groupPermission.setProductId(data.product().getId());
+        groupPermission.setGroupId(UUID.randomUUID());
+        planningChangeService.persistBatch(List.of(userPermission, groupPermission), "Granted permissions");
+        ProductAclEntryDAO original = aclRepository.findById(userPermission.getId()).orElseThrow();
+        planningChangeService.deleteTree(ProductDAO.class, data.product().getId(), "Deleted product hierarchy");
+        assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
+        assertEquals(2, planningChangeService.historicalProductAcl(data.product().getId()).size());
+        for (int replay = 0; replay < 2; replay++) {
+            planningChangeService.undo(data.product().getId());
+            ProductAclEntryDAO restored = aclRepository.findById(original.getId()).orElseThrow();
+            assertEquals(original.getProductId(), restored.getProductId());
+            assertEquals(original.getUserId(), restored.getUserId());
+            assertEquals(original.getCreated(), restored.getCreated());
+            assertEquals(original.getUpdated(), restored.getUpdated());
+            assertTrue(aclRepository.existsById(groupPermission.getId()));
+            assertTrue(taskRepository.existsById(data.childTask().getId()));
+            planningChangeService.redo(data.product().getId());
+            assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
+            assertTrue(productRepository.findById(data.product().getId()).isEmpty());
+        }
+    }
+
+    /**
+     * Restores a grouped revoke/re-grant without colliding with the permission's unique slot.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void groupedAclReplacementPreservesUniquePermissionSlot() {
+        PlanningData       data     = createPlanningData();
+        ProductAclEntryDAO original = permission(data.product().getId(), UUID.randomUUID());
+        planningChangeService.persist(original, "Granted user access");
+        UUID operationId = UUID.randomUUID();
+        AuditOperationContextHolder.setOperationId(operationId);
+        planningChangeService.delete(ProductAclEntryDAO.class, original.getId(), "Replaced permission");
+        ProductAclEntryDAO replacement = permission(data.product().getId(), original.getUserId());
+        AuditOperationContextHolder.setOperationId(operationId);
+        planningChangeService.persist(replacement, "Replaced permission");
+        var entries = undoableOperationRepository.findById(operationId).orElseThrow().getEntries();
+        assertEquals(2, entries.size());
+        assertNotEquals(entries.getFirst().getRevisionNumber(), entries.getLast().getRevisionNumber());
+        for (int replay = 0; replay < 2; replay++) {
+            planningChangeService.undo(data.product().getId());
+            assertTrue(aclRepository.existsById(original.getId()));
+            assertFalse(aclRepository.existsById(replacement.getId()));
+            planningChangeService.redo(data.product().getId());
+            assertFalse(aclRepository.existsById(original.getId()));
+            assertTrue(aclRepository.existsById(replacement.getId()));
+        }
+    }
+
+    /**
+     * Uses the complete deletion revision when no earlier ACL audit row exists.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void aclDeletionWithoutEarlierAuditStateIsUndoable() {
+        PlanningData       data       = createPlanningData();
+        ProductAclEntryDAO permission = permission(data.product().getId(), UUID.randomUUID());
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> aclRepository.save(permission));
+        ProductAclEntryDAO original = aclRepository.findById(permission.getId()).orElseThrow();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
+                .createNativeQuery("DELETE FROM product_acl_entries_aud WHERE id = :id")
+                .setParameter("id", permission.getId()).executeUpdate());
+        planningChangeService.delete(ProductAclEntryDAO.class, permission.getId(), "Revoked legacy permission");
+        var deletion = planningChangeService.history(data.product().getId()).getFirst();
+        var entry    = deletion.getEntries().getFirst();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status ->
+                assertTrue(enversPlanningStateService.findBeforeRevision(ProductAclEntryDAO.class, permission.getId(),
+                        entry.getRevisionNumber()).isEmpty()));
+        planningChangeService.undo(data.product().getId());
+        ProductAclEntryDAO restored = aclRepository.findById(permission.getId()).orElseThrow();
+        assertEquals(original.getUserId(), restored.getUserId());
+        assertEquals(original.getCreated(), restored.getCreated());
+        assertEquals(original.getUpdated(), restored.getUpdated());
+        planningChangeService.redo(data.product().getId());
+        assertFalse(aclRepository.existsById(permission.getId()));
+    }
+
+    /**
+     * Denies incomplete lifecycle evidence and rolls back the whole tree restoration.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void incompleteAclStateRollsBackProductUndo() {
+        PlanningData       data       = createPlanningData();
+        ProductAclEntryDAO permission = permission(data.product().getId(), UUID.randomUUID());
+        planningChangeService.persist(permission, "Granted permission");
+        planningChangeService.deleteTree(ProductDAO.class, data.product().getId(), "Deleted product hierarchy");
+        var deletion = planningChangeService.history(data.product().getId()).getFirst();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
+                .createNativeQuery("UPDATE product_acl_entries_aud SET product_id = NULL WHERE id = :id")
+                .setParameter("id", permission.getId()).executeUpdate());
+        assertTrue(planningChangeService.historicalProductAcl(data.product().getId()).isEmpty());
+        assertThrows(IllegalStateException.class, () -> planningChangeService.undo(data.product().getId()));
+        assertTrue(productRepository.findById(data.product().getId()).isEmpty());
+        assertTrue(taskRepository.findById(data.childTask().getId()).isEmpty());
+        assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
+        assertFalse(undoableOperationRepository.findById(deletion.getId()).orElseThrow().isUndone());
+    }
+
+    /**
+     * Keeps redo available after idempotent revocations, and discards it after a real permission mutation.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void noOpRevocationPreservesRedoBranch() {
+        PlanningData       data       = createPlanningData();
+        ProductAclEntryDAO permission = permission(data.product().getId(), UUID.randomUUID());
+        planningChangeService.persist(permission, "Granted permission");
+        planningChangeService.undo(data.product().getId());
+        int historySize = planningChangeService.history(data.product().getId()).size();
+        productAclService.revokeUserAccess(data.product().getId(), permission.getUserId());
+        productAclService.revokeGroupAccess(data.product().getId(), UUID.randomUUID());
+        assertTrue(planningChangeService.canRedo(data.product().getId()));
+        assertEquals(historySize, planningChangeService.history(data.product().getId()).size());
+        planningChangeService.persist(permission(data.product().getId(), UUID.randomUUID()), "Granted another permission");
+        assertFalse(planningChangeService.canRedo(data.product().getId()));
+        assertEquals(historySize, planningChangeService.history(data.product().getId()).size());
+    }
+
+    private ProductAclEntryDAO permission(UUID productId, UUID userId) {
+        ProductAclEntryDAO permission = new ProductAclEntryDAO();
+        permission.setProductId(productId);
+        permission.setUserId(userId);
+        return permission;
+    }
+
+    /**
+     * Restores ACL scalar updates and rejects replay when its recorded source revision is missing.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void aclUpdatesReplayAndMissingSourceFailsExplicitly() {
+        PlanningData       data           = createPlanningData();
+        UUID               originalUserId = UUID.randomUUID();
+        ProductAclEntryDAO permission     = permission(data.product().getId(), originalUserId);
+        planningChangeService.persist(permission, "Granted permission");
+        UUID replacementUserId = UUID.randomUUID();
+        permission.setUserId(replacementUserId);
+        planningChangeService.update(permission, "Changed permission");
+        planningChangeService.undo(data.product().getId());
+        assertEquals(originalUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
+        planningChangeService.redo(data.product().getId());
+        assertEquals(replacementUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
+        var operation = planningChangeService.history(data.product().getId()).getFirst();
+        int revision  = operation.getEntries().getFirst().getRevisionNumber();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
+                .createNativeQuery("DELETE FROM product_acl_entries_aud WHERE id = :id AND rev = :rev")
+                .setParameter("id", permission.getId()).setParameter("rev", revision).executeUpdate());
+        assertThrows(IllegalStateException.class, () -> planningChangeService.undo(data.product().getId()));
+        assertEquals(replacementUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
+        assertFalse(undoableOperationRepository.findById(operation.getId()).orElseThrow().isUndone());
+    }
 
     /**
      * Retains a deleted product as a tombstone and restores it through undo.

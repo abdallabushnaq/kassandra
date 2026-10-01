@@ -182,7 +182,7 @@ public class DefaultEntitiesInitializer implements ApplicationRunner {
 
         // Grant "All" group access to the Default product (if not already granted)
         if (!productAclEntryRepository.existsByProductIdAndGroupId(product.getId(), allUsersGroup.getId())) {
-            productAclService.grantGroupAccess(product.getId(), allUsersGroup.getId());
+            productAclService.initializeDefaultGroupAccess(product.getId(), allUsersGroup.getId());
             log.info("Granted 'All' group access to Default product");
         }
 
