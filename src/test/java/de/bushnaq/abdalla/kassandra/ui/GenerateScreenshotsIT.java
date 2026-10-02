@@ -484,10 +484,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //ActiveSprints
         //-----------------
         activeSprintsTester.switchToActiveSprints();
-        seleniumHandler.wait(1000);
-//        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Zurich"});//enable
-//        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{"Oslo"});//enable
-        seleniumHandler.wait(1000);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
         takeActiveSprintsDialogScreenshots(folder);
 

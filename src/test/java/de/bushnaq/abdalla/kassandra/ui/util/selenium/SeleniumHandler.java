@@ -82,13 +82,27 @@ class SeleniumHandler {
         //dummy implementation
     }
 
+    /**
+     * Clicks an element by ID, re-locating it if a client-side update replaces it.
+     *
+     * @param id the element identifier
+     */
     public void click(String id) {
         if (!isEnabled())
             return;
-        waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
-        WebElement element = findElement(By.id(id));
-        moveMouseToElement(element);
-        element.click();
+        waitUntil(driver -> {
+            try {
+                WebElement element = ExpectedConditions.elementToBeClickable(By.id(id)).apply(driver);
+                if (element == null)
+                    return false;
+                moveMouseToElement(element);
+                element.click();
+                return true;
+            } catch (StaleElementReferenceException e) {
+                log.debug("Element {} was replaced before clicking; locating it again.", id);
+                return false;
+            }
+        });
         log.trace("Clicked element with ID: " + id);
     }
 
@@ -1299,9 +1313,9 @@ class SeleniumHandler {
         if (!isEnabled())
             return;
         log.trace("Waiting for {} chart to be rendered.", chartId);
-        waitUntil(driver -> driver.findElements(By.cssSelector("[data-chart-rendered~='" + chartId + "'] svg"))
+        waitUntil(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("[data-chart-rendered~='" + chartId + "'] svg"))
                 .stream()
-                .anyMatch(WebElement::isDisplayed));
+                .anyMatch(WebElement::isDisplayed)));
     }
 
     public void waitForElementToBeDisabled(String id) {

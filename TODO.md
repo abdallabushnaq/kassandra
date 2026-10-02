@@ -56,4 +56,15 @@
 # setup issues
 
 - about image not stored in demo db.
- 
+
+# Missing Screenshots
+
+| Area              | Screens or dialogs not covered                                                                                           |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------|
+| Administration    | Audit page and expanded event details; Identity Providers; Server Settings and its categories                            |
+| Authentication    | Setup wizard steps, recovery login, multi-provider login, no-provider login                                              |
+| AI                | Kassandra assistant and Insights views                                                                                   |
+| History           | Undo-history drawer, expanded operation details, undo/redo confirmation dialog                                           |
+| Charts and boards | Detached chart windows; Backlog edit-mode screenshot; Active Sprints task-board and grouping variants                    |
+| Worklogs          | Edit-worklog dialog and delete-worklog confirmation                                                                      |
+| Image generation  | Product, feature, sprint and user image-prompt variants; profile variant is conditional on Stable Diffusion availability |
