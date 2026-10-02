@@ -50,6 +50,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -667,7 +668,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //AboutView
         //-----------------
-        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        StableDiffusionService.setEnabled(true);
+        try {
+            aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
+            new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
+                    .withMessage("About View banner did not finish loading before screenshot capture")
+                    .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
+                            .stream()
+                            .anyMatch(image -> image.isDisplayed()
+                                    && "true".equals(image.getDomProperty("complete"))
+                                    && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
+        } finally {
+            StableDiffusionService.setEnabled(false);
+        }
         if (ETheme.dark.equals(eTheme)) {
             seleniumHandler.click(MainLayout.ID_THEME_TOGGLE);
             seleniumHandler.wait(1000);

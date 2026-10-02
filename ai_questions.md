@@ -87,4 +87,13 @@ breadcrumbs that shows information and allows placing buttons.<br>
 Some, like ProductListView, are based on AbstractMainGrid that handles the smart header.
 Some, like Backlog, just create it from scratch.<br>
 
+# Create Help Pages
+
+Let's create a plan on how to add help pages to the UI pages using markdown.
+Vaadin renders it inside a Help drawer.
+Let's first implement it for one page, e.g. ProductListView.
+Create the help icon and the drawer.
+Create the markdown page.
+Create the vaadin markdown renderer.
+
 

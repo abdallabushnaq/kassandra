@@ -18,10 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Main;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
@@ -81,7 +78,7 @@ public class AboutView extends Main implements AfterNavigationObserver {
                 .set("font-size", "var(--lumo-font-size-s)");
 
         // Banner image – max 1024 px wide, hidden until the background thread delivers the bytes
-        com.vaadin.flow.component.html.Image bannerImage = new com.vaadin.flow.component.html.Image();
+        Image bannerImage = new Image();
         bannerImage.setMaxWidth("1024px");
         bannerImage.setWidth("100%");
         bannerImage.getStyle()

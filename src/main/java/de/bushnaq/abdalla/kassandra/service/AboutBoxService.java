@@ -179,7 +179,6 @@ public class AboutBoxService {
             } else {
                 log.info("Stable Diffusion not available and no database image – About View banner will be hidden");
                 cachedImage = SD_UNAVAILABLE;
-                cacheDate   = today;
             }
             return cachedImage;
         }
