@@ -34,6 +34,14 @@ import java.util.function.Function;
  * Displays a planning operation with its affected entities collapsed until the user expands it.
  */
 public class UndoHistoryOperationDetails extends Details {
+    /**
+     * Prefix for an operation summary in the history pane, followed by the operation ID.
+     */
+    public static final String SUMMARY_ID_PREFIX = "planning-history-summary-";
+    /**
+     * Prefix for an operation action button, followed by the operation ID.
+     */
+    public static final String ACTION_ID_PREFIX = "planning-history-action-";
 
     /**
      * Creates a collapsible planning operation without an action button.
@@ -67,7 +75,12 @@ public class UndoHistoryOperationDetails extends Details {
     private UndoHistoryOperationDetails(UndoRedoHistory.Operation operation,
                                         Function<UUID, String> productAvatarUrlResolver,
                                         Function<String, String> userAvatarUrlResolver, Button action) {
-        setSummary(createSummary(operation, productAvatarUrlResolver, userAvatarUrlResolver));
+        VerticalLayout summary = createSummary(operation, productAvatarUrlResolver, userAvatarUrlResolver);
+        if (action != null) {
+            summary.setId(SUMMARY_ID_PREFIX + operation.getId());
+            action.setId(ACTION_ID_PREFIX + operation.getId());
+        }
+        setSummary(summary);
         add(createContent(operation, action));
         addClassName("planning-history-operation");
         setOpened(false);

@@ -70,6 +70,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ActiveSprints extends Main implements AfterNavigationObserver {
     /**
+     * Identifier of the merged task board below the chart.
+     */
+    public static final String BOARD_ID = "active-sprints-board";
+    /**
      * Identifier of the Active Sprints Gantt/burndown chart container.
      */
     public static final String                      GANTT_BURNDOWN_CONTAINER_ID = "active-sprints-gantt-burndown-container";
@@ -569,6 +573,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 worklogApi
                 , this::refreshAfterPlanningChange
         );
+        mergedBoard.setId(BOARD_ID);
 
         contentLayout.add(mergedBoard);
     }

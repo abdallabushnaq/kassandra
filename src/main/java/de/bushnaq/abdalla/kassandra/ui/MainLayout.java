@@ -79,6 +79,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
      * Stable ID for the action-history toggle.
      */
     public static final String             ID_ACTION_HISTORY_BUTTON        = "main-layout-action-history-button";
+    /**
+     * Stable ID for the planning-history pane.
+     */
+    public static final String             ID_ACTION_HISTORY_PANE          = "main-layout-action-history-pane";
     public static final String             ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
     public static final String             ID_LOGO                         = "main-layout-logo";
     public static final String             ID_TAB_BASE                     = "main-layout-tab-";
@@ -326,6 +330,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         drawer.setSizeFull();
         drawer.addClassName("planning-history-drawer");
         Div pane = new Div(drawer);
+        pane.setId(ID_ACTION_HISTORY_PANE);
         pane.setSizeFull();
         pane.addClassName("planning-history-pane");
         pane.getStyle().set("width", "0").set("min-width", "0").set("overflow", "hidden");

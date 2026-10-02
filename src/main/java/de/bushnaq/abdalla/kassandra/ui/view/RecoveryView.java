@@ -33,6 +33,10 @@ import de.bushnaq.abdalla.kassandra.security.SetupRecoveryAuthenticationProvider
 @PageTitle("Recover Kassandra access")
 @AnonymousAllowed
 public class RecoveryView extends VerticalLayout {
+    /**
+     * Identifier of the recovery sign-in view.
+     */
+    public static final String VIEW_ID = "recovery-view";
 
     /**
      * The public recovery route.
@@ -43,6 +47,7 @@ public class RecoveryView extends VerticalLayout {
      * Creates the restricted recovery login form.
      */
     public RecoveryView() {
+        setId(VIEW_ID);
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);

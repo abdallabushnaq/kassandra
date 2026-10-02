@@ -18,11 +18,19 @@
 package de.bushnaq.abdalla.kassandra.ui;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
+import de.bushnaq.abdalla.kassandra.dao.OidcProviderDAO;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.repository.SecurityConfigurationRepository;
+import de.bushnaq.abdalla.kassandra.rest.api.AuditLogApi;
+import de.bushnaq.abdalla.kassandra.rest.api.ServerSettingsApi;
+import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
+import de.bushnaq.abdalla.kassandra.service.SecurityConfigurationService;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskCard;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryOperationDetails;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
@@ -38,23 +46,31 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
@@ -71,6 +87,18 @@ import java.util.List;
 @Testcontainers
 @Slf4j
 public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
+    @Autowired
+    private       AuditLogApi                     auditLogApi;
+    @Autowired
+    private       ServerSettingsApi               serverSettingsApi;
+    @Autowired
+    private       UndoRedoApi                     undoRedoApi;
+    @Autowired
+    private       SecurityConfigurationService    securityConfigurationService;
+    @Autowired
+    private       SecurityConfigurationRepository securityConfigurationRepository;
+    @Autowired
+    private       PasswordEncoder                 passwordEncoder;
     @Autowired
     private       AboutViewTester            aboutViewTester;
     @Autowired
@@ -172,22 +200,30 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of {@link WorklogDialog} and {@link TaskDialog} from the Active Sprints view.
      * <p>
-     * Relies on sprint "Zurich" being present in the generated test data (it is always created with
-     * {@code Status.STARTED} thanks to {@code PersistingEntityGenerator.addSprint}).
+     * Selects an active sprint and an in-progress task assigned to the signed-in user.
+     * Existing worklogs are edited and deleted only as previews; both dialogs are cancelled.
      *
      * @param folder destination folder for the screenshot files
      */
     private void takeActiveSprintsDialogScreenshots(String folder) {
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
-                .filter(s -> !s.getStatus().equals(Status.CLOSED))
+                .filter(s -> s.getStatus() == Status.STARTED)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Could not find a sprint that is not closed"));
+                .orElseThrow(() -> new IllegalStateException("No started sprint found"));
         List<Task> tasks = peg.taskApi.getAll(sprint.getId());
+        List<Worklog> worklogs = peg.worklogApi.getAll(sprint.getId());
+        User currentUser = peg.userApi.getByEmail("christopher.paul@kassandra.org").orElseThrow();
         Task leafTask = tasks.stream()
                 .filter(t -> !t.isMilestone() && t.getParentTaskId() != null && t.getTaskStatus().equals(TaskStatus.IN_PROGRESS))
+                .filter(t -> currentUser.getId().equals(t.getResourceId()))
+                .filter(t -> worklogs.stream().anyMatch(w -> t.getId().equals(w.getTaskId())))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No task found in sprint that has IN_PROGRESS status"));
+                .orElseThrow(() -> new IllegalStateException("No in-progress task with worklogs assigned to the signed-in user"));
+        navigateTo(ActiveSprints.ROUTE + "?sprints=" + sprint.getId() + "&groupBy=" + GroupingMode.FEATURES.name());
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        takeActiveSprintsBoardScreenshot(folder, GroupingMode.FEATURES);
+        takeActiveSprintsBoardScreenshot(folder, GroupingMode.STORIES);
 
         // WorklogDialog — opened by clicking the task card body
         String taskCardId = "task-card-" + leafTask.getId();
@@ -208,7 +244,229 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 seleniumHandler.findDialogOverlayElement(TaskDialog.TASK_DIALOG),
                 TaskDialog.TASK_DIALOG,
                 folder + "/task-dialog.png");
+
+        Worklog worklog = worklogs.stream().filter(w -> leafTask.getId().equals(w.getTaskId())).findFirst().orElseThrow();
+        seleniumHandler.click(TaskDialog.WORKLOG_EDIT_BUTTON_PREFIX + worklog.getId());
+        seleniumHandler.waitForElementToBeClickable(WorklogDialog.CANCEL_BUTTON);
+        takeDialogScreenshot(WorklogDialog.WORKLOG_DIALOG, folder + "/worklog-edit-dialog.png");
+        seleniumHandler.click(WorklogDialog.CANCEL_BUTTON);
+        seleniumHandler.waitForElementToBeClickable(TaskDialog.WORKLOG_DELETE_BUTTON_PREFIX + worklog.getId());
+        seleniumHandler.click(TaskDialog.WORKLOG_DELETE_BUTTON_PREFIX + worklog.getId());
+        seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON);
+        takeDialogScreenshot(ConfirmDialog.CONFIRM_DIALOG, folder + "/worklog-delete-dialog.png");
+        seleniumHandler.click(ConfirmDialog.CANCEL_BUTTON);
+        seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
         activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);
+    }
+
+    private void takeActiveSprintsBoardScreenshot(String folder, GroupingMode mode) {
+        seleniumHandler.setComboBoxValue(ActiveSprints.ID_GROUPING_MODE_SELECTOR, mode.getDisplayName());
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        scrollIntoView(ActiveSprints.BOARD_ID);
+        seleniumHandler.takeScreenShot(folder + "/active-sprints-board-" + mode.name().toLowerCase(Locale.ROOT) + ".png");
+    }
+
+    private void navigateTo(String route) {
+        seleniumHandler.getAndCheck("http://localhost:" + allocatedPort + "/ui/" + route);
+    }
+
+    private void scrollIntoView(String id) {
+        seleniumHandler.waitForElementToBeClickable(id);
+        seleniumHandler.executeJavaScript("arguments[0].scrollIntoView({block: 'start', inline: 'nearest'});",
+                seleniumHandler.findElement(By.id(id)));
+    }
+
+    private void takeDialogScreenshot(String dialogId, String fileName) {
+        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(dialogId), dialogId, fileName);
+    }
+
+    private void takeDetachedChartScreenshot(String buttonId, String chartId, String fileName) {
+        WebDriver driver = seleniumHandler.getDriver();
+        String originalWindow = driver.getWindowHandle();
+        Set<String> originalWindows = driver.getWindowHandles();
+        String chartWindow = null;
+        try {
+            scrollIntoView(buttonId);
+            seleniumHandler.click(buttonId);
+            seleniumHandler.waitUntil(ExpectedConditions.numberOfWindowsToBe(originalWindows.size() + 1));
+            chartWindow = driver.getWindowHandles().stream().filter(handle -> !originalWindows.contains(handle))
+                    .findFirst().orElseThrow();
+            driver.switchTo().window(chartWindow);
+            seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#chart svg")));
+            seleniumHandler.takeScreenShot(fileName);
+        } finally {
+            if (chartWindow != null && driver.getWindowHandles().contains(chartWindow)) {
+                driver.switchTo().window(chartWindow);
+                driver.close();
+            }
+            driver.switchTo().window(originalWindow);
+        }
+        seleniumHandler.waitForChartRendered(chartId);
+    }
+
+    private void takeProductHistoryScreenshots(String folder) {
+        Product product = peg.productApi.getAll().stream().filter(p -> productName.equals(p.getName()))
+                .findFirst().orElseThrow();
+        try {
+            seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + productName);
+            seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, productName + " - planning update");
+            productListViewTester.closeDialog(ProductDialog.CONFIRM_BUTTON);
+            UndoRedoHistory.Operation operation = undoRedoApi.history(product.getId()).getOperations().getFirst();
+
+            seleniumHandler.click(MainLayout.ID_ACTION_HISTORY_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(UndoHistoryOperationDetails.SUMMARY_ID_PREFIX + operation.getId());
+            seleniumHandler.takeScreenShot(folder + "/product-history.png");
+            seleniumHandler.click(UndoHistoryOperationDetails.SUMMARY_ID_PREFIX + operation.getId());
+            seleniumHandler.waitForElementToBeClickable(UndoHistoryOperationDetails.ACTION_ID_PREFIX + operation.getId());
+            seleniumHandler.takeScreenShot(folder + "/product-history-expanded.png");
+
+            seleniumHandler.click(UndoHistoryOperationDetails.ACTION_ID_PREFIX + operation.getId());
+            seleniumHandler.waitForElementToBeClickable(UndoHistoryConfirmationDialog.CONFIRM_BUTTON);
+            takeDialogScreenshot(UndoHistoryConfirmationDialog.DIALOG_ID, folder + "/undo-history-confirmation-dialog.png");
+            seleniumHandler.click(UndoHistoryConfirmationDialog.CONFIRM_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_GRID_NAME_PREFIX + productName);
+
+            seleniumHandler.click(MainLayout.ID_ACTION_HISTORY_BUTTON);
+            seleniumHandler.click(UndoHistoryOperationDetails.SUMMARY_ID_PREFIX + operation.getId());
+            seleniumHandler.waitForElementToBeClickable(UndoHistoryOperationDetails.ACTION_ID_PREFIX + operation.getId());
+            seleniumHandler.takeScreenShot(folder + "/product-history-undone.png");
+            seleniumHandler.click(UndoHistoryOperationDetails.ACTION_ID_PREFIX + operation.getId());
+            seleniumHandler.waitForElementToBeClickable(UndoHistoryConfirmationDialog.CANCEL_BUTTON);
+            takeDialogScreenshot(UndoHistoryConfirmationDialog.DIALOG_ID, folder + "/redo-history-confirmation-dialog.png");
+            // Complete the replay before restoring a regular revision as the next theme's baseline.
+            seleniumHandler.click(UndoHistoryConfirmationDialog.CONFIRM_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_GRID_NAME_PREFIX + productName + " - planning update");
+        } finally {
+            Product current = peg.productApi.getById(product.getId());
+            if (!productName.equals(current.getName())) {
+                current.setName(productName);
+                peg.productApi.update(current);
+                navigateTo(ProductListView.ROUTE);
+                seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_GRID_NAME_PREFIX + productName);
+            }
+        }
+    }
+
+    private void takeAdministrationScreenshots(String folder) {
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_AUDIT);
+        seleniumHandler.waitForElementToBeClickable(AuditLogView.PAGE_TITLE_ID);
+        seleniumHandler.takeScreenShot(folder + "/audit-log-view.png");
+        seleniumHandler.setTextField(AuditLogView.SEARCH_FIELD_ID, productName);
+        seleniumHandler.click(AuditLogView.ACTION_FILTER_ID);
+        By updateOption = By.xpath("//vaadin-select-item[normalize-space(.)='UPDATE']");
+        seleniumHandler.waitUntil(ExpectedConditions.elementToBeClickable(updateOption));
+        seleniumHandler.clickElement(seleniumHandler.findElement(updateOption));
+        seleniumHandler.click(AuditLogView.APPLY_BUTTON_ID);
+        AuditEvent event = auditLogApi.getPage(null, "UPDATE", productName, null, null, 0, 50).items().getFirst();
+        String eventKey = event.revision() + "-" + event.entityId();
+        seleniumHandler.click(AuditLogView.EVENT_ID_PREFIX + eventKey);
+        seleniumHandler.waitForElementToBeClickable(AuditLogView.DETAILS_ID_PREFIX + eventKey);
+        seleniumHandler.takeScreenShot(folder + "/audit-log-details.png");
+
+        navigateTo(OidcProviderManagementView.ROUTE);
+        seleniumHandler.waitForElementToBeClickable(OidcProviderManagementView.PAGE_TITLE_ID);
+        seleniumHandler.takeScreenShot(folder + "/identity-providers-view.png");
+
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_SETTINGS);
+        seleniumHandler.waitForElementToBeClickable(ServerSettingsView.PAGE_TITLE_ID);
+        List<ServerSetting> settings = serverSettingsApi.getAll();
+        for (String category : settings.stream().map(ServerSetting::getCategoryKey).distinct().toList()) {
+            seleniumHandler.click(ServerSettingsView.CATEGORY_BUTTON_PREFIX + category);
+            seleniumHandler.waitForElementToBeClickable(ServerSettingsView.CATEGORY_TITLE_PREFIX + category);
+            boolean enableForCapture = ("lm-studio".equals(category) || "stable-diffusion".equals(category))
+                    && settings.stream().filter(setting -> category.equals(setting.getCategoryKey()))
+                    .noneMatch(ServerSetting::isCategoryEnabled);
+            try {
+                if (enableForCapture) {
+                    String checkboxId = ServerSettingsView.CATEGORY_ENABLED_PREFIX + category;
+                    WebElement details = seleniumHandler.findElement(By.id(ServerSettingsView.DETAILS_ID));
+                    seleniumHandler.waitForElementToBeClickable(checkboxId);
+                    seleniumHandler.setCheckCheckbox(checkboxId, true);
+                    seleniumHandler.waitUntil(ExpectedConditions.stalenessOf(details));
+                    seleniumHandler.waitUntil(ExpectedConditions.refreshed(ExpectedConditions.elementToBeSelected(
+                            By.cssSelector("#" + checkboxId + " input[type='checkbox']"))));
+                }
+                takeScrollableScreenshots(ServerSettingsView.DETAILS_ID, folder + "/server-settings-" + category);
+            } finally {
+                if (enableForCapture) {
+                    serverSettingsApi.updateCategoryEnabled(category, false);
+                }
+            }
+        }
+    }
+
+    private void takeScrollableScreenshots(String id, String filePrefix) {
+        WebElement scroller = seleniumHandler.findElement(By.id(id));
+        seleniumHandler.executeJavaScript("arguments[0].scrollTop = 0;", scroller);
+        int part = 1;
+        while (true) {
+            seleniumHandler.takeScreenShot(filePrefix + (part == 1 ? "" : "-" + part) + ".png");
+            boolean advanced = Boolean.TRUE.equals(seleniumHandler.executeJavaScript(
+                    "const e = arguments[0]; const before = e.scrollTop; e.scrollTop += e.clientHeight; return e.scrollTop > before;",
+                    scroller));
+            if (!advanced)
+                break;
+            part++;
+        }
+    }
+
+    private void takeAuthenticationScreenshots(String folder, ETheme theme) {
+        var configuration = securityConfigurationService.getConfiguration();
+        String originalRecoveryHash = configuration.getRecoveryPasswordHash();
+        List<OidcProviderDAO> enabledProviders = oidcProviderService.getProviders().stream().filter(OidcProviderDAO::isEnabled).toList();
+        OidcProviderDAO primary = enabledProviders.getFirst();
+        OidcProviderDAO additional = null;
+        try {
+            configuration.setRecoveryPasswordHash(passwordEncoder.encode("screenshot-recovery-password"));
+            securityConfigurationRepository.saveAndFlush(configuration);
+            takeLoginScreenshot(folder + "/login-view.png", theme, LoginView.OIDC_LOGIN_BUTTON);
+
+            // Providers require distinct issuers; the existing master realm also supports discovery.
+            additional = oidcProviderService.createProvider("Keycloak master", URI.create(primary.getIssuerUri()).resolve("master").toString(),
+                    "admin-cli", "screenshot-client-secret", List.of(primary.getScopes().split(",")));
+            takeLoginScreenshot(folder + "/login-multiple-providers.png", theme, LoginView.OIDC_PROVIDER_SELECTOR);
+            oidcProviderService.disableProvider(additional.getId());
+            for (OidcProviderDAO provider : enabledProviders) {
+                oidcProviderService.disableProvider(provider.getId());
+            }
+            takeLoginScreenshot(folder + "/login-no-providers.png", theme, LoginView.SETUP_LINK);
+            navigateTo(RecoveryView.ROUTE);
+            seleniumHandler.waitForElementToBeClickable(RecoveryView.VIEW_ID);
+            applyLoginTheme(theme);
+            seleniumHandler.takeScreenShot(folder + "/recovery-view.png");
+        } finally {
+            try {
+                for (OidcProviderDAO provider : enabledProviders) {
+                    oidcProviderService.enableProvider(provider.getId());
+                }
+            } finally {
+                try {
+                    if (additional != null) {
+                        oidcProviderService.deleteProvider(additional.getId());
+                    }
+                } finally {
+                    var current = securityConfigurationService.getConfiguration();
+                    current.setRecoveryPasswordHash(originalRecoveryHash);
+                    securityConfigurationRepository.saveAndFlush(current);
+                }
+            }
+        }
+    }
+
+    private void takeLoginScreenshot(String fileName, ETheme theme, String readyId) {
+        navigateTo(LoginView.ROUTE);
+        seleniumHandler.waitForElementToBeClickable(readyId);
+        applyLoginTheme(theme);
+        seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, fileName);
+    }
+
+    private void applyLoginTheme(ETheme theme) {
+        // Login and recovery have no theme toggle; use the same persisted preference as MainLayout.
+        seleniumHandler.executeJavaScript(
+                "localStorage.setItem('theme', arguments[0]); document.documentElement.setAttribute('theme', arguments[0]); document.body.setAttribute('theme', arguments[0]);",
+                theme.name());
     }
 
     /**
@@ -270,6 +528,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         // Switch to edit mode
         seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
         seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        seleniumHandler.takeScreenShot(folder + "/backlog-edit-mode.png");
 
         // Click the dependency cell for the leaf task to open DependencyDialog
         seleniumHandler.click(TaskGrid.TASK_GRID_DEPENDENCY_PREFIX + leafTask.getName());
@@ -407,7 +667,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //AboutView
         //-----------------
-        aboutViewTester.login("christopher.paul@kassandra.org", "password", folder + "/login-view.png", testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         if (ETheme.dark.equals(eTheme)) {
             seleniumHandler.click(MainLayout.ID_THEME_TOGGLE);
             seleniumHandler.wait(1000);
@@ -422,6 +682,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         productListViewTester.switchToProductListView();
         seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
         takeProductDialogScreenshots(folder);
+        takeProductHistoryScreenshots(folder);
         productListViewTester.selectProduct(productName);
 
         //-----------------
@@ -455,6 +716,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "Lisbon");
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
+        takeDetachedChartScreenshot(QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
+                folder + "/quality-board-detached-chart.png");
 
         //-----------------
         //UserProfileView
@@ -478,6 +741,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
         seleniumHandler.takeScreenShot(folder + "/backlog.png");
+        takeDetachedChartScreenshot(Backlog.OPEN_GANTT_CHART_BUTTON_ID, RenderUtil.GANTT_CHART, folder + "/backlog-detached-chart.png");
         takeDependencyDialogScreenshots(folder);
 
         //-----------------
@@ -486,6 +750,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         activeSprintsTester.switchToActiveSprints();
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+        takeDetachedChartScreenshot(ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
+                folder + "/active-sprints-detached-chart.png");
         takeActiveSprintsDialogScreenshots(folder);
 
         //-----------------
@@ -531,9 +797,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takeWorkWeekDialogScreenshots(folder);
         if (false) {
         }
+        takeAdministrationScreenshots(folder);
         aboutViewTester.logout();
+        takeAuthenticationScreenshots(folder, eTheme);
     }
 
+    /**
+     * Captures the supported non-AI screens and dialogs in light and dark themes.
+     * Setup is excluded because it requires an unconfigured installation; AI interactions
+     * are excluded because they need separate GPU-backed services.
+     *
+     * @param randomCase deterministic screenshot fixture
+     * @param testInfo current test metadata
+     * @throws Exception when fixture generation or screenshot capture fails
+     */
     @ParameterizedTest
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
@@ -545,6 +822,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
+        StableDiffusionService.setEnabled(false);
         read();
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         userName    = "Christopher Paul";
@@ -668,12 +946,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     }
 
     /**
-     * Navigates to the {@link UserProfileView} via the user menu, takes a full-page screenshot,
-     * and – when Stable Diffusion is available – also opens and screenshots the {@link ImagePromptDialog}.
-     * <p>
-     * The {@link ImagePromptDialog} requires the {@code GENERATE_AVATAR_BUTTON} to be present in the DOM,
-     * which only happens when the Stable Diffusion API is reachable.  When SD is unavailable the dialog
-     * screenshot is silently skipped.
+     * Navigates to the user profile and captures it without invoking AI image generation.
      *
      * @param folder destination folder for the screenshot files
      */
@@ -684,26 +957,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
         seleniumHandler.takeScreenShot(folder + "/user-profile-view.png");
 
-        // ImagePromptDialog is only reachable when Stable Diffusion is running
-        if (seleniumHandler.isElementPresent(UserProfileView.GENERATE_AVATAR_BUTTON)) {
-            seleniumHandler.click(UserProfileView.GENERATE_AVATAR_BUTTON);
-            seleniumHandler.waitForElementToBeClickable(ImagePromptDialog.ID_CANCEL_BUTTON);
-
-//            seleniumHandler.click(ImagePromptDialog.ID_GENERATE_BUTTON);
-//            seleniumHandler.pushWaitDuration(Duration.ofSeconds(120));
-//            seleniumHandler.waitForElementToBeInteractable(ImagePromptDialog.ID_GENERATE_BUTTON);
-//            seleniumHandler.popWaitDuration();
-
-            seleniumHandler.takeElementScreenShot(
-                    seleniumHandler.findDialogOverlayElement(ImagePromptDialog.IMAGE_PROMPT_DIALOG),
-                    ImagePromptDialog.IMAGE_PROMPT_DIALOG,
-                    folder + "/image-prompt-dialog.png");
-            seleniumHandler.wait(200);
-            seleniumHandler.click(ImagePromptDialog.ID_CANCEL_BUTTON);
-            seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
-        } else {
-            log.info("Skipping ImagePromptDialog screenshot: Stable Diffusion is not available");
-        }
     }
 
     /**

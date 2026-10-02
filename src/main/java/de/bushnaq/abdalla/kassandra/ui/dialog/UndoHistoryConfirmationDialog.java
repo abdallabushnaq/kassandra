@@ -31,6 +31,18 @@ import java.util.function.Function;
  * Confirms the complete server-selected range of planning operations to undo or redo.
  */
 public class UndoHistoryConfirmationDialog extends Dialog {
+    /**
+     * Identifier of the replay confirmation dialog.
+     */
+    public static final String DIALOG_ID = "undo-history-confirmation-dialog";
+    /**
+     * Identifier of the cancel button.
+     */
+    public static final String CANCEL_BUTTON = "undo-history-confirmation-cancel";
+    /**
+     * Identifier of the replay confirmation button.
+     */
+    public static final String CONFIRM_BUTTON = "undo-history-confirmation-confirm";
     private final Function<UUID, String>   productAvatarUrlResolver;
     private final Function<String, String> userAvatarUrlResolver;
 
@@ -48,6 +60,7 @@ public class UndoHistoryConfirmationDialog extends Dialog {
                                          Function<String, String> userAvatarUrlResolver, Runnable confirmCallback) {
         this.productAvatarUrlResolver = productAvatarUrlResolver;
         this.userAvatarUrlResolver    = userAvatarUrlResolver;
+        setId(DIALOG_ID);
         setHeaderTitle(undo ? "Confirm undo" : "Confirm redo");
 
         VerticalLayout operations = new VerticalLayout();
@@ -61,10 +74,12 @@ public class UndoHistoryConfirmationDialog extends Dialog {
         add(operations);
 
         Button cancel = new Button("Cancel", event -> close());
+        cancel.setId(CANCEL_BUTTON);
         Button confirm = new Button(undo ? "Undo operations" : "Redo operations", event -> {
             confirmCallback.run();
             close();
         });
+        confirm.setId(CONFIRM_BUTTON);
         confirm.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         getFooter().add(cancel, confirm);
         setWidth("900px");

@@ -44,6 +44,10 @@ import java.util.List;
 @PageTitle("Identity Providers")
 @RolesAllowed("ADMIN")
 public class OidcProviderManagementView extends VerticalLayout {
+    /**
+     * Identifier of the identity-provider page title.
+     */
+    public static final String PAGE_TITLE_ID = "identity-providers-page-title";
 
     /**
      * Route for OIDC provider administration.
@@ -62,7 +66,9 @@ public class OidcProviderManagementView extends VerticalLayout {
         this.oidcProviderApi = oidcProviderApi;
 
         setSizeFull();
-        add(new H1("Identity Providers"),
+        H1 title = new H1("Identity Providers");
+        title.setId(PAGE_TITLE_ID);
+        add(title,
                 new Paragraph("Client secrets are encrypted and are never displayed after they have been saved."),
                 createProviderForm());
         configureGrid();

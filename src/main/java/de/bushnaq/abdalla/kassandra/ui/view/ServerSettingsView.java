@@ -57,6 +57,26 @@ import java.util.Map;
 @PageTitle("Server Settings")
 @RolesAllowed("ADMIN")
 public class ServerSettingsView extends VerticalLayout {
+    /**
+     * Identifier of the server-settings page title.
+     */
+    public static final String PAGE_TITLE_ID = "server-settings-page-title";
+    /**
+     * Prefix for category buttons, followed by the category key.
+     */
+    public static final String CATEGORY_BUTTON_PREFIX = "server-settings-category-";
+    /**
+     * Prefix for category headings, followed by the category key.
+     */
+    public static final String CATEGORY_TITLE_PREFIX = "server-settings-category-title-";
+    /**
+     * Prefix for category enablement checkboxes, followed by the category key.
+     */
+    public static final String CATEGORY_ENABLED_PREFIX = "server-settings-category-enabled-";
+    /**
+     * Identifier of the scrollable category details.
+     */
+    public static final String DETAILS_ID = "server-settings-details";
 
     /**
      * Route for server settings administration.
@@ -87,6 +107,7 @@ public class ServerSettingsView extends VerticalLayout {
             selectedCategory = category;
             render();
         });
+        categoryButton.setId(CATEGORY_BUTTON_PREFIX + category);
         categoryButton.setIcon(VaadinIcon.valueOf(categoryDefinition.getCategoryIcon()).create());
         categoryButton.setWidthFull();
         if (category.equals(selectedCategory)) {
@@ -163,7 +184,9 @@ public class ServerSettingsView extends VerticalLayout {
 
     private void render() {
         removeAll();
-        add(new H1("Server Settings"), new Paragraph(
+        H1 title = new H1("Server Settings");
+        title.setId(PAGE_TITLE_ID);
+        add(title, new Paragraph(
                 "Changes apply immediately unless a setting is marked as requiring a restart."));
         VerticalLayout categories = new VerticalLayout();
         categories.setPadding(false);
@@ -172,6 +195,7 @@ public class ServerSettingsView extends VerticalLayout {
         categories.setFlexShrink(0);
         groupedSettings().forEach((category, categorySettings) -> categories.add(createCategoryRow(category, categorySettings)));
         detail = new VerticalLayout();
+        detail.setId(DETAILS_ID);
         detail.setPadding(false);
         detail.setSpacing(true);
         detail.setHeightFull();
@@ -201,11 +225,14 @@ public class ServerSettingsView extends VerticalLayout {
                 .filter(setting -> selectedCategory.equals(setting.getCategoryKey()))
                 .findFirst()
                 .ifPresent(setting -> {
-                    HorizontalLayout heading = new HorizontalLayout(new H1(setting.getCategoryLabel()));
+                    H1 title = new H1(setting.getCategoryLabel());
+                    title.setId(CATEGORY_TITLE_PREFIX + selectedCategory);
+                    HorizontalLayout heading = new HorizontalLayout(title);
                     heading.setWidthFull();
                     heading.setAlignItems(Alignment.CENTER);
                     if (setting.isCategoryAllowDisable()) {
                         Checkbox enabled = new Checkbox("Enabled", setting.isCategoryEnabled());
+                        enabled.setId(CATEGORY_ENABLED_PREFIX + selectedCategory);
                         enabled.addValueChangeListener(event -> updateCategoryEnabled(selectedCategory, event.getValue()));
                         heading.add(enabled);
                     }

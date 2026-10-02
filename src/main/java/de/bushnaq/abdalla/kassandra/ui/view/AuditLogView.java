@@ -48,6 +48,30 @@ import java.time.format.DateTimeFormatter;
 @RolesAllowed("ADMIN")
 public class AuditLogView extends VerticalLayout {
     /**
+     * Identifier of the audit page title.
+     */
+    public static final String PAGE_TITLE_ID = "audit-page-title";
+    /**
+     * Identifier of the audit search field.
+     */
+    public static final String SEARCH_FIELD_ID = "audit-search-field";
+    /**
+     * Identifier of the action filter.
+     */
+    public static final String ACTION_FILTER_ID = "audit-action-filter";
+    /**
+     * Identifier of the apply-filters button.
+     */
+    public static final String APPLY_BUTTON_ID = "audit-apply-button";
+    /**
+     * Prefix for an event label, followed by its revision and entity ID.
+     */
+    public static final String EVENT_ID_PREFIX = "audit-event-";
+    /**
+     * Prefix for expanded event details, followed by its revision and entity ID.
+     */
+    public static final String DETAILS_ID_PREFIX = "audit-details-";
+    /**
      * Route for administrator audit history.
      */
     public static final  String ROUTE     = "audit";
@@ -82,6 +106,8 @@ public class AuditLogView extends VerticalLayout {
     public AuditLogView(AuditLogApi auditLogApi) {
         this.auditLogApi = auditLogApi;
         setSizeFull();
+        action.setId(ACTION_FILTER_ID);
+        search.setId(SEARCH_FIELD_ID);
         action.setLabel("Action");
         action.setItems("All", "CREATE", "UPDATE", "DELETE");
         action.setValue("All");
@@ -90,6 +116,7 @@ public class AuditLogView extends VerticalLayout {
             page = 0;
             refresh();
         });
+        apply.setId(APPLY_BUTTON_ID);
         HorizontalLayout filters = new HorizontalLayout(search, user, action, from, to, apply);
         filters.setAlignItems(Alignment.END);
         filters.setWidthFull();
@@ -99,10 +126,15 @@ public class AuditLogView extends VerticalLayout {
         grid.addColumn(AuditEvent::actor).setHeader("Who").setAutoWidth(true);
         grid.addColumn(AuditEvent::action).setHeader("Action").setAutoWidth(true);
         grid.addColumn(AuditEvent::entityType).setHeader("Type").setAutoWidth(true);
-        grid.addColumn(event -> event.label() == null ? event.entityId() : event.label()).setHeader("What").setFlexGrow(1);
+        grid.addComponentColumn(event -> {
+            Span label = new Span(event.label() == null ? event.entityId() : event.label());
+            label.setId(EVENT_ID_PREFIX + event.revision() + "-" + event.entityId());
+            return label;
+        }).setHeader("What").setFlexGrow(1);
         grid.addColumn(event -> event.replay() ? "Undo/redo" : "Change").setHeader("Origin").setAutoWidth(true);
         grid.setItemDetailsRenderer(new ComponentRenderer<>(event -> {
             VerticalLayout details = new VerticalLayout();
+            details.setId(DETAILS_ID_PREFIX + event.revision() + "-" + event.entityId());
             details.setWidthFull();
             details.getStyle().set("box-sizing", "border-box")
                     .set("background", "var(--lumo-contrast-5pct)")
@@ -152,7 +184,9 @@ public class AuditLogView extends VerticalLayout {
         });
         HorizontalLayout paging = new HorizontalLayout(previous, pageLabel, next, pageNumber, go);
         paging.setAlignItems(Alignment.CENTER);
-        add(new H1("Audit"), filters, grid, paging);
+        H1 title = new H1("Audit");
+        title.setId(PAGE_TITLE_ID);
+        add(title, filters, grid, paging);
         refresh();
     }
 

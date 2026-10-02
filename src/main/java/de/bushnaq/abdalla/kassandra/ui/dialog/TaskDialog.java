@@ -67,6 +67,14 @@ import java.util.Map;
  */
 @Slf4j
 public class TaskDialog extends Dialog {
+    /**
+     * Prefix for a worklog edit button, followed by the worklog ID.
+     */
+    public static final String WORKLOG_EDIT_BUTTON_PREFIX = "task-dialog-worklog-edit-";
+    /**
+     * Prefix for a worklog delete button, followed by the worklog ID.
+     */
+    public static final String WORKLOG_DELETE_BUTTON_PREFIX = "task-dialog-worklog-delete-";
 
     public static final  String            CANCEL_BUTTON      = "cancel-task-dialog-button";
     public static final  String            SAVE_TASK_BUTTON   = "save-task-button";
@@ -531,12 +539,14 @@ public class TaskDialog extends Dialog {
                 && (currentUserId.equals(worklog.getAuthorId()) || isAdmin());
 
         Button editButton = new Button(new Icon(VaadinIcon.EDIT));
+        editButton.setId(WORKLOG_EDIT_BUTTON_PREFIX + worklog.getId());
         editButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON);
         editButton.setEnabled(canEdit);
         editButton.getElement().setAttribute("title", canEdit ? "Edit work log" : "Only the author can edit this log");
         editButton.addClickListener(e -> openEditWorklogDialog(worklog));
 
         Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
+        deleteButton.setId(WORKLOG_DELETE_BUTTON_PREFIX + worklog.getId());
         deleteButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ICON,
                 ButtonVariant.LUMO_ERROR);
         deleteButton.setEnabled(canEdit);
@@ -682,5 +692,4 @@ public class TaskDialog extends Dialog {
         n.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 }
-
 
