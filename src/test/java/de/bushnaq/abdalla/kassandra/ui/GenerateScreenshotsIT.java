@@ -82,13 +82,13 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       FeatureListViewTester      featureListViewTester;
     private       String                     featureName;
-    private final LocalDate                  firstDay        = LocalDate.of(2025, 6, 1);
-    private final LocalDate                  firstDayRecord1 = LocalDate.of(2026, 8, 4);
-    Availability lastAvailability = null;
-    private final LocalDate lastDay        = LocalDate.of(2025, 6, 1);
-    private final LocalDate lastDayRecord1 = LocalDate.of(2026, 8, 7);
-    Location     lastLocation     = null;
-    UserWorkWeek lastUserWorkWeek = null;
+    private final LocalDate                  firstDay         = LocalDate.of(2025, 6, 1);
+    private final LocalDate                  firstDayRecord1  = LocalDate.of(2026, 8, 4);
+    private       Availability               lastAvailability = null;
+    private final LocalDate                  lastDay          = LocalDate.of(2025, 6, 1);
+    private final LocalDate                  lastDayRecord1   = LocalDate.of(2026, 8, 7);
+    private       Location                   lastLocation     = null;
+    private       UserWorkWeek               lastUserWorkWeek = null;
     @Autowired
     private       LocationListViewTester     locationListViewTester;
     @Autowired
@@ -104,7 +104,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       TaskListViewTester         taskListViewTester;
     private       String                     taskName;
-    private final OffDayType                 typeRecord1 = OffDayType.VACATION;
+    private final OffDayType                 typeRecord1      = OffDayType.VACATION;
     @Autowired
     private       UserGroupListViewTester    userGroupListViewTester;
     @Autowired

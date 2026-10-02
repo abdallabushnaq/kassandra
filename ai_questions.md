@@ -60,14 +60,31 @@ To add GDPR support we need several intermediate steps:
 
 # Better Pagination Menu
 
-lets add a much elaborate pagination menu below the Audit page. Similar to google, we want to show:
-Previous 1 2 3 4 5 6 7 8 9 10 Next
-We show 10 page numbers max
-If we show the first page, Previous is not shown.
-If we show the last page, Next is not shown.
+let's add a much more elaborate pagination menu below the Audit page. Similar to google, we want to show:
+
+```Previous 1 2 3 4 5 6 7 8 9 10 Next```
+
+1. We show 10 page numbers max
+2. If we show the first page, Previous is not shown.
+3. If we show the last page, Next is not shown.
 
 # Run Instruction Videos as Tests in Headless Mode
 
-In headless mode we currently do not run the instruction videos, as they are not needed for testing.
-However, we should run them in headless mode , as they are a good test of the video player and the video files.
+In headless mode we currently do not run the instruction videos, as they are not actually tests.
+They lack expected outcome for any step in the video.
+However, we should convert them to tests and allow running them in headless mode.
+In headless mode we must not record the video.
+In headless mode we must not support narration.
+We need to add expected results similar as we do for other UI tests like ActiveSprintsIT or AvailabilityListViewIT or
+any tests in the de.bushnaq.abdalla.kassandra.ui.view package.
+e.g. we press the button to add a user, and then we need to use the UserApi to check if that user has been created.
+Every action we execute in the UI that has an expected outcome must be checked in the test code.
+
+# Harmonize Smart Headers
+
+Most pages have some kind of smart header. With smart header we mean a header on the top below the toolbar and
+breadcrumbs that shows information and allows placing buttons.<br>
+Some, like ProductListView, are based on AbstractMainGrid that handles the smart header.
+Some, like Backlog, just create it from scratch.<br>
+
 

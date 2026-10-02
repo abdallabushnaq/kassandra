@@ -439,7 +439,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         if (kassandraProperties.getUi().getLegacyPrototypePages().isEnabled()) {
             return true;
         }
-        return !Set.of("legacy-backlog", "legacy-quality-board", "legacy-sprint-list", "insights").contains(entry.path());
+        return !Set.of("/legacy-backlog", "/legacy-quality-board", "/legacy-sprint-list", "/insights").contains(entry.path());
     }
 
     /**
