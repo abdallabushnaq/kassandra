@@ -157,6 +157,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         pageHeaderBackground = createHeaderBackground();
 
         var navAndBreadcrumbs = new VerticalLayout();
+        navAndBreadcrumbs.getElement().setAttribute("data-page-header", "true");
         navAndBreadcrumbs.setPadding(false);
         navAndBreadcrumbs.setSpacing(false);
         navAndBreadcrumbs.setMargin(false);
@@ -308,11 +309,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         Div banner = new Div();
         banner.addClassNames(Width.FULL);
         banner.getStyle()
-                .set("min-height", "80px")
-                .set("max-height", "80px")
-                .set("height", "80px")
+                .set("height", "100%")
                 .set("background-repeat", "no-repeat")
-                .set("background-position", "center top")
+                .set("background-position", "center")
                 .set("background-size", "cover")
                 .set("border-radius", "0")
                 .set("overflow", "hidden")

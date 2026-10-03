@@ -41,6 +41,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.TiledDiffusionOptions;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -104,6 +105,7 @@ public class ImagePromptDialog extends Dialog {
     private volatile    byte[]                 generatedDarkImageOriginal;
     private             byte[]                 generatedLightHeaderImage;
     private volatile    long                   generatedLightHeaderSeed        = -1L;
+    private             TiledDiffusionOptions  lightHeaderOptions;
     private             byte[]                 generatedLightImage;
     private             byte[]                 generatedLightImageOriginal;
     private volatile    long                   generatedLightImageSeed         = -1L;
@@ -740,6 +742,32 @@ public class ImagePromptDialog extends Dialog {
     private void generateHeader(Div container, Button updateButton, String label, String prompt, long seed, boolean dark) {
         updateButton.setEnabled(false);
         acceptButton.setEnabled(false);
+        getUI().ifPresent(ui -> ui.getPage().executeJs("""
+                const header = document.querySelector('[data-page-header]');
+                if (!header) throw new Error('Page header is unavailable');
+                const bounds = header.getBoundingClientRect();
+                return bounds.width + 'x' + bounds.height;
+                """).then(String.class, dimensions -> {
+            try {
+                String[] size = dimensions.split("x");
+                TiledDiffusionOptions options = dark && lightHeaderOptions != null ? lightHeaderOptions
+                        : TiledDiffusionOptions.forHeader(Double.parseDouble(size[0]), Double.parseDouble(size[1]));
+                generateHeader(container, updateButton, label, prompt, seed, dark, options);
+            } catch (IllegalArgumentException exception) {
+                updateButton.setEnabled(true);
+                acceptButton.setEnabled(generatedLightImage != null);
+                Notification.show("Cannot size header: " + exception.getMessage(), 5000, Notification.Position.MIDDLE);
+            }
+        }, error -> {
+            updateButton.setEnabled(true);
+            acceptButton.setEnabled(generatedLightImage != null);
+            Notification.show("Cannot measure page header: " + error, 5000, Notification.Position.MIDDLE);
+        }));
+    }
+
+    private void generateHeader(Div container, Button updateButton, String label, String prompt, long seed, boolean dark,
+                                TiledDiffusionOptions options) {
+        String negativePrompt = lightNegativePromptField.getValue().trim();
         container.removeAll();
         Div loadingText = new Div(label);
         loadingText.getStyle().set("color", "var(--lumo-contrast-60pct)").set("font-weight", "500").set("line-height", "1");
@@ -761,24 +789,25 @@ public class ImagePromptDialog extends Dialog {
         getUI().ifPresent(ui -> new Thread(() -> {
             try {
                 GeneratedImageResult result = dark && generatedLightHeaderImage != null
-                        ? avatarService.generateDarkHeaderWithFallback(prompt, lightNegativePromptField.getValue().trim(),
+                        ? avatarService.generateDarkHeaderWithFallback(prompt, negativePrompt,
                         new GeneratedImageResult(generatedLightHeaderImage, "", null, seed), darkIconName,
                         (value, step, total) -> ui.access(() -> {
                             progressBar.setValue(value);
                             progressText.setText(String.format("Step %d / %d (%.0f%%)", step, total, value * 100));
                             ui.push();
-                        }))
-                        : avatarService.generateLightHeaderWithFallback(prompt, lightNegativePromptField.getValue().trim(), darkIconName,
+                        }), options)
+                        : avatarService.generateLightHeaderWithFallback(prompt, negativePrompt, darkIconName,
                         (value, step, total) -> ui.access(() -> {
                             progressBar.setValue(value);
                             progressText.setText(String.format("Step %d / %d (%.0f%%)", step, total, value * 100));
                             ui.push();
-                        }));
+                        }), options);
                 if (dark) {
                     generatedDarkHeaderImage = result.getResizedImage();
                 } else {
                     generatedLightHeaderImage = result.getResizedImage();
                     generatedLightHeaderSeed  = result.getSeed();
+                    lightHeaderOptions        = options;
                 }
                 ui.access(() -> {
                     displayHeader(container, result.getResizedImage());

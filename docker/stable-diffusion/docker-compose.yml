@@ -1,6 +1,7 @@
 services:
   stable-diffusion:
-    image: johnguan/stable-diffusion-webui
+    build: .
+    image: kassandra-stable-diffusion-webui
     container_name: kassandra-stable-diffusion
     ports:
       - "7861:7860"

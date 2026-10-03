@@ -18,8 +18,12 @@
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Request DTO for Stable Diffusion text-to-image API
@@ -29,44 +33,49 @@ import lombok.Data;
 public class ImageGenerationRequest {
 
     /**
+     * Always-on extension arguments, omitted for ordinary image generation.
+     */
+    @JsonProperty("alwayson_scripts")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Map<String, Map<String, List<Object>>> alwaysonScripts;
+    /**
      * Number of images to generate in batch
      */
     @JsonProperty("batch_size")
-    private Integer batchSize;
+    private Integer                                batchSize;
     /**
      * CFG Scale (Classifier Free Guidance)
      */
     @JsonProperty("cfg_scale")
-    private Double cfgScale;
+    private Double                                 cfgScale;
     /**
      * Height of the generated image
      */
-    private Integer height;
+    private Integer                                height;
     /**
      * The negative prompt describing what to avoid
      */
     @JsonProperty("negative_prompt")
-    private String negativePrompt;
+    private String                                 negativePrompt;
     /**
      * The positive prompt describing what to generate
      */
-    private String prompt;
+    private String                                 prompt;
     /**
      * Sampler algorithm to use
      */
     @JsonProperty("sampler_name")
-    private String samplerName;
+    private String                                 samplerName;
     /**
      * Random seed for reproducibility (optional)
      */
-    private Long seed;
+    private Long                                   seed;
     /**
      * Number of sampling steps
      */
-    private Integer steps;
+    private Integer                                steps;
     /**
      * Width of the generated image
      */
-    private Integer width;
+    private Integer                                width;
 }
-

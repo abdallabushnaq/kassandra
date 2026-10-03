@@ -42,17 +42,17 @@ public class AvatarService {
      */
     public static final String                DARK_PROMPT_SUFFIX       = ", simple dark background";
     /**
-     * Header generation height in pixels. Stable Diffusion produces reliable images at this aspect ratio.
+     * Base header generation height before Tiled Diffusion overwrites the canvas size.
      */
-    public static final int                   HEADER_GENERATION_HEIGHT = 512;
+    public static final int                   HEADER_GENERATION_HEIGHT = 1024;
     /**
-     * Header image height in pixels.
+     * Minimum tiled header canvas height in pixels.
      */
-    public static final int                   HEADER_HEIGHT            = 48;
+    public static final int                   HEADER_HEIGHT            = 256;
     /**
-     * Header image width in pixels.
+     * Default header canvas width for callers without browser dimensions.
      */
-    public static final int                   HEADER_WIDTH             = 1024;
+    public static final int                   HEADER_WIDTH             = 4096;
     /**
      * Prompt suffix appended to every light-avatar SD call.
      */
@@ -242,7 +242,7 @@ public class AvatarService {
      * @param negativePrompt   Negative prompt guiding what to avoid
      * @param lightHeader      Matching light header, used to retain the generation seed
      * @param fallbackIconName Icon used by the programmatic fallback
-     * @return A 1024x48 dark header image
+     * @return A 4096x256 dark header image
      */
     public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader, String fallbackIconName) {
         return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, null);
@@ -256,10 +256,28 @@ public class AvatarService {
      * @param lightHeader      Matching light header, used to retain the generation seed
      * @param fallbackIconName Icon used by the programmatic fallback
      * @param progress         Optional callback invoked on each Stable Diffusion polling tick
-     * @return A 1024x48 dark header image
+     * @return A 4096x256 dark header image
      */
     public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader, String fallbackIconName, StableDiffusionService.ProgressCallback progress) {
-        return generateHeaderWithFallback(prompt, negativePrompt, lightHeader.getSeed(), fallbackIconName, true, progress);
+        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress,
+                TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT));
+    }
+
+    /**
+     * Generates a dark tiled header with the matching light header's seed.
+     *
+     * @param prompt           dark header prompt
+     * @param negativePrompt   negative prompt
+     * @param lightHeader      matching light header result
+     * @param fallbackIconName icon for the explicit programmatic fallback
+     * @param progress         optional progress callback
+     * @param options          tiled canvas settings matching the light header
+     * @return generated header or the programmatic fallback
+     */
+    public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
+                                                               String fallbackIconName, StableDiffusionService.ProgressCallback progress,
+                                                               TiledDiffusionOptions options) {
+        return generateHeaderWithFallback(prompt, negativePrompt, lightHeader.getSeed(), fallbackIconName, true, progress, options);
     }
 
     /**
@@ -285,18 +303,15 @@ public class AvatarService {
     }
 
     private GeneratedImageResult generateHeaderWithFallback(String prompt, String negativePrompt, long seed,
-                                                            String fallbackIconName, boolean dark, StableDiffusionService.ProgressCallback progress) {
+                                                            String fallbackIconName, boolean dark, StableDiffusionService.ProgressCallback progress,
+                                                            TiledDiffusionOptions options) {
         try {
-            GeneratedImageResult generatedHeader = stableDiffusionService.text2ImgWithOriginal(
-                    prompt, negativePrompt, HEADER_WIDTH, HEADER_GENERATION_HEIGHT,
-                    progress, seed, config.getCfgScale());
-            GeneratedImageResult croppedHeader = new GeneratedImageResult(
-                    generatedHeader.getOriginalImage(),
-                    generatedHeader.getPrompt(),
-                    stableDiffusionService.cropVerticalCenter(generatedHeader.getResizedImage(), HEADER_WIDTH, HEADER_HEIGHT),
-                    generatedHeader.getSeed());
-            croppedHeader.setNegativePrompt(generatedHeader.getNegativePrompt());
-            return croppedHeader;
+            if (!stableDiffusionService.isAvailable()) {
+                throw new StableDiffusionException("Stable Diffusion is not available");
+            }
+            return stableDiffusionService.text2ImgWithOriginal(
+                    prompt, negativePrompt, 1024, HEADER_GENERATION_HEIGHT,
+                    progress, seed, config.getCfgScale(), options);
         } catch (StableDiffusionException e) {
             log.warn("Failed to generate {} header (icon={}): {}", dark ? "dark" : "light", fallbackIconName, e.getMessage());
             return stableDiffusionService.generateDefaultHeader(fallbackIconName, dark);
@@ -385,7 +400,7 @@ public class AvatarService {
      * @param prompt           The header-specific prompt
      * @param negativePrompt   Negative prompt guiding what to avoid
      * @param fallbackIconName Icon used by the programmatic fallback
-     * @return A 1024x48 light header image
+     * @return A 4096x256 light header image
      */
     public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName) {
         return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, null);
@@ -398,11 +413,24 @@ public class AvatarService {
      * @param negativePrompt   Negative prompt guiding what to avoid
      * @param fallbackIconName Icon used by the programmatic fallback
      * @param progress         Optional callback invoked on each Stable Diffusion polling tick
-     * @return A 1024x48 light header image
+     * @return A 4096x256 light header image
      */
-    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName,
-                                                                StableDiffusionService.ProgressCallback progress) {
-        return generateHeaderWithFallback(prompt, negativePrompt, -1L, fallbackIconName, false, progress);
+    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName, StableDiffusionService.ProgressCallback progress) {
+        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress, TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT));
+    }
+
+    /**
+     * Generates a tiled light header sized for the browser's header aspect ratio.
+     *
+     * @param prompt           light header prompt
+     * @param negativePrompt   negative prompt
+     * @param fallbackIconName icon for the explicit programmatic fallback
+     * @param progress         optional progress callback
+     * @param options          tiled canvas settings
+     * @return generated header or the programmatic fallback
+     */
+    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName, StableDiffusionService.ProgressCallback progress, TiledDiffusionOptions options) {
+        return generateHeaderWithFallback(prompt, negativePrompt, -1L, fallbackIconName, false, progress, options);
     }
 
 }

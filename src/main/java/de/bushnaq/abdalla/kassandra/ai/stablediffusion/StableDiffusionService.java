@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Service for generating images using Stable Diffusion WebUI API.
@@ -57,7 +60,7 @@ public class StableDiffusionService {
         // Configure WebClient with increased buffer size for large image responses
         // Stable Diffusion returns base64-encoded images which can be large (several MB)
         ExchangeStrategies strategies = ExchangeStrategies.builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 10MB
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(32 * 1024 * 1024)) // Wide tiled headers include base64 overhead.
                 .build();
 
         this.webClient = WebClient.builder()
@@ -362,11 +365,11 @@ public class StableDiffusionService {
     }
 
     /**
-     * Generate a 1024x48 fallback header image with the entity icon.
+     * Generate a default-size fallback header image with the entity icon.
      *
      * @param iconName Optional icon name (without the {@code .png} extension)
      * @param dark     {@code true} to use the configured dark background
-     * @return A header image result whose original and resized images are both 1024x48
+     * @return A header image result whose original and resized images are both 4096x256
      */
     public GeneratedImageResult generateDefaultHeader(String iconName, boolean dark) {
         try {
@@ -380,7 +383,9 @@ public class StableDiffusionService {
                     BufferedImage icon = ImageIO.read(new ByteArrayInputStream(iconBytes));
                     if (icon != null) {
                         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                        graphics.drawImage(icon, 8, 8, 32, 32, null);
+                        int iconSize = AvatarService.HEADER_HEIGHT * 2 / 3;
+                        int margin   = (AvatarService.HEADER_HEIGHT - iconSize) / 2;
+                        graphics.drawImage(icon, margin, margin, iconSize, iconSize, null);
                     }
                 }
             }
@@ -828,8 +833,37 @@ public class StableDiffusionService {
      */
     public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputWidth, int outputHeight,
                                                      ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
+        return text2ImgWithOriginal(prompt, negativePrompt, outputWidth, outputHeight, progressCallback, seed, cfgScale, null);
+    }
+
+    /**
+     * Generates an image with optional Tiled Diffusion settings.
+     * With size overwrite enabled, the extension's canvas dimensions replace the
+     * base request dimensions and the returned image is retained without cropping.
+     *
+     * @param prompt           positive prompt
+     * @param negativePrompt   negative prompt, or null for the default
+     * @param outputWidth      base request width
+     * @param outputHeight     base request height
+     * @param progressCallback optional progress callback
+     * @param seed             generation seed, or -1 for a random seed
+     * @param cfgScale         classifier-free guidance scale
+     * @param tiledDiffusion   optional extension settings; null leaves existing behavior unchanged
+     * @return original and resized image bytes with generation metadata
+     * @throws StableDiffusionException if the extension is unavailable or generation fails
+     */
+    public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputWidth, int outputHeight,
+                                                     ProgressCallback progressCallback, long seed, double cfgScale,
+                                                     TiledDiffusionOptions tiledDiffusion) throws StableDiffusionException {
         log.trace("Generating image with prompt '{}' at {}x{}", prompt, outputWidth, outputHeight);
         try {
+            boolean tiled = tiledDiffusion != null && tiledDiffusion.isEnabled();
+            if (tiled) {
+                validateTiledDiffusion(tiledDiffusion);
+                requireTiledDiffusion();
+            }
+            int targetWidth  = tiled && tiledDiffusion.isOverwriteImageSize() ? tiledDiffusion.getImageWidth() : outputWidth;
+            int targetHeight = tiled && tiledDiffusion.isOverwriteImageSize() ? tiledDiffusion.getImageHeight() : outputHeight;
             selectModel(config.getModelName());
             String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
             ImageGenerationRequest request = ImageGenerationRequest.builder()
@@ -842,6 +876,7 @@ public class StableDiffusionService {
                     .height(outputHeight)
                     .batchSize(1)
                     .seed(seed)
+                    .alwaysonScripts(tiled ? tiledDiffusionScripts(tiledDiffusion) : null)
                     .build();
 
             Thread progressThread = null;
@@ -861,9 +896,15 @@ public class StableDiffusionService {
                 if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
                     throw new StableDiffusionException("No image returned from Stable Diffusion API");
                 }
-                byte[]               originalImage = Base64.getDecoder().decode(response.getImages().getFirst());
-                byte[]               resizedImage  = resizeImage(originalImage, outputWidth, outputHeight);
-                GeneratedImageResult result        = new GeneratedImageResult(originalImage, prompt, resizedImage, parseSeedFromInfo(response.getInfo()));
+                byte[] originalImage = Base64.getDecoder().decode(response.getImages().getFirst());
+                if (tiled) {
+                    BufferedImage image = ImageIO.read(new ByteArrayInputStream(originalImage));
+                    if (image == null || image.getWidth() != targetWidth || image.getHeight() != targetHeight) {
+                        throw new StableDiffusionException("Tiled Diffusion did not return the requested " + targetWidth + "x" + targetHeight + " canvas");
+                    }
+                }
+                byte[]               resizedImage = tiled ? originalImage : resizeImage(originalImage, outputWidth, outputHeight);
+                GeneratedImageResult result       = new GeneratedImageResult(originalImage, prompt, resizedImage, parseSeedFromInfo(response.getInfo()));
                 result.setNegativePrompt(resolvedNegativePrompt);
                 return result;
             } finally {
@@ -871,9 +912,46 @@ public class StableDiffusionService {
                     progressThread.interrupt();
                 }
             }
-        } catch (Exception e) {
+        } catch (StableDiffusionException e) {
+            throw e;
+        } catch (IOException | RuntimeException e) {
             log.error("Error generating image with Stable Diffusion: {}", e.getMessage());
             throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
+        }
+    }
+
+    private void requireTiledDiffusion() throws StableDiffusionException {
+        Map<String, List<String>> scripts = webClient.get().uri("/sdapi/v1/scripts").retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, List<String>>>() {
+                })
+                .timeout(Duration.ofSeconds(config.getTimeoutSeconds())).block();
+        if (scripts == null || scripts.get("txt2img") == null
+                || scripts.get("txt2img").stream().noneMatch("Tiled Diffusion"::equalsIgnoreCase)) {
+            throw new StableDiffusionException("Tiled Diffusion is not loaded. Install multidiffusion-upscaler-for-automatic1111 and restart WebUI");
+        }
+    }
+
+    private Map<String, Map<String, List<Object>>> tiledDiffusionScripts(TiledDiffusionOptions options) {
+        // A1111 uses the positional UI arguments, including hidden img2img controls.
+        List<Object> args = List.of(true, "MultiDiffusion", options.isOverwriteImageSize(), true,
+                options.getImageWidth(), options.getImageHeight(), options.getLatentTileWidth(),
+                options.getLatentTileHeight(), options.getLatentTileOverlap(), options.getLatentTileBatchSize(),
+                "None", 1.0, false, 10, 1.0, 1.0, 64, false, false, false, false);
+        return Map.of("Tiled Diffusion", Map.of("args", args));
+    }
+
+    private void validateTiledDiffusion(TiledDiffusionOptions options) throws StableDiffusionException {
+        if (options.isOverwriteImageSize()
+                && (options.getImageWidth() < 256 || options.getImageWidth() > 16384 || options.getImageWidth() % 16 != 0
+                || options.getImageHeight() < 256 || options.getImageHeight() > 16384 || options.getImageHeight() % 16 != 0)) {
+            throw new StableDiffusionException("Tiled Diffusion canvas dimensions must be multiples of 16 between 256 and 16384");
+        }
+        if (options.getLatentTileWidth() < 16 || options.getLatentTileWidth() > 256 || options.getLatentTileWidth() % 16 != 0
+                || options.getLatentTileHeight() < 16 || options.getLatentTileHeight() > 256 || options.getLatentTileHeight() % 16 != 0
+                || options.getLatentTileOverlap() < 0 || options.getLatentTileOverlap() % 4 != 0
+                || options.getLatentTileOverlap() >= Math.min(options.getLatentTileWidth(), options.getLatentTileHeight())
+                || options.getLatentTileBatchSize() < 1 || options.getLatentTileBatchSize() > 8) {
+            throw new StableDiffusionException("Invalid Tiled Diffusion latent tile dimensions, overlap, or batch size");
         }
     }
 
