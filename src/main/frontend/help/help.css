@@ -1,0 +1,100 @@
+/*
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.help-drawer {
+  inset: 0 0 0 auto;
+  width: min(72rem, 100vw);
+}
+
+vaadin-dialog.help-drawer::part(overlay) {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(72rem, 100vw);
+  height: 100dvh;
+  max-width: 100vw;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  background: var(--lumo-base-color);
+  color: var(--lumo-body-text-color);
+  border-left: 1px solid var(--lumo-contrast-20pct);
+  box-shadow: var(--lumo-box-shadow-m);
+}
+
+vaadin-dialog.help-drawer::part(header) {
+  border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
+vaadin-dialog.help-drawer::part(content) {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+kassandra-help-markdown {
+  display: block;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+kassandra-help-markdown p,
+kassandra-help-markdown ul,
+kassandra-help-markdown ol {
+  max-width: 75ch;
+}
+
+kassandra-help-markdown p:has(> img) {
+  max-width: none;
+}
+
+kassandra-help-markdown img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+kassandra-help-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+kassandra-help-markdown th,
+kassandra-help-markdown td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--lumo-space-xs);
+  border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
+kassandra-help-markdown pre {
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+kassandra-help-markdown .help-diagram {
+  margin: var(--lumo-space-m) 0;
+  white-space: normal;
+}
+
+kassandra-help-markdown .help-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: auto;
+  max-width: 32rem;
+}
+
+kassandra-help-markdown .help-diagram-error {
+  color: var(--lumo-error-text-color);
+}

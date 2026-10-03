@@ -46,6 +46,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.HashSet;
@@ -67,6 +68,10 @@ public class ProductDialog extends Dialog {
     public static final String                         PRODUCT_ACL_GROUPS_FIELD = "product-acl-groups-field";
     public static final String                         PRODUCT_ACL_USERS_FIELD  = "product-acl-users-field";
     public static final String                         PRODUCT_DIALOG           = "product-dialog";
+    /**
+     * Stable ID of the Create/Edit Product help button.
+     */
+    public static final String                         PRODUCT_HELP_BUTTON      = "product-dialog-help-button";
     public static final String                         PRODUCT_NAME_FIELD       = "product-name-field";
     private final       MultiSelectComboBox<UserGroup> aclGroupsField;
     private final       MultiSelectComboBox<User>      aclUsersField;
@@ -162,6 +167,15 @@ public class ProductDialog extends Dialog {
         }
         // For create mode, leave image src empty
         getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
+
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/product-dialog.md");
+        getHeader().add(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);

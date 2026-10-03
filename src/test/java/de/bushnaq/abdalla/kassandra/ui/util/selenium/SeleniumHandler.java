@@ -1288,6 +1288,20 @@ class SeleniumHandler {
         }
     }
 
+    /**
+     * Waits until a client-rendered chart has appended its SVG and published its readiness marker.
+     *
+     * @param chartId the chart identifier from {@code RenderUtil}
+     */
+    public void waitForChartRendered(String chartId) {
+        if (!isEnabled())
+            return;
+        log.trace("Waiting for {} chart to be rendered.", chartId);
+        waitUntil(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("[data-chart-rendered~='" + chartId + "'] svg"))
+                .stream()
+                .anyMatch(WebElement::isDisplayed)));
+    }
+
     public void waitForElementToBeClickable(String id) {
         if (!isEnabled())
             return;
@@ -1302,20 +1316,6 @@ class SeleniumHandler {
             }
         }
         while (iterations-- > 0);
-    }
-
-    /**
-     * Waits until a client-rendered chart has appended its SVG and published its readiness marker.
-     *
-     * @param chartId the chart identifier from {@code RenderUtil}
-     */
-    public void waitForChartRendered(String chartId) {
-        if (!isEnabled())
-            return;
-        log.trace("Waiting for {} chart to be rendered.", chartId);
-        waitUntil(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("[data-chart-rendered~='" + chartId + "'] svg"))
-                .stream()
-                .anyMatch(WebElement::isDisplayed)));
     }
 
     public void waitForElementToBeDisabled(String id) {

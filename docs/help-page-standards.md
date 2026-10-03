@@ -1,0 +1,231 @@
+<!--
+Copyright (C) 2025-2026 Abdalla Bushnaq
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+# UI help-page design and standards
+
+## Scope and architecture
+
+The pilot covers the Products page (`ProductListView`) and its Create/Edit Product
+dialog (`ProductDialog`). Other views and dialogs can opt in without
+changing their shared base class or the main navigation.
+
+| Surface                                                                   | Responsibility                                                                                    |
+|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| `ui\component\HelpDrawer.java`                                            | Owner-attached, non-modal Vaadin Dialog styled as a right-side drawer, with an accessible toggle. |
+| `ui\component\HelpMarkdown.java`                                          | UTF-8 classpath loading, shared chapter inclusion and Vaadin's native Markdown component.         |
+| `src\main\frontend\help\help-markdown.ts`                                 | Local, lazy Mermaid rendering and theme-paired screenshots.                                       |
+| `src\main\frontend\help\help.css`                                         | Scoped drawer, Markdown and diagram presentation.                                                 |
+| `src\main\resources\help\<route>.md`                                      | Version-controlled help content.                                                                  |
+| `src\main\resources\help\product-dialog.md`                               | Create/Edit Product dialog help, separate from the list page.                                     |
+| `src\main\resources\help\shared\*.md`                                     | Reusable table, filtering/sorting and Undo/Redo chapters.                                         |
+| `src\main\resources\META-INF\resources\ui\images\help\light\` and `dark\` | Bundled screenshot pairs, served through the existing UI image path.                              |
+
+No runtime connection to the wiki checkout, a CDN or a diagram service is needed.
+Mermaid is pinned with Vaadin's `@NpmPackage` annotation and recorded in the npm
+manifest/lockfile. Its JavaScript is dynamically imported only when a connected
+help page contains a Mermaid diagram. The small help integration module and styles
+are part of the normal Vaadin frontend.
+
+The drawer overlays the right side rather than resizing the existing AI split
+layout. It uses up to 72rem and fits the viewport on narrow screens. Screenshots
+use the available width; prose is limited to 75 characters per line for readability.
+The native non-modal Dialog overlay handles layering and keyboard/focus behavior,
+including help opened from a modal product form. Opening focuses Close; Close and
+Escape return focus to the invoking Help button. Navigating away closes the
+view-owned drawer. Closing a product form also closes its help.
+
+Unreadable help resources are logged and reported through a notification. Invalid
+diagram content or a failed module load displays a visible error in place of the
+diagram; the accompanying prose remains available.
+
+## Adding help to a view
+
+Create `help\<route>.md`, then attach a drawer to the view and add its toggle to the
+existing smart header:
+
+```java
+HelpDrawer helpDrawer = new HelpDrawer("Products", "help/product-list.md");
+
+addHeaderButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
+
+add(helpDrawer);
+```
+
+Use a stable, page-specific button ID. The drawer derives its own ID from it
+and uses a native dialog title. Add Javadoc to any new public constants/methods. Do not automatically
+open help or persist its open state across different views.
+
+For a dialog, attach the drawer as a child, put its toggle in the dialog header,
+and close help from the owner's opened-change listener when the owner closes.
+Use a dialog-specific help resource. Do not put dialog field walkthroughs in the
+list page's help; explain the task there and direct users to the form's Help button.
+
+Keep help under the view's existing authorization. Do not expose private entity
+data, tokens or operational settings in static help assets. Only bundled,
+reviewed help resources are accepted; this component is not an arbitrary
+user-supplied Markdown viewer.
+
+## Content template
+
+Use short, task-oriented English with these sections when applicable:
+
+1. **Purpose and concepts**: what the page manages and a relationship diagram if useful.
+2. **Find your way around**: annotated screenshot and short control legend.
+3. **The table**: shared interaction guidance, followed by page-specific columns and row navigation.
+4. **Filtering and sorting**: its own shared chapter, followed by page-specific examples.
+5. **Page actions**: creating, editing and deleting, expressed as tasks and outcomes.
+6. **Undo and redo**: history control, product/project scope and confirmation.
+7. **Optional features**: availability and permission conditions.
+
+Dialog help has its own field legend, task instructions, access defaults, optional
+features, and Save/Cancel behavior. State what happens when optional fields are
+left empty. For product creation, the creator is granted access automatically
+and administrators have role-based access; do not describe an empty collaborator
+selection as granting everybody access.
+
+Describe controls by what users can accomplish, not merely which dialog opens:
+"Edit the product name or generate a new icon/header" rather than "Opens Edit
+Product." Explain deletion and its recoverability through recorded history.
+Do not treat filtering, sorting or navigation as saved changes.
+
+### Shared chapters
+
+Include a shared chapter on its own line using a stable lowercase name:
+
+```markdown
+{{include:table}}
+
+### Product columns and navigation
+
+Page-specific column meanings and row navigation.
+
+{{include:filtering-sorting}}
+
+### Product filter examples
+
+Page-specific queries.
+
+{{include:undo-redo}}
+```
+
+The renderer expands these directives from `help\shared\<name>.md` before passing
+the complete document to native Markdown. Names allow only lowercase letters,
+digits and hyphens. Includes are deliberately one-level: shared chapters cannot
+include other files. Missing files and malformed/nested directives fail explicitly.
+Do not duplicate shared chapter text across help pages or include it where the
+underlying page does not support the described behavior.
+
+The drawer supplies the page title. Start Markdown at `##` rather than repeating
+a top-level title. Use ordinary headings, paragraphs, lists, tables, images and
+fenced Mermaid. Avoid custom HTML and scripts.
+
+Document observed behavior, not intended future behavior. Confirm existing
+introduction-video narration against current UI code and screenshots. The pilot's
+workflow reference is
+`ProductsVersionsFeaturesAndSprintsIntroductionVideo09IT`: Jupiter, version
+1.0.0, Config server and Minimum Viable Product. Do not copy narration verbatim;
+turn it into concise task instructions.
+
+## Referring to controls
+
+Users do not know Java identifiers or DOM IDs. Use the exact visible label in
+bold, supplemented by its icon and location where useful:
+
+- **Create (+)** at the upper right.
+- The **pencil/notepad icon** in the product row's **Actions** column.
+- **Grant Access to Groups** in the Create Product dialog.
+
+For unlabeled icons, describe both appearance and purpose. For select boxes,
+give the visible field label, whether multiple values are allowed and what to
+select. Do not identify a control only by color, coordinates or a screenshot
+number. Explain controls that appear only with a service or permission.
+
+Page help and filter-specific help are distinct. Page toggles use
+`Help: <page>` for both the accessible name and tooltip. Existing filter help
+continues to explain filter syntax.
+
+## Screenshots
+
+Use the wiki's `light-screenshots` and `dark-screenshots` as source material,
+but copy selected images into the application. Never link to `..\kassandra.wiki`
+at runtime. Check screenshots for personal/confidential data before copying.
+
+Use matching crops and numbered callouts in both themes. Crop empty space to
+keep screenshots readable in a narrow drawer. Supply a text legend with the same
+numbers, descriptive alternative text and a note that example data may differ.
+For dense screenshots, describe controls in prose rather than relying on tiny
+labels. At desktop drawer width, callout numbers must remain readable at their
+rendered size. Use detail crops if a full-page image would make them too small.
+Keep referenced top-navigation controls, such as history, visible in the image.
+Redact user-identifying content that is not relevant to the explanation.
+Refresh both images when the referenced UI changes.
+
+Images under `images/help/light/` or `images/help/dark/` are theme pairs. Their
+theme path segment switches with the active Lumo theme. Both files must exist:
+
+```markdown
+![Create Product fields and buttons](images/help/light/product-create.png)
+```
+
+The relative URL resolves from Vaadin's `/ui/` base to `/ui/images/help/`, using
+the application's existing image resource/security mapping, including deployments
+using a context path. Do not introduce a separate root-level asset endpoint.
+Only help image path
+pairs use this convention; ordinary image links are unchanged.
+
+## Mermaid diagrams
+
+Vaadin 25's native Markdown renderer uses `marked` and DOMPurify; it does not
+render Mermaid itself. The help component recognizes `mermaid` fenced code blocks
+after native Markdown rendering and replaces them with locally generated SVG.
+Ordinary code fences remain code.
+
+Use diagrams for relationships, lifecycles or decision paths, not as substitutes
+for instructions or screenshots. Prefer compact vertical flowcharts in the drawer.
+Label arrows where their meaning is not obvious.
+
+````markdown
+```mermaid
+flowchart TD
+    accTitle: Product planning hierarchy
+    accDescr: Products contain versions; versions contain features; features contain sprints.
+    P["Product"] -->|contains| V["Version"]
+    V -->|contains| F["Feature"]
+    F -->|contains| S["Sprint"]
+```
+
+A product contains versions, each version contains features, and each feature
+contains sprints.
+````
+
+Every diagram requires `accTitle`, `accDescr` and an equivalent prose explanation.
+Do not encode meaning in color alone. Keep labels short and use plain text rather
+than HTML labels. Check both light/dark rendering and narrow layouts.
+
+Mermaid runs with `securityLevel: 'strict'`, `startOnLoad: false` and HTML labels
+disabled. Do not add click handlers, remote resources, initialization directives
+or diagram-specific security/theme overrides. No Mermaid event bindings are
+installed. Rendering is scoped to the help element, serialized because Mermaid
+configuration is global, and repeated from preserved source when the UI theme
+changes. Observers disconnect when the help element leaves the DOM; outdated
+asynchronous results are not applied.
+
+## Review checklist
+
+Confirm the resource loads from the packaged application; the help button, close,
+Escape and focus restoration work; navigation removes the panel; both screenshot
+pairs load; diagrams render in both themes; broken diagrams show an error; and
+small screens remain usable. Confirm existing page actions and the AI pane still
+work. Follow the repository's existing build, formatting and UI test conventions.

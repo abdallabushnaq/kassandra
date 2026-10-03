@@ -94,6 +94,9 @@ Vaadin renders it inside a Help drawer.
 Let's first implement it for one page, e.g. ProductListView.
 Create the help icon and the drawer.
 Create the markdown page.
+How can we reference specific elements like buttons or select boxes? The user does not know their names. could we take
+them from the screenshots we have at: ../kassandra.wiki/light-screenshots or ../kassandra.wiki/dark-screenshots?
 Create the vaadin markdown renderer.
+Create a document to define help page design and standards. 
 
 

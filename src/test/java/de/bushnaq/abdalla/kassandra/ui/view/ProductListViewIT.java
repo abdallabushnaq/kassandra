@@ -20,6 +20,8 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
@@ -34,6 +36,13 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,6 +60,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration test for the ProductListView UI component.
@@ -120,6 +132,108 @@ public class ProductListViewIT extends AbstractKeycloakUiTestUtil {
                 generateTestCaseName(testInfo)
         );
         ProductListViewTester.switchToProductListView();
+    }
+
+    /**
+     * Exercises Products help, live diagrams, themed images and keyboard closing.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testHelpDrawer() {
+        WebDriver          driver     = seleniumHandler.getDriver();
+        WebDriverWait      wait       = new WebDriverWait(driver, Duration.ofSeconds(30));
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        By                 toggle     = By.id(ProductListView.PRODUCT_HELP_BUTTON);
+        By                 drawer     = By.id(ProductListView.PRODUCT_HELP_BUTTON + "-drawer");
+        By                 diagram    = By.cssSelector(".help-drawer .help-diagram svg");
+        By                 close      = By.cssSelector(".help-drawer vaadin-button[aria-label='Close help']");
+        wait.until(ExpectedConditions.elementToBeClickable(toggle)).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
+        wait.until(ExpectedConditions.presenceOfElementLocated(diagram));
+        assertEquals("true", driver.findElement(toggle).getDomAttribute("aria-expanded"));
+        String helpText = driver.findElement(drawer).getDomProperty("textContent");
+        assertTrue(helpText.contains("creator and administrators"), helpText);
+        assertTrue(helpText.contains("The table"), helpText);
+        assertTrue(helpText.contains("Filtering and sorting"), helpText);
+        assertTrue(helpText.contains("Undo and redo"), helpText);
+        new WebDriverWait(driver, Duration.ofSeconds(10)).withMessage(() -> String.valueOf(javascript.executeScript(
+                "return JSON.stringify({base: document.baseURI, images: [...document.querySelectorAll('.help-drawer img')]"
+                        + ".map(i => ({src: i.src, complete: i.complete, width: i.naturalWidth}))})")))
+                .until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                        "return [...document.querySelectorAll('.help-drawer img')].length === 1"
+                                + " && [...document.querySelectorAll('.help-drawer img')].every(i => i.complete && i.naturalWidth > 0)")));
+
+        String previousDiagram = driver.findElement(diagram).getDomAttribute("id");
+        assertTrue(Boolean.TRUE.equals(javascript.executeScript(
+                "return document.querySelector('.help-drawer img').getBoundingClientRect().width >= Math.min(1000, window.innerWidth - 100)")));
+        javascript.executeScript("document.getElementById(arguments[0]).click()", MainLayout.ID_THEME_TOGGLE);
+        wait.until(webDriver -> !previousDiagram.equals(driver.findElement(diagram).getDomAttribute("id")));
+        wait.withMessage(() -> String.valueOf(javascript.executeScript(
+                "return JSON.stringify({body: document.body.getAttribute('theme'), html: document.documentElement.getAttribute('theme'),"
+                        + " images: [...document.querySelectorAll('.help-drawer img')]"
+                        + ".map(i => ({src: i.src, title: i.title, complete: i.complete, width: i.naturalWidth}))})")))
+                .until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                        "const dark = document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]');"
+                                + " return [...document.querySelectorAll('.help-drawer img')].every(i =>"
+                                + " i.src.includes(dark ? '/dark/' : '/light/') && i.complete && i.naturalWidth > 0)")));
+
+        Dimension originalSize = driver.manage().window().getSize();
+        try {
+            driver.manage().window().setSize(new Dimension(390, 800));
+            assertTrue(Boolean.TRUE.equals(javascript.executeScript(
+                    "const overlay = document.querySelector('.help-drawer').shadowRoot.querySelector('vaadin-dialog-overlay')"
+                            + ".shadowRoot.querySelector('[part~=overlay]');"
+                            + " return overlay.getBoundingClientRect().width <= window.innerWidth")));
+        } finally {
+            driver.manage().window().setSize(originalSize);
+        }
+        driver.findElement(close).sendKeys(Keys.ESCAPE);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));
+        assertEquals("false", driver.findElement(toggle).getDomAttribute("aria-expanded"));
+        wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                "return document.activeElement.id === arguments[0]", ProductListView.PRODUCT_HELP_BUTTON)));
+        driver.findElement(toggle).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
+        wait.until(ExpectedConditions.presenceOfElementLocated(diagram));
+        driver.findElement(close).click();
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));
+    }
+
+    /**
+     * Exercises help above the product form without losing unsaved input.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testProductDialogHelp() {
+        WebDriver driver = seleniumHandler.getDriver();
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        By form = By.id(ProductDialog.PRODUCT_DIALOG);
+        By toggle = By.id(ProductDialog.PRODUCT_HELP_BUTTON);
+        By drawer = By.id(ProductDialog.PRODUCT_HELP_BUTTON + "-drawer");
+        By close = By.cssSelector("#" + ProductDialog.PRODUCT_HELP_BUTTON
+                + "-drawer vaadin-button[aria-label='Close help']");
+        wait.until(ExpectedConditions.elementToBeClickable(By.id(ProductListView.CREATE_PRODUCT_BUTTON))).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(form));
+        seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, "Jupiter help example");
+        driver.findElement(toggle).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
+        assertTrue(driver.findElement(drawer).getText().contains("Who has access by default?"));
+        assertTrue(driver.findElement(drawer).getText().contains("Administrators can access all"));
+        wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                "const images = [...document.querySelectorAll('#' + arguments[0] + ' img')];"
+                        + " return images.length === 1 && images.every(i => i.complete && i.naturalWidth > 0)",
+                ProductDialog.PRODUCT_HELP_BUTTON + "-drawer")));
+        driver.findElement(close).sendKeys(Keys.ESCAPE);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));
+        assertTrue(driver.findElement(form).isDisplayed());
+        assertEquals("Jupiter help example",
+                driver.findElement(By.id(ProductDialog.PRODUCT_NAME_FIELD)).getDomProperty("value"));
+        driver.findElement(toggle).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
+        javascript.executeScript("document.getElementById(arguments[0]).click()", ProductDialog.CANCEL_BUTTON);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(form));
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));
     }
 
     /**

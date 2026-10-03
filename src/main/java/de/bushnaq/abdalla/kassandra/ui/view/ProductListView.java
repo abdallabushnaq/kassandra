@@ -51,6 +51,7 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ProductDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -75,6 +76,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
     public static final  String                 MENU_ITEM_ID                      = "/product-list";
     public static final  String                 PRODUCT_AI_PANEL_BUTTON           = "product-ai-panel-button";
     public static final  String                 PRODUCT_GLOBAL_FILTER             = "product-global-filter";
+    /**
+     * Stable ID of the Products help button.
+     */
+    public static final  String                 PRODUCT_HELP_BUTTON               = "product-help-button";
     public static final  String                 PRODUCT_GRID                      = "product-grid";
     public static final  String                 PRODUCT_GRID_ACCESS_PREFIX        = "product-grid-access-";
     public static final  String                 PRODUCT_GRID_DELETE_BUTTON_PREFIX = "product-grid-delete-button-prefix-";
@@ -136,6 +141,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
+
+        HelpDrawer helpDrawer = new HelpDrawer("Products", "help/product-list.md");
+        addHeaderButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
+        add(helpDrawer);
 
         // Chat panel (session-aware: reuses conversationId + replays history on F5)
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);

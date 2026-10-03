@@ -13,6 +13,7 @@
     "date-fns": "4.1.0",
     "fontmetrics": "1.0.0",
     "lit": "3.3.2",
+    "mermaid": "12.1.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-router": "7.17.0"
@@ -115,7 +116,8 @@
     "date-fns": "$date-fns",
     "@vaadin/vaadin-usage-statistics": "$@vaadin/vaadin-usage-statistics",
     "@vaadin/react-components": "$@vaadin/react-components",
-    "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles"
+    "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
+    "mermaid": "$mermaid"
   },
   "vaadin": {
     "dependencies": {
@@ -128,6 +130,7 @@
       "@vaadin/vaadin-usage-statistics": "2.1.3",
       "date-fns": "4.1.0",
       "lit": "3.3.2",
+      "mermaid": "12.1.0",
       "react": "19.2.7",
       "react-dom": "19.2.7",
       "react-router": "7.17.0"
@@ -151,7 +154,7 @@
       "vite": "7.3.2",
       "vite-plugin-checker": "0.12.0"
     },
-    "hash": "e66dd72d360efab313c68b08c69ce97e3ab0797358af4be61a0315436321070f",
+    "hash": "36b106cdb9c930b0b14a218b672c5ee15fdd6454f43d23fd4c28db6c40dc110e",
     "overrides": {
       "@vaadin/a11y-base": "25.0.13",
       "@vaadin/accordion": "25.0.13",
@@ -222,6 +225,7 @@
       "date-fns": "$date-fns",
       "fontmetrics": "$fontmetrics",
       "lit": "$lit",
+      "mermaid": "$mermaid",
       "react": "$react",
       "react-dom": "$react-dom",
       "react-router": "$react-router"

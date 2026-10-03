@@ -157,8 +157,7 @@ public class PersistingEntityGenerator {
             product.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
             GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "cube");
             product.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(
-                    Product.getDefaultLightHeaderPrompt(name), negativePrompt, "cube");
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(Product.getDefaultLightHeaderPrompt(name), negativePrompt, "cube");
             product.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
             GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(
                     Product.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "cube");
