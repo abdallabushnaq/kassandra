@@ -1261,13 +1261,13 @@ class SeleniumHandler {
     /**
      * Captures the first visible row action using its stable DOM ID prefix as the filename.
      *
-     * @param pageClass the view owning the help images
+     * @param pageClass       the view owning the help images
      * @param elementIdPrefix the row action ID prefix, excluding the entity-specific suffix
      * @throws IOException if the image cannot be captured or written
      */
     public void takeHelpRowActionScreenshot(Class<?> pageClass, String elementIdPrefix) throws IOException {
-        Path destination = helpImagePath(pageClass, elementIdPrefix);
-        WebElement element = waitForHelpElement(By.cssSelector("[id^='" + elementIdPrefix + "']"));
+        Path       destination = helpImagePath(pageClass, elementIdPrefix);
+        WebElement element     = waitForHelpElement(By.cssSelector("[id^='" + elementIdPrefix + "']"));
         writeHelpElement(destination, element, element.getRect().getHeight());
     }
 
@@ -1275,7 +1275,7 @@ class SeleniumHandler {
      * Captures a Vaadin grid's headings and first populated row.
      *
      * @param pageClass the view owning the help images
-     * @param gridId the grid's DOM ID
+     * @param gridId    the grid's DOM ID
      * @throws IOException if the image cannot be captured or written
      */
     public void takeHelpGridScreenshot(Class<?> pageClass, String gridId) throws IOException {
@@ -1291,7 +1291,7 @@ class SeleniumHandler {
     }
 
     private Path helpImagePath(Class<?> pageClass, String elementId) {
-        if (!elementId.matches("[a-zA-Z0-9_-]+")) {
+        if (!elementId.matches("[a-zA-Z0-9_.-]+")) {
             throw new IllegalArgumentException("Invalid help image element ID: " + elementId);
         }
         boolean dark = Boolean.TRUE.equals(executeJavaScript(
@@ -1302,6 +1302,7 @@ class SeleniumHandler {
 
     private WebElement waitForHelpElement(By locator) {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+        executeJavaScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest', behavior: 'instant'})", element);
         waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
                 "return document.fonts.status === 'loaded' && [...arguments[0].querySelectorAll('img')]"
                         + ".every(i => i.complete && i.naturalWidth > 0)", element)));
@@ -1313,8 +1314,8 @@ class SeleniumHandler {
         if (image == null || cssHeight <= 0 || cssHeight > element.getRect().getHeight()) {
             throw new IOException("Invalid element screenshot dimensions for " + destination);
         }
-        int height = (int) Math.ceil(cssHeight * image.getHeight() / element.getRect().getHeight());
-        BufferedImage crop = image.getSubimage(0, 0, image.getWidth(), Math.min(height, image.getHeight()));
+        int           height = (int) Math.ceil(cssHeight * image.getHeight() / element.getRect().getHeight());
+        BufferedImage crop   = image.getSubimage(0, 0, image.getWidth(), Math.min(height, image.getHeight()));
         Files.createDirectories(destination.getParent());
         if (!ImageIO.write(crop, "png", destination.toFile())) {
             throw new IOException("No PNG writer available for " + destination);

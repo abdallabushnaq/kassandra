@@ -39,6 +39,11 @@ public class RecoveryView extends VerticalLayout {
     public static final String VIEW_ID = "recovery-view";
 
     /**
+     * Identifier of the recovery sign-in form.
+     */
+    public static final String FORM_ID = "recovery-login-form";
+
+    /**
      * The public recovery route.
      */
     public static final String ROUTE = "recovery";
@@ -53,6 +58,7 @@ public class RecoveryView extends VerticalLayout {
         setJustifyContentMode(JustifyContentMode.CENTER);
 
         LoginForm recoveryForm = new LoginForm();
+        recoveryForm.setId(FORM_ID);
         recoveryForm.setAction(ROUTE + "/login");
         recoveryForm.setForgotPasswordButtonVisible(false);
         add(new H1("Kassandra recovery"),

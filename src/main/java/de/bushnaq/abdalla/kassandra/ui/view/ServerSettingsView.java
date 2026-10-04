@@ -60,15 +60,15 @@ public class ServerSettingsView extends VerticalLayout {
     /**
      * Identifier of the server-settings page title.
      */
-    public static final String PAGE_TITLE_ID = "server-settings-page-title";
+    public static final String PAGE_TITLE_ID           = "server-settings-page-title";
     /**
      * Prefix for category buttons, followed by the category key.
      */
-    public static final String CATEGORY_BUTTON_PREFIX = "server-settings-category-";
+    public static final String CATEGORY_BUTTON_PREFIX  = "server-settings-category-";
     /**
      * Prefix for category headings, followed by the category key.
      */
-    public static final String CATEGORY_TITLE_PREFIX = "server-settings-category-title-";
+    public static final String CATEGORY_TITLE_PREFIX   = "server-settings-category-title-";
     /**
      * Prefix for category enablement checkboxes, followed by the category key.
      */
@@ -76,7 +76,24 @@ public class ServerSettingsView extends VerticalLayout {
     /**
      * Identifier of the scrollable category details.
      */
-    public static final String DETAILS_ID = "server-settings-details";
+    public static final String DETAILS_ID              = "server-settings-details";
+
+    /**
+     * Prefix for setting editors, followed by the setting key.
+     */
+    public static final String SETTING_FIELD_PREFIX = "server-setting-field-";
+    /**
+     * Prefix for setting save buttons, followed by the setting key.
+     */
+    public static final String SAVE_BUTTON_PREFIX   = "server-setting-save-";
+    /**
+     * Prefix for connection-test buttons, followed by the setting key.
+     */
+    public static final String TEST_BUTTON_PREFIX   = "server-setting-test-";
+    /**
+     * Prefix for stored-secret clearing buttons, followed by the setting key.
+     */
+    public static final String CLEAR_BUTTON_PREFIX  = "server-setting-clear-";
 
     /**
      * Route for server settings administration.
@@ -244,8 +261,10 @@ public class ServerSettingsView extends VerticalLayout {
     }
 
     private Component saveRow(ServerSetting setting, Component field, java.util.function.Supplier<String> value, boolean categoryEnabled) {
+        field.setId(SETTING_FIELD_PREFIX + setting.getKey());
         ((HasSize) field).setWidthFull();
         Button save = new Button("Save", event -> save(setting, value.get(), false));
+        save.setId(SAVE_BUTTON_PREFIX + setting.getKey());
         if (field instanceof HasEnabled enabledField) {
             enabledField.setEnabled(categoryEnabled);
         }
@@ -253,11 +272,13 @@ public class ServerSettingsView extends VerticalLayout {
         HorizontalLayout result = new HorizontalLayout(field, save);
         if (setting.isTestable()) {
             Button test = new Button("Test connection", event -> test(setting, value.get()));
+            test.setId(TEST_BUTTON_PREFIX + setting.getKey());
             test.setEnabled(categoryEnabled);
             result.add(test);
         }
         if (setting.isSecret() && setting.isConfigured()) {
             Button clear = new Button("Clear stored secret", event -> save(setting, "", true));
+            clear.setId(CLEAR_BUTTON_PREFIX + setting.getKey());
             clear.setEnabled(categoryEnabled);
             result.add(clear);
         }

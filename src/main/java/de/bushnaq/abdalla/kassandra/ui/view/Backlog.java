@@ -77,6 +77,10 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class Backlog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
     public static final String                       BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
+    /**
+     * Identifier of the selected sprint's task grid.
+     */
+    public static final String                       TASK_GRID_ID               = "backlog-task-grid";
     public static final String                       CANCEL_BUTTON_ID           = "cancel-tasks-button";
     public static final String                       CLEAR_FILTER_BUTTON_ID     = "clear-filter-button";
     public static final String                       CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
@@ -467,6 +471,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
     private TaskGrid createGrid(Clock clock) {
         TaskGrid grid = new TaskGrid(clock, getLocale(), jsonMapper);
+        grid.setId(TASK_GRID_ID);
         grid.setOnSaveAllChangesAndRefresh(this::saveAllChangesAndRefresh);
         grid.setOnDeleteTask(this::deleteTaskAndRefresh);
 

@@ -83,18 +83,30 @@ import java.util.stream.Collectors;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class QualityBoard extends Main implements AfterNavigationObserver {
-    public static final String                          GANTT_BURNDOWN_CONTAINER_ID = "quality-board-gantt-burndown-container";
-    public static final String                          MENU_ITEM_ID                = "/quality-board";
+    /**
+     * Identifier of the JSON export button.
+     */
+    public static final String                          EXPORT_JSON_BUTTON_ID               = "quality-board-export-json";
+    /**
+     * Identifier of the XML export button.
+     */
+    public static final String                          EXPORT_XML_BUTTON_ID                = "quality-board-export-xml";
+    /**
+     * Identifier of the Excel export button.
+     */
+    public static final String                          EXPORT_XLSX_BUTTON_ID               = "quality-board-export-xlsx";
+    public static final String                          GANTT_BURNDOWN_CONTAINER_ID         = "quality-board-gantt-burndown-container";
+    public static final String                          MENU_ITEM_ID                        = "/quality-board";
     /**
      * Identifier of the control that opens the Gantt and burndown chart in a separate browser tab.
      */
     public static final String                          OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID = "open-gantt-burndown-chart-button";
-    public static final String                          SPRINT_GRID_NAME_PREFIX     = "sprint-grid-name-";
-    public static final String                          SPRINT_SELECTOR_ID          = "sprint-selector";
+    public static final String                          SPRINT_GRID_NAME_PREFIX             = "sprint-grid-name-";
+    public static final String                          SPRINT_SELECTOR_ID                  = "sprint-selector";
     /**
      * All non-Backlog sprints belonging to the current feature, used to populate the sprint selector.
      */
-    private             List<Sprint>                    allFeatureSprints           = new ArrayList<>();
+    private             List<Sprint>                    allFeatureSprints                   = new ArrayList<>();
     /**
      * Container for the burndown SVG (the spanning column in the stats grid).
      */
@@ -107,7 +119,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     @Autowired
     protected           Context                         context;
     private final       LocalDateTime                   created;
-    private final       GanttErrorHandler               eh                          = new GanttErrorHandler();
+    private final       GanttErrorHandler               eh                                  = new GanttErrorHandler();
     private final       FeatureApi                      featureApi;
     private             UUID                            featureId;
     /**
@@ -129,11 +141,11 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     private final       Image                           headerAvatar;
     private final       HorizontalLayout                headerControlsLayout;
     private final       HorizontalLayout                headerTitleLayout;
-    private final       HtmlUtil                        htmlUtil                    = new HtmlUtil();
+    private final       HtmlUtil                        htmlUtil                            = new HtmlUtil();
     /**
      * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
      */
-    private             boolean                         isRestoringFromUrl          = false;
+    private             boolean                         isRestoringFromUrl                  = false;
     private final       JsonMapper                      jsonMapper;
     private final       LocalDateTime                   now;
     private final       H2                              pageTitle;
@@ -304,6 +316,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         Anchor jsonAnchor = new Anchor(jsonHandler, "");
         jsonAnchor.getElement().setAttribute("download", true);
         Button jsonButton = new Button("JSON", new Icon(VaadinIcon.DOWNLOAD));
+        jsonButton.setId(EXPORT_JSON_BUTTON_ID);
         jsonButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
         jsonButton.getElement().setAttribute("title", "Download sprint data as JSON");
         jsonAnchor.add(jsonButton);
@@ -320,6 +333,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         Anchor xmlAnchor = new Anchor(xmlHandler, "");
         xmlAnchor.getElement().setAttribute("download", true);
         Button xmlButton = new Button("XML", new Icon(VaadinIcon.DOWNLOAD));
+        xmlButton.setId(EXPORT_XML_BUTTON_ID);
         xmlButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
         xmlButton.getElement().setAttribute("title", "Download sprint data as Microsoft Project XML (MSPDI)");
         xmlAnchor.add(xmlButton);
@@ -339,6 +353,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         Anchor xlsxAnchor = new Anchor(xlsxHandler, "");
         xlsxAnchor.getElement().setAttribute("download", true);
         Button xlsxButton = new Button("XLSX", new Icon(VaadinIcon.DOWNLOAD));
+        xlsxButton.setId(EXPORT_XLSX_BUTTON_ID);
         xlsxButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
         xlsxButton.getElement().setAttribute("title", "Download burndown values as an Excel workbook");
         xlsxAnchor.add(xlsxButton);

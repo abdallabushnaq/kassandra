@@ -95,7 +95,10 @@ import java.util.stream.Collectors;
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
     public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button";
     public static final  String                       FEATURE_SELECTOR                 = "feature-selector";
-    private static final String                       OVERVIEW_CONTAINER_ID            = "sprints-overview-chart-container";
+    /**
+     * Identifier of the container hosting the sprint overview chart.
+     */
+    public static final  String                       OVERVIEW_CONTAINER_ID            = "sprints-overview-chart-container";
     private static final String                       ROUTE_KEY_PREFIX                 = "overview:";
     public static final  String                       SPRINT_AI_PANEL_BUTTON           = "sprint-ai-panel-button";
     public static final  String                       SPRINT_GLOBAL_FILTER             = "sprint-global-filter";

@@ -50,12 +50,49 @@ public class OidcProviderManagementView extends VerticalLayout {
     public static final String PAGE_TITLE_ID = "identity-providers-page-title";
 
     /**
+     * Identifier of the provider name field.
+     */
+    public static final String NAME_FIELD_ID          = "identity-provider-name";
+    /**
+     * Identifier of the issuer URI field.
+     */
+    public static final String ISSUER_FIELD_ID        = "identity-provider-issuer";
+    /**
+     * Identifier of the client ID field.
+     */
+    public static final String CLIENT_ID_FIELD_ID     = "identity-provider-client-id";
+    /**
+     * Identifier of the client secret field.
+     */
+    public static final String CLIENT_SECRET_FIELD_ID = "identity-provider-client-secret";
+    /**
+     * Identifier of the scopes field.
+     */
+    public static final String SCOPES_FIELD_ID        = "identity-provider-scopes";
+    /**
+     * Identifier of the add-provider button.
+     */
+    public static final String ADD_BUTTON_ID          = "identity-provider-add-button";
+    /**
+     * Identifier of the providers grid.
+     */
+    public static final String GRID_ID                = "identity-providers-grid";
+    /**
+     * Prefix for provider enable/disable buttons, followed by the provider ID.
+     */
+    public static final String STATE_BUTTON_PREFIX    = "identity-provider-state-";
+    /**
+     * Prefix for provider delete buttons, followed by the provider ID.
+     */
+    public static final String DELETE_BUTTON_PREFIX   = "identity-provider-delete-";
+
+    /**
      * Route for OIDC provider administration.
      */
     public static final String ROUTE = "identity-providers";
 
     private final Grid<OidcProvider> grid = new Grid<>(OidcProvider.class, false);
-    private final OidcProviderApi     oidcProviderApi;
+    private final OidcProviderApi    oidcProviderApi;
 
     /**
      * Creates the identity-provider management view.
@@ -77,11 +114,16 @@ public class OidcProviderManagementView extends VerticalLayout {
     }
 
     private HorizontalLayout createProviderForm() {
-        TextField displayName = new TextField("Name");
-        TextField issuerUri = new TextField("Issuer URI");
-        TextField clientId = new TextField("Client ID");
+        TextField     displayName  = new TextField("Name");
+        TextField     issuerUri    = new TextField("Issuer URI");
+        TextField     clientId     = new TextField("Client ID");
         PasswordField clientSecret = new PasswordField("Client secret");
-        TextField scopes = new TextField("Scopes");
+        TextField     scopes       = new TextField("Scopes");
+        displayName.setId(NAME_FIELD_ID);
+        issuerUri.setId(ISSUER_FIELD_ID);
+        clientId.setId(CLIENT_ID_FIELD_ID);
+        clientSecret.setId(CLIENT_SECRET_FIELD_ID);
+        scopes.setId(SCOPES_FIELD_ID);
         scopes.setValue("openid,profile,email");
         Button addProvider = new Button("Add provider", event -> {
             try {
@@ -102,6 +144,7 @@ public class OidcProviderManagementView extends VerticalLayout {
             }
         });
 
+        addProvider.setId(ADD_BUTTON_ID);
         HorizontalLayout form = new HorizontalLayout(displayName, issuerUri, clientId, clientSecret, scopes, addProvider);
         form.setWidthFull();
         form.setAlignItems(Alignment.END);
@@ -109,6 +152,7 @@ public class OidcProviderManagementView extends VerticalLayout {
     }
 
     private void configureGrid() {
+        grid.setId(GRID_ID);
         grid.addColumn(OidcProvider::getDisplayName).setHeader("Name").setAutoWidth(true);
         grid.addColumn(OidcProvider::getIssuerUri).setHeader("Issuer").setFlexGrow(1);
         grid.addColumn(provider -> provider.isEnabled() ? "Enabled" : "Disabled").setHeader("Status").setAutoWidth(true);
@@ -137,6 +181,8 @@ public class OidcProviderManagementView extends VerticalLayout {
                 Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
         });
+        state.setId(STATE_BUTTON_PREFIX + provider.getId());
+        delete.setId(DELETE_BUTTON_PREFIX + provider.getId());
         return new HorizontalLayout(state, delete);
     }
 
@@ -145,7 +191,7 @@ public class OidcProviderManagementView extends VerticalLayout {
     }
 
     private OidcProviderCreateRequest createProviderRequest(String displayName, String issuerUri, String clientId,
-            String clientSecret, List<String> scopes) {
+                                                            String clientSecret, List<String> scopes) {
         OidcProviderCreateRequest request = new OidcProviderCreateRequest();
         request.setDisplayName(displayName);
         request.setIssuerUri(issuerUri);

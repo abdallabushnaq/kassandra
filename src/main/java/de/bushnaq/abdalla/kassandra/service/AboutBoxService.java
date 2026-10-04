@@ -18,9 +18,11 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dao.AboutImageDAO;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.repository.AboutImageRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -31,14 +33,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.EnumMap;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Service that manages the About View banner image.
  * <p>
- * On application startup a background daemon thread attempts to generate a 512×512 image
+ * On application startup a background daemon thread attempts to generate a banner image per theme
  * via Stable Diffusion. The result is cached both in memory (for the current process) and
- * in the database (across restarts). A new image is generated once per calendar day. When
+ * in the database (across restarts). A new image is generated once per theme per calendar day. When
  * Stable Diffusion is unavailable the last successfully generated image from the database
  * is used, so the About View always shows something useful.
  * </p>
@@ -47,20 +51,20 @@ import java.util.Optional;
 @Slf4j
 public class AboutBoxService {
 
-    static final         String[]               SD_LORA          = {
+    static final         String[]                   SD_LORA          = {
             "<lora:- SDXL - ptrn-no1_style_V1.0:1> ptrn-no1",
             "<lora:Abstract_Mosaic_Pattern:0.5> Abstract_Mosaic_Pattern",
             "<lora:AbstractPatternStyleXL:1> AbstractPatternStyle",
             "<lora:Circuit_pattern:1> circuitpattern",
             "<lora:novuschroma66 style_:1.3> novuschroma66 style swirl patterns",
             "<lora:ral-dstgrtptrn-sdxl:1> ral-dstgrtptrn",
-            "<lora:Test_Golden_Patterns.:1> gold patterns, gold and black spirit, liquid gold explosion, golden smoke magic, star dust, golden milky way, black background, magic fog.",
+            "<lora:Test_Golden_Patterns.:1> gold patterns, gold and black spirit, liquid gold explosion, golden smoke magic, star dust, golden milky way, magic fog.",
             "<lora:Zarabi:1> adrr-zrb, patterns, intricate weavings, rich colors",
     };
     /**
      * Stable Diffusion prompt used to generate the daily About View banner image.
      */
-    static final         String                 SD_PROMPT        =
+    static final         String                     SD_PROMPT        =
             """
                     Artistic, based on patterns and lines. Abstract futuristic digital art, AI circuit boards.
                     Futuristic neon color.
@@ -69,32 +73,30 @@ public class AboutBoxService {
                     Intricate micro-details, 8k resolution, colorful.
                     """;
     /**
-     * Sentinel value stored in {@link #cachedImage} when no image is available at all
+     * Sentinel value stored in {@link #cachedImages} when no image is available at all
      * (SD unavailable <em>and</em> no DB record), so callers can distinguish
      * "not yet known" ({@code null}) from "definitely nothing to show" (empty array).
      */
-    private static final byte[]                 SD_UNAVAILABLE   = new byte[0];
-    /**
-     * Singleton row id used in the {@code about_images} table.
-     */
-    private static final Long                   SINGLETON_ID     = 1L;
+    private static final byte[]                     SD_UNAVAILABLE   = new byte[0];
     @Autowired
-    private              AboutImageRepository   aboutImageRepository;
+    private              AboutImageRepository       aboutImageRepository;
     /**
      * Set to {@code false} by {@link #destroy()} so that any in-flight or future call to
-     * {@link #getOrGenerateImage()} returns the sentinel value without touching the database.
+     * {@link #getOrGenerateImage(ETheme)} returns the sentinel value without touching the database.
      * This prevents Hibernate "table not found" warnings when the JPA schema is dropped
      * during Spring context teardown (e.g. between {@code @DirtiesContext} tests).
      */
-    private volatile     boolean                active           = true;
+    private volatile     boolean                    active           = true;
     /**
      * Reference to the background pre-load thread so that {@link #destroy()} can join it.
      */
-    private              Thread                 backgroundThread = null;
-    private volatile     LocalDate              cacheDate        = null;
-    private volatile     byte[]                 cachedImage      = null;
+    private              Thread                     backgroundThread = null;
+    private final        EnumMap<ETheme, LocalDate> cacheDates       = new EnumMap<>(ETheme.class);
+    private final        EnumMap<ETheme, byte[]>    cachedImages     = new EnumMap<>(ETheme.class);
     @Autowired
-    private              StableDiffusionService stableDiffusionService;
+    private              StableDiffusionConfig      stableDiffusionConfig;
+    @Autowired
+    private              StableDiffusionService     stableDiffusionService;
     /**
      * The application version, resolved from {@code kassandra.version} in
      * {@code application.properties} via Maven resource filtering at build time.
@@ -102,11 +104,11 @@ public class AboutBoxService {
      */
     @Getter
     @Value("${kassandra.version:0.0.1}")
-    private              String                 version;
+    private              String                     version;
 
     private void cacheFromDb(AboutImageDAO dao) {
-        cachedImage = dao.getImageData();
-        cacheDate   = dao.getImageDate();
+        cachedImages.put(dao.getTheme(), dao.getImageData());
+        cacheDates.put(dao.getTheme(), dao.getImageDate());
     }
 
     /**
@@ -133,7 +135,7 @@ public class AboutBoxService {
     }
 
     /**
-     * Returns the banner image bytes for the About View.
+     * Returns the banner image bytes for the About View in the requested theme.
      * <p>
      * Resolution order:
      * <ol>
@@ -151,11 +153,12 @@ public class AboutBoxService {
      * This method is {@code synchronized}: only one thread calls SD at a time.
      * </p>
      *
-     * @return PNG bytes, an empty array when no image is available at all, or {@code null}
-     * while the init thread is still running (should not be observed by callers
-     * that block on this method)
+     * @param theme the light/dark theme to generate or retrieve
+     * @return PNG bytes, or an empty array when no image is available for this theme
+     * @throws NullPointerException if theme is null
      */
-    public synchronized byte[] getOrGenerateImage() {
+    public synchronized byte[] getOrGenerateImage(ETheme theme) {
+        Objects.requireNonNull(theme, "Theme must not be null");
         LocalDate today = LocalDate.now();
 
         // Guard: return immediately if the service is being shut down.
@@ -164,53 +167,56 @@ public class AboutBoxService {
         }
 
         // 1. In-memory cache hit
-        if (cachedImage != null && today.equals(cacheDate)) {
-            return cachedImage;
+        if (cachedImages.containsKey(theme) && today.equals(cacheDates.get(theme))) {
+            return cachedImages.get(theme);
         }
 
-        // 2. Load the persisted row (singleton id = 1)
-        Optional<AboutImageDAO> dbRecord = aboutImageRepository.findById(SINGLETON_ID);
+        // 2. Load the persisted image for this theme
+        Optional<AboutImageDAO> dbRecord = aboutImageRepository.findById(theme);
 
-        // 3. SD unavailable – return whatever is in the DB (even if stale)
+        if (dbRecord.isPresent() && today.equals(dbRecord.get().getImageDate()) && hasImageData(dbRecord.get())) {
+            log.info("Loading today's {} About View image from database", theme);
+            cacheFromDb(dbRecord.get());
+            return cachedImages.get(theme);
+        }
+
+        // SD unavailable – return this theme's DB image (even if stale)
         if (!stableDiffusionService.isAvailable()) {
             if (dbRecord.isPresent() && hasImageData(dbRecord.get())) {
-                log.info("Stable Diffusion not available – using database image ({})", dbRecord.get().getImageDate());
+                log.info("Stable Diffusion not available – using {} database image ({})", theme, dbRecord.get().getImageDate());
                 cacheFromDb(dbRecord.get());
             } else {
-                log.info("Stable Diffusion not available and no database image – About View banner will be hidden");
-                cachedImage = SD_UNAVAILABLE;
+                log.info("Stable Diffusion not available and no {} database image – About View banner will be hidden", theme);
+                cachedImages.put(theme, SD_UNAVAILABLE);
             }
-            return cachedImage;
+            return cachedImages.get(theme);
         }
 
-        // 4. DB already has today's image – no need to call SD
-        if (dbRecord.isPresent() && today.equals(dbRecord.get().getImageDate()) && hasImageData(dbRecord.get())) {
-            log.info("Loading today's About View image from database");
-            cacheFromDb(dbRecord.get());
-            return cachedImage;
-        }
-
-        // 5. Generate a fresh image via Stable Diffusion
+        // Generate a fresh image for this theme via Stable Diffusion
         try {
-            log.info("Generating About View banner image via Stable Diffusion");
-            String               prompt = SD_PROMPT + " " + SD_LORA[(int) (Math.random() * SD_LORA.length)];
+            log.info("Generating {} About View banner image via Stable Diffusion", theme);
+            String background = theme == ETheme.dark
+                    ? "Dark background, low-key lighting, background color " + stableDiffusionConfig.getAvatarDarkBackgroundColor()
+                    : "Light background, high-key lighting, background color " + stableDiffusionConfig.getAvatarLightBackgroundColor();
+            String               prompt = SD_PROMPT + " " + SD_LORA[(int) (Math.random() * SD_LORA.length)] + " " + background;
             GeneratedImageResult result = stableDiffusionService.text2ImgWithOriginal(prompt, 1024, null, -1L, 3.0);
-            cachedImage = result.getOriginalImage();
-            cacheDate   = today;
-            persistToDb(dbRecord, today, cachedImage);
-            log.info("About View banner image generated and persisted for {}", today);
+            byte[]               image  = result.getOriginalImage();
+            persistToDb(dbRecord, theme, today, image);
+            cachedImages.put(theme, image);
+            cacheDates.put(theme, today);
+            log.info("{} About View banner image generated and persisted for {}", theme, today);
         } catch (StableDiffusionException e) {
-            log.warn("Failed to generate About View image: {}", e.getMessage());
-            // Fall back to any existing DB image rather than showing nothing
+            log.warn("Failed to generate {} About View image: {}", theme, e.getMessage());
+            // Fall back to this theme's existing DB image rather than showing nothing
             if (dbRecord.isPresent() && hasImageData(dbRecord.get())) {
-                log.info("Using previous database image as fallback ({})", dbRecord.get().getImageDate());
+                log.info("Using previous {} database image as fallback ({})", theme, dbRecord.get().getImageDate());
                 cacheFromDb(dbRecord.get());
             } else {
-                cachedImage = SD_UNAVAILABLE;
-                cacheDate   = today;
+                cachedImages.put(theme, SD_UNAVAILABLE);
+                cacheDates.put(theme, today);
             }
         }
-        return cachedImage;
+        return cachedImages.get(theme);
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -220,19 +226,23 @@ public class AboutBoxService {
     }
 
     /**
-     * Kicks off a daemon background thread that pre-loads or generates the first daily
-     * image so the About View can open immediately on first use.
+     * Kicks off a daemon background thread that pre-loads or generates both daily
+     * themed images so the About View can open immediately on first use.
      */
     @PostConstruct
     private void init() {
-        backgroundThread = new Thread(this::getOrGenerateImage, "about-image-init");
+        backgroundThread = new Thread(() -> {
+            for (ETheme theme : ETheme.values()) {
+                getOrGenerateImage(theme);
+            }
+        }, "about-image-init");
         backgroundThread.setDaemon(true);
         backgroundThread.start();
     }
 
-    private void persistToDb(Optional<AboutImageDAO> existing, LocalDate date, byte[] data) {
+    private void persistToDb(Optional<AboutImageDAO> existing, ETheme theme, LocalDate date, byte[] data) {
         AboutImageDAO dao = existing.orElse(new AboutImageDAO());
-        dao.setId(SINGLETON_ID);
+        dao.setTheme(theme);
         dao.setImageDate(date);
         dao.setImageData(data);
         aboutImageRepository.save(dao);

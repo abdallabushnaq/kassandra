@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,8 @@ import de.bushnaq.abdalla.kassandra.rest.api.AuditLogApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ServerSettingsApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.service.SecurityConfigurationService;
+import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
+import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskCard;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryOperationDetails;
@@ -101,6 +103,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       FeatureListViewTester           featureListViewTester;
     private       String                          featureName;
+    private       boolean                         helpOnly;
     private final LocalDate                       firstDay         = LocalDate.of(2025, 6, 1);
     private final LocalDate                       firstDayRecord1  = LocalDate.of(2026, 8, 4);
     private       Availability                    lastAvailability = null;
@@ -185,6 +188,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                         5, 8, 8, 4, 6, 7)//official screenshot data
         };
         return Arrays.stream(randomCases).toList();
+    }
+
+    private static List<RandomCase> listHelpRandomCases() {
+        return List.of(new RandomCase(4,
+                OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
+                LocalDate.parse("2026-02-01"), Duration.ofDays(10),
+                1, 1, 1, 1, 1, 1, 3, 3,
+                5, 4, 4, 4, 6, 7));
     }
 
     private void navigateTo(String route) {
@@ -284,11 +295,18 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         activeSprintsTester.closeDialog(TaskDialog.CANCEL_BUTTON);
     }
 
-    private void takeAdministrationScreenshots(String folder) {
+    private void takeAdministrationScreenshots(String folder, ETheme theme) throws IOException {
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_AUDIT);
         seleniumHandler.waitForElementToBeClickable(AuditLogView.PAGE_TITLE_ID);
-        seleniumHandler.takeScreenShot(folder + "/audit-log-view.png");
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/audit-log-view.png");
+        }
+        takeHelpElements(AuditLogView.class, AuditLogView.PAGE_TITLE_ID, theme,
+                AuditLogView.SEARCH_FIELD_ID, AuditLogView.USER_FILTER_ID, AuditLogView.ACTION_FILTER_ID,
+                AuditLogView.FROM_FILTER_ID, AuditLogView.TO_FILTER_ID, AuditLogView.APPLY_BUTTON_ID,
+                AuditLogView.PREVIOUS_BUTTON_ID, AuditLogView.NEXT_BUTTON_ID, AuditLogView.PAGE_NUMBER_ID, AuditLogView.GO_BUTTON_ID);
+        seleniumHandler.takeHelpGridScreenshot(AuditLogView.class, AuditLogView.GRID_ID);
         seleniumHandler.setTextField(AuditLogView.SEARCH_FIELD_ID, productName);
         seleniumHandler.click(AuditLogView.ACTION_FILTER_ID);
         By updateOption = By.xpath("//vaadin-select-item[normalize-space(.)='UPDATE']");
@@ -299,11 +317,18 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         String     eventKey = event.revision() + "-" + event.entityId();
         seleniumHandler.click(AuditLogView.EVENT_ID_PREFIX + eventKey);
         seleniumHandler.waitForElementToBeClickable(AuditLogView.DETAILS_ID_PREFIX + eventKey);
-        seleniumHandler.takeScreenShot(folder + "/audit-log-details.png");
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/audit-log-details.png");
+        }
+        seleniumHandler.takeHelpRowActionScreenshot(AuditLogView.class, AuditLogView.EVENT_ID_PREFIX);
+        seleniumHandler.takeHelpRowActionScreenshot(AuditLogView.class, AuditLogView.DETAILS_ID_PREFIX);
 
         navigateTo(OidcProviderManagementView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(OidcProviderManagementView.PAGE_TITLE_ID);
-        seleniumHandler.takeScreenShot(folder + "/identity-providers-view.png");
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/identity-providers-view.png");
+        }
+        takeOidcProviderElementScreenshots(theme);
 
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_SETTINGS);
@@ -325,7 +350,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                     seleniumHandler.waitUntil(ExpectedConditions.refreshed(ExpectedConditions.elementToBeSelected(
                             By.cssSelector("#" + checkboxId + " input[type='checkbox']"))));
                 }
-                takeScrollableScreenshots(ServerSettingsView.DETAILS_ID, folder + "/server-settings-" + category);
+                takeServerSettingsElementScreenshots(theme, category, settings);
+                if (!helpOnly) {
+                    takeScrollableScreenshots(ServerSettingsView.DETAILS_ID, folder + "/server-settings-" + category);
+                }
             } finally {
                 if (enableForCapture) {
                     serverSettingsApi.updateCategoryEnabled(category, false);
@@ -334,7 +362,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         }
     }
 
-    private void takeAuthenticationScreenshots(String folder, ETheme theme) {
+    private void takeAuthenticationScreenshots(String folder, ETheme theme) throws IOException {
         var                   configuration        = securityConfigurationService.getConfiguration();
         String                originalRecoveryHash = configuration.getRecoveryPasswordHash();
         List<OidcProviderDAO> enabledProviders     = oidcProviderService.getProviders().stream().filter(OidcProviderDAO::isEnabled).toList();
@@ -344,20 +372,31 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             configuration.setRecoveryPasswordHash(passwordEncoder.encode("screenshot-recovery-password"));
             securityConfigurationRepository.saveAndFlush(configuration);
             takeLoginScreenshot(folder + "/login-view.png", theme, LoginView.OIDC_LOGIN_BUTTON);
+            seleniumHandler.prepareHelpScreenshots(LoginView.LOGIN_VIEW);
+            seleniumHandler.takeHelpElementScreenshot(LoginView.class, LoginView.OIDC_LOGIN_BUTTON);
 
             // Providers require distinct issuers; the existing master realm also supports discovery.
             additional = oidcProviderService.createProvider("Keycloak master", URI.create(primary.getIssuerUri()).resolve("master").toString(),
                     "admin-cli", "screenshot-client-secret", List.of(primary.getScopes().split(",")));
             takeLoginScreenshot(folder + "/login-multiple-providers.png", theme, LoginView.OIDC_PROVIDER_SELECTOR);
+            seleniumHandler.prepareHelpScreenshots(LoginView.LOGIN_VIEW);
+            seleniumHandler.takeHelpElementScreenshot(LoginView.class, LoginView.OIDC_PROVIDER_SELECTOR);
+            seleniumHandler.takeHelpElementScreenshot(LoginView.class, LoginView.OIDC_PROVIDER_SIGN_IN_BUTTON);
             oidcProviderService.disableProvider(additional.getId());
             for (OidcProviderDAO provider : enabledProviders) {
                 oidcProviderService.disableProvider(provider.getId());
             }
             takeLoginScreenshot(folder + "/login-no-providers.png", theme, LoginView.SETUP_LINK);
+            seleniumHandler.prepareHelpScreenshots(LoginView.LOGIN_VIEW);
+            seleniumHandler.takeHelpElementScreenshot(LoginView.class, LoginView.SETUP_LINK);
             navigateTo(RecoveryView.ROUTE);
             seleniumHandler.waitForElementToBeClickable(RecoveryView.VIEW_ID);
             applyLoginTheme(theme);
-            seleniumHandler.takeScreenShot(folder + "/recovery-view.png");
+            if (!helpOnly) {
+                seleniumHandler.takeScreenShot(folder + "/recovery-view.png");
+            }
+            seleniumHandler.prepareHelpScreenshots(RecoveryView.VIEW_ID);
+            seleniumHandler.takeHelpElementScreenshot(RecoveryView.class, RecoveryView.FORM_ID);
         } finally {
             try {
                 for (OidcProviderDAO provider : enabledProviders) {
@@ -520,6 +559,181 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.takeHelpRowActionScreenshot(FeatureListView.class, FeatureListView.FEATURE_GRID_DELETE_BUTTON_PREFIX);
         seleniumHandler.takeHelpElementScreenshot(FeatureListView.class, MainLayout.ID_ACTION_HISTORY_BUTTON);
         seleniumHandler.takeHelpGridScreenshot(FeatureListView.class, FeatureListView.FEATURE_GRID);
+        seleniumHandler.prepareHelpScreenshots(FeatureListView.FEATURE_LIST_PAGE_TITLE);
+    }
+
+    private void takeHelpElements(Class<?> view, String titleId, ETheme theme, String... elementIds) throws IOException {
+        seleniumHandler.setHelpScreenshotTheme(theme);
+        seleniumHandler.prepareHelpScreenshots(titleId);
+        for (String elementId : elementIds) {
+            seleniumHandler.takeHelpElementScreenshot(view, elementId);
+        }
+        seleniumHandler.prepareHelpScreenshots(titleId);
+    }
+
+    private void takeHelpListElements(Class<?> view, String titleId, ETheme theme, String gridId,
+                                      String createId, String filterId, String counterId,
+                                      String editPrefix, String deletePrefix, String... additionalIds) throws IOException {
+        takeHelpElements(view, titleId, theme, createId, filterId, filterId + "-help-button", counterId);
+        for (String elementId : additionalIds) {
+            seleniumHandler.takeHelpElementScreenshot(view, elementId);
+        }
+        seleniumHandler.takeHelpGridScreenshot(view, gridId);
+        seleniumHandler.takeHelpRowActionScreenshot(view, editPrefix);
+        seleniumHandler.takeHelpRowActionScreenshot(view, deletePrefix);
+        seleniumHandler.prepareHelpScreenshots(titleId);
+    }
+
+    private void takeProductElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(ProductListView.class, ProductListView.PRODUCT_LIST_PAGE_TITLE, theme,
+                ProductListView.PRODUCT_GRID, ProductListView.CREATE_PRODUCT_BUTTON, ProductListView.PRODUCT_GLOBAL_FILTER,
+                ProductListView.PRODUCT_ROW_COUNTER, ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX,
+                ProductListView.PRODUCT_GRID_DELETE_BUTTON_PREFIX, ProductListView.PRODUCT_AI_PANEL_BUTTON,
+                ProductListView.PRODUCT_HELP_BUTTON, MainLayout.ID_ACTION_HISTORY_BUTTON);
+        seleniumHandler.takeHelpRowActionScreenshot(ProductListView.class, ProductListView.PRODUCT_GRID_ACCESS_PREFIX);
+        seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+    }
+
+    private void takeVersionElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(VersionListView.class, VersionListView.VERSION_LIST_PAGE_TITLE, theme,
+                VersionListView.VERSION_GRID, VersionListView.CREATE_VERSION_BUTTON, VersionListView.VERSION_GLOBAL_FILTER,
+                VersionListView.VERSION_ROW_COUNTER, VersionListView.VERSION_GRID_EDIT_BUTTON_PREFIX,
+                VersionListView.VERSION_GRID_DELETE_BUTTON_PREFIX, VersionListView.PRODUCT_SELECTOR,
+                VersionListView.VERSION_AI_PANEL_BUTTON, MainLayout.ID_ACTION_HISTORY_BUTTON);
+    }
+
+    private void takeSprintElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(SprintListView.class, SprintListView.SPRINT_LIST_PAGE_TITLE, theme,
+                SprintListView.SPRINT_GRID, SprintListView.CREATE_SPRINT_BUTTON, SprintListView.SPRINT_GLOBAL_FILTER,
+                SprintListView.SPRINT_ROW_COUNTER, SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX,
+                SprintListView.SPRINT_GRID_DELETE_BUTTON_PREFIX, SprintListView.FEATURE_SELECTOR,
+                SprintListView.SPRINT_AI_PANEL_BUTTON, MainLayout.ID_ACTION_HISTORY_BUTTON);
+        seleniumHandler.takeHelpRowActionScreenshot(SprintListView.class, SprintListView.SPRINT_GRID_CONFIG_BUTTON_PREFIX);
+        seleniumHandler.takeHelpElementScreenshot(SprintListView.class, SprintListView.OVERVIEW_CONTAINER_ID);
+        seleniumHandler.prepareHelpScreenshots(SprintListView.SPRINT_LIST_PAGE_TITLE);
+    }
+
+    private void takeBacklogElementScreenshots(ETheme theme) throws IOException {
+        takeHelpElements(Backlog.class, Backlog.BACKLOG_PAGE_TITLE_ID, theme,
+                Backlog.SEARCH_FIELD_ID, Backlog.USER_SELECTOR_ID, Backlog.SPRINT_SELECTOR_ID,
+                Backlog.CLEAR_FILTER_BUTTON_ID, Backlog.EXPAND_TOGGLE_BUTTON_ID,
+                Backlog.CREATE_MILESTONE_BUTTON_ID, Backlog.CREATE_STORY_BUTTON_ID, Backlog.CREATE_TASK_BUTTON_ID,
+                Backlog.EDIT_BUTTON_ID, Backlog.SPRINT_STATUS_SELECTOR_ID, Backlog.OPEN_GANTT_CHART_BUTTON_ID);
+        seleniumHandler.takeHelpGridScreenshot(Backlog.class, Backlog.TASK_GRID_ID);
+        seleniumHandler.takeHelpRowActionScreenshot(Backlog.class, TaskGrid.TASK_GRID_DELETE_BUTTON_PREFIX);
+        seleniumHandler.takeHelpElementScreenshot(Backlog.class, Backlog.GANTT_CHART_CONTAINER_ID);
+        seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
+        try {
+            seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
+            takeHelpElements(Backlog.class, Backlog.BACKLOG_PAGE_TITLE_ID, theme,
+                    Backlog.SAVE_BUTTON_ID, Backlog.CANCEL_BUTTON_ID);
+            seleniumHandler.takeHelpRowActionScreenshot(Backlog.class, TaskGrid.TASK_GRID_DEPENDENCY_PREFIX);
+        } finally {
+            seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
+            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+            seleniumHandler.prepareHelpScreenshots(Backlog.BACKLOG_PAGE_TITLE_ID);
+        }
+    }
+
+    private void takeActiveSprintsElementScreenshots(ETheme theme) throws IOException {
+        takeHelpElements(ActiveSprints.class, "page-header", theme, ActiveSprints.ID_SEARCH_FIELD,
+                ActiveSprints.ID_USER_SELECTOR, ActiveSprints.ID_SPRINT_SELECTOR, ActiveSprints.ID_GROUPING_MODE_SELECTOR,
+                ActiveSprints.ID_CLEAR_FILTERS_BUTTON, ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
+                ActiveSprints.GANTT_BURNDOWN_CONTAINER_ID);
+        seleniumHandler.takeHelpElementScreenshot(ActiveSprints.class, ActiveSprints.BOARD_ID);
+        seleniumHandler.takeHelpRowActionScreenshot(ActiveSprints.class, TaskCard.TASK_CARD_TITLE_ID_PREFIX);
+        seleniumHandler.prepareHelpScreenshots("page-header");
+    }
+
+    private void takeUserGroupElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(UserGroupListView.class, UserGroupListView.GROUP_LIST_PAGE_TITLE, theme,
+                UserGroupListView.GROUP_GRID, UserGroupListView.CREATE_GROUP_BUTTON, UserGroupListView.GROUP_GLOBAL_FILTER,
+                UserGroupListView.GROUP_ROW_COUNTER, UserGroupListView.GROUP_GRID_EDIT_BUTTON_PREFIX,
+                UserGroupListView.GROUP_GRID_DELETE_BUTTON_PREFIX);
+    }
+
+    private void takeUserElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(UserListView.class, UserListView.USER_LIST_PAGE_TITLE, theme,
+                UserListView.USER_GRID, UserListView.CREATE_USER_BUTTON, UserListView.USER_GLOBAL_FILTER,
+                UserListView.USER_ROW_COUNTER, UserListView.USER_GRID_EDIT_BUTTON_PREFIX,
+                UserListView.USER_GRID_DELETE_BUTTON_PREFIX, UserListView.USER_AI_PANEL_BUTTON);
+    }
+
+    private void takeAvailabilityElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(AvailabilityListView.class, AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE, theme,
+                AvailabilityListView.AVAILABILITY_GRID, AvailabilityListView.CREATE_AVAILABILITY_BUTTON,
+                AvailabilityListView.AVAILABILITY_GLOBAL_FILTER, AvailabilityListView.AVAILABILITY_ROW_COUNTER,
+                AvailabilityListView.AVAILABILITY_GRID_EDIT_BUTTON_PREFIX, AvailabilityListView.AVAILABILITY_GRID_DELETE_BUTTON_PREFIX,
+                AvailabilityCalendarComponent.CALENDAR_PREV_YEAR_BTN, AvailabilityCalendarComponent.CALENDAR_NEXT_YEAR_BTN);
+        seleniumHandler.takeHelpRowActionScreenshot(AvailabilityListView.class, AvailabilityCalendarComponent.LEGEND_ITEM_ID_PREFIX);
+        seleniumHandler.prepareHelpScreenshots(AvailabilityListView.AVAILABILITY_LIST_PAGE_TITLE);
+    }
+
+    private void takeLocationElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(LocationListView.class, LocationListView.LOCATION_LIST_PAGE_TITLE, theme,
+                LocationListView.LOCATION_GRID, LocationListView.CREATE_LOCATION_BUTTON,
+                LocationListView.LOCATION_GLOBAL_FILTER, LocationListView.LOCATION_ROW_COUNTER,
+                LocationListView.LOCATION_GRID_EDIT_BUTTON_PREFIX, LocationListView.LOCATION_GRID_DELETE_BUTTON_PREFIX);
+        takeOffDayCalendarElementScreenshots(LocationListView.class, LocationListView.LOCATION_LIST_PAGE_TITLE, theme);
+    }
+
+    private void takeOffDayElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(OffDayListView.class, OffDayListView.OFFDAY_LIST_PAGE_TITLE, theme,
+                OffDayListView.OFFDAY_GRID, OffDayListView.CREATE_OFFDAY_BUTTON,
+                OffDayListView.OFFDAY_GLOBAL_FILTER, OffDayListView.OFFDAY_ROW_COUNTER,
+                OffDayListView.OFFDAY_GRID_EDIT_BUTTON_PREFIX, OffDayListView.OFFDAY_GRID_DELETE_BUTTON_PREFIX);
+        takeOffDayCalendarElementScreenshots(OffDayListView.class, OffDayListView.OFFDAY_LIST_PAGE_TITLE, theme);
+    }
+
+    private void takeUserWorkWeekElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(UserWorkWeekListView.class, UserWorkWeekListView.PAGE_TITLE, theme,
+                UserWorkWeekListView.GRID, UserWorkWeekListView.CREATE_BUTTON, UserWorkWeekListView.GLOBAL_FILTER,
+                UserWorkWeekListView.ROW_COUNTER, UserWorkWeekListView.GRID_EDIT_BUTTON_PREFIX,
+                UserWorkWeekListView.GRID_DELETE_BUTTON_PREFIX);
+        takeOffDayCalendarElementScreenshots(UserWorkWeekListView.class, UserWorkWeekListView.PAGE_TITLE, theme);
+    }
+
+    private void takeOffDayCalendarElementScreenshots(Class<?> view, String titleId, ETheme theme) throws IOException {
+        takeHelpElements(view, titleId, theme, OffDaysCalendarComponent.CALENDAR_PREV_YEAR_BTN,
+                OffDaysCalendarComponent.CALENDAR_NEXT_YEAR_BTN, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_VACATION,
+                OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_SICK_LEAVE, OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_HOLIDAY,
+                OffDaysCalendarComponent.LEGEND_ITEM_ID_PREFIX_BUSINESS_TRIP);
+    }
+
+    private void takeWorkWeekElementScreenshots(ETheme theme) throws IOException {
+        takeHelpListElements(WorkWeekListView.class, WorkWeekListView.PAGE_TITLE, theme,
+                WorkWeekListView.GRID, WorkWeekListView.CREATE_BUTTON, WorkWeekListView.GLOBAL_FILTER,
+                WorkWeekListView.ROW_COUNTER, WorkWeekListView.GRID_EDIT_BUTTON_PREFIX, WorkWeekListView.GRID_DELETE_BUTTON_PREFIX);
+    }
+
+    private void takeOidcProviderElementScreenshots(ETheme theme) throws IOException {
+        takeHelpElements(OidcProviderManagementView.class, OidcProviderManagementView.PAGE_TITLE_ID, theme,
+                OidcProviderManagementView.NAME_FIELD_ID, OidcProviderManagementView.ISSUER_FIELD_ID,
+                OidcProviderManagementView.CLIENT_ID_FIELD_ID, OidcProviderManagementView.CLIENT_SECRET_FIELD_ID,
+                OidcProviderManagementView.SCOPES_FIELD_ID, OidcProviderManagementView.ADD_BUTTON_ID);
+        seleniumHandler.takeHelpGridScreenshot(OidcProviderManagementView.class, OidcProviderManagementView.GRID_ID);
+        seleniumHandler.takeHelpRowActionScreenshot(OidcProviderManagementView.class, OidcProviderManagementView.STATE_BUTTON_PREFIX);
+        seleniumHandler.takeHelpRowActionScreenshot(OidcProviderManagementView.class, OidcProviderManagementView.DELETE_BUTTON_PREFIX);
+        seleniumHandler.prepareHelpScreenshots(OidcProviderManagementView.PAGE_TITLE_ID);
+    }
+
+    private void takeServerSettingsElementScreenshots(ETheme theme, String category, List<ServerSetting> settings) throws IOException {
+        takeHelpElements(ServerSettingsView.class, ServerSettingsView.PAGE_TITLE_ID, theme,
+                ServerSettingsView.CATEGORY_BUTTON_PREFIX + category, ServerSettingsView.CATEGORY_TITLE_PREFIX + category);
+        ServerSetting definition = settings.stream().filter(setting -> category.equals(setting.getCategoryKey())).findFirst().orElseThrow();
+        if (definition.isCategoryAllowDisable()) {
+            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CATEGORY_ENABLED_PREFIX + category);
+        }
+        for (ServerSetting setting : settings.stream().filter(candidate -> category.equals(candidate.getCategoryKey())).toList()) {
+            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.SETTING_FIELD_PREFIX + setting.getKey());
+            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.SAVE_BUTTON_PREFIX + setting.getKey());
+            if (setting.isTestable()) {
+                seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.TEST_BUTTON_PREFIX + setting.getKey());
+            }
+            if (setting.isSecret() && setting.isConfigured()) {
+                seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CLEAR_BUTTON_PREFIX + setting.getKey());
+            }
+        }
     }
 
     /**
@@ -583,7 +797,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         navigateTo(LoginView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(readyId);
         applyLoginTheme(theme);
-        seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, fileName);
+        if (!helpOnly) {
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, fileName);
+        }
     }
 
     /**
@@ -693,25 +909,31 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //AboutView
         //-----------------
-        StableDiffusionService.setEnabled(true);
+        StableDiffusionService.setEnabled(!helpOnly);
         try {
-            aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            aboutViewTester.login("christopher.paul@kassandra.org", "password", null,
+                    helpOnly ? null : testInfo.getTestClass().get().getSimpleName(),
+                    helpOnly ? null : generateTestCaseName(testInfo));
             // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
-            new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
-                    .withMessage("About View banner did not finish loading before screenshot capture")
-                    .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
-                            .stream()
-                            .anyMatch(image -> image.isDisplayed()
-                                    && "true".equals(image.getDomProperty("complete"))
-                                    && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
+            if (!helpOnly) {
+                new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
+                        .withMessage("About View banner did not finish loading before screenshot capture")
+                        .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
+                                .stream()
+                                .anyMatch(image -> image.isDisplayed()
+                                        && "true".equals(image.getDomProperty("complete"))
+                                        && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
+            }
         } finally {
             StableDiffusionService.setEnabled(false);
         }
-        if (ETheme.dark.equals(eTheme)) {
-            seleniumHandler.click(MainLayout.ID_THEME_TOGGLE);
-            seleniumHandler.wait(1000);
+        seleniumHandler.setHelpScreenshotTheme(eTheme);
+        takeHelpElements(AboutView.class, AboutView.ABOUT_PAGE_TITLE, eTheme,
+                AboutView.ABOUT_PAGE_TITLE, AboutView.LICENSE_LINK_ID, AboutView.GITHUB_LINK_ID,
+                MainLayout.ID_THEME_TOGGLE, MainLayout.ID_USER_MENU);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/about-view.png");
         }
-        seleniumHandler.takeScreenShot(folder + "/about-view.png");
 
         if (false) {
         }
@@ -719,32 +941,53 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //ProductListView
         //-----------------
         productListViewTester.switchToProductListView();
-        seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
-        takeProductDialogScreenshots(folder);
-        takeProductHistoryScreenshots(folder);
+        takeProductElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
+            takeProductDialogScreenshots(folder);
+            takeProductHistoryScreenshots(folder);
+        } else {
+            // Record a regular update so the audit-details example is independent of cached fixture history.
+            Product product = peg.productApi.getAll().stream().filter(p -> productName.equals(p.getName())).findFirst().orElseThrow();
+            product.setName(productName + " - help screenshot");
+            try {
+                peg.productApi.update(product);
+            } finally {
+                product.setName(productName);
+                peg.productApi.update(product);
+            }
+        }
         productListViewTester.selectProduct(productName);
 
         //-----------------
         //VersionListView
         //-----------------
-        seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
-        takeVersionDialogScreenshots(folder);
+        takeVersionElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
+            takeVersionDialogScreenshots(folder);
+        }
         versionListViewTester.selectVersion(versionName);
 
         //-----------------
         //FeatureListView
         //-----------------
-        seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
         takeFeatureElementScreenshots(eTheme);
-        takeFeatureDialogScreenshots(folder);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
+            takeFeatureDialogScreenshots(folder);
+        }
         featureListViewTester.selectFeature(featureName);
 
         //-----------------
         //SprintListView
         //-----------------
         seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
-        seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
-        takeSprintDialogScreenshots(folder);
+        takeSprintElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
+            takeSprintDialogScreenshots(folder);
+        }
         sprintListViewTester.selectSprint(sprintName);
 
 
@@ -752,17 +995,25 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //QualityBoard
         //-----------------
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
+        takeHelpElements(QualityBoard.class, "page-header", eTheme,
+                QualityBoard.SPRINT_SELECTOR_ID, QualityBoard.EXPORT_JSON_BUTTON_ID, QualityBoard.EXPORT_XML_BUTTON_ID,
+                QualityBoard.EXPORT_XLSX_BUTTON_ID, QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
+                QualityBoard.GANTT_BURNDOWN_CONTAINER_ID);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
+        }
         seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "Lisbon");
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
-        takeDetachedChartScreenshot(QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
-                folder + "/quality-board-detached-chart.png");
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
+            takeDetachedChartScreenshot(QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
+                    folder + "/quality-board-detached-chart.png");
+        }
 
         //-----------------
         //UserProfileView
         //-----------------
-        takeUserProfileScreenshots(folder);
+        takeUserProfileScreenshots(folder, eTheme);
 
         //-----------------
         //UserGroupListView
@@ -770,8 +1021,11 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS);
         seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
-        seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
-        takeUserGroupDialogScreenshots(folder);
+        takeUserGroupElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
+            takeUserGroupDialogScreenshots(folder);
+        }
 
 
         //-----------------
@@ -780,66 +1034,136 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         backlogTester.switchToBacklog();
         seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
-        seleniumHandler.takeScreenShot(folder + "/backlog.png");
-        takeDetachedChartScreenshot(Backlog.OPEN_GANTT_CHART_BUTTON_ID, RenderUtil.GANTT_CHART, folder + "/backlog-detached-chart.png");
-        takeDependencyDialogScreenshots(folder);
+        takeBacklogElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/backlog.png");
+            takeDetachedChartScreenshot(Backlog.OPEN_GANTT_CHART_BUTTON_ID, RenderUtil.GANTT_CHART, folder + "/backlog-detached-chart.png");
+            takeDependencyDialogScreenshots(folder);
+        }
 
         //-----------------
         //ActiveSprints
         //-----------------
-        activeSprintsTester.switchToActiveSprints();
+        if (helpOnly) {
+            Sprint activeSprint = peg.sprintApi.getAll().stream().filter(sprint -> sprintName.equals(sprint.getName())).findFirst().orElseThrow();
+            navigateTo(ActiveSprints.ROUTE + "?sprints=" + activeSprint.getId() + "&groupBy=" + GroupingMode.FEATURES.name());
+        } else {
+            activeSprintsTester.switchToActiveSprints();
+        }
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
-        takeDetachedChartScreenshot(ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
-                folder + "/active-sprints-detached-chart.png");
-        takeActiveSprintsDialogScreenshots(folder);
+        takeActiveSprintsElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+            takeDetachedChartScreenshot(ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
+                    folder + "/active-sprints-detached-chart.png");
+            takeActiveSprintsDialogScreenshots(folder);
+        }
 
         //-----------------
         //UserListView
         //-----------------
         userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
-        takeUserDialogScreenshots(folder);
+        takeUserElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
+            takeUserDialogScreenshots(folder);
+        }
 
         //-----------------
         //AvailabilityListView
         //-----------------
         availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
-        takeAvailabilityDialogScreenshots(folder);
+        takeAvailabilityElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
+            takeAvailabilityDialogScreenshots(folder);
+        }
 
         //-----------------
         //LocationListView
         //-----------------
         locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
-        takeLocationDialogScreenshots(folder);
+        takeLocationElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
+            takeLocationDialogScreenshots(folder);
+        }
 
         //-----------------
         //OffdayListView
         //-----------------
         offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
-        takeOffDayDialogScreenshots(folder);
+        takeOffDayElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
+            takeOffDayDialogScreenshots(folder);
+        }
 
         //-----------------
         //UserWorkWeekListView
         //-----------------
         userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-        seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
-        takeUserWorkWeekDialogScreenshots(folder);
+        takeUserWorkWeekElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
+            takeUserWorkWeekDialogScreenshots(folder);
+        }
 
         //-----------------
         //WorkWeekListView
         //-----------------
         workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
-        takeWorkWeekDialogScreenshots(folder);
+        takeWorkWeekElementScreenshots(eTheme);
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
+            takeWorkWeekDialogScreenshots(folder);
+        }
         if (false) {
         }
-        takeAdministrationScreenshots(folder);
+        takeAdministrationScreenshots(folder, eTheme);
         aboutViewTester.logout();
         takeAuthenticationScreenshots(folder, eTheme);
+    }
+
+    /**
+     * Regenerates help element images for every view in the screenshot tour, in both themes.
+     * Does not invoke GPU services, record video, or wait for the browser to be closed manually.
+     *
+     * @param randomCase deterministic screenshot fixture
+     * @param testInfo   current test metadata
+     * @throws Exception if fixture creation or screenshot capture fails
+     */
+    @ParameterizedTest
+    @MethodSource("listHelpRandomCases")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void takeHelpScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        helpOnly = true;
+        prepareScreenshotFixture(randomCase, testInfo);
+        for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+            takeScreenshot(testInfo, null, theme);
+        }
+    }
+
+    private void prepareScreenshotFixture(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
+        StableDiffusionService.setEnabled(false);
+        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
+        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        generateProductsIfNeeded(testInfo, randomCase, !helpOnly);
+        StableDiffusionService.setEnabled(false);
+        read();
+        userName    = "Christopher Paul";
+        productName = peg.nameGenerator.generateProductName(0);
+        versionName = peg.nameGenerator.generateVersionName(0);
+        featureName = peg.nameGenerator.generateFeatureName(0);
+        sprintName  = peg.nameGenerator.generateSprintName(1);
+        if (helpOnly) {
+            // The compact fixture can finish before "now"; retain one sprint for the active-board examples.
+            Sprint activeSprint = peg.sprintApi.getAll().stream().filter(sprint -> sprintName.equals(sprint.getName())).findFirst().orElseThrow();
+            activeSprint.setStatus(Status.STARTED);
+            peg.sprintApi.update(activeSprint);
+        }
     }
 
     /**
@@ -855,23 +1179,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @MethodSource("listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
-//        seleniumHandler.setWindowSize(1700, 1200);
-
-        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
-        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
-        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
-        generateProductsIfNeeded(testInfo, randomCase);
-        StableDiffusionService.setEnabled(false);
-        read();
+        prepareScreenshotFixture(randomCase, testInfo);
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        userName    = "Christopher Paul";
-        productName = peg.nameGenerator.generateProductName(0);
-        versionName = peg.nameGenerator.generateVersionName(0);
-        featureName = peg.nameGenerator.generateFeatureName(0);
-        sprintName  = peg.nameGenerator.generateSprintName(1);
-
-
         takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
 
@@ -1005,12 +1314,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      *
      * @param folder destination folder for the screenshot files
      */
-    private void takeUserProfileScreenshots(String folder) {
+    private void takeUserProfileScreenshots(String folder, ETheme theme) throws IOException {
         // Navigate to the profile page via the user menu
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
         seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
-        seleniumHandler.takeScreenShot(folder + "/user-profile-view.png");
+        takeHelpElements(UserProfileView.class, UserProfileView.PROFILE_PAGE_TITLE, theme,
+                UserProfileView.USER_NAME_FIELD, UserProfileView.USER_EMAIL_FIELD, UserProfileView.USER_COLOR_PICKER,
+                UserProfileView.SAVE_PROFILE_BUTTON);
+        if (seleniumHandler.getDriver().findElements(By.id(UserProfileView.GENERATE_AVATAR_BUTTON)).stream().anyMatch(WebElement::isDisplayed)) {
+            seleniumHandler.takeHelpElementScreenshot(UserProfileView.class, UserProfileView.GENERATE_AVATAR_BUTTON);
+        }
+        if (!helpOnly) {
+            seleniumHandler.takeScreenShot(folder + "/user-profile-view.png");
+        }
 
     }
 

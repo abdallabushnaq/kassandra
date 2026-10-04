@@ -50,32 +50,64 @@ public class AuditLogView extends VerticalLayout {
     /**
      * Identifier of the audit page title.
      */
-    public static final String PAGE_TITLE_ID = "audit-page-title";
+    public static final  String PAGE_TITLE_ID      = "audit-page-title";
+    /**
+     * Identifier of the actor filter.
+     */
+    public static final  String USER_FILTER_ID     = "audit-user-filter";
+    /**
+     * Identifier of the inclusive start-time filter.
+     */
+    public static final  String FROM_FILTER_ID     = "audit-from-filter";
+    /**
+     * Identifier of the exclusive end-time filter.
+     */
+    public static final  String TO_FILTER_ID       = "audit-to-filter";
+    /**
+     * Identifier of the audit grid.
+     */
+    public static final  String GRID_ID            = "audit-grid";
+    /**
+     * Identifier of the page-number field.
+     */
+    public static final  String PAGE_NUMBER_ID     = "audit-page-number";
+    /**
+     * Identifier of the previous-page button.
+     */
+    public static final  String PREVIOUS_BUTTON_ID = "audit-previous-button";
+    /**
+     * Identifier of the next-page button.
+     */
+    public static final  String NEXT_BUTTON_ID     = "audit-next-button";
+    /**
+     * Identifier of the go-to-page button.
+     */
+    public static final  String GO_BUTTON_ID       = "audit-go-button";
     /**
      * Identifier of the audit search field.
      */
-    public static final String SEARCH_FIELD_ID = "audit-search-field";
+    public static final  String SEARCH_FIELD_ID    = "audit-search-field";
     /**
      * Identifier of the action filter.
      */
-    public static final String ACTION_FILTER_ID = "audit-action-filter";
+    public static final  String ACTION_FILTER_ID   = "audit-action-filter";
     /**
      * Identifier of the apply-filters button.
      */
-    public static final String APPLY_BUTTON_ID = "audit-apply-button";
+    public static final  String APPLY_BUTTON_ID    = "audit-apply-button";
     /**
      * Prefix for an event label, followed by its revision and entity ID.
      */
-    public static final String EVENT_ID_PREFIX = "audit-event-";
+    public static final  String EVENT_ID_PREFIX    = "audit-event-";
     /**
      * Prefix for expanded event details, followed by its revision and entity ID.
      */
-    public static final String DETAILS_ID_PREFIX = "audit-details-";
+    public static final  String DETAILS_ID_PREFIX  = "audit-details-";
     /**
      * Route for administrator audit history.
      */
-    public static final  String ROUTE     = "audit";
-    private static final int    PAGE_SIZE = 50;
+    public static final  String ROUTE              = "audit";
+    private static final int    PAGE_SIZE          = 50;
 
     private final Select<String>   action     = new Select<>();
     private final AuditLogApi      auditLogApi;
@@ -108,6 +140,13 @@ public class AuditLogView extends VerticalLayout {
         setSizeFull();
         action.setId(ACTION_FILTER_ID);
         search.setId(SEARCH_FIELD_ID);
+        user.setId(USER_FILTER_ID);
+        from.setId(FROM_FILTER_ID);
+        to.setId(TO_FILTER_ID);
+        grid.setId(GRID_ID);
+        pageNumber.setId(PAGE_NUMBER_ID);
+        previous.setId(PREVIOUS_BUTTON_ID);
+        next.setId(NEXT_BUTTON_ID);
         action.setLabel("Action");
         action.setItems("All", "CREATE", "UPDATE", "DELETE");
         action.setValue("All");
@@ -182,6 +221,7 @@ public class AuditLogView extends VerticalLayout {
             page = requested - 1;
             refresh();
         });
+        go.setId(GO_BUTTON_ID);
         HorizontalLayout paging = new HorizontalLayout(previous, pageLabel, next, pageNumber, go);
         paging.setAlignItems(Alignment.CENTER);
         H1 title = new H1("Audit");

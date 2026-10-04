@@ -54,7 +54,7 @@
 7. legend is drawn below grid lines.
 8. FIXED: scrollYOffset and visualScale are not persisted in any of teh charts.
 9. avatar default prompt is Default Avatar
-10. header default prompt is missing simple white background/simple dark background
+10. fixed: header default prompt is missing simple white background/simple dark background
 11. Create Feature dialog should allow selecting the project/version if the select box is allowing more than one.
 12. Create Version dialog should allow selecting the project/version if the select box is allowing more than one.
 13. Create Sprint dialog should allow selecting the project/version if the select box is allowing more than one.

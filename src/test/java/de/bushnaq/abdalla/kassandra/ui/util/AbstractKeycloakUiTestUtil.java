@@ -169,7 +169,19 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
 
     @Override
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
-        StableDiffusionService.setEnabled(true);
+        generateProductsIfNeeded(testInfo, randomCase, true);
+    }
+
+    /**
+     * Creates or restores a fixture with optional GPU-backed image generation.
+     *
+     * @param testInfo       current test metadata
+     * @param randomCase     deterministic fixture configuration
+     * @param generateImages whether image generation is enabled during fixture creation
+     * @throws Exception if fixture creation or restoration fails
+     */
+    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean generateImages) throws Exception {
+        StableDiffusionService.setEnabled(generateImages);
         super.generateProductsIfNeeded(testInfo, randomCase);
         refreshRestoredKeycloakProvider();
     }

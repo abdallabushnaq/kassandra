@@ -18,12 +18,12 @@
 package de.bushnaq.abdalla.kassandra.repository;
 
 import de.bushnaq.abdalla.kassandra.dao.AboutImageDAO;
+import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import org.springframework.data.repository.ListCrudRepository;
 
 /**
  * Spring Data repository for {@link AboutImageDAO}.
- * The table holds a single row ({@code id = 1}); only {@code findById} and {@code save} are needed.
+ * The table holds one row per theme; only {@code findById} and {@code save} are needed.
  */
-public interface AboutImageRepository extends ListCrudRepository<AboutImageDAO, Long> {
+public interface AboutImageRepository extends ListCrudRepository<AboutImageDAO, ETheme> {
 }
-
