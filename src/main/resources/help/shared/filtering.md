@@ -13,29 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## Filtering and sorting
-
 ### Find matching items
 
-Use the **filter field beside the page heading** to narrow the table:
+Use the **filter field beside the page heading** to filter the table content:
 
 1. Enter a name or a description of the items you want to find.
-2. Press **Enter** to apply the filter. A non-empty filter is also applied when
-   you leave the field.
+2. Press **Enter** to apply the filter. Clicking another control after entering
+   text also applies it.
 3. Review the matching rows and the **Showing ... rows** indicator.
 
 Use the field's **clear (X) button**, or remove all its text, to show all items
-available to you again. The adjacent **question-mark button** explains the
+again. The adjacent **question-mark button** explains the
 filter's syntax and page-specific examples.
-
-Filtering hides non-matching rows; it does not delete items, change their access
-settings or modify saved data. It cannot reveal items you do not have access to.
-
-### Change the order
-
-Click a **sortable column heading** to order the rows by that column. Click it
-again to reverse the order. The arrow beside the heading shows the current
-direction. Not every column supports sorting.
-
-Sorting changes the presentation, not the saved items. You can sort the
-matching rows while a filter is active.

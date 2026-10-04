@@ -20,8 +20,7 @@ package de.bushnaq.abdalla.kassandra.dto;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import lombok.*;
 
@@ -39,7 +38,7 @@ import java.util.UUID;
         scope = Product.class,
         generator = ObjectIdGenerators.PropertyGenerator.class,
         property = "id")
-public class Product extends AbstractTimeAware implements Comparable<Product> {
+public class Product extends AbstractTimeAware implements Comparable<Product>, HeaderPrompt {
 
     private String        darkAvatarHash;
     private String        darkHeaderHash;
@@ -82,17 +81,6 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
     }
 
     /**
-     * Get the light avatar URL with hash parameter for proper caching.
-     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
-     *
-     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
-     */
-    @JsonIgnore
-    public String getAvatarUrl() {
-        return getAvatarUrl(false);
-    }
-
-    /**
      * Get the header URL for the given theme variant.
      *
      * @param dark {@code true} to request the dark-background header variant
@@ -108,95 +96,6 @@ public class Product extends AbstractTimeAware implements Comparable<Product> {
             url += "?h=" + lightHeaderHash;
         }
         return url;
-    }
-
-    private static String getDefaultAvatarPrompt(String productName) {
-        return "In the style of TOK, App Icon '" + productName + "'" + StableDiffusionService.LORA;
-    }
-
-    private static String getDefaultHeaderPrompt(String productName) {
-        return "panoramic view of " + productName + ", web page header, detailed, high resolution";
-    }
-
-    /**
-     * Return the default negative prompt used when generating dark-background avatars.
-     *
-     * @return The default dark negative prompt string
-     */
-    public static String getDefaultDarkAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
-     *
-     * @return A default dark avatar prompt string
-     */
-    @JsonIgnore
-    public String getDefaultDarkAvatarPrompt() {
-        return getDefaultDarkAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt for a given product name.
-     *
-     * @param productName The name of the product
-     * @return A default dark avatar prompt string
-     */
-    public static String getDefaultDarkAvatarPrompt(String productName) {
-        return getDefaultAvatarPrompt(productName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Generate a default dark-background header prompt for a given product name.
-     *
-     * @param productName The name of the product
-     * @return A default dark header prompt string
-     */
-    public static String getDefaultDarkHeaderPrompt(String productName) {
-        return getDefaultHeaderPrompt(productName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    @JsonIgnore
-    public static String getDefaultLightAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for product avatars.
-     *
-     * @return A default prompt string for generating product avatar images
-     */
-    @JsonIgnore
-    public String getDefaultLightAvatarPrompt() {
-        return getDefaultLightAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for product avatars.
-     *
-     * @param productName The name of the product
-     * @return A default prompt string for generating product avatar images
-     */
-    public static String getDefaultLightAvatarPrompt(String productName) {
-        return getDefaultAvatarPrompt(productName) + AvatarService.LIGHT_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Generate a default light-background header prompt for a given product name.
-     *
-     * @param productName The name of the product
-     * @return A default light header prompt string
-     */
-    public static String getDefaultLightHeaderPrompt(String productName) {
-        return getDefaultHeaderPrompt(productName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

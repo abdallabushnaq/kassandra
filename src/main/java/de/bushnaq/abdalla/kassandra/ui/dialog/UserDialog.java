@@ -44,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -534,20 +535,20 @@ public class UserDialog extends Dialog {
         if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
             defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = User.getDefaultLightAvatarPrompt(nameField.getValue());
+            defaultPrompt = AvatarPrompt.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : User.getDefaultDarkAvatarPrompt(nameField.getValue());
+                : AvatarPrompt.getDefaultDarkAvatarPrompt(nameField.getValue());
 
         String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : User.getDefaultLightAvatarNegativePrompt();
+                : AvatarPrompt.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : User.getDefaultDarkAvatarNegativePrompt();
+                : AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
 
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;

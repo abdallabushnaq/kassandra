@@ -735,6 +735,17 @@ public class StableDiffusionService {
         }
     }
 
+    private void requireTiledDiffusion() throws StableDiffusionException {
+        Map<String, List<String>> scripts = webClient.get().uri("/sdapi/v1/scripts").retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, List<String>>>() {
+                })
+                .timeout(Duration.ofSeconds(config.getTimeoutSeconds())).block();
+        if (scripts == null || scripts.get("txt2img") == null
+                || scripts.get("txt2img").stream().noneMatch("Tiled Diffusion"::equalsIgnoreCase)) {
+            throw new StableDiffusionException("Tiled Diffusion is not loaded. Install multidiffusion-upscaler-for-automatic1111 and restart WebUI");
+        }
+    }
+
     /**
      * Resize an image to the specified size (square).
      *
@@ -920,41 +931,6 @@ public class StableDiffusionService {
         }
     }
 
-    private void requireTiledDiffusion() throws StableDiffusionException {
-        Map<String, List<String>> scripts = webClient.get().uri("/sdapi/v1/scripts").retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, List<String>>>() {
-                })
-                .timeout(Duration.ofSeconds(config.getTimeoutSeconds())).block();
-        if (scripts == null || scripts.get("txt2img") == null
-                || scripts.get("txt2img").stream().noneMatch("Tiled Diffusion"::equalsIgnoreCase)) {
-            throw new StableDiffusionException("Tiled Diffusion is not loaded. Install multidiffusion-upscaler-for-automatic1111 and restart WebUI");
-        }
-    }
-
-    private Map<String, Map<String, List<Object>>> tiledDiffusionScripts(TiledDiffusionOptions options) {
-        // A1111 uses the positional UI arguments, including hidden img2img controls.
-        List<Object> args = List.of(true, "MultiDiffusion", options.isOverwriteImageSize(), true,
-                options.getImageWidth(), options.getImageHeight(), options.getLatentTileWidth(),
-                options.getLatentTileHeight(), options.getLatentTileOverlap(), options.getLatentTileBatchSize(),
-                "None", 1.0, false, 10, 1.0, 1.0, 64, false, false, false, false);
-        return Map.of("Tiled Diffusion", Map.of("args", args));
-    }
-
-    private void validateTiledDiffusion(TiledDiffusionOptions options) throws StableDiffusionException {
-        if (options.isOverwriteImageSize()
-                && (options.getImageWidth() < 256 || options.getImageWidth() > 16384 || options.getImageWidth() % 16 != 0
-                || options.getImageHeight() < 256 || options.getImageHeight() > 16384 || options.getImageHeight() % 16 != 0)) {
-            throw new StableDiffusionException("Tiled Diffusion canvas dimensions must be multiples of 16 between 256 and 16384");
-        }
-        if (options.getLatentTileWidth() < 16 || options.getLatentTileWidth() > 256 || options.getLatentTileWidth() % 16 != 0
-                || options.getLatentTileHeight() < 16 || options.getLatentTileHeight() > 256 || options.getLatentTileHeight() % 16 != 0
-                || options.getLatentTileOverlap() < 0 || options.getLatentTileOverlap() % 4 != 0
-                || options.getLatentTileOverlap() >= Math.min(options.getLatentTileWidth(), options.getLatentTileHeight())
-                || options.getLatentTileBatchSize() < 1 || options.getLatentTileBatchSize() > 8) {
-            throw new StableDiffusionException("Invalid Tiled Diffusion latent tile dimensions, overlap, or batch size");
-        }
-    }
-
     /**
      * Generate an image from a text prompt with both original and resized versions.
      *
@@ -1056,6 +1032,30 @@ public class StableDiffusionService {
         } catch (Exception e) {
             log.error("Error generating image with Stable Diffusion", e);
             throw new StableDiffusionException("Failed to generate image: " + e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Map<String, List<Object>>> tiledDiffusionScripts(TiledDiffusionOptions options) {
+        // A1111 uses the positional UI arguments, including hidden img2img controls.
+        List<Object> args = List.of(true, "MultiDiffusion", options.isOverwriteImageSize(), true,
+                options.getImageWidth(), options.getImageHeight(), options.getLatentTileWidth(),
+                options.getLatentTileHeight(), options.getLatentTileOverlap(), options.getLatentTileBatchSize(),
+                "None", 1.0, false, 10, 1.0, 1.0, 64, false, false, false, false);
+        return Map.of("Tiled Diffusion", Map.of("args", args));
+    }
+
+    private void validateTiledDiffusion(TiledDiffusionOptions options) throws StableDiffusionException {
+        if (options.isOverwriteImageSize()
+                && (options.getImageWidth() < 256 || options.getImageWidth() > 16384 || options.getImageWidth() % 16 != 0
+                || options.getImageHeight() < 256 || options.getImageHeight() > 16384 || options.getImageHeight() % 16 != 0)) {
+            throw new StableDiffusionException("Tiled Diffusion canvas dimensions must be multiples of 16 between 256 and 16384");
+        }
+        if (options.getLatentTileWidth() < 16 || options.getLatentTileWidth() > 256 || options.getLatentTileWidth() % 16 != 0
+                || options.getLatentTileHeight() < 16 || options.getLatentTileHeight() > 256 || options.getLatentTileHeight() % 16 != 0
+                || options.getLatentTileOverlap() < 0 || options.getLatentTileOverlap() % 4 != 0
+                || options.getLatentTileOverlap() >= options.getLatentTileWidth()
+                || options.getLatentTileBatchSize() < 1 || options.getLatentTileBatchSize() > 8) {
+            throw new StableDiffusionException("Invalid Tiled Diffusion latent tile dimensions, overlap, or batch size");
         }
     }
 

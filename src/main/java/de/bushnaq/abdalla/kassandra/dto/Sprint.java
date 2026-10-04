@@ -20,8 +20,7 @@ package de.bushnaq.abdalla.kassandra.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
 import de.bushnaq.abdalla.kassandra.report.dao.WorklogRemaining;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.util.DurationDeserializer;
@@ -46,7 +45,7 @@ import java.util.*;
 @Setter
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
+public class Sprint extends AbstractTimeAware implements Comparable<Sprint>, HeaderPrompt {
 
     @JsonIgnore
     private       ProjectCalendar calendar;
@@ -176,94 +175,6 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint> {
             url += "?h=" + lightAvatarHash;
         }
         return url;
-    }
-
-    private static String getDefaultAvatarPrompt(String sprintName) {
-        return "app icon '" + sprintName + "'" + StableDiffusionService.LORA;
-    }
-
-    /**
-     * Return the default negative prompt used when generating dark-background avatars.
-     *
-     * @return The default dark negative prompt string
-     */
-    public static String getDefaultDarkAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
-     *
-     * @return A default dark avatar prompt string
-     */
-    @JsonIgnore
-    public String getDefaultDarkAvatarPrompt() {
-        return getDefaultDarkAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt for a given sprint name.
-     *
-     * @param sprintName The name of the sprint
-     * @return A default dark avatar prompt string
-     */
-    public static String getDefaultDarkAvatarPrompt(String sprintName) {
-        return getDefaultAvatarPrompt(sprintName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Generate a default dark-background header prompt for a given sprint name.
-     *
-     * @param sprintName The name of the sprint
-     * @return A default dark header prompt string
-     */
-    public static String getDefaultDarkHeaderPrompt(String sprintName) {
-        return getDefaultHeaderPrompt(sprintName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    private static String getDefaultHeaderPrompt(String sprintName) {
-        return "panoramic view of " + sprintName + ", web page header, detailed, high resolution";
-    }
-
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    public static String getDefaultLightAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for sprint avatars.
-     *
-     * @return A default prompt string for generating sprint avatar images
-     */
-    @JsonIgnore
-    public String getDefaultLightAvatarPrompt() {
-        return getDefaultLightAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for sprint avatars.
-     *
-     * @param sprintName The name of the sprint
-     * @return A default prompt string for generating sprint avatar images
-     */
-    public static String getDefaultLightAvatarPrompt(String sprintName) {
-        return getDefaultAvatarPrompt(sprintName) + AvatarService.LIGHT_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Generate a default light-background header prompt for a given sprint name.
-     *
-     * @param sprintName The name of the sprint
-     * @return A default light header prompt string
-     */
-    public static String getDefaultLightHeaderPrompt(String sprintName) {
-        return getDefaultHeaderPrompt(sprintName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     @JsonIgnore

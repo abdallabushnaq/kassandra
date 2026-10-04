@@ -41,7 +41,10 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
+import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
+import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -51,8 +54,8 @@ import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
@@ -78,21 +81,22 @@ public class ProductDialog extends Dialog {
     private final       List<UserGroup>                allUserGroups;
     private final       List<User>                     allUsers;
     private final       Image                          avatarPreview;
+    private final       AvatarService                  avatarService;
     private final       AvatarUpdateRequest            avatarUpdateRequest;
     private final       Binder<Product>                binder;
     private final       Span                           errorMessage;
-    private             byte[]                         generatedImageBytes;
-    private             byte[]                         generatedImageBytesOriginal;
-    private             String                         generatedImagePrompt;
+    private             byte[]                         generatedDarkHeaderImage;
+    private             String                         generatedDarkHeaderPrompt;
     private volatile    byte[]                         generatedDarkImageBytes;
     private volatile    byte[]                         generatedDarkImageBytesOriginal;
     private             String                         generatedDarkImagePrompt;
-    private             byte[]                         generatedLightHeaderImage;
-    private             byte[]                         generatedDarkHeaderImage;
-    private             String                         generatedLightHeaderPrompt;
-    private             String                         generatedDarkHeaderPrompt;
-    private             String                         generatedNegativePrompt;
     private             String                         generatedDarkNegativePrompt;
+    private             byte[]                         generatedImageBytes;
+    private             byte[]                         generatedImageBytesOriginal;
+    private             String                         generatedImagePrompt;
+    private             byte[]                         generatedLightHeaderImage;
+    private             String                         generatedLightHeaderPrompt;
+    private             String                         generatedNegativePrompt;
     private final       Image                          headerIcon;
     private final       Set<UUID>                      initialGroupIds;
     private final       Set<UUID>                      initialUserIds;
@@ -103,7 +107,6 @@ public class ProductDialog extends Dialog {
     private final       ProductAclApi                  productAclApi;
     private final       ProductApi                     productApi;
     private final       StableDiffusionService         stableDiffusionService;
-    private final       AvatarService                  avatarService;
 
     /**
      * Creates a dialog for creating or editing a product.
@@ -413,7 +416,7 @@ public class ProductDialog extends Dialog {
     }
 
     private void handleGeneratedImage(GeneratedImageResult result, GeneratedImageResult darkResult,
-            GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
+                                      GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
@@ -459,20 +462,20 @@ public class ProductDialog extends Dialog {
         if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
             defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = Product.getDefaultLightAvatarPrompt(nameField.getValue());
+            defaultPrompt = AvatarPrompt.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : Product.getDefaultDarkAvatarPrompt(nameField.getValue());
+                : AvatarPrompt.getDefaultDarkAvatarPrompt(nameField.getValue());
 
         String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : Product.getDefaultLightAvatarNegativePrompt();
+                : IconPrompt.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : Product.getDefaultDarkAvatarNegativePrompt();
+                : IconPrompt.getDefaultDarkAvatarNegativePrompt();
 
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
@@ -491,9 +494,9 @@ public class ProductDialog extends Dialog {
                 defaultNegativePrompt,
                 defaultDarkNegativePrompt,
                 avatarUpdateRequest != null && avatarUpdateRequest.getLightHeaderPrompt() != null
-                        ? avatarUpdateRequest.getLightHeaderPrompt() : Product.getDefaultLightHeaderPrompt(nameField.getValue()),
+                        ? avatarUpdateRequest.getLightHeaderPrompt() : HeaderPrompt.getDefaultLightHeaderPrompt(nameField.getValue()),
                 avatarUpdateRequest != null && avatarUpdateRequest.getDarkHeaderPrompt() != null
-                        ? avatarUpdateRequest.getDarkHeaderPrompt() : Product.getDefaultDarkHeaderPrompt(nameField.getValue())
+                        ? avatarUpdateRequest.getDarkHeaderPrompt() : HeaderPrompt.getDefaultDarkHeaderPrompt(nameField.getValue())
         );
         imageDialog.open();
     }

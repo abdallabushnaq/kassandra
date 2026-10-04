@@ -30,19 +30,19 @@ public class TiledDiffusionOptions {
     @Builder.Default
     private final boolean enabled             = false;
     @Builder.Default
-    private final boolean overwriteImageSize  = false;
+    private final int     imageHeight         = 1024;
     @Builder.Default
     private final int     imageWidth          = 1024;
     @Builder.Default
-    private final int     imageHeight         = 1024;
+    private final int     latentTileBatchSize = 4;
     @Builder.Default
-    private final int     latentTileWidth     = 256;
-    @Builder.Default
-    private final int     latentTileHeight    = 256;
+    private final int     latentTileHeight    = 32;
     @Builder.Default
     private final int     latentTileOverlap   = 48;
     @Builder.Default
-    private final int     latentTileBatchSize = 4;
+    private final int     latentTileWidth     = 128;
+    @Builder.Default
+    private final boolean overwriteImageSize  = false;
 
     /**
      * Calculates a header canvas with a minimum height of 256 image pixels.

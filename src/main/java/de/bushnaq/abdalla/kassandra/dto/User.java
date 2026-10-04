@@ -21,9 +21,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.report.calendar.CalendarUtil;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.focus_shift.jollyday.core.Holiday;
@@ -51,7 +50,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Slf4j
-public class User extends AbstractTimeAware implements Comparable<User> {
+public class User extends AbstractTimeAware implements Comparable<User>, AvatarPrompt {
     @JsonManagedReference
     private List<Availability> availabilities = new ArrayList<>();
     @JsonIgnore
@@ -216,83 +215,6 @@ public class User extends AbstractTimeAware implements Comparable<User> {
             url += "?h=" + lightAvatarHash;
         }
         return url;
-    }
-
-    /**
-     * Get the light avatar URL with hash parameter for proper caching.
-     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
-     *
-     * @return The light avatar URL with hash parameter if hash is available, otherwise just the base URL
-     */
-    @JsonIgnore
-    public String getAvatarUrl() {
-        return getAvatarUrl(false);
-    }
-
-    private static String getDefaultAvatarPrompt(String userName) {
-        return "Professional avatar portrait of '" + userName + "', software developer";
-//        return "close-up portrait of '" + userName + "' for a profile picture, photo quality, sharp focus, high resolution, 8k resolution, 50mm lens";
-    }
-
-    /**
-     * Return the default negative prompt used when generating dark-background avatars.
-     *
-     * @return The default dark negative prompt string
-     */
-    public static String getDefaultDarkAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
-     *
-     * @return A default dark avatar prompt string
-     */
-    @JsonIgnore
-    public String getDefaultDarkAvatarPrompt() {
-        return getDefaultDarkAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt for a given user name.
-     *
-     * @param userName The name of the user
-     * @return A default dark avatar prompt string
-     */
-    @JsonIgnore
-    public static String getDefaultDarkAvatarPrompt(String userName) {
-        return getDefaultAvatarPrompt(userName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    public static String getDefaultLightAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for user avatars.
-     *
-     * @return A default prompt string for generating user avatar images
-     */
-    @JsonIgnore
-    public String getDefaultLightAvatarPrompt() {
-        return getDefaultLightAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for user avatars.
-     *
-     * @param userName The name of the user
-     * @return A default prompt string for generating user avatar images
-     */
-    public static String getDefaultLightAvatarPrompt(String userName) {
-        return getDefaultAvatarPrompt(userName) + AvatarService.LIGHT_PROMPT_SUFFIX;
     }
 
     /**

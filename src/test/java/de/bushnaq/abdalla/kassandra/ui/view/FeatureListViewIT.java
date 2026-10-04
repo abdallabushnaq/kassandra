@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view;
 
+import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
@@ -28,6 +29,13 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +44,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration test for the ProjectListView UI component.
@@ -101,6 +113,71 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
         // Create a version
         versionListViewTester.createVersionConfirm(versionName);
         versionListViewTester.selectVersion(versionName);
+    }
+
+    /**
+     * Exercises Features help with named element images in both themes and on narrow screens.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void testElementHelp() {
+        WebDriver          driver     = seleniumHandler.getDriver();
+        WebDriverWait      wait       = new WebDriverWait(driver, Duration.ofSeconds(30));
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        By                 toggle     = By.id(FeatureListView.FEATURE_HELP_BUTTON);
+        By                 drawer     = By.id(FeatureListView.FEATURE_HELP_BUTTON + "-drawer");
+        By close = By.cssSelector("#" + FeatureListView.FEATURE_HELP_BUTTON
+                + "-drawer vaadin-button[aria-label='Close help']");
+        driver.findElement(toggle).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
+        String text = driver.findElement(drawer).getDomProperty("textContent");
+        assertTrue(text.contains("Choose versions"));
+        assertTrue(text.contains("Filtering and sorting"));
+        assertTrue(text.contains("Undo and redo"));
+        assertTrue(!text.contains("The table"));
+        assertTrue(!text.contains("Open and close page help"));
+        assertTrue(Boolean.TRUE.equals(javascript.executeScript(
+                "const root = document.getElementById(arguments[0]);"
+                        + " const image = root.querySelector('img[src$=\"feature-global-filter.png\"]');"
+                        + " const sorting = [...root.querySelectorAll('h3')].find(h => h.textContent === 'Change the order');"
+                        + " return !!image && !!sorting && !!(image.compareDocumentPosition(sorting) & Node.DOCUMENT_POSITION_FOLLOWING);",
+                FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
+        for (int theme = 0; theme < 2; theme++) {
+            wait.withMessage("Features help element images failed to load in the active theme")
+                    .until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                            "const images = [...document.querySelectorAll('#' + arguments[0] + ' img')];"
+                                    + " const dark = document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]');"
+                                    + " return images.length === 9 && images.every(i => i.complete && i.naturalWidth > 0"
+                                    + " && /^[a-z0-9-]+\\.png$/.test(i.src.split('/').pop())"
+                                    + " && i.src.includes('/' + (dark ? 'dark' : 'light') + '/FeatureListView/'))",
+                            FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
+            assertTrue(Boolean.TRUE.equals(javascript.executeScript(
+                    "return [...document.querySelectorAll('#' + arguments[0] + ' img')]"
+                            + ".every(i => i.getBoundingClientRect().width <= i.naturalWidth)",
+                    FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
+            if (theme == 0) {
+                boolean dark = Boolean.TRUE.equals(javascript.executeScript(
+                        "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
+                javascript.executeScript("document.getElementById(arguments[0]).click()", MainLayout.ID_THEME_TOGGLE);
+                wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                        "return (document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')) === arguments[0]",
+                        !dark)));
+            }
+        }
+        Dimension original = driver.manage().window().getSize();
+        try {
+            driver.manage().window().setSize(new Dimension(390, 800));
+            assertTrue(Boolean.TRUE.equals(javascript.executeScript(
+                    "return [...document.querySelectorAll('#' + arguments[0] + ' img')]"
+                            + ".every(i => i.getBoundingClientRect().width <= window.innerWidth)",
+                    FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
+        } finally {
+            driver.manage().window().setSize(original);
+        }
+        driver.findElement(close).sendKeys(Keys.ESCAPE);
+        wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));
+        wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                "return document.activeElement.id === arguments[0]", FeatureListView.FEATURE_HELP_BUTTON)));
     }
 
     /**

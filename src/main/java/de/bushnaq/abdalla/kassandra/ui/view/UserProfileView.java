@@ -45,6 +45,7 @@ import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
@@ -379,20 +380,20 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
             defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = User.getDefaultLightAvatarPrompt(nameField.getValue());
+            defaultPrompt = AvatarPrompt.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : User.getDefaultDarkAvatarPrompt(nameField.getValue());
+                : AvatarPrompt.getDefaultDarkAvatarPrompt(nameField.getValue());
 
         String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : User.getDefaultLightAvatarNegativePrompt();
+                : AvatarPrompt.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : User.getDefaultDarkAvatarNegativePrompt();
+                : AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
 
         // Fetch avatar image if it exists (needed for img2img)
         byte[] initialImage     = avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;

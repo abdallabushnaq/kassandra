@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
-import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Shortcuts;
 import com.vaadin.flow.component.UI;
@@ -41,10 +40,14 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
+import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
+import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
 import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
+import java.util.UUID;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
@@ -63,19 +66,19 @@ public class SprintDialog extends Dialog {
     private final       AvatarUpdateRequest    avatarUpdateRequest;
     private final       Binder<Sprint>         binder;
     private final       Span                   errorMessage;
-    private final UUID featureId;
+    private final       UUID                   featureId;
+    private             byte[]                 generatedDarkHeaderImage;
+    private             String                 generatedDarkHeaderPrompt;
     private volatile    byte[]                 generatedDarkImageBytes;
     private volatile    byte[]                 generatedDarkImageBytesOriginal;
     private             String                 generatedDarkImagePrompt;
-    private             byte[]                 generatedLightHeaderImage;
-    private             byte[]                 generatedDarkHeaderImage;
-    private             String                 generatedLightHeaderPrompt;
-    private             String                 generatedDarkHeaderPrompt;
+    private             String                 generatedDarkNegativePrompt;
     private             byte[]                 generatedImageBytes;
     private             byte[]                 generatedImageBytesOriginal;
     private             String                 generatedImagePrompt;
+    private             byte[]                 generatedLightHeaderImage;
+    private             String                 generatedLightHeaderPrompt;
     private             String                 generatedNegativePrompt;
-    private             String                 generatedDarkNegativePrompt;
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
@@ -257,7 +260,7 @@ public class SprintDialog extends Dialog {
     }
 
     private void handleGeneratedImage(GeneratedImageResult result, GeneratedImageResult darkResult,
-            GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
+                                      GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
         this.generatedImageBytes         = result.getResizedImage();
         this.generatedImageBytesOriginal = result.getOriginalImage();
         this.generatedImagePrompt        = result.getPrompt();
@@ -303,20 +306,20 @@ public class SprintDialog extends Dialog {
         if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
             defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
         } else {
-            defaultPrompt = Sprint.getDefaultLightAvatarPrompt(nameField.getValue());
+            defaultPrompt = AvatarPrompt.getDefaultLightAvatarPrompt(nameField.getValue());
         }
 
         String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : Sprint.getDefaultDarkAvatarPrompt(nameField.getValue());
+                : AvatarPrompt.getDefaultDarkAvatarPrompt(nameField.getValue());
 
         String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : Sprint.getDefaultLightAvatarNegativePrompt();
+                : IconPrompt.getDefaultLightAvatarNegativePrompt();
 
         String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
                 ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : Sprint.getDefaultDarkAvatarNegativePrompt();
+                : IconPrompt.getDefaultDarkAvatarNegativePrompt();
 
         byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
         byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
@@ -335,9 +338,9 @@ public class SprintDialog extends Dialog {
                 defaultNegativePrompt,
                 defaultDarkNegativePrompt,
                 avatarUpdateRequest != null && avatarUpdateRequest.getLightHeaderPrompt() != null
-                        ? avatarUpdateRequest.getLightHeaderPrompt() : Sprint.getDefaultLightHeaderPrompt(nameField.getValue()),
+                        ? avatarUpdateRequest.getLightHeaderPrompt() : HeaderPrompt.getDefaultLightHeaderPrompt(nameField.getValue()),
                 avatarUpdateRequest != null && avatarUpdateRequest.getDarkHeaderPrompt() != null
-                        ? avatarUpdateRequest.getDarkHeaderPrompt() : Sprint.getDefaultDarkHeaderPrompt(nameField.getValue())
+                        ? avatarUpdateRequest.getDarkHeaderPrompt() : HeaderPrompt.getDefaultDarkHeaderPrompt(nameField.getValue())
         );
         imageDialog.open();
     }

@@ -98,6 +98,7 @@ public class GlobalAiFilter<T> extends HorizontalLayout {
 
         // Create help button
         Button helpButton = new Button(new Icon(VaadinIcon.QUESTION_CIRCLE));
+        helpButton.setId(fieldId + "-help-button");
         helpButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
 //        helpButton.getElement().setAttribute("title", "Search Help");
         helpButton.addClickListener(e -> showSearchHelp());

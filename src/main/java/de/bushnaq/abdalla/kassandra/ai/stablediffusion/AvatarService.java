@@ -17,13 +17,15 @@
 
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Central service for AI avatar generation.
+ * Central service for AI avatar and header generation.
+ * Cozy styles apply only to headers; avatars omit them to remain recognizable at small sizes.
  * <p>
  * Encapsulates the white/black canvas creation, prompt augmentation, and img2img wiring that
  * would otherwise be duplicated across UI dialogs, test data generators and test classes.
@@ -195,8 +197,8 @@ public class AvatarService {
         if (!stableDiffusionService.isAvailable()) {
             throw new StableDiffusionException("Stable Diffusion is not available");
         }
-        return stableDiffusionService.text2ImgWithOriginal(basePrompt, negativePrompt, config.getAvatarOutputSize(), progress,
-                lightResult.getSeed(), config.getCfgScale());
+        return stableDiffusionService.text2ImgWithOriginal(plainPrompt(basePrompt), negativePrompt,
+                config.getAvatarOutputSize(), progress, lightResult.getSeed(), config.getCfgScale());
     }
 
 //    /**
@@ -231,7 +233,7 @@ public class AvatarService {
             return generateDarkAvatar(basePrompt, negativePrompt, lightResult);
         } catch (StableDiffusionException e) {
             log.warn("Failed to generate dark avatar (icon={}): {}", fallbackIconName, e.getMessage());
-            return generateDefaultDarkAvatar(fallbackIconName);
+            return fallbackResult(generateDefaultDarkAvatar(fallbackIconName), plainPrompt(basePrompt), negativePrompt, null);
         }
     }
 
@@ -246,6 +248,24 @@ public class AvatarService {
      */
     public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader, String fallbackIconName) {
         return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, null);
+    }
+
+    /**
+     * Generates a default-size dark header with the shared style and matching light seed.
+     *
+     * @param prompt           editable header description
+     * @param negativePrompt   things to avoid
+     * @param lightHeader      matching light header
+     * @param fallbackIconName placeholder icon
+     * @param progress         optional progress callback
+     * @param style            explicit style; null inherits the light style
+     * @return generated or fallback header
+     */
+    public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
+                                                               String fallbackIconName, StableDiffusionService.ProgressCallback progress,
+                                                               CozyStylePrompt style) {
+        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress,
+                TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT), style);
     }
 
     /**
@@ -277,7 +297,27 @@ public class AvatarService {
     public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
                                                                String fallbackIconName, StableDiffusionService.ProgressCallback progress,
                                                                TiledDiffusionOptions options) {
-        return generateHeaderWithFallback(prompt, negativePrompt, lightHeader.getSeed(), fallbackIconName, true, progress, options);
+        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress, options, null);
+    }
+
+    /**
+     * Generates a dark tiled header with the matching light seed and a shared Cozy style.
+     *
+     * @param prompt           editable header description
+     * @param negativePrompt   things to avoid
+     * @param lightHeader      matching light header
+     * @param fallbackIconName placeholder icon
+     * @param progress         optional progress callback
+     * @param options          tiled canvas settings
+     * @param style            explicit style; null inherits the light style or selects randomly
+     * @return generated or fallback header with resolved style metadata
+     */
+    public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
+                                                               String fallbackIconName, StableDiffusionService.ProgressCallback progress,
+                                                               TiledDiffusionOptions options, CozyStylePrompt style) {
+        CozyStylePrompt resolvedStyle = resolveStyle(style, lightHeader);
+        return withStyle(generateHeaderWithFallback(styledPrompt(prompt, resolvedStyle), negativePrompt, lightHeader.getSeed(),
+                fallbackIconName, true, progress, options), resolvedStyle);
     }
 
     /**
@@ -314,7 +354,7 @@ public class AvatarService {
                     progress, seed, config.getCfgScale(), options);
         } catch (StableDiffusionException e) {
             log.warn("Failed to generate {} header (icon={}): {}", dark ? "dark" : "light", fallbackIconName, e.getMessage());
-            return stableDiffusionService.generateDefaultHeader(fallbackIconName, dark);
+            return fallbackResult(stableDiffusionService.generateDefaultHeader(fallbackIconName, dark), prompt, negativePrompt, null);
         }
     }
 
@@ -358,7 +398,8 @@ public class AvatarService {
         if (!stableDiffusionService.isAvailable()) {
             throw new StableDiffusionException("Stable Diffusion is not available");
         }
-        return stableDiffusionService.text2ImgWithOriginal(prompt, negativePrompt, config.getAvatarOutputSize(), progress, -1, config.getCfgScale());
+        return stableDiffusionService.text2ImgWithOriginal(plainPrompt(prompt), negativePrompt,
+                config.getAvatarOutputSize(), progress, -1, config.getCfgScale());
     }
 
 //    /**
@@ -390,7 +431,7 @@ public class AvatarService {
             return generateLightAvatar(basePrompt, negativePrompt);
         } catch (StableDiffusionException e) {
             log.warn("Failed to generate light avatar (icon={}): {}", fallbackIconName, e.getMessage());
-            return generateDefaultLightAvatar(fallbackIconName);
+            return fallbackResult(generateDefaultLightAvatar(fallbackIconName), plainPrompt(basePrompt), negativePrompt, null);
         }
     }
 
@@ -404,6 +445,22 @@ public class AvatarService {
      */
     public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName) {
         return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, null);
+    }
+
+    /**
+     * Generates a default-size light header with a shared explicit style.
+     *
+     * @param prompt           editable header description
+     * @param negativePrompt   things to avoid
+     * @param fallbackIconName placeholder icon
+     * @param progress         optional progress callback
+     * @param style            explicit style; null selects randomly
+     * @return generated or fallback header
+     */
+    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName,
+                                                                StableDiffusionService.ProgressCallback progress, CozyStylePrompt style) {
+        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress,
+                TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT), style);
     }
 
     /**
@@ -430,7 +487,60 @@ public class AvatarService {
      * @return generated header or the programmatic fallback
      */
     public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName, StableDiffusionService.ProgressCallback progress, TiledDiffusionOptions options) {
-        return generateHeaderWithFallback(prompt, negativePrompt, -1L, fallbackIconName, false, progress, options);
+        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress, options, null);
+    }
+
+    /**
+     * Generates a tiled light header using an explicit or randomly selected Cozy style.
+     *
+     * @param prompt           editable header description
+     * @param negativePrompt   things to avoid
+     * @param fallbackIconName placeholder icon
+     * @param progress         optional progress callback
+     * @param options          tiled canvas settings
+     * @param style            explicit style; null selects randomly
+     * @return generated or fallback header with resolved style metadata
+     */
+    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName,
+                                                                StableDiffusionService.ProgressCallback progress,
+                                                                TiledDiffusionOptions options, CozyStylePrompt style) {
+        CozyStylePrompt resolvedStyle = resolveStyle(style, null);
+        return withStyle(generateHeaderWithFallback(styledPrompt(prompt, resolvedStyle), negativePrompt, -1L,
+                fallbackIconName, false, progress, options), resolvedStyle);
+    }
+
+    private CozyStylePrompt resolveStyle(CozyStylePrompt style, GeneratedImageResult lightResult) {
+        if (style != null) {
+            return style;
+        }
+        return lightResult != null && lightResult.getStyle() != null ? lightResult.getStyle() : CozyStylePrompt.randomStyle();
+    }
+
+    private String styledPrompt(String prompt, CozyStylePrompt style) {
+        return plainPrompt(prompt) + ", " + style.getPrompt();
+    }
+
+    private String plainPrompt(String prompt) {
+        if (prompt == null || prompt.isBlank()) {
+            throw new IllegalArgumentException("Image description cannot be null or blank");
+        }
+        String subject = prompt.trim();
+        for (CozyStylePrompt previousStyle : CozyStylePrompt.values()) {
+            subject = subject.replace(", " + previousStyle.getPrompt(), "");
+        }
+        return subject;
+    }
+
+    private GeneratedImageResult withStyle(GeneratedImageResult result, CozyStylePrompt style) {
+        result.setStyle(style);
+        return result;
+    }
+
+    private GeneratedImageResult fallbackResult(GeneratedImageResult result, String prompt, String negativePrompt, CozyStylePrompt style) {
+        // Retain the requested prompt so saving a placeholder does not discard the user's description.
+        result.setPrompt(prompt);
+        result.setNegativePrompt(negativePrompt != null && !negativePrompt.isBlank() ? negativePrompt : StableDiffusionService.NEGATIVE_PROMPT);
+        return withStyle(result, style);
     }
 
 }

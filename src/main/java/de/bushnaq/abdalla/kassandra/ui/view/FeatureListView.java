@@ -51,6 +51,7 @@ import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.FeatureDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -79,10 +80,17 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
     public static final  String                       FEATURE_GRID_DELETE_BUTTON_PREFIX = "feature-grid-delete-button-prefix-";
     public static final  String                       FEATURE_GRID_EDIT_BUTTON_PREFIX   = "feature-grid-edit-button-prefix-";
     public static final  String                       FEATURE_GRID_NAME_PREFIX          = "feature-grid-name-";
+    /**
+     * Stable ID of the Features page help button.
+     */
+    public static final  String                       FEATURE_HELP_BUTTON               = "feature-help-button";
     public static final  String                       FEATURE_LIST_PAGE_TITLE           = "feature-list-page-title";
     public static final  String                       FEATURE_ROW_COUNTER               = "feature-row-counter";
+    /**
+     * Stable ID of the Features version selector.
+     */
+    public static final  String                       FEATURE_VERSION_SELECTOR                  = "feature-version-selector";
     private static final String                       ROUTE_KEY_PREFIX                  = "feature-list:";
-    public static final  String                       VERSION_SELECTOR                  = "version-selector";
     private final        Button                       aiToggleButton;
     private              List<Feature>                allFeatures                       = new ArrayList<>();
     private final        AvatarService                avatarService;
@@ -127,7 +135,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
 
         versionSelector = new MultiSelectComboBox<>();
         versionSelector.addThemeVariants(MultiSelectComboBoxVariant.LUMO_SMALL);
-        versionSelector.setId(VERSION_SELECTOR);
+        versionSelector.setId(FEATURE_VERSION_SELECTOR);
         // Version names are only unique within one product — prefix with product name.
         versionSelector.setItemLabelGenerator(v -> {
             Product p = productMap.get(v.getProductId());
@@ -151,6 +159,10 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
+
+        HelpDrawer helpDrawer = new HelpDrawer("Features", "help/feature-list.md");
+        addHeaderButton(helpDrawer.createToggleButton(FEATURE_HELP_BUTTON));
+        add(helpDrawer);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();

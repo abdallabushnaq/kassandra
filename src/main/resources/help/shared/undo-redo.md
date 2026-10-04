@@ -13,21 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## Undo and redo
-
 Use the **history button (clock with a curved arrow) in the top navigation**
 to open the recorded change history. Expand an entry to inspect its details,
 then choose **Undo** to reverse it or **Redo** to reapply an undone change.
 Review the confirmation before proceeding.
 
-History is scoped to a **product (project)**. Undoing changes for one product
+History is scoped to a **product**. Undoing changes for one product
 does not roll back another product. On the Products page, the history can include
-changes for multiple accessible products; check the product named in the entry.
+changes for multiple products; check the product named in the entry.
 
 You can undo recorded creation, editing and deletion changes, including restoring
 a deleted product and its contained work. Undoing or redoing through an older
 entry may involve additional entries for that product; the confirmation shows
 the affected changes.
-
-Filtering, sorting, opening help and navigating between pages do not modify
-saved project data and are not Undo/Redo operations.

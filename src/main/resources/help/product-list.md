@@ -71,13 +71,17 @@ feature takes you to its sprints.
 grant. They do not count every individual member of a granted group or
 administrators' role-based access.
 
-{{include:filtering-sorting}}
+## Filtering and sorting
+
+{{include:filtering}}
 
 ### Product filter examples
 
 Try a product name such as **Jupiter**, **name contains Jupiter**, or **products created after January 2024**. The
 question mark beside the filter
 provides more examples. AI-powered filtering requires an available AI service.
+
+{{include:sorting}}
 
 ## Create and edit products
 
@@ -103,6 +107,8 @@ confirmation if you do not want to delete it.
 **Warning:** deleting a product also removes its contained work from the active
 lists. You can restore a recorded deletion through that product's Undo/Redo
 history. Do not use deletion merely to hide a product from the table.
+
+## Undo and redo
 
 {{include:undo-redo}}
 

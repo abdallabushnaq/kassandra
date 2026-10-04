@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ai.stablediffusion;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -29,23 +30,27 @@ public class GeneratedImageResult {
     /**
      * Original image at generation size (e.g., 512x512)
      */
-    private byte[] originalImage;
+    private byte[]          originalImage;
     /**
      * The negative prompt used during generation; {@code null} when not applicable (e.g., programmatic fallback).
      */
-    private String negativePrompt;
+    private String          negativePrompt;
     /**
-     * The prompt used to generate the image
+     * The prompt requested for generation, retained when a programmatic fallback is returned.
      */
-    private String prompt;
+    private String          prompt;
     /**
      * Resized image at output size (e.g., 64x64)
      */
-    private byte[] resizedImage;
+    private byte[]          resizedImage;
     /**
      * The seed used by Stable Diffusion; {@code -1} means unknown (e.g., uploaded image or programmatic fallback).
      */
-    private long   seed = -1L;
+    private long            seed = -1L;
+    /**
+     * Resolved header style, used by matching dark headers; null for avatars, uploaded or legacy images.
+     */
+    private CozyStylePrompt style;
 
     /**
      * Backward-compatible 3-arg constructor. Seed defaults to {@code -1} (unknown).

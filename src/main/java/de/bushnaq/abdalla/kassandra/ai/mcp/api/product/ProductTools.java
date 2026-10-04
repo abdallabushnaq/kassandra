@@ -17,13 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
-import java.util.UUID;
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -109,7 +110,7 @@ public class ProductTools {
     }
 
     private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
-        String prompt = Product.getDefaultLightAvatarPrompt(name);
+        String prompt = AvatarPrompt.getDefaultLightAvatarPrompt(name);
         log.trace("Generating image for product: {} with prompt: {}", name, prompt);
         return stableDiffusionService.text2ImgWithOriginal(prompt);
     }

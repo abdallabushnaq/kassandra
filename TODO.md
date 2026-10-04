@@ -14,6 +14,7 @@
     3. use entitymanager to persist
 10. sort db printout
 11. remove fallback parameter in ColorUtils.intToHex
+12. TiledDiffusionOptions should be server settings.
 
 ## Feature
 
@@ -52,6 +53,12 @@
 6. burndown author legend color is too dark.
 7. legend is drawn below grid lines.
 8. FIXED: scrollYOffset and visualScale are not persisted in any of teh charts.
+9. avatar default prompt is Default Avatar
+10. header default prompt is missing simple white background/simple dark background
+11. Create Feature dialog should allow selecting the project/version if the select box is allowing more than one.
+12. Create Version dialog should allow selecting the project/version if the select box is allowing more than one.
+13. Create Sprint dialog should allow selecting the project/version if the select box is allowing more than one.
+14. About banner is not themed.
 
 # setup issues
 

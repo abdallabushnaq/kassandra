@@ -81,12 +81,17 @@ user-supplied Markdown viewer.
 
 Use short, task-oriented English with these sections when applicable:
 
+Focus on non-obvious behavior and the user's task. Keep implementation and design
+decisions in this standards document, not in user-facing help. Do not repeatedly
+explain that filtering leaves data unchanged or that access limits the rows shown.
+Use Kassandra's domain terminology: **product**, not project.
+
 1. **Purpose and concepts**: what the page manages and a relationship diagram if useful.
 2. **Find your way around**: annotated screenshot and short control legend.
 3. **The table**: shared interaction guidance, followed by page-specific columns and row navigation.
 4. **Filtering and sorting**: its own shared chapter, followed by page-specific examples.
 5. **Page actions**: creating, editing and deleting, expressed as tasks and outcomes.
-6. **Undo and redo**: history control, product/project scope and confirmation.
+6. **Undo and redo**: history control, product scope and confirmation.
 7. **Optional features**: availability and permission conditions.
 
 Dialog help has its own field legend, task instructions, access defaults, optional
@@ -111,11 +116,19 @@ Include a shared chapter on its own line using a stable lowercase name:
 
 Page-specific column meanings and row navigation.
 
-{{include:filtering-sorting}}
+## Filtering and sorting
+
+Filter image for this page.
+
+{{include:filtering}}
 
 ### Product filter examples
 
 Page-specific queries.
+
+{{include:sorting}}
+
+## Undo and redo
 
 {{include:undo-redo}}
 ```
@@ -157,6 +170,58 @@ Page help and filter-specific help are distinct. Page toggles use
 continues to explain filter syntax.
 
 ## Screenshots
+
+### Element-image pilot: Features
+
+The Features help page uses independently captured controls instead of numbered
+full-page images. Keep the Products pilot unchanged for comparison.
+Use a control image followed by editable Markdown describing its label, location
+and outcome. Images supplement the text; they must not be the only instructions.
+Small controls retain their natural size rather than being enlarged to drawer width.
+
+`GenerateScreenshotsIT.takeFeatureHelpScreenshots` captures the Features controls
+in both themes without running the full wiki capture or waiting for browser closure.
+It uses synthetic Jupiter / 1.0.0 / Config server data, no AI image generation.
+Run it from the IDE or use the existing production frontend for a headless capture:
+
+```bash
+mvn -Pproduction test -Dtest="GenerateScreenshotsIT#takeFeatureHelpScreenshots" -Dselenium.headless=true -Dvaadin.productionMode=true
+```
+
+Generated files belong to the application, not the wiki:
+`src\main\resources\META-INF\resources\ui\images\help\<theme>\FeatureListView\`.
+Folder names match view class names; filenames use DOM ID values, such as
+`create-feature-button.png`. Do not introduce a second set of screenshot names.
+Dynamic row actions use their DOM ID prefix without the entity-specific suffix,
+for example `feature-grid-edit-button-prefix-.png`. Give referenced controls a
+page-specific ID when needed. Filter help uses `<filter-id>-help-button`.
+
+Reusable capture code belongs in `SeleniumHandler`: `takeHelpElementScreenshot`,
+`takeHelpRowActionScreenshot` and `takeHelpGridScreenshot`. These methods derive
+the output folder and active theme automatically. Use `setHelpScreenshotTheme`
+and `prepareHelpScreenshots` before capturing a page. `GenerateScreenshotsIT`
+owns the page-specific element list and fixture/navigation setup only.
+
+The capture routine explicitly lists help-referenced elements; it does not crawl
+every DOM node. Buttons and selectors are captured individually; grids include
+their headings and only the first populated row. Missing controls, missing rows
+and invalid images fail the capture rather than producing full-page fallbacks.
+Add a capture entry when documenting a new control. Regeneration overwrites the
+same named assets, leaving Markdown references and other controls unaffected.
+The full wiki capture also refreshes these element images when it visits Features.
+
+```markdown
+![Create feature button](images/help/light/FeatureListView/create-feature-button.png)
+
+Use **Create (+)** at the upper right to add a feature.
+```
+
+Review and commit regenerated light/dark pairs together. Rebuild after capture
+to include refreshed source images in the packaged application; an already
+running server can still have the previous classpath copies. Help uses the existing
+theme switching and UI image serving; no external files or new endpoint are needed.
+
+### Full-page images
 
 Use the wiki's `light-screenshots` and `dark-screenshots` as source material,
 but copy selected images into the application. Never link to `..\kassandra.wiki`

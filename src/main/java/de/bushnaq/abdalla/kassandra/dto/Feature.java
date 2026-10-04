@@ -18,8 +18,7 @@
 package de.bushnaq.abdalla.kassandra.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import lombok.*;
 
@@ -33,7 +32,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(of = {"id"}, callSuper = false)
-public class Feature extends AbstractTimeAware implements Comparable<Feature> {
+public class Feature extends AbstractTimeAware implements Comparable<Feature>, HeaderPrompt {
     private String darkAvatarHash;
     private String darkHeaderHash;
     private UUID   id;
@@ -79,106 +78,6 @@ public class Feature extends AbstractTimeAware implements Comparable<Feature> {
             url += "?h=" + lightAvatarHash;
         }
         return url;
-    }
-
-    /**
-     * Get the light avatar URL with hash parameter for proper caching.
-     * Delegates to {@link #getAvatarUrl(boolean)} with {@code dark = false}.
-     *
-     * @return The avatar URL with hash parameter if hash is available, otherwise just the base URL
-     */
-    @JsonIgnore
-    public String getAvatarUrl() {
-        return getAvatarUrl(false);
-    }
-
-    private static String getDefaultAvatarPrompt(String featureName) {
-        return "app icon '" + featureName + "'" + StableDiffusionService.LORA;
-    }
-
-    /**
-     * Return the default negative prompt used when generating dark-background avatars.
-     *
-     * @return The default dark negative prompt string
-     */
-    public static String getDefaultDarkAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt by appending the dark suffix to the base prompt.
-     *
-     * @return A default dark avatar prompt string
-     */
-    @JsonIgnore
-    public String getDefaultDarkAvatarPrompt() {
-        return getDefaultDarkAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default dark-background avatar prompt for a given feature name.
-     *
-     * @param featureName The name of the feature
-     * @return A default dark avatar prompt string
-     */
-    @JsonIgnore
-    public static String getDefaultDarkAvatarPrompt(String featureName) {
-        return getDefaultAvatarPrompt(featureName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Generate a default dark-background header prompt for a given feature name.
-     *
-     * @param featureName The name of the feature
-     * @return A default dark header prompt string
-     */
-    public static String getDefaultDarkHeaderPrompt(String featureName) {
-        return getDefaultHeaderPrompt(featureName)/* + AvatarService.DARK_PROMPT_SUFFIX*/;
-    }
-
-    private static String getDefaultHeaderPrompt(String featureName) {
-        return "panoramic view of " + featureName + ", web page header, detailed, high resolution";
-    }
-
-    /**
-     * Return the default negative prompt used when generating light-background avatars.
-     *
-     * @return The default negative prompt string
-     */
-    public static String getDefaultLightAvatarNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT;
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This provides a consistent prompt format for feature avatars.
-     *
-     * @return A default prompt string for generating feature avatar images
-     */
-    @JsonIgnore
-    public String getDefaultLightAvatarPrompt() {
-        return getDefaultLightAvatarPrompt(name);
-    }
-
-    /**
-     * Generate a default avatar prompt for AI image generation.
-     * This static method provides a consistent prompt format for feature avatars.
-     *
-     * @param featureName The name of the feature
-     * @return A default prompt string for generating feature avatar images
-     */
-    public static String getDefaultLightAvatarPrompt(String featureName) {
-        return getDefaultAvatarPrompt(featureName) + AvatarService.LIGHT_PROMPT_SUFFIX;
-    }
-
-    /**
-     * Generate a default light-background header prompt for a given feature name.
-     *
-     * @param featureName The name of the feature
-     * @return A default light header prompt string
-     */
-    public static String getDefaultLightHeaderPrompt(String featureName) {
-        return getDefaultHeaderPrompt(featureName)/* + AvatarService.LIGHT_PROMPT_SUFFIX*/;
     }
 
     /**
