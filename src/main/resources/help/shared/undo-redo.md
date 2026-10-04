@@ -13,16 +13,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-Use the **history button (clock with a curved arrow) in the top navigation**
-to open the recorded change history. Expand an entry to inspect its details,
-then choose **Undo** to reverse it or **Redo** to reapply an undone change.
-Review the confirmation before proceeding.
+Use the **history button in the top navigation** to inspect recorded planning
+changes, including creation, editing and deletion. Expand an entry to check
+what changed and which product it belongs to. **Undo** reverses applied changes;
+**Redo** reapplies undone changes.
 
-History is scoped to a **product**. Undoing changes for one product
-does not roll back another product. On the Products page, the history can include
-changes for multiple products; check the product named in the entry.
+History is scoped to a **product**, not to an individual row, feature or sprint.
+Undoing through an older entry also reverses the later applied entries for that
+product. Redoing through an entry can reapply preceding undone entries. **Review
+all affected changes in the confirmation**, including work outside the current
+list, before proceeding. Another product is not rolled back with it.
 
-You can undo recorded creation, editing and deletion changes, including restoring
-a deleted product and its contained work. Undoing or redoing through an older
-entry may involve additional entries for that product; the confirmation shows
-the affected changes.
+The **Products** page can show history for multiple products, including deleted
+products you are permitted to recover. Use it to find a recorded deletion when
+the product is no longer in the list. Undoing that deletion restores its recorded
+planning hierarchy; creating a new item with the same name does not.
+
+History shows a limited set of recent operations and is not a backup of every
+application setting. Use the entry details and confirmation to establish what
+will be restored rather than assuming that every setting or image is included.

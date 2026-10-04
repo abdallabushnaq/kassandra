@@ -13,10 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## What are products?
+## Organize work by product
 
-A product groups the work you want to plan and track. The **Products** page lists
-the products available to you.
+A **product** is the starting point for planning and tracking a body of work.
+Use this page to open an existing product, start a new one, or manage who can
+work on it. You see only products you have access to; administrators see all
+products.
 
 ```mermaid
 flowchart TD
@@ -28,99 +30,105 @@ flowchart TD
 ```
 
 A product can have multiple **versions**, each version multiple **features**, and
-each feature multiple **sprints**.
+each feature multiple **sprints**. Stories, tasks and their worklogs belong to
+the work planned inside those sprints.
 
-## Find your way around
+## Open the work you want to plan
 
-![Products page with numbered references to its controls](images/help/light/product-list.png)
-
-The screenshot shows example data; your products and available controls may differ.
-The page Help button is beside **AI**; the question mark beside the filter
-opens filter-specific help instead.
-
-| Reference | Control                                              | What it does                                                       |
-|-----------|------------------------------------------------------|--------------------------------------------------------------------|
-| 1         | **AI powered filter**, beside the Products heading   | Find products using the filtering instructions below.              |
-| 2         | **Create (+)**, at the upper right                   | Add a product. The dialog has its own Help button.                 |
-| 3         | A row in the table                                   | Click a row to go to the versions listed for that product.         |
-| 4         | **Access** badges                                    | See how many users and groups have explicitly been granted access. |
-| 5         | Pencil/notepad icon, in the row's **Actions** column | Edit the product name or generate a new icon/header.               |
-| 6         | Trash-can icon, in the row's **Actions** column      | Delete a product you no longer need.                               |
-| 7         | **AI**, at the upper right                           | Opens or closes the AI assistant pane.                             |
-| 8         | History button, in the top navigation                | Undo or redo recorded changes for a product.                       |
+Choose a product row to open its **versions**. From there, choose a version to
+reach its **features**, then a feature to reach its **sprints**. Opening a row
+does not edit the product.
 
 {{include:table}}
 
-### Product columns and navigation
+## Find a product
 
-| Column      | Meaning                                          |
-|-------------|--------------------------------------------------|
-| **Key**     | The product's identifier.                        |
-| Icon        | A visual identifier for the product.             |
-| **Name**    | The product's name.                              |
-| **Access**  | Counts of explicit user and group access grants. |
-| **Created** | When the product was created.                    |
-| **Updated** | When it was last updated.                        |
-| **Actions** | Edit and delete controls for this product.       |
-
-**Clicking a row in the table takes you to the versions listed for that product.**
-Selecting a version on the next page takes you to its features; selecting a
-feature takes you to its sprints.
-
-**Access** badges count explicit grants, including the creator's automatic user
-grant. They do not count every individual member of a granted group or
-administrators' role-based access.
-
-## Filtering and sorting
+![Product filter](images/help/light/ProductListView/product-global-filter.png)
 
 {{include:filtering}}
 
-### Product filter examples
+Try **Jupiter** to find a product by name, or **products created after January
+2024** when you know when it was added. Filtering changes the visible list,
+not the products themselves or anyone's access.
 
-Try a product name such as **Jupiter**, **name contains Jupiter**, or **products created after January 2024**. The
-question mark beside the filter
-provides more examples. AI-powered filtering requires an available AI service.
+![Product filter examples button](images/help/light/ProductListView/product-global-filter-help-button.png)
+
+The question mark **beside the filter** opens search examples, not this page's
+help.
+
+![Product matching row count](images/help/light/ProductListView/product-row-counter.png)
 
 {{include:sorting}}
 
-## Create and edit products
+## Start a new product
 
-Use **Create (+)** at the upper right to add a product. Use the **pencil/notepad icon** in a row's **Actions** column to
-edit the product name
-or generate a new icon/header.
+![Create product button](images/help/light/ProductListView/create-product-button.png)
 
-The Create/Edit Product dialog has its own **Help button in the dialog header**
-for its fields, image generation, access settings, saving and cancelling.
+Use **Create** for a separate body of work. If you are planning another release
+of an existing product, open that product and add a **version** instead.
 
-**Default access:** if no additional users or groups are selected when a product
-is created, its creator and administrators can access it. Other users need an
-explicit grant or membership in a granted group. Product access also covers its
-versions, features and sprints.
+Choose a required, unique product name and any collaborators, then **Save**.
+Creating a product does not create its versions, features or sprints.
+The dialog's own **Help** explains access settings and optional images.
 
-## Delete a product
+## Change a product or its collaborators
 
-You can delete a product you no longer need using the **trash-can icon** in that
-row's **Actions** column. Check the
-product name in the confirmation before selecting **Delete**. Cancel the
-confirmation if you do not want to delete it.
+![Edit product button](images/help/light/ProductListView/product-grid-edit-button-prefix-.png)
 
-**Warning:** deleting a product also removes its contained work from the active
-lists. You can restore a recorded deletion through that product's Undo/Redo
-history. Do not use deletion merely to hide a product from the table.
+Use the row's **edit action** to rename the existing product, change its access
+grants, or choose an icon/header. Renaming does not create a new product or move
+its contained work. **Save** applies your changes; **Cancel** discards unsaved
+form changes.
 
-## Undo and redo
+![Explicit product access grants](images/help/light/ProductListView/product-grid-access-.png)
+
+Access is managed at the **product level** and also governs its versions,
+features and sprints. The creator receives a user grant automatically;
+administrators have role-based access. Without additional grants, other users
+cannot access the product.
+
+The **Access** badges count explicit user and group grants, not the total number
+of people who can access the product. A group counts as one grant regardless of
+its membership; administrators are not added to the count just for being
+administrators.
+
+Removing a user's explicit grant does not remove access they still have through
+a granted group or an administrator role. Conversely, removing your own last
+grant can make the product disappear from your list.
+
+## Remove a product and its work
+
+![Delete product button](images/help/light/ProductListView/product-grid-delete-button-prefix-.png)
+
+**Delete removes the product and its versions, features, sprints, stories,
+tasks and worklogs from the active planning data.** It is not a way to hide one
+row or revoke one person's access. Use filtering to narrow your list, or edit
+the product's access grants to change its collaborators.
+
+Check the product named in the confirmation before proceeding. To recover a
+recorded deletion, open history from the Products page.
+
+## Recover a recorded change
+
+![Product history button](images/help/light/ProductListView/main-layout-action-history-button.png)
 
 {{include:undo-redo}}
 
-## Use the AI assistant
+## Ask the assistant for help with your work
 
-Select **AI** at the upper right to open the assistant alongside the product list.
-Select it again to close the assistant. Help and the assistant are independent.
-AI features require configured, available services and operate with your access
-permissions.
+![AI assistant button](images/help/light/ProductListView/product-ai-panel-button.png)
 
-## Close help
+The **AI** button opens or closes the assistant alongside the list. You can ask
+about products or request changes; it operates with your access permissions.
+Be explicit about the product you mean when several have similar names.
+Opening the assistant alone does not change a product.
 
-Select the **X** at the top of this drawer, or press **Escape** while focus is
-inside it. Closing help returns focus to the Help button that opened it. Opening help
-does not change products, filters or the AI conversation.
+The assistant needs configured, available AI services. It is separate from both
+the filter and optional image generation in the product dialog.
+
+## If a product is missing
+
+Clear the text filter first. If the product is still absent, ask a collaborator
+or administrator to check your user and group grants. Filtering cannot reveal
+a product you do not have access to. If the product was deleted, check its
+recorded history rather than creating a replacement.

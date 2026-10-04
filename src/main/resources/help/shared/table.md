@@ -13,18 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## The table
-
-Each **row** represents one item. Each **column** shows a property, such as its
-name or creation date. The column headings tell you what the cells contain.
-
-If an **Actions** column is present, its buttons act on that row's item.
-Use the relevant action icon rather than clicking the row when you want to
-edit or delete it. Row navigation, where supported, is described below.
-
-Scroll to reach additional rows. On a narrow screen, you may also need to scroll
-horizontally to reach columns on the right. A row is not a separate copy of an
-item: editing the item updates what the table displays.
-
-An empty table can mean that no accessible items exist or that the current
-filter matches none. Clear the filter before assuming there are no items.
+Use the row's **Actions** buttons to edit or delete the item rather than open
+its contained work. These actions affect the existing item, not a separate
+copy shown in the table. A row disappearing after a change can mean it no longer
+matches your filter or you no longer have access; it does not necessarily mean
+it was deleted.

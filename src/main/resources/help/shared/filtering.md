@@ -13,15 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-### Find matching items
+The **AI powered filter** turns a name or a description into a search over the
+loaded items you have access to. **Even a simple name search uses the AI
+service**, so filtering needs that service to be configured and available.
+It does not grant access, edit items or delete non-matching rows.
 
-Use the **filter field beside the page heading** to filter the table content:
+Apply a query with **Enter** or by leaving the field. Clearing the field with
+**X**, or removing its text, clears the active table filter. Other selectors on
+the page may have their own scope rules, explained in this help.
 
-1. Enter a name or a description of the items you want to find.
-2. Press **Enter** to apply the filter. Clicking another control after entering
-   text also applies it.
-3. Review the matching rows and the **Showing ... rows** indicator.
-
-Use the field's **clear (X) button**, or remove all its text, to show all items
-again. The adjacent **question-mark button** explains the
-filter's syntax and page-specific examples.
+**Showing ... rows** compares the current matching rows with the total loaded
+items, not with all records on the server. If no rows match, simplify the query
+or clear it before assuming an item is missing. If filtering fails because the
+AI service is unavailable, restore the unfiltered list and check the service
+configuration with your administrator.

@@ -58,7 +58,9 @@
 11. Create Feature dialog should allow selecting the project/version if the select box is allowing more than one.
 12. Create Version dialog should allow selecting the project/version if the select box is allowing more than one.
 13. Create Sprint dialog should allow selecting the project/version if the select box is allowing more than one.
-14. About banner is not themed.
+14. Fixed: About banner is not themed.
+15. Also corrected misleading filtering guidance: even name searches use AI, and the Features text filter and version
+    selector currently replace rather than combine their filters.
 
 # setup issues
 

@@ -13,75 +13,147 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## What are features?
+## Plan related work within a version
 
-A **feature** groups related work within a product version. Each feature contains
-sprints. The **Features** page lists the features of the currently selected
-product/version combination in the filter.
+A **feature** groups related work within one **product version** and contains
+the **sprints** used to plan that work. Use this page to find a feature, open its
+sprints, or add another area of work to a version.
 
-## Choose versions
+The planning hierarchy is **Product > Version > Feature > Sprint**. A feature
+belongs to one version, even when you view several versions together. Its access
+comes from its parent product; there are no separate access selectors here.
+
+## Compare work across versions
 
 ![Version selector](images/help/light/FeatureListView/feature-version-selector.png)
 
-Use the **Version Selector** to select one or more versions. All features of the
-selected versions will be shown. Entries include the product name so you can
-distinguish versions with the same name. Clear the selection with **X** to show
-features across all versions.
+The **version selector** lets you view features from one or more versions,
+including versions of different accessible products. Entries use **Product /
+Version** labels because different products can have the same version name.
+Use the **Product** and **Version** columns to distinguish similar feature names.
 
-## Filtering and sorting
+Entering from a version normally selects that version. Clearing the selector
+with **X** shows features across all accessible versions; it does not delete
+features or detach them from their versions.
 
-![AI powered filter field](images/help/light/FeatureListView/feature-global-filter.png)
+With exactly one version selected, the page heading shows its name. With none
+or several selected, it shows **Features**. The version selection is kept in
+the URL, so it can survive a browser refresh or be bookmarked.
+
+**Viewing scope is not creation context.** The selector changes which features
+you see, not the version used by **Create**. See "Add work to the right version"
+below before creating a feature.
+
+## Find a feature
+
+![Feature filter](images/help/light/FeatureListView/feature-global-filter.png)
 
 {{include:filtering}}
 
-Enter a feature name such as **Config server** or describe the features you want
-to find. AI-powered queries require a configured, available AI service.
+Try **Config server**, or describe the features you need, for example **features
+created after January 2024**.
 
 ![Filter help button](images/help/light/FeatureListView/feature-global-filter-help-button.png)
 
-The **question-mark button beside the filter** opens filtering examples.
+The question mark **beside the filter** opens search examples.
+
+**Current filtering behavior:** text searches and the version selector replace
+each other's filter; they do not combine. Applying a text search searches the
+loaded accessible features, even outside the selected versions. Changing the
+version selection replaces that search with the version filter. Clearing the
+text field clears the active filter, even if version chips remain selected.
+To return to a version-scoped list, change the version selection again.
 
 ![Matching row count](images/help/light/FeatureListView/feature-row-counter.png)
 
-**Showing ... rows** reports how many rows match out of the available features.
-
 {{include:sorting}}
 
-## Create a feature
+## Open a feature's sprints
+
+Choose a feature row to open its **sprints**. This is where you continue planning
+the feature's work; opening the row does not edit the feature.
+
+{{include:table}}
+
+## Add work to the right version
 
 ![Create feature button](images/help/light/FeatureListView/create-feature-button.png)
 
-Use **Create (+)** at the upper right to add a feature to the current version.
-The creation context comes from your navigation into the Features page; selecting
-multiple versions for viewing does not create a feature in each of them.
+Before using **Create**, open the intended product's **Versions** page and enter
+Features through the version that should own the new work. Creation uses that
+navigation context, not the version selector or the set of visible rows.
+Selecting several versions does not create a copy in each one.
 
-## Edit a feature
+Enter a required name that is unique **within that version**, then **Save**.
+The new feature belongs to that version; it does not create sprints
+automatically. **Cancel** discards unsaved form changes.
+
+If Save reports a duplicate name, choose another name within that version.
+For a permission or other dialog-level error, inspect the message and the
+current list before retrying: the feature and its images are saved separately,
+so an error does not necessarily mean that no changes were applied.
+
+If you arrived from the main menu, the page can use an automatically chosen
+product/version context. Do not rely on that default when the destination matters;
+enter through the intended version first. You need an existing product and
+version before a feature can be created.
+
+## Rename a feature without moving its work
 
 ![Edit feature button](images/help/light/FeatureListView/feature-grid-edit-button-prefix-.png)
 
-Use the **pencil/notepad icon** in the feature row's **Actions** column to edit
-its name or generate a new icon/header.
-Image generation is an optional feature that needs a running **Stable Diffusion
-server**.
-Use the action button, rather than the row, to avoid navigating to sprints.
+Use the row's **edit action** to change that feature's name or optional
+icon/header. Editing affects the feature in that row, even if it belongs to a
+different version from your creation context. Renaming keeps its parent version
+and existing sprints; this dialog does not move a feature between versions.
 
-## Delete a feature
+Optional image generation is available only when the **Stable Diffusion**
+service is available. The magic-wand button also needs a non-empty name.
+Accepting images returns them to the form; **Save** applies them to the feature.
+You do not need custom images to organize work.
+
+## Remove a feature and its planned work
 
 ![Delete feature button](images/help/light/FeatureListView/feature-grid-delete-button-prefix-.png)
 
-Use the **trash-can icon** in the feature row's **Actions** column to delete a
-feature you no longer need. Check the feature name before confirming **Delete**.
-Deleting a feature also removes all its **Sprints, Stories, Tasks and worklogs**.
+**Deleting a feature also removes its sprints, stories, tasks and worklogs from
+the active planning data.** It leaves the parent product/version and other
+features in place. To remove only one sprint, work from the sprint list instead.
 
-## Undo and redo
+When comparing versions, check the row's **Product** and **Version** as well as
+the feature name before opening Delete: the confirmation names the feature,
+which may share its name with a feature elsewhere. Cancel if it is not the
+intended work.
+
+## Recover a recorded change
 
 ![Product-scoped history button](images/help/light/FeatureListView/main-layout-action-history-button.png)
 
 {{include:undo-redo}}
 
-## Use the AI assistant
+On this page, history follows the **product in your navigation context**, not
+every product represented by the version selector. If you changed a feature
+from another product, return to **Products** to find that product's history.
+
+## Ask the assistant about the intended version
 
 ![AI assistant button](images/help/light/FeatureListView/feature-ai-panel-button.png)
 
-Use **AI** at the upper right to open or close the assistant.
-AI features require configured, available services.
+The **AI** button opens or closes the assistant alongside the list. It receives
+your navigation-context product and version, not a new creation context from
+the version selector. When comparing versions, name the intended product and
+version explicitly in requests to create or change work.
+
+The assistant requires configured, available AI services and operates with your
+access permissions. Opening it alone does not change features.
+
+## If the expected feature is missing
+
+Clear the text filter, then change the version selection to the intended
+version. If you are unsure which version owns the feature, clear the version
+selector to inspect all accessible features and check their Product/Version
+columns.
+
+If it is still missing, check access to its parent product or look for a recorded
+deletion in that product's history. Creating a similarly named feature would
+create new work, not recover the original sprints.

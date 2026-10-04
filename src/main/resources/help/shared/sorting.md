@@ -13,8 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-### Change the order
+### Compare the results
 
-Click a **sortable column heading** to order the rows by that column. Click it
-again to reverse the order. The arrow beside the heading shows the current
-direction. Not every column supports sorting.
+Use a **sortable column heading** to compare items by that value; its arrow
+indicates the current direction. For example, ordering by **Name** can bring
+similarly named items together.
+
+Sorting changes only the order of the visible rows. It does not change their
+parent, dates or saved data, and it does not reveal rows excluded by filtering
+or access permissions. Not every column supports sorting.

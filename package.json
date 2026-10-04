@@ -115,9 +115,9 @@
     "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
     "date-fns": "$date-fns",
     "@vaadin/vaadin-usage-statistics": "$@vaadin/vaadin-usage-statistics",
+    "mermaid": "$mermaid",
     "@vaadin/react-components": "$@vaadin/react-components",
-    "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
-    "mermaid": "$mermaid"
+    "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles"
   },
   "vaadin": {
     "dependencies": {
