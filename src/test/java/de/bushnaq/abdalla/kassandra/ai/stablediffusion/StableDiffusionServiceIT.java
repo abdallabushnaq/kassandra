@@ -184,14 +184,14 @@ public class StableDiffusionServiceIT {
         String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
-        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt);
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
         assertNotNull(lightResult.getResizedImage(), "Light feature avatar should not be null");
         assertTrue(lightResult.getResizedImage().length > 0, "Light feature avatar should have content");
         saveTestImage(lightResult.getResizedImage(), "feature-" + featureName + ".png");
         log.info("Generated light feature avatar for '{}' with seed {} and prompt: '{}'", featureName, lightResult.getSeed(), lightResult.getPrompt());
 
         // Dark avatar via AvatarService, pinned to the light seed
-        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult);
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult, null);
         assertNotNull(darkResult.getResizedImage(), "Dark feature avatar should not be null");
         assertTrue(darkResult.getResizedImage().length > 0, "Dark feature avatar should have content");
         saveTestImage(darkResult.getResizedImage(), "feature-" + featureName + "-dark.png");
@@ -207,14 +207,14 @@ public class StableDiffusionServiceIT {
         String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
-        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt);
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
         assertNotNull(lightResult.getResizedImage(), "Light product avatar should not be null");
         assertTrue(lightResult.getResizedImage().length > 0, "Light product avatar should have content");
         saveTestImage(lightResult.getResizedImage(), "product-" + productName + ".png");
         log.info("Generated light product avatar for '{}' with seed {} and prompt: '{}'", productName, lightResult.getSeed(), lightResult.getPrompt());
 
         // Dark avatar via AvatarService, pinned to the light seed
-        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult);
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult, null);
         assertNotNull(darkResult.getResizedImage(), "Dark product avatar should not be null");
         assertTrue(darkResult.getResizedImage().length > 0, "Dark product avatar should have content");
         saveTestImage(darkResult.getResizedImage(), "product-" + productName + "-dark.png");
@@ -236,14 +236,14 @@ public class StableDiffusionServiceIT {
         String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
-        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt);
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
         assertNotNull(lightResult.getResizedImage(), "Light product avatar should not be null");
         assertTrue(lightResult.getResizedImage().length > 0, "Light product avatar should have content");
         saveTestImage(lightResult.getResizedImage(), "product-" + productName + ".png");
         log.info("Generated light product avatar for '{}' with seed {} and prompt: '{}'", productName, lightResult.getSeed(), lightResult.getPrompt());
 
         // Dark avatar via AvatarService, pinned to the light seed
-        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult);
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult, null);
         assertNotNull(darkResult.getResizedImage(), "Dark product avatar should not be null");
         assertTrue(darkResult.getResizedImage().length > 0, "Dark product avatar should have content");
         saveTestImage(darkResult.getResizedImage(), "product-" + productName + "-dark.png");
@@ -265,14 +265,14 @@ public class StableDiffusionServiceIT {
         String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
 
         // Light avatar via AvatarService
-        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt);
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
         assertNotNull(lightResult.getResizedImage(), "Light sprint avatar should not be null");
         assertTrue(lightResult.getResizedImage().length > 0, "Light sprint avatar should have content");
         saveTestImage(lightResult.getResizedImage(), "sprint-" + sprintName + ".png");
         log.info("Generated light sprint avatar for '{}' with seed {} and prompt: '{}'", sprintName, lightResult.getSeed(), lightResult.getPrompt());
 
         // Dark avatar via AvatarService, pinned to the light seed
-        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult);
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkBasePrompt, darkNegativePrompt, lightResult, null);
         assertNotNull(darkResult.getResizedImage(), "Dark sprint avatar should not be null");
         assertTrue(darkResult.getResizedImage().length > 0, "Dark sprint avatar should have content");
         saveTestImage(darkResult.getResizedImage(), "sprint-" + sprintName + "-dark.png");
@@ -290,7 +290,7 @@ public class StableDiffusionServiceIT {
         String darkNegativePrompt = AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
 
         // ── Light avatar via AvatarService ────────────────────────────────────
-        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightPrompt, negativePrompt);
+        GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightPrompt, negativePrompt, null);
 
         assertNotNull(lightResult.getResizedImage(), "Light avatar should not be null");
         assertTrue(lightResult.getResizedImage().length > 0, "Light avatar should have content");
@@ -298,7 +298,7 @@ public class StableDiffusionServiceIT {
         log.info("Generated light avatar for '{}' with seed {} and prompt: '{}'", userName, lightResult.getSeed(), lightResult.getPrompt());
 
         // ── Dark avatar via AvatarService, pinned to the light seed ───────────
-        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkPrompt, darkNegativePrompt, lightResult);
+        GeneratedImageResult darkResult = avatarService.generateDarkAvatar(darkPrompt, darkNegativePrompt, lightResult, null);
 
         assertNotNull(darkResult.getResizedImage(), "Dark avatar should not be null");
         assertTrue(darkResult.getResizedImage().length > 0, "Dark avatar should have content");

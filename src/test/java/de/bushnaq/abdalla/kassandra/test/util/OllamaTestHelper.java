@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Utility class for managing Ollama container in tests
  */
+@Deprecated
 public class OllamaTestHelper {
 
     private static final int    MAX_STARTUP_WAIT_SECONDS = 120;

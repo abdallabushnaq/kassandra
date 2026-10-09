@@ -34,15 +34,6 @@ import java.util.UUID;
 public class SprintAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
 
     @Lob
-    @Column(name = "light_avatar_image_original")
-    private byte[] lightAvatarImageOriginal;
-    @Column(name = "light_avatar_negative_prompt", length = 1000)
-    private String lightAvatarNegativePrompt;
-    @Column(name = "light_avatar_prompt", length = 1000)
-    private String lightAvatarPrompt;
-    @Column(name = "light_header_prompt", length = 1000)
-    private String lightHeaderPrompt;
-    @Lob
     @Column(name = "dark_avatar_image_original")
     private byte[] darkAvatarImageOriginal;
     @Column(name = "dark_avatar_negative_prompt", length = 1000)
@@ -55,6 +46,20 @@ public class SprintAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
     private UUID   id;
+    @Lob
+    @Column(name = "light_avatar_image_original")
+    private byte[] lightAvatarImageOriginal;
+    @Column(name = "light_avatar_negative_prompt", length = 1000)
+    private String lightAvatarNegativePrompt;
+    @Column(name = "light_avatar_prompt", length = 1000)
+    private String lightAvatarPrompt;
+    @Column(name = "light_header_prompt", length = 1000)
+    private String lightHeaderPrompt;
     @Column(name = "sprint_id", unique = true, nullable = false)
     private UUID   sprintId;
+    /**
+     * The style of the image. This is used to generate a prompt for the AI to generate a new header image.
+     */
+    @Column(name = "style", length = 1000)
+    private String style;
 }

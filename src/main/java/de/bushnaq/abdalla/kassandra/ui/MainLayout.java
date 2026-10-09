@@ -52,8 +52,8 @@ import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
-import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
@@ -114,12 +114,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Div                         historyPane;
     private       boolean                     historyPaneOpen;
     private final Collection<UUID>            historyProductIds         = new LinkedHashSet<>();
+    private final KassandraProperties         kassandraProperties;
     private       String                      lightHeaderBackgroundUrl;
     private       Image                       logoImage;
     private final HorizontalLayout            navbarLayout;
     private final Div                         pageHeaderBackground;
     private final ProductApi                  productApi;
-    private final KassandraProperties         kassandraProperties;
     private final Map<Tab, String>            tabToPathMap              = new HashMap<>();
     private       Tabs                        tabs;
     private final ThemeSessionState           themeSessionState;
@@ -184,9 +184,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         // Add the combined layout to the navbar area
         addToNavbar(true, navAndBreadcrumbs);
         // Remove margins from navbar layout and apply padding to the container instead
-        navAndBreadcrumbs.getStyle().set("padding-left", "var(--lumo-space-xs)");
-        navAndBreadcrumbs.getStyle().set("padding-right", "var(--lumo-space-xs)");
-        navAndBreadcrumbs.getStyle().set("padding-bottom", "var(--lumo-space-xs)");
+//        navAndBreadcrumbs.getStyle().set("padding-left", "var(--lumo-space-xs)");
+//        navAndBreadcrumbs.getStyle().set("padding-right", "var(--lumo-space-xs)");
+//        navAndBreadcrumbs.getStyle().set("padding-bottom", "var(--lumo-space-xs)");
         // Remove these lines that are causing the overflow
         this.getStyle().set("padding-left", "var(--lumo-space-xs)");
         this.getStyle().set("padding-right", "var(--lumo-space-xs)");
@@ -439,13 +439,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         return tabs;
     }
 
-    private boolean isVisibleMenuEntry(MenuEntry entry) {
-        if (kassandraProperties.getUi().getLegacyPrototypePages().isEnabled()) {
-            return true;
-        }
-        return !Set.of("/legacy-backlog", "/legacy-quality-board", "/legacy-sprint-list", "/insights").contains(entry.path());
-    }
-
     /**
      * Creates a theme toggle button and adds a listener to update the logo when theme changes
      *
@@ -605,6 +598,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
      */
     private String getTabIdForTitle(String title) {
         return ID_TAB_BASE + title.toLowerCase();
+    }
+
+    private boolean isVisibleMenuEntry(MenuEntry entry) {
+        if (kassandraProperties.getUi().getLegacyPrototypePages().isEnabled()) {
+            return true;
+        }
+        return !Set.of("/legacy-backlog", "/legacy-quality-board", "/legacy-sprint-list", "/insights").contains(entry.path());
     }
 
     private void logout() {

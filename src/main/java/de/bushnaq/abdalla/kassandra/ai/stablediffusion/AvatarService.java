@@ -26,14 +26,6 @@ import org.springframework.stereotype.Service;
 /**
  * Central service for AI avatar and header generation.
  * Cozy styles apply only to headers; avatars omit them to remain recognizable at small sizes.
- * <p>
- * Encapsulates the white/black canvas creation, prompt augmentation, and img2img wiring that
- * would otherwise be duplicated across UI dialogs, test data generators and test classes.
- * Both light and dark variants are generated via Stable Diffusion img2img; when SD is
- * unavailable the service throws {@link StableDiffusionException} so callers can fall back
- * to the programmatic defaults provided by {@link #generateDefaultLightAvatar} /
- * {@link #generateDefaultDarkAvatar}.
- * </p>
  */
 @Service
 @Slf4j
@@ -74,112 +66,13 @@ public class AvatarService {
     @Autowired
     private StableDiffusionService stableDiffusionService;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Public API
-    // ─────────────────────────────────────────────────────────────────────────
-
-//    /**
-//     * Creates a solid-black canvas whose dimensions are derived from the light-avatar original.
-//     * Falls back to {@link StableDiffusionConfig#getGenerationSize()} if the original cannot be read.
-//     *
-//     * @param lightOriginal Original (generation-size) bytes from the light avatar result.
-//     * @return PNG-encoded bytes of the black canvas.
-//     * @throws StableDiffusionException if canvas creation fails.
-//     */
-//    private byte[] createBlackCanvas(byte[] lightOriginal) throws StableDiffusionException {
-//        int size = config.getGenerationSize();
-//        if (lightOriginal != null && lightOriginal.length > 0) {
-//            try {
-//                BufferedImage bi = ImageIO.read(new ByteArrayInputStream(lightOriginal));
-//                if (bi != null) {
-//                    size = bi.getWidth();
-//                }
-//            } catch (IOException e) {
-//                log.warn("Could not read light-avatar original to determine canvas size, using generationSize={}", size);
-//            }
-//        }
-//        Color bgColor = Color.BLACK;
-//        try {
-//            bgColor = Color.decode(config.getAvatarDarkBackgroundColor());
-//        } catch (Exception e) {
-//            log.debug("Could not parse configured dark avatar background color '{}', using black", config.getAvatarDarkBackgroundColor());
-//        }
-//        try {
-//            return createSolidCanvas(size, bgColor);
-//        } catch (IOException e) {
-//            throw new StableDiffusionException("Failed to create black canvas: " + e.getMessage(), e);
-//        }
-//    }
-
-//    /**
-//     * Creates a solid-colour square canvas of the requested size and returns it as PNG bytes.
-//     *
-//     * @param size  Width and height of the canvas in pixels.
-//     * @param color Fill colour.
-//     * @return PNG-encoded bytes of the filled canvas.
-//     * @throws IOException if writing to the in-memory stream fails.
-//     */
-//    private byte[] createSolidCanvas(int size, Color color) throws IOException {
-//        BufferedImage bi  = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
-//        Graphics2D    g2d = bi.createGraphics();
-//        g2d.setColor(color);
-//        g2d.fillRect(0, 0, size, size);
-//        g2d.dispose();
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        ImageIO.write(bi, "png", baos);
-//        return baos.toByteArray();
-//    }
-
-//    /**
-//     * Generates a dark-background AI avatar using a solid-black img2img canvas, pinned to the
-//     * seed of the matching light avatar so the two variants are visually consistent.
-//     * Intended for test / data-gen callers that do not need progress reporting.
-//     * Uses {@link StableDiffusionService#NEGATIVE_PROMPT} as the negative prompt.
-//     *
-//     * @param basePrompt  Core prompt; the dark-background suffix is appended internally.
-//     * @param lightResult Full result from the corresponding {@link #generateLightAvatar} call;
-//     *                    its {@code originalImage} bytes and {@code seed} are reused.
-//     * @return {@link GeneratedImageResult} containing the original and resized dark images.
-//     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-//     */
-//    public GeneratedImageResult generateDarkAvatar(String basePrompt, GeneratedImageResult lightResult)
-//            throws StableDiffusionException {
-//        return generateDarkAvatar(basePrompt, StableDiffusionService.NEGATIVE_PROMPT, lightResult, null);
-//    }
-
-    /**
-     * Generates a dark-background AI avatar with a custom negative prompt.
-     * Intended for test / data-gen callers that do not need progress reporting.
-     *
-     * @param basePrompt     Core prompt; the dark-background suffix is appended internally.
-     * @param negativePrompt Negative prompt; falls back to {@link StableDiffusionService#NEGATIVE_PROMPT} when null.
-     * @param lightResult    Full result from the corresponding {@link #generateLightAvatar} call.
-     * @return {@link GeneratedImageResult} containing the original and resized dark images.
-     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-     */
-    protected GeneratedImageResult generateDarkAvatar(String basePrompt, String negativePrompt, GeneratedImageResult lightResult)
-            throws StableDiffusionException {
-        return generateDarkAvatar(basePrompt, negativePrompt, lightResult, null);
+    private GeneratedImageResult fallbackResult(GeneratedImageResult result, String prompt, String negativePrompt, CozyStylePrompt style) {
+        // Retain the requested prompt so saving a placeholder does not discard the user's description.
+        result.setPrompt(prompt);
+        result.setNegativePrompt(negativePrompt != null && !negativePrompt.isBlank() ? negativePrompt : StableDiffusionService.NEGATIVE_PROMPT);
+        result.setStyle(style);
+        return result;
     }
-
-//    /**
-//     * Generates a dark-background AI avatar using a solid-black img2img canvas, pinned to the
-//     * seed of the matching light avatar so the two variants are visually consistent.
-//     * Uses {@link StableDiffusionService#NEGATIVE_PROMPT} as the negative prompt.
-//     * Intended for UI callers that want to stream generation progress.
-//     *
-//     * @param basePrompt  Core prompt; the dark-background suffix is appended internally.
-//     * @param lightResult Full result from the corresponding {@link #generateLightAvatar} call;
-//     *                    its {@code originalImage} bytes and {@code seed} are reused.
-//     * @param progress    Optional callback invoked on each SD polling tick; may be {@code null}.
-//     * @return {@link GeneratedImageResult} containing the original and resized dark images.
-//     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-//     */
-//    public GeneratedImageResult generateDarkAvatar(String basePrompt, GeneratedImageResult lightResult,
-//                                                   StableDiffusionService.ProgressCallback progress)
-//            throws StableDiffusionException {
-//        return generateDarkAvatar(basePrompt, StableDiffusionService.NEGATIVE_PROMPT, lightResult, progress);
-//    }
 
     /**
      * Generates a dark-background AI avatar with a custom negative prompt and optional progress callback.
@@ -201,53 +94,24 @@ public class AvatarService {
                 config.getAvatarOutputSize(), progress, lightResult.getSeed(), config.getCfgScale());
     }
 
-//    /**
-//     * Generates a dark-background AI avatar, falling back to a programmatic placeholder if
-//     * Stable Diffusion is unavailable or generation fails.
-//     * Uses {@link StableDiffusionService#NEGATIVE_PROMPT} as the negative prompt.
-//     *
-//     * @param basePrompt       Core prompt passed to {@link #generateDarkAvatar(String, GeneratedImageResult)}.
-//     * @param lightResult      Full result from the matching light-avatar generation.
-//     * @param fallbackIconName Icon name forwarded to {@link #generateDefaultDarkAvatar(String)}
-//     *                         when the AI generation fails; may be {@code null}.
-//     * @return {@link GeneratedImageResult} — either AI-generated or the programmatic default.
-//     */
-//    public GeneratedImageResult generateDarkAvatarWithFallback(String basePrompt, GeneratedImageResult lightResult,
-//                                                               String fallbackIconName) {
-//        return generateDarkAvatarWithFallback(basePrompt, StableDiffusionService.NEGATIVE_PROMPT, lightResult, fallbackIconName);
-//    }
-
     /**
      * Generates a dark-background AI avatar with a custom negative prompt, falling back to a
      * programmatic placeholder if Stable Diffusion is unavailable or generation fails.
      *
-     * @param basePrompt       Core prompt passed to {@link #generateDarkAvatar(String, String, GeneratedImageResult)}.
+     * @param basePrompt       Core prompt passed to {@link #generateDarkAvatar(String, String, GeneratedImageResult, StableDiffusionService.ProgressCallback)}.
      * @param negativePrompt   Negative prompt; falls back to {@link StableDiffusionService#NEGATIVE_PROMPT} when null.
      * @param lightResult      Full result from the matching light-avatar generation.
-     * @param fallbackIconName Icon name forwarded to {@link #generateDefaultDarkAvatar(String)}; may be {@code null}.
+     * @param fallbackIconName Icon name used to generate default image; may be {@code null}.
      * @return {@link GeneratedImageResult} — either AI-generated or the programmatic default.
      */
     public GeneratedImageResult generateDarkAvatarWithFallback(String basePrompt, String negativePrompt,
-                                                               GeneratedImageResult lightResult, String fallbackIconName) {
+                                                               GeneratedImageResult lightResult, String fallbackIconName, StableDiffusionService.ProgressCallback progress) {
         try {
-            return generateDarkAvatar(basePrompt, negativePrompt, lightResult);
+            return generateDarkAvatar(basePrompt, negativePrompt, lightResult, progress);
         } catch (StableDiffusionException e) {
             log.warn("Failed to generate dark avatar (icon={}): {}", fallbackIconName, e.getMessage());
-            return fallbackResult(generateDefaultDarkAvatar(fallbackIconName), plainPrompt(basePrompt), negativePrompt, null);
+            return fallbackResult(stableDiffusionService.generateDefaultDarkAvatar(fallbackIconName, config.getAvatarDarkBackgroundColor()), plainPrompt(basePrompt), negativePrompt, null);
         }
-    }
-
-    /**
-     * Generate a dark-theme header image matching its light-theme counterpart.
-     *
-     * @param prompt           The dark header-specific prompt
-     * @param negativePrompt   Negative prompt guiding what to avoid
-     * @param lightHeader      Matching light header, used to retain the generation seed
-     * @param fallbackIconName Icon used by the programmatic fallback
-     * @return A 4096x256 dark header image
-     */
-    public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader, String fallbackIconName) {
-        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, null);
     }
 
     /**
@@ -264,40 +128,7 @@ public class AvatarService {
     public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
                                                                String fallbackIconName, StableDiffusionService.ProgressCallback progress,
                                                                CozyStylePrompt style) {
-        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress,
-                TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT), style);
-    }
-
-    /**
-     * Generate a dark-theme header image and report Stable Diffusion progress.
-     *
-     * @param prompt           The dark header-specific prompt
-     * @param negativePrompt   Negative prompt guiding what to avoid
-     * @param lightHeader      Matching light header, used to retain the generation seed
-     * @param fallbackIconName Icon used by the programmatic fallback
-     * @param progress         Optional callback invoked on each Stable Diffusion polling tick
-     * @return A 4096x256 dark header image
-     */
-    public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader, String fallbackIconName, StableDiffusionService.ProgressCallback progress) {
-        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress,
-                TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT));
-    }
-
-    /**
-     * Generates a dark tiled header with the matching light header's seed.
-     *
-     * @param prompt           dark header prompt
-     * @param negativePrompt   negative prompt
-     * @param lightHeader      matching light header result
-     * @param fallbackIconName icon for the explicit programmatic fallback
-     * @param progress         optional progress callback
-     * @param options          tiled canvas settings matching the light header
-     * @return generated header or the programmatic fallback
-     */
-    public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
-                                                               String fallbackIconName, StableDiffusionService.ProgressCallback progress,
-                                                               TiledDiffusionOptions options) {
-        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress, options, null);
+        return generateDarkHeaderWithFallback(prompt, negativePrompt, lightHeader, fallbackIconName, progress, TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT), style);
     }
 
     /**
@@ -315,31 +146,11 @@ public class AvatarService {
     public GeneratedImageResult generateDarkHeaderWithFallback(String prompt, String negativePrompt, GeneratedImageResult lightHeader,
                                                                String fallbackIconName, StableDiffusionService.ProgressCallback progress,
                                                                TiledDiffusionOptions options, CozyStylePrompt style) {
-        CozyStylePrompt resolvedStyle = resolveStyle(style, lightHeader);
-        return withStyle(generateHeaderWithFallback(styledPrompt(prompt, resolvedStyle), negativePrompt, lightHeader.getSeed(),
-                fallbackIconName, true, progress, options), resolvedStyle);
-    }
-
-    /**
-     * Generates a programmatic dark-background placeholder avatar without using Stable Diffusion.
-     * Use this as the fallback when {@link #generateDarkAvatar} throws.
-     *
-     * @param iconName Optional icon resource name (e.g. {@code "user"}, {@code "cube"}); may be {@code null}.
-     * @return {@link GeneratedImageResult} containing the dark placeholder images.
-     */
-    public GeneratedImageResult generateDefaultDarkAvatar(String iconName) {
-        return stableDiffusionService.generateDefaultDarkAvatar(iconName, config.getAvatarDarkBackgroundColor());
-    }
-
-    /**
-     * Generates a programmatic light-background placeholder avatar without using Stable Diffusion.
-     * Use this as the fallback when {@link #generateLightAvatar} throws.
-     *
-     * @param iconName Optional icon resource name (e.g. {@code "user"}, {@code "cube"}); may be {@code null}.
-     * @return {@link GeneratedImageResult} containing the placeholder images.
-     */
-    public GeneratedImageResult generateDefaultLightAvatar(String iconName) {
-        return stableDiffusionService.generateDefaultAvatar(iconName, config.getAvatarLightBackgroundColor());
+        CozyStylePrompt      resolvedStyle = resolveStyle(style, lightHeader);
+        String               styledPrompt  = styledPrompt(prompt, resolvedStyle);
+        GeneratedImageResult imageResult   = generateHeaderWithFallback(styledPrompt, negativePrompt, lightHeader.getSeed(), fallbackIconName, true, progress, options);
+        imageResult.setStyle(resolvedStyle);
+        return imageResult;
     }
 
     private GeneratedImageResult generateHeaderWithFallback(String prompt, String negativePrompt, long seed,
@@ -353,36 +164,10 @@ public class AvatarService {
                     prompt, negativePrompt, 1024, HEADER_GENERATION_HEIGHT,
                     progress, seed, config.getCfgScale(), options);
         } catch (StableDiffusionException e) {
-            log.warn("Failed to generate {} header (icon={}): {}", dark ? "dark" : "light", fallbackIconName, e.getMessage());
+            log.warn("Stable Diffusion not available, using default {} header {} with custom background color {}", dark ? "dark" : "light", fallbackIconName != null ? " with icon: " + fallbackIconName : "", dark ? config.getAvatarDarkBackgroundColor() : config.getAvatarLightBackgroundColor());
             return fallbackResult(stableDiffusionService.generateDefaultHeader(fallbackIconName, dark), prompt, negativePrompt, null);
         }
     }
-
-    /**
-     * Generates a light-background AI avatar with a custom negative prompt.
-     * Intended for test / data-gen callers that do not need progress reporting.
-     *
-     * @param basePrompt     Core prompt; the light-background suffix is appended internally.
-     * @param negativePrompt Negative prompt; falls back to {@link StableDiffusionService#NEGATIVE_PROMPT} when null.
-     * @return {@link GeneratedImageResult} containing the original and resized images, plus the SD seed.
-     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-     */
-    protected GeneratedImageResult generateLightAvatar(String basePrompt, String negativePrompt) throws StableDiffusionException {
-        return generateLightAvatar(basePrompt, negativePrompt, null);
-    }
-
-//    /**
-//     * Generates a light-background AI avatar using a solid-white img2img canvas.
-//     * Uses {@link StableDiffusionService#NEGATIVE_PROMPT} as the negative prompt.
-//     * Intended for test / data-gen callers that do not need progress reporting.
-//     *
-//     * @param basePrompt Core prompt; the light-background suffix is appended internally.
-//     * @return {@link GeneratedImageResult} containing the original and resized images, plus the SD seed.
-//     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-//     */
-//    public GeneratedImageResult generateLightAvatar(String basePrompt) throws StableDiffusionException {
-//        return generateLightAvatar(basePrompt, StableDiffusionService.NEGATIVE_PROMPT, null);
-//    }
 
     /**
      * Generates a light-background AI avatar with a custom negative prompt and optional progress callback.
@@ -398,53 +183,26 @@ public class AvatarService {
         if (!stableDiffusionService.isAvailable()) {
             throw new StableDiffusionException("Stable Diffusion is not available");
         }
-        return stableDiffusionService.text2ImgWithOriginal(plainPrompt(prompt), negativePrompt,
-                config.getAvatarOutputSize(), progress, -1, config.getCfgScale());
+        return stableDiffusionService.text2ImgWithOriginal(plainPrompt(prompt), negativePrompt, config.getAvatarOutputSize(), progress, -1, config.getCfgScale());
     }
-
-//    /**
-//     * Generates a light-background AI avatar using a solid-white img2img canvas.
-//     * Uses {@link StableDiffusionService#NEGATIVE_PROMPT} as the negative prompt.
-//     * Intended for UI callers that want to stream generation progress.
-//     *
-//     * @param basePrompt Core prompt; the light-background suffix is appended internally.
-//     * @param progress   Optional callback invoked on each SD polling tick; may be {@code null}.
-//     * @return {@link GeneratedImageResult} containing the original and resized images, plus the SD seed.
-//     * @throws StableDiffusionException if Stable Diffusion is unavailable or generation fails.
-//     */
-//    public GeneratedImageResult generateLightAvatar(String basePrompt, StableDiffusionService.ProgressCallback progress)
-//            throws StableDiffusionException {
-//        return generateLightAvatar(basePrompt, StableDiffusionService.NEGATIVE_PROMPT, progress);
-//    }
 
     /**
      * Generates a light-background AI avatar with a custom negative prompt, falling back to a
      * programmatic placeholder if Stable Diffusion is unavailable or generation fails.
      *
-     * @param basePrompt       Core prompt passed to {@link #generateLightAvatar(String, String)}.
+     * @param prompt           Core prompt passed to {@link #generateLightAvatar(String, String, StableDiffusionService.ProgressCallback)}.
      * @param negativePrompt   Negative prompt; falls back to {@link StableDiffusionService#NEGATIVE_PROMPT} when null.
-     * @param fallbackIconName Icon name forwarded to {@link #generateDefaultLightAvatar(String)}; may be {@code null}.
+     * @param fallbackIconName Icon name used to generate default image; may be {@code null}.
      * @return {@link GeneratedImageResult} — either AI-generated or the programmatic default.
      */
-    public GeneratedImageResult generateLightAvatarWithFallback(String basePrompt, String negativePrompt, String fallbackIconName) {
+    public GeneratedImageResult generateLightAvatarWithFallback(String prompt, String negativePrompt, String fallbackIconName, StableDiffusionService.ProgressCallback progress) {
         try {
-            return generateLightAvatar(basePrompt, negativePrompt);
+            return generateLightAvatar(prompt, negativePrompt, progress);
         } catch (StableDiffusionException e) {
             log.warn("Failed to generate light avatar (icon={}): {}", fallbackIconName, e.getMessage());
-            return fallbackResult(generateDefaultLightAvatar(fallbackIconName), plainPrompt(basePrompt), negativePrompt, null);
-        }
-    }
+            return fallbackResult(stableDiffusionService.generateDefaultLightAvatar(fallbackIconName, config.getAvatarLightBackgroundColor()), plainPrompt(prompt), negativePrompt, null);
 
-    /**
-     * Generate a light-theme header image from a header-specific prompt.
-     *
-     * @param prompt           The header-specific prompt
-     * @param negativePrompt   Negative prompt guiding what to avoid
-     * @param fallbackIconName Icon used by the programmatic fallback
-     * @return A 4096x256 light header image
-     */
-    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName) {
-        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, null);
+        }
     }
 
     /**
@@ -459,35 +217,7 @@ public class AvatarService {
      */
     public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName,
                                                                 StableDiffusionService.ProgressCallback progress, CozyStylePrompt style) {
-        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress,
-                TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT), style);
-    }
-
-    /**
-     * Generate a light-theme header image and report Stable Diffusion progress.
-     *
-     * @param prompt           The header-specific prompt
-     * @param negativePrompt   Negative prompt guiding what to avoid
-     * @param fallbackIconName Icon used by the programmatic fallback
-     * @param progress         Optional callback invoked on each Stable Diffusion polling tick
-     * @return A 4096x256 light header image
-     */
-    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName, StableDiffusionService.ProgressCallback progress) {
-        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress, TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT));
-    }
-
-    /**
-     * Generates a tiled light header sized for the browser's header aspect ratio.
-     *
-     * @param prompt           light header prompt
-     * @param negativePrompt   negative prompt
-     * @param fallbackIconName icon for the explicit programmatic fallback
-     * @param progress         optional progress callback
-     * @param options          tiled canvas settings
-     * @return generated header or the programmatic fallback
-     */
-    public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName, StableDiffusionService.ProgressCallback progress, TiledDiffusionOptions options) {
-        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress, options, null);
+        return generateLightHeaderWithFallback(prompt, negativePrompt, fallbackIconName, progress, TiledDiffusionOptions.forHeader(HEADER_WIDTH, HEADER_HEIGHT), style);
     }
 
     /**
@@ -504,20 +234,11 @@ public class AvatarService {
     public GeneratedImageResult generateLightHeaderWithFallback(String prompt, String negativePrompt, String fallbackIconName,
                                                                 StableDiffusionService.ProgressCallback progress,
                                                                 TiledDiffusionOptions options, CozyStylePrompt style) {
-        CozyStylePrompt resolvedStyle = resolveStyle(style, null);
-        return withStyle(generateHeaderWithFallback(styledPrompt(prompt, resolvedStyle), negativePrompt, -1L,
-                fallbackIconName, false, progress, options), resolvedStyle);
-    }
-
-    private CozyStylePrompt resolveStyle(CozyStylePrompt style, GeneratedImageResult lightResult) {
-        if (style != null) {
-            return style;
-        }
-        return lightResult != null && lightResult.getStyle() != null ? lightResult.getStyle() : CozyStylePrompt.randomStyle();
-    }
-
-    private String styledPrompt(String prompt, CozyStylePrompt style) {
-        return plainPrompt(prompt) + ", " + style.getPrompt();
+        CozyStylePrompt      resolvedStyle = resolveStyle(style, null);
+        String               styledPrompt  = styledPrompt(prompt, resolvedStyle);
+        GeneratedImageResult imageResult   = generateHeaderWithFallback(styledPrompt, negativePrompt, -1L, fallbackIconName, false, progress, options);
+        imageResult.setStyle(resolvedStyle);
+        return imageResult;
     }
 
     private String plainPrompt(String prompt) {
@@ -531,16 +252,25 @@ public class AvatarService {
         return subject;
     }
 
-    private GeneratedImageResult withStyle(GeneratedImageResult result, CozyStylePrompt style) {
-        result.setStyle(style);
-        return result;
+    /**
+     * Resolves the Cozy style to use for a header generation.
+     * If an explicit style is provided, it is returned.
+     * If no explicit style is provided, but a light header result exists with a style, that style is returned.
+     * Otherwise, a random Cozy style is selected.
+     *
+     * @param style       Explicitly requested style; may be null.
+     * @param lightResult Matching light header result; may be null.
+     * @return Resolved CozyStylePrompt to use for header generation.
+     */
+    private CozyStylePrompt resolveStyle(CozyStylePrompt style, GeneratedImageResult lightResult) {
+        if (style != null) {
+            return style;
+        }
+        return lightResult != null && lightResult.getStyle() != null ? lightResult.getStyle() : CozyStylePrompt.randomStyle();
     }
 
-    private GeneratedImageResult fallbackResult(GeneratedImageResult result, String prompt, String negativePrompt, CozyStylePrompt style) {
-        // Retain the requested prompt so saving a placeholder does not discard the user's description.
-        result.setPrompt(prompt);
-        result.setNegativePrompt(negativePrompt != null && !negativePrompt.isBlank() ? negativePrompt : StableDiffusionService.NEGATIVE_PROMPT);
-        return withStyle(result, style);
+    private String styledPrompt(String prompt, CozyStylePrompt style) {
+        return plainPrompt(prompt) + ", " + style.getPrompt();
     }
 
 }

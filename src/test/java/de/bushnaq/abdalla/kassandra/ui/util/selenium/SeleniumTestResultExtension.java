@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+@Deprecated
 public class SeleniumTestResultExtension implements TestWatcher {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 

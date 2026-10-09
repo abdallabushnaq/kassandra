@@ -533,7 +533,7 @@ public class ProductDialog extends Dialog {
             productToSave.setLightAvatarHash(newHash);
         } else if (avatarUpdateRequest == null) {
             //generate default avatar if none exists
-            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("cube");
+            GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("cube");
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();

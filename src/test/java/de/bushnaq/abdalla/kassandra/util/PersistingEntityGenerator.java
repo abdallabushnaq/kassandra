@@ -60,6 +60,10 @@ import java.util.function.UnaryOperator;
 @Component
 @ActiveProfiles("test")
 public class PersistingEntityGenerator {
+    public static final String                 DEFAULT_FEATURE_ICON      = "lightbulb";
+    public static final String                 DEFAULT_PRODUCT_ICON      = "cube";
+    public static final String                 DEFAULT_SPRINT_ICON       = "exit";
+    public static final String                 DEFAULT_USER_ICON         = "user";
     public static final String                 FIRST_OFF_DAY_FINISH_DATE = "2024-04-10";
     public static final String                 FIRST_OFF_DAY_START_DATE  = "2024-04-01";
     public static final String                 INITIAL_ADMIN             = "christopher.paul@kassandra.org";
@@ -100,27 +104,49 @@ public class PersistingEntityGenerator {
 
     public Feature addFeature(Version version, String name) {
         return eg.addFeature(version, name, feature -> {
-            long                 startTime          = System.currentTimeMillis();
-            String               basePrompt         = AvatarPrompt.getDefaultLightAvatarPrompt(name);
-            String               darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(name);
-            String               negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-            String               darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
-            CozyStylePrompt      style              = CozyStylePrompt.randomStyle();
-            GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "lightbulb");
+            log.trace("----------------------------------------------------------------------------------------------------");
+            long startTime = System.currentTimeMillis();
+            // avatar
+            String lightAvatarPrompt         = IconPrompt.getDefaultLightAvatarPrompt(name);
+            String lightAvatarNegativePrompt = IconPrompt.getDefaultLightAvatarNegativePrompt();
+            String darkAvatarPrompt          = IconPrompt.getDefaultDarkAvatarPrompt(name);
+            String darkAvatarNegativePrompt  = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+            //
+            GeneratedImageResult lightImage = avatarService.generateLightAvatarWithFallback(lightAvatarPrompt, lightAvatarNegativePrompt, DEFAULT_FEATURE_ICON, null);
             feature.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
-            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "lightbulb");
+            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkAvatarPrompt, darkAvatarNegativePrompt, lightImage, DEFAULT_FEATURE_ICON, null);
             feature.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(HeaderPrompt.getDefaultLightHeaderPrompt(name), negativePrompt, "lightbulb", null, style);
+            // header
+            String          lightHeaderPrompt         = HeaderPrompt.getDefaultLightHeaderPrompt(name);
+            String          lightHeaderNegativePrompt = HeaderPrompt.getDefaultLightHeaderNegativePrompt();
+            String          darkHeaderPrompt          = HeaderPrompt.getDefaultDarkHeaderPrompt(name);
+            String          darkHeaderNegativePrompt  = HeaderPrompt.getDefaultDarkHeaderNegativePrompt();
+            CozyStylePrompt style                     = CozyStylePrompt.randomStyle();
+            //
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(lightHeaderPrompt, lightHeaderNegativePrompt, DEFAULT_FEATURE_ICON, null, style);
             feature.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
-            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(HeaderPrompt.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "lightbulb", null, style);
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(darkHeaderPrompt, darkHeaderNegativePrompt, lightHeader, DEFAULT_FEATURE_ICON, null, style);
             feature.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Feature saved = featureApi.persist(feature);
-            featureApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), lightImage.getPrompt(),
-                    darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
-                    lightHeader.getResizedImage(), darkHeader.getResizedImage());
-            log.trace("Generated lightImage for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+
+
+            AvatarUpdateRequest request = new AvatarUpdateRequest();
+            request.setLightAvatarImage(lightImage.getResizedImage());
+            request.setLightAvatarImageOriginal(lightImage.getOriginalImage());
+            request.setLightAvatarPrompt(lightImage.getPrompt());
+            request.setDarkAvatarImage(darkImage.getResizedImage());
+            request.setDarkAvatarImageOriginal(darkImage.getOriginalImage());
+            request.setDarkAvatarPrompt(darkImage.getPrompt());
+            request.setLightAvatarNegativePrompt(lightImage.getNegativePrompt());
+            request.setDarkAvatarNegativePrompt(darkImage.getNegativePrompt());
+            request.setLightHeaderImage(lightHeader.getResizedImage());
+            request.setLightHeaderPrompt(lightHeader.getPrompt());
+            request.setDarkHeaderImage(darkHeader.getResizedImage());
+            request.setDarkHeaderPrompt(darkHeader.getPrompt());
+            featureApi.updateAvatarFull(saved.getId(), request);
+            log.trace("Generated images for feature: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            log.trace("----------------------------------------------------------------------------------------------------");
             return saved;
         });
     }
@@ -153,28 +179,52 @@ public class PersistingEntityGenerator {
 
     public Product addProduct(String name) {
         return eg.addProduct(name, product -> {
-            long                 startTime          = System.currentTimeMillis();
-            String               basePrompt         = AvatarPrompt.getDefaultLightAvatarPrompt(name);
-            String               darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(name);
-            String               negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-            String               darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
-            CozyStylePrompt      style              = CozyStylePrompt.randomStyle();
-            GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "cube");
+            log.trace("----------------------------------------------------------------------------------------------------");
+            long startTime = System.currentTimeMillis();
+            // avatar
+            String lightAvatarPrompt         = IconPrompt.getDefaultLightAvatarPrompt(name);
+            String lightAvatarNegativePrompt = IconPrompt.getDefaultLightAvatarNegativePrompt();
+            String darkAvatarPrompt          = IconPrompt.getDefaultDarkAvatarPrompt(name);
+            String darkAvatarNegativePrompt  = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+            //
+            GeneratedImageResult lightImage = avatarService.generateLightAvatarWithFallback(lightAvatarPrompt, lightAvatarNegativePrompt, DEFAULT_PRODUCT_ICON, null);
             product.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
-            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "cube");
+            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkAvatarPrompt, darkAvatarNegativePrompt, lightImage, DEFAULT_PRODUCT_ICON, null);
             product.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(HeaderPrompt.getDefaultLightHeaderPrompt(name), negativePrompt, "cube", null, style);
+            // header
+            String          lightHeaderPrompt         = HeaderPrompt.getDefaultLightHeaderPrompt(name);
+            String          lightHeaderNegativePrompt = HeaderPrompt.getDefaultLightHeaderNegativePrompt();
+            String          darkHeaderPrompt          = HeaderPrompt.getDefaultDarkHeaderPrompt(name);
+            String          darkHeaderNegativePrompt  = HeaderPrompt.getDefaultDarkHeaderNegativePrompt();
+            CozyStylePrompt style                     = CozyStylePrompt.randomStyle();
+            //
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(lightHeaderPrompt, lightHeaderNegativePrompt, DEFAULT_PRODUCT_ICON, null, style);
             product.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
-            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(HeaderPrompt.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "cube", null, style);
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(darkHeaderPrompt, darkHeaderNegativePrompt, lightHeader, DEFAULT_PRODUCT_ICON, null, style);
             product.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Product saved = productApi.persist(product);
 
-            productApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), lightImage.getPrompt(),
-                    darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
-                    lightHeader.getResizedImage(), darkHeader.getResizedImage());
-            log.trace("Generated lightImage for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            AvatarUpdateRequest request = new AvatarUpdateRequest();
+            request.setLightAvatarImage(lightImage.getResizedImage());
+            request.setLightAvatarImageOriginal(lightImage.getOriginalImage());
+            request.setLightAvatarPrompt(lightImage.getPrompt());
+            request.setLightAvatarNegativePrompt(lightImage.getNegativePrompt());
+            //
+            request.setDarkAvatarImage(darkImage.getResizedImage());
+            request.setDarkAvatarImageOriginal(darkImage.getOriginalImage());
+            request.setDarkAvatarPrompt(darkImage.getPrompt());
+            request.setDarkAvatarNegativePrompt(darkImage.getNegativePrompt());
+            //
+            request.setLightHeaderImage(lightHeader.getResizedImage());
+            request.setLightHeaderPrompt(lightHeader.getPrompt());
+            //
+            request.setDarkHeaderImage(darkHeader.getResizedImage());
+            request.setDarkHeaderPrompt(darkHeader.getPrompt());
+
+            productApi.updateAvatarFull(saved.getId(), request);
+            log.trace("Generated images for product: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            log.trace("----------------------------------------------------------------------------------------------------");
             return saved;
         });
     }
@@ -313,30 +363,46 @@ public class PersistingEntityGenerator {
 
     public Sprint addSprint(Feature feature, String name) {
         return eg.addSprint(feature, name, sprint -> {
-            long                 startTime          = System.currentTimeMillis();
-            String               basePrompt         = AvatarPrompt.getDefaultLightAvatarPrompt(name);
-            String               darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(name);
-            String               negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-            String               darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
-            CozyStylePrompt      style              = CozyStylePrompt.randomStyle();
-            GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "exit");
+            log.trace("----------------------------------------------------------------------------------------------------");
+            long startTime = System.currentTimeMillis();
+            // avatar
+            String               lightAvatarPrompt         = IconPrompt.getDefaultLightAvatarPrompt(name);
+            String               lightAvatarNegativePrompt = IconPrompt.getDefaultLightAvatarNegativePrompt();
+            String               darkAvatarPrompt          = IconPrompt.getDefaultDarkAvatarPrompt(name);
+            String               darkAvatarNegativePrompt  = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+            GeneratedImageResult lightImage                = avatarService.generateLightAvatarWithFallback(lightAvatarPrompt, lightAvatarNegativePrompt, DEFAULT_SPRINT_ICON, null);
             sprint.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
-            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "exit");
+            GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(darkAvatarPrompt, darkAvatarNegativePrompt, lightImage, DEFAULT_SPRINT_ICON, null);
             sprint.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
-            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(
-                    HeaderPrompt.getDefaultLightHeaderPrompt(name), negativePrompt, "exit", null, style);
+            // header
+            String               lightHeaderPrompt         = HeaderPrompt.getDefaultLightHeaderPrompt(name);
+            String               lightHeaderNegativePrompt = HeaderPrompt.getDefaultLightHeaderNegativePrompt();
+            String               darkHeaderPrompt          = HeaderPrompt.getDefaultDarkHeaderPrompt(name);
+            String               darkHeaderNegativePrompt  = HeaderPrompt.getDefaultDarkHeaderNegativePrompt();
+            CozyStylePrompt      style                     = CozyStylePrompt.randomStyle();
+            GeneratedImageResult lightHeader               = avatarService.generateLightHeaderWithFallback(lightHeaderPrompt, lightHeaderNegativePrompt, DEFAULT_SPRINT_ICON, null, style);
             sprint.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
-            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(
-                    HeaderPrompt.getDefaultDarkHeaderPrompt(name), darkNegativePrompt, lightHeader, "exit", null, style);
+            GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(darkHeaderPrompt, darkHeaderNegativePrompt, lightHeader, DEFAULT_SPRINT_ICON, null, style);
             sprint.setDarkHeaderHash(AvatarUtil.computeHash(darkHeader.getResizedImage()));
 
             Sprint saved = sprintApi.persist(sprint);
 
-            sprintApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), lightImage.getPrompt(),
-                    darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
-                    lightImage.getNegativePrompt(), darkImage.getNegativePrompt(),
-                    lightHeader.getResizedImage(), darkHeader.getResizedImage());
-            log.trace("Generated lightImage for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            AvatarUpdateRequest request = new AvatarUpdateRequest();
+            request.setLightAvatarImage(lightImage.getResizedImage());
+            request.setLightAvatarImageOriginal(lightImage.getOriginalImage());
+            request.setLightAvatarPrompt(lightImage.getPrompt());
+            request.setDarkAvatarImage(darkImage.getResizedImage());
+            request.setDarkAvatarImageOriginal(darkImage.getOriginalImage());
+            request.setDarkAvatarPrompt(darkImage.getPrompt());
+            request.setLightAvatarNegativePrompt(lightImage.getNegativePrompt());
+            request.setDarkAvatarNegativePrompt(darkImage.getNegativePrompt());
+            request.setLightHeaderImage(lightHeader.getResizedImage());
+            request.setLightHeaderPrompt(lightHeader.getPrompt());
+            request.setDarkHeaderImage(darkHeader.getResizedImage());
+            request.setDarkHeaderPrompt(darkHeader.getPrompt());
+            sprintApi.updateAvatarFull(saved.getId(), request);
+            log.trace("Generated images for sprint: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+            log.trace("----------------------------------------------------------------------------------------------------");
             return saved;
         });
     }
@@ -380,12 +446,9 @@ public class PersistingEntityGenerator {
         });
     }
 
-//    private boolean hasMissingAvatar(User user) {
-//        return user.getLightAvatarHash() == null || user.getLightAvatarHash().isBlank()
-//                || user.getDarkAvatarHash() == null || user.getDarkAvatarHash().isBlank();
-//    }
-
     public User addUser(String name, String email, String roles, String country, String state, LocalDate start, Color color, float availability, WorkWeek workWeek) {
+        log.trace("----------------------------------------------------------------------------------------------------");
+        long startTime = System.currentTimeMillis();
         // Check if user already exists by email
         User existingUser = null;
         try {
@@ -401,13 +464,14 @@ public class PersistingEntityGenerator {
             return existingUser;
         }
 
-        long                 startTime          = System.currentTimeMillis();
-        String               basePrompt         = AvatarPrompt.getDefaultLightAvatarPrompt(name);
-        String               darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(name);
-        String               negativePrompt     = AvatarPrompt.getDefaultLightAvatarNegativePrompt();
-        String               darkNegativePrompt = AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
-        GeneratedImageResult darkImage          = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "user");
+        // avatar
+        String lightAvatarPrompt         = AvatarPrompt.getDefaultLightAvatarPrompt(name);
+        String lightAvatarNegativePrompt = AvatarPrompt.getDefaultLightAvatarNegativePrompt();
+        String darkAvatarPrompt          = AvatarPrompt.getDefaultDarkAvatarPrompt(name);
+        String darkAvatarNegativePrompt  = AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
+        //
+        GeneratedImageResult lightImage = avatarService.generateLightAvatarWithFallback(lightAvatarPrompt, lightAvatarNegativePrompt, DEFAULT_USER_ICON, null);
+        GeneratedImageResult darkImage  = avatarService.generateDarkAvatarWithFallback(darkAvatarPrompt, darkAvatarNegativePrompt, lightImage, DEFAULT_USER_ICON, null);
 
         // eg.addUser builds the User, assigns an ID, persists it, and registers it in the collection
         User saved = eg.addUser(name, email, roles, start, color, user -> {
@@ -417,6 +481,8 @@ public class PersistingEntityGenerator {
             log.info("Created user: " + user.getName() + " with email: " + user.getEmail());
             return s;
         });
+
+
         userApi.updateAvatarFull(saved.getId(), lightImage.getResizedImage(), lightImage.getOriginalImage(), lightImage.getPrompt(),
                 darkImage.getResizedImage(), darkImage.getOriginalImage(), darkImage.getPrompt(),
                 lightImage.getNegativePrompt(), darkImage.getNegativePrompt());
@@ -437,7 +503,8 @@ public class PersistingEntityGenerator {
             addWorkWeek(saved, defaultWorkWeek, start);
         }
 
-        log.trace("Generated avatar for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+        log.trace("Generated images for user: " + name + " in " + (System.currentTimeMillis() - startTime) + " ms");
+        log.trace("----------------------------------------------------------------------------------------------------");
 
         return saved;
     }
@@ -526,8 +593,8 @@ public class PersistingEntityGenerator {
         String               darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(name);
         String               negativePrompt     = AvatarPrompt.getDefaultLightAvatarNegativePrompt();
         String               darkNegativePrompt = AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
-        GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, "user");
-        GeneratedImageResult darkImage          = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, "user");
+        GeneratedImageResult lightImage         = avatarService.generateLightAvatarWithFallback(basePrompt, negativePrompt, DEFAULT_USER_ICON, null);
+        GeneratedImageResult darkImage          = avatarService.generateDarkAvatarWithFallback(darkBasePrompt, darkNegativePrompt, lightImage, DEFAULT_USER_ICON, null);
 
         user.setLightAvatarHash(AvatarUtil.computeHash(lightImage.getResizedImage()));
         user.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));

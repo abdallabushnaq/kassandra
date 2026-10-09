@@ -76,11 +76,11 @@ public class ProductTools {
                 image = generateProductAvatar(name);
             } catch (StableDiffusionException e) {
                 log.warn("Failed to generate image for product {}: {}", name, e.getMessage());
-                image = stableDiffusionService.generateDefaultAvatar("cube");
+                image = stableDiffusionService.generateDefaultLightAvatar("cube");
             }
         } else {
             log.warn("Stable Diffusion not available, using default avatar for product: {}", name);
-            image = stableDiffusionService.generateDefaultAvatar("cube");
+            image = stableDiffusionService.generateDefaultLightAvatar("cube");
         }
         product.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         Product savedProduct = productApi.persist(product);

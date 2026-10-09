@@ -18,8 +18,18 @@
 package de.bushnaq.abdalla.kassandra.dto.util;
 
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 
 public interface HeaderPrompt extends IconPrompt {
+
+    /**
+     * Return the default negative prompt used when generating dark-background headers.
+     *
+     * @return The default dark negative prompt string
+     */
+    static String getDefaultDarkHeaderNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
+    }
 
     /**
      * Generate a default dark-background header prompt for a given product name.
@@ -33,6 +43,15 @@ public interface HeaderPrompt extends IconPrompt {
 
     private static String getDefaultHeaderPrompt(String productName) {
         return "panoramic view of (" + productName + ":2), web page header, detailed, high resolution";
+    }
+
+    /**
+     * Return the default negative prompt used when generating light-background headers.
+     *
+     * @return The default negative prompt string
+     */
+    static String getDefaultLightHeaderNegativePrompt() {
+        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
     }
 
     /**

@@ -73,79 +73,6 @@ public class StableDiffusionService {
     }
 
     /**
-     * Crop a horizontally centered image to a vertically centered strip.
-     *
-     * @param imageBytes    PNG image bytes
-     * @param expectedWidth Expected image width
-     * @param targetHeight  Height of the cropped strip
-     * @return PNG bytes containing the vertical center strip
-     * @throws StableDiffusionException if the image cannot be decoded or has unexpected dimensions
-     */
-    public byte[] cropVerticalCenter(byte[] imageBytes, int expectedWidth, int targetHeight)
-            throws StableDiffusionException {
-        try {
-            BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
-            if (image == null) {
-                throw new StableDiffusionException("Failed to read generated image for header crop");
-            }
-            if (image.getWidth() != expectedWidth || image.getHeight() < targetHeight) {
-                throw new StableDiffusionException(String.format("Generated image dimensions %dx%d cannot produce a %dx%d header", image.getWidth(), image.getHeight(), expectedWidth, targetHeight));
-            }
-            BufferedImage croppedImage = image.getSubimage(0, (image.getHeight() - targetHeight) / 2,
-                    expectedWidth, targetHeight);
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ImageIO.write(croppedImage, "PNG", outputStream);
-            return outputStream.toByteArray();
-        } catch (IOException e) {
-            throw new StableDiffusionException("Failed to crop generated header image", e);
-        }
-    }
-
-    /**
-     * Generate a default avatar image with white background and dotted light gray border.
-     * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
-     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
-     *
-     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
-     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
-     *                 Pass null for no icon. Examples: "user", "cube", "lightbulb", "exit"
-     * @return GeneratedImageResult containing original and resized images
-     */
-    public GeneratedImageResult generateDefaultAvatar(String iconName) {
-        log.warn("Stable Diffusion not available, using default avatar" + (iconName != null ? " with icon: " + iconName : ""));
-        byte[] pngImageBytes = null;
-        if (iconName != null && !iconName.trim().isEmpty()) {
-            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
-            if (pngImageBytes == null) {
-                log.warn("Failed to load icon '{}', generating avatar without icon", iconName);
-            }
-        }
-        return generateDefaultAvatarInternal(pngImageBytes, false);
-    }
-
-    /**
-     * Generate a default avatar image with a custom background color and dotted light gray border.
-     * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
-     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
-     *
-     * @param iconName        Optional icon name (without .png extension) to render in the center of the image.
-     *                        Icons are loaded from META-INF/resources/ui/icons/ directory.
-     * @param backgroundColor CSS hex string (e.g., "#FFFFFF") for the avatar background. If null or invalid, falls back to default.
-     * @return GeneratedImageResult containing original and resized images
-     */
-    public GeneratedImageResult generateDefaultAvatar(String iconName, String backgroundColor) {
-        log.warn("Stable Diffusion not available, using default avatar{} with custom background color {}", iconName != null ? " with icon: " + iconName : "", backgroundColor);
-        byte[] pngImageBytes = null;
-        if (iconName != null && !iconName.trim().isEmpty()) {
-            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
-            if (pngImageBytes == null) {
-                log.warn("Failed to load icon '{}', generating avatar without icon", iconName);
-            }
-        }
-        return generateDefaultAvatarInternal(pngImageBytes, false, backgroundColor);
-    }
-
-    /**
      * Internal method to generate a default avatar image.
      *
      * @param pngImageBytes Optional PNG image bytes to render in the center of the image
@@ -400,6 +327,50 @@ public class StableDiffusionService {
     }
 
     /**
+     * Generate a default avatar image with white background and dotted light gray border.
+     * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
+     *
+     * @param iconName Optional icon name (without .png extension) to render in the center of the image.
+     *                 Icons are loaded from META-INF/resources/ui/icons/ directory.
+     *                 Pass null for no icon. Examples: "user", "cube", "lightbulb", "exit"
+     * @return GeneratedImageResult containing original and resized images
+     */
+    public GeneratedImageResult generateDefaultLightAvatar(String iconName) {
+        log.warn("Stable Diffusion not available, using default avatar" + (iconName != null ? " with icon: " + iconName : ""));
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating avatar without icon", iconName);
+            }
+        }
+        return generateDefaultAvatarInternal(pngImageBytes, false);
+    }
+
+    /**
+     * Generate a default avatar image with a custom background color and dotted light gray border.
+     * This is used when Stable Diffusion is not available or when the user doesn't want to use AI image generation.
+     * Uses the same sizes as configured for Stable Diffusion (generationSize and outputSize).
+     *
+     * @param iconName        Optional icon name (without .png extension) to render in the center of the image.
+     *                        Icons are loaded from META-INF/resources/ui/icons/ directory.
+     * @param backgroundColor CSS hex string (e.g., "#FFFFFF") for the avatar background. If null or invalid, falls back to default.
+     * @return GeneratedImageResult containing original and resized images
+     */
+    public GeneratedImageResult generateDefaultLightAvatar(String iconName, String backgroundColor) {
+        log.warn("Stable Diffusion not available, using default avatar{} with custom background color {}", iconName != null ? " with icon: " + iconName : "", backgroundColor);
+        byte[] pngImageBytes = null;
+        if (iconName != null && !iconName.trim().isEmpty()) {
+            pngImageBytes = loadPngResource("META-INF/resources/ui/icons/" + iconName + ".png");
+            if (pngImageBytes == null) {
+                log.warn("Failed to load icon '{}', generating avatar without icon", iconName);
+            }
+        }
+        return generateDefaultAvatarInternal(pngImageBytes, false, backgroundColor);
+    }
+
+    /**
      * Get the currently loaded Stable Diffusion model checkpoint name.
      *
      * @return The name of the currently loaded model, or null if unavailable
@@ -448,186 +419,6 @@ public class StableDiffusionService {
         } catch (Exception e) {
             log.debug("Failed to get progress: {}", e.getMessage());
             return null;
-        }
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) using the configured output size.
-     * Convenience overload — seed defaults to {@code -1} (random).
-     *
-     * @param initImage The initial image bytes (PNG or JPG)
-     * @param prompt    The text description guiding the transformation
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, config.getOutputSize(), null, -1L);
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) with a specific seed.
-     * Uses the configured output size and no progress callback.
-     *
-     * @param initImage The initial image bytes (PNG or JPG)
-     * @param prompt    The text description guiding the transformation
-     * @param seed      Seed to use; pass {@code -1} for a random seed
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, long seed) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, config.getOutputSize(), null, seed);
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
-     * Seed defaults to {@code -1} (random).
-     *
-     * @param initImage        The initial image bytes (PNG or JPG)
-     * @param prompt           The text description of the image to generate
-     * @param outputSize       The desired output size (square image)
-     * @param progressCallback Callback for progress updates (can be null)
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, outputSize, progressCallback, -1L);
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) using a custom negative prompt.
-     * Seed defaults to {@code -1} (random).
-     *
-     * @param initImage        The initial image bytes (PNG or JPG)
-     * @param prompt           The text description of the image to generate
-     * @param negativePrompt   Negative prompt; falls back to {@link #NEGATIVE_PROMPT} when null or blank
-     * @param outputSize       The desired output size (square image)
-     * @param progressCallback Callback for progress updates (can be null)
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, negativePrompt, outputSize, progressCallback, -1L, config.getDefaultDenoisingStrength(), config.getCfgScale());
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
-     *
-     * @param initImage        The initial image bytes (PNG or JPG)
-     * @param prompt           The text description of the image to generate
-     * @param outputSize       The desired output size (square image)
-     * @param progressCallback Callback for progress updates (can be null)
-     * @param seed             Seed to use; pass {@code -1} for a random seed
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, outputSize, progressCallback, seed, config.getDefaultDenoisingStrength());
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
-     * Uses the configured CFG scale.
-     *
-     * @param initImage         The initial image bytes (PNG or JPG)
-     * @param prompt            The text description of the image to generate
-     * @param outputSize        The desired output size (square image)
-     * @param progressCallback  Callback for progress updates (can be null)
-     * @param seed              Seed to use; pass {@code -1} for a random seed
-     * @param denoisingStrength How much to alter the init image: 0.0 = no change, 1.0 = completely new image
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, outputSize, progressCallback, seed, denoisingStrength, config.getCfgScale());
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) with both original and resized versions.
-     *
-     * @param initImage         The initial image bytes (PNG or JPG)
-     * @param prompt            The text description of the image to generate
-     * @param outputSize        The desired output size (square image)
-     * @param progressCallback  Callback for progress updates (can be null)
-     * @param seed              Seed to use; pass {@code -1} for a random seed
-     * @param denoisingStrength How much to alter the init image: 0.0 = no change, 1.0 = completely new image
-     * @param cfgScale          Classifier Free Guidance scale; higher values follow the prompt more strictly
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
-        return img2imgWithOriginal(initImage, prompt, NEGATIVE_PROMPT, outputSize, progressCallback, seed, denoisingStrength, cfgScale);
-    }
-
-    /**
-     * Generate an image from an initial image and a text prompt (img2img) using a custom negative prompt.
-     *
-     * @param initImage         The initial image bytes (PNG or JPG)
-     * @param prompt            The text description of the image to generate
-     * @param negativePrompt    Negative prompt guiding what to avoid; falls back to {@link #NEGATIVE_PROMPT} when null or blank
-     * @param outputSize        The desired output size (square image)
-     * @param progressCallback  Callback for progress updates (can be null)
-     * @param seed              Seed to use; pass {@code -1} for a random seed
-     * @param denoisingStrength How much to alter the init image: 0.0 = no change, 1.0 = completely new image
-     * @param cfgScale          Classifier Free Guidance scale; higher values follow the prompt more strictly
-     * @return GeneratedImageResult containing original, resized images, the prompt, and the actual seed used
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult img2imgWithOriginal(byte[] initImage, String prompt, String negativePrompt, int outputSize, ProgressCallback progressCallback, long seed, double denoisingStrength, double cfgScale) throws StableDiffusionException {
-        log.trace("Generating image-to-image with prompt: '{}', seed: {}, output: {}x{}, denoising: {}, cfgScale: {}", prompt, seed, outputSize, outputSize, denoisingStrength, cfgScale);
-        try {
-            selectModel(config.getModelName());
-            String resolvedNegativePrompt = (negativePrompt != null && !negativePrompt.isBlank()) ? negativePrompt : NEGATIVE_PROMPT;
-            String base64Init             = java.util.Base64.getEncoder().encodeToString(initImage);
-            ImageToImageRequest request = ImageToImageRequest.builder()
-                    .prompt(prompt)
-                    .negativePrompt(resolvedNegativePrompt)
-                    .steps(config.getDefaultSteps())
-                    .samplerName(config.getDefaultSampler())
-                    .cfgScale(cfgScale)
-                    .width(config.getGenerationSize())
-                    .height(config.getGenerationSize())
-                    .batchSize(1)
-                    .seed(seed)
-                    .denoisingStrength(denoisingStrength)
-                    .initImages(new String[]{base64Init})
-                    .build();
-
-            Thread progressThread = null;
-            if (progressCallback != null) {
-                progressThread = new Thread(() -> pollProgress(progressCallback));
-                progressThread.setDaemon(true);
-                progressThread.start();
-            }
-
-            try {
-                ImageGenerationResponse response = webClient.post()
-                        .uri("/sdapi/v1/img2img")
-                        .bodyValue(request)
-                        .retrieve()
-                        .bodyToMono(ImageGenerationResponse.class)
-                        .timeout(Duration.ofSeconds(config.getTimeoutSeconds()))
-                        .block();
-
-                if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
-                    throw new StableDiffusionException("No image returned from Stable Diffusion API (img2img)");
-                }
-
-                String base64Image   = response.getImages().getFirst();
-                byte[] originalImage = java.util.Base64.getDecoder().decode(base64Image);
-                byte[] resizedImage  = resizeImage(originalImage, outputSize);
-                long   actualSeed    = parseSeedFromInfo(response.getInfo());
-                log.trace("Successfully generated and resized image-to-image to {}x{} with seed {}", outputSize, outputSize, actualSeed);
-                GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, actualSeed);
-                result.setNegativePrompt(resolvedNegativePrompt);
-                return result;
-            } finally {
-                if (progressThread != null) {
-                    progressThread.interrupt();
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error generating image-to-image with Stable Diffusion", e);
-            throw new StableDiffusionException("Failed to generate image-to-image: " + e.getMessage(), e);
         }
     }
 
@@ -735,17 +526,6 @@ public class StableDiffusionService {
         }
     }
 
-    private void requireTiledDiffusion() throws StableDiffusionException {
-        Map<String, List<String>> scripts = webClient.get().uri("/sdapi/v1/scripts").retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, List<String>>>() {
-                })
-                .timeout(Duration.ofSeconds(config.getTimeoutSeconds())).block();
-        if (scripts == null || scripts.get("txt2img") == null
-                || scripts.get("txt2img").stream().noneMatch("Tiled Diffusion"::equalsIgnoreCase)) {
-            throw new StableDiffusionException("Tiled Diffusion is not loaded. Install multidiffusion-upscaler-for-automatic1111 and restart WebUI");
-        }
-    }
-
     /**
      * Resize an image to the specified size (square).
      *
@@ -797,6 +577,25 @@ public class StableDiffusionService {
     }
 
     /**
+     * Saves image to a file for debugging purposes.
+     *
+     * @param imageBytes The image bytes to save
+     */
+    private void saveImage(byte[] imageBytes) {
+        if (imageBytes != null) {
+            try {
+                BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                ImageIO.write(image, "PNG", new java.io.File("generated_image.png"));
+                log.debug("Saved generated image to 'generated_image.png'");
+            } catch (IOException e) {
+                log.error("Failed to save generated image: {}", e.getMessage(), e);
+            }
+        } else {
+            log.error("Failed to read generated image for saving");
+        }
+    }
+
+    /**
      * Selects and loads a new Stable Diffusion model by name.
      *
      * @param modelName The filename of the model to load (e.g., "realisticVisionV60B1_v51HyperVAE.safetensors")
@@ -830,24 +629,6 @@ public class StableDiffusionService {
     }
 
     /**
-     * Generate a non-square image from a text prompt.
-     *
-     * @param prompt           The text description of the image to generate
-     * @param negativePrompt   Negative prompt guiding what to avoid
-     * @param outputWidth      The desired output width
-     * @param outputHeight     The desired output height
-     * @param progressCallback Callback for progress updates, or null
-     * @param seed             Seed to use; pass {@code -1} for a random seed
-     * @param cfgScale         Classifier Free Guidance scale
-     * @return GeneratedImageResult containing the generated image at the requested dimensions
-     * @throws StableDiffusionException if generation fails
-     */
-    public GeneratedImageResult text2ImgWithOriginal(String prompt, String negativePrompt, int outputWidth, int outputHeight,
-                                                     ProgressCallback progressCallback, long seed, double cfgScale) throws StableDiffusionException {
-        return text2ImgWithOriginal(prompt, negativePrompt, outputWidth, outputHeight, progressCallback, seed, cfgScale, null);
-    }
-
-    /**
      * Generates an image with optional Tiled Diffusion settings.
      * With size overwrite enabled, the extension's canvas dimensions replace the
      * base request dimensions and the returned image is retained without cropping.
@@ -870,8 +651,8 @@ public class StableDiffusionService {
         try {
             boolean tiled = tiledDiffusion != null && tiledDiffusion.isEnabled();
             if (tiled) {
-                validateTiledDiffusion(tiledDiffusion);
-                requireTiledDiffusion();
+                validateTiledDiffusionParameters(tiledDiffusion);
+                validateTiledDiffusionOption();
             }
             int targetWidth  = tiled && tiledDiffusion.isOverwriteImageSize() ? tiledDiffusion.getImageWidth() : outputWidth;
             int targetHeight = tiled && tiledDiffusion.isOverwriteImageSize() ? tiledDiffusion.getImageHeight() : outputHeight;
@@ -914,8 +695,9 @@ public class StableDiffusionService {
                         throw new StableDiffusionException("Tiled Diffusion did not return the requested " + targetWidth + "x" + targetHeight + " canvas");
                     }
                 }
-                byte[]               resizedImage = tiled ? originalImage : resizeImage(originalImage, outputWidth, outputHeight);
-                GeneratedImageResult result       = new GeneratedImageResult(originalImage, prompt, resizedImage, parseSeedFromInfo(response.getInfo()));
+                byte[] resizedImage = tiled ? originalImage : resizeImage(originalImage, outputWidth, outputHeight);
+
+                GeneratedImageResult result = new GeneratedImageResult(originalImage, prompt, resizedImage, parseSeedFromInfo(response.getInfo()));
                 result.setNegativePrompt(resolvedNegativePrompt);
                 return result;
             } finally {
@@ -1044,7 +826,29 @@ public class StableDiffusionService {
         return Map.of("Tiled Diffusion", Map.of("args", args));
     }
 
-    private void validateTiledDiffusion(TiledDiffusionOptions options) throws StableDiffusionException {
+    /**
+     * Validate Tiled Diffusion option via api.
+     *
+     * @throws StableDiffusionException if validation fails
+     */
+    private void validateTiledDiffusionOption() throws StableDiffusionException {
+        Map<String, List<String>> scripts = webClient.get().uri("/sdapi/v1/scripts").retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, List<String>>>() {
+                })
+                .timeout(Duration.ofSeconds(config.getTimeoutSeconds())).block();
+        if (scripts == null || scripts.get("txt2img") == null
+                || scripts.get("txt2img").stream().noneMatch("Tiled Diffusion"::equalsIgnoreCase)) {
+            throw new StableDiffusionException("Tiled Diffusion is not loaded. Install multidiffusion-upscaler-for-automatic1111 and restart WebUI");
+        }
+    }
+
+    /**
+     * Validate Tiled Diffusion parameters.
+     *
+     * @param options TiledDiffusionOptions to validate
+     * @throws StableDiffusionException if validation fails
+     */
+    private void validateTiledDiffusionParameters(TiledDiffusionOptions options) throws StableDiffusionException {
         if (options.isOverwriteImageSize()
                 && (options.getImageWidth() < 256 || options.getImageWidth() > 16384 || options.getImageWidth() % 16 != 0
                 || options.getImageHeight() < 256 || options.getImageHeight() > 16384 || options.getImageHeight() % 16 != 0)) {

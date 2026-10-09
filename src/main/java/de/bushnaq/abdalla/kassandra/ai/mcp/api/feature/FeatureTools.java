@@ -79,11 +79,11 @@ public class FeatureTools {
                 image = generateFeatureAvatar(name);
             } catch (StableDiffusionException e) {
                 log.warn("Failed to generate image for feature {}: {}", name, e.getMessage());
-                image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+                image = stableDiffusionService.generateDefaultLightAvatar("lightbulb");
             }
         } else {
             log.warn("Stable Diffusion not available, using default avatar for feature: {}", name);
-            image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+            image = stableDiffusionService.generateDefaultLightAvatar("lightbulb");
         }
         feature.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
         Feature savedFeature = featureApi.persist(feature);

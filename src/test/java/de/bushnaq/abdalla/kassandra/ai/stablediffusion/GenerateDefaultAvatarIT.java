@@ -61,7 +61,7 @@ public class GenerateDefaultAvatarIT extends PersistingEntityGenerator {
     @Test
     public void testGenerateDefaultAvatar() throws IOException {
         // Generate default avatar without icon (pass null)
-        GeneratedImageResult result = stableDiffusionService.generateDefaultAvatar(null);
+        GeneratedImageResult result = stableDiffusionService.generateDefaultLightAvatar(null);
 
         // Verify result is not null
         assertNotNull(result, "Generated result should not be null");
@@ -95,7 +95,7 @@ public class GenerateDefaultAvatarIT extends PersistingEntityGenerator {
     @Test
     public void testGenerateDefaultAvatarWithIcon() throws IOException {
         // Generate default avatar with user icon
-        GeneratedImageResult result = stableDiffusionService.generateDefaultAvatar("user");
+        GeneratedImageResult result = stableDiffusionService.generateDefaultLightAvatar("user");
 
         // Verify result is not null
         assertNotNull(result, "Generated result should not be null");

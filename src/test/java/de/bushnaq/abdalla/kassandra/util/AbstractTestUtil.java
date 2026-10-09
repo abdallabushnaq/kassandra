@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.service.DatabaseDebugService;
 import jakarta.persistence.EntityManager;
@@ -49,6 +50,7 @@ public class AbstractTestUtil extends DTOAsserts {
 
     @BeforeEach
     protected void beforeEach(TestInfo testInfo) {
+        StableDiffusionService.setEnabled(false);
         logger.info("==============================================");
         logger.info("start " + testInfo.getDisplayName());
         logger.info("----------------------------------------------");

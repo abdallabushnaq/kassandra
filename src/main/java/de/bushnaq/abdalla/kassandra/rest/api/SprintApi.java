@@ -31,8 +31,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -127,73 +127,6 @@ public class SprintApi extends AbstractApi {
     }
 
     /**
-     * Get the dark-mode avatar image bytes for a sprint.
-     * The server falls back to the light image automatically if no dark variant has been stored yet.
-     *
-     * @param sprintId The sprint ID
-     * @return The dark avatar image (or light fallback), or null if not found
-     */
-    public AvatarWrapper getDarkAvatarImage(UUID sprintId) {
-        try {
-            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                    getBaseUrl() + "/sprint/{id}/dark-avatar",
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    AvatarWrapper.class,
-                    sprintId
-            ));
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Error fetching dark avatar image for sprint ID {}: {}", sprintId, e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Get the light-mode header image bytes for a sprint.
-     *
-     * @param sprintId The sprint ID
-     * @return The header image, or null if not found
-     */
-    public AvatarWrapper getHeaderImage(UUID sprintId) {
-        try {
-            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                    getBaseUrl() + "/sprint/{id}/header",
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    AvatarWrapper.class,
-                    sprintId
-            ));
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Error fetching header image for sprint ID {}: {}", sprintId, e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Get the dark-mode header image bytes for a sprint.
-     *
-     * @param sprintId The sprint ID
-     * @return The dark header image, or its light fallback, or null if not found
-     */
-    public AvatarWrapper getDarkHeaderImage(UUID sprintId) {
-        try {
-            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                    getBaseUrl() + "/sprint/{id}/dark-header",
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    AvatarWrapper.class,
-                    sprintId
-            ));
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Error fetching dark header image for sprint ID {}: {}", sprintId, e.getMessage());
-            return null;
-        }
-    }
-
-    /**
      * Get the global Backlog sprint.
      *
      * @return The Backlog sprint
@@ -238,6 +171,73 @@ public class SprintApi extends AbstractApi {
         }
     }
 
+    /**
+     * Get the dark-mode avatar image bytes for a sprint.
+     * The server falls back to the light image automatically if no dark variant has been stored yet.
+     *
+     * @param sprintId The sprint ID
+     * @return The dark avatar image (or light fallback), or null if not found
+     */
+    public AvatarWrapper getDarkAvatarImage(UUID sprintId) {
+        try {
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/sprint/{id}/dark-avatar",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarWrapper.class,
+                    sprintId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error fetching dark avatar image for sprint ID {}: {}", sprintId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get the dark-mode header image bytes for a sprint.
+     *
+     * @param sprintId The sprint ID
+     * @return The dark header image, or its light fallback, or null if not found
+     */
+    public AvatarWrapper getDarkHeaderImage(UUID sprintId) {
+        try {
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/sprint/{id}/dark-header",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarWrapper.class,
+                    sprintId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error fetching dark header image for sprint ID {}: {}", sprintId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get the light-mode header image bytes for a sprint.
+     *
+     * @param sprintId The sprint ID
+     * @return The header image, or null if not found
+     */
+    public AvatarWrapper getHeaderImage(UUID sprintId) {
+        try {
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/sprint/{id}/header",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    AvatarWrapper.class,
+                    sprintId
+            ));
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Error fetching header image for sprint ID {}: {}", sprintId, e.getMessage());
+            return null;
+        }
+    }
+
     public Sprint persist(Sprint sprint) {
         ResponseEntity<Sprint> response = executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint",
@@ -274,15 +274,15 @@ public class SprintApi extends AbstractApi {
      * Update sprint avatar with both light and dark theme fields in a single request.
      * Delegates to the full overload with null negative-prompt fields.
      *
-     * @param sprintId           The sprint ID
-     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
+     * @param sprintId          The sprint ID
+     * @param resizedImage      Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage     Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt            Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage  Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage Original dark avatar image bytes (e.g., 512x512), or null to skip
      */
     public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage) {
+                                 byte[] darkResizedImage, byte[] darkOriginalImage) {
         updateAvatarFull(sprintId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
     }
 
@@ -290,19 +290,19 @@ public class SprintApi extends AbstractApi {
      * Update sprint avatar with all light, dark, and prompt fields in a single request.
      * All fields are optional — pass {@code null} to leave the stored value unchanged.
      *
-     * @param sprintId                The sprint ID
-     * @param resizedImage            Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage           Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt                  Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage        Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage       Original dark avatar image bytes (e.g., 512x512), or null to skip
-     * @param darkPrompt              Prompt used to generate the dark avatar (includes dark suffix), or null to skip
-     * @param negativePrompt          Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
+     * @param sprintId           The sprint ID
+     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt             Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
+     * @param darkPrompt         Prompt used to generate the dark avatar (includes dark suffix), or null to skip
+     * @param negativePrompt     Negative prompt for the light avatar, or null to skip
+     * @param darkNegativePrompt Negative prompt for the dark avatar, or null to skip
      */
     public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage,
-            String darkPrompt, String negativePrompt, String darkNegativePrompt) {
+                                 byte[] darkResizedImage, byte[] darkOriginalImage,
+                                 String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
 
         if (resizedImage != null) {
@@ -334,34 +334,10 @@ public class SprintApi extends AbstractApi {
     /**
      * Update sprint avatar and matching light/dark header images in a single request.
      *
-     * @param sprintId           The sprint ID
-     * @param resizedImage       Resized light avatar image bytes, or null to skip
-     * @param originalImage      Original light avatar image bytes, or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes, or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes, or null to skip
-     * @param darkPrompt         Prompt used to generate the dark avatar, or null to skip
-     * @param negativePrompt     Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt Negative prompt for the dark avatar, or null to skip
-     * @param lightHeaderImage   Light header image bytes, or null to skip
-     * @param darkHeaderImage    Dark header image bytes, or null to skip
+     * @param sprintId The sprint ID
+     * @param request  The AvatarUpdateRequest containing all fields to update (light/dark avatar images, prompts, and header images)
      */
-    public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage,
-            String darkPrompt, String negativePrompt, String darkNegativePrompt,
-            byte[] lightHeaderImage, byte[] darkHeaderImage) {
-        AvatarUpdateRequest request = new AvatarUpdateRequest();
-        request.setLightAvatarImage(resizedImage);
-        request.setLightAvatarImageOriginal(originalImage);
-        request.setLightAvatarPrompt(prompt);
-        request.setDarkAvatarImage(darkResizedImage);
-        request.setDarkAvatarImageOriginal(darkOriginalImage);
-        request.setDarkAvatarPrompt(darkPrompt);
-        request.setLightAvatarNegativePrompt(negativePrompt);
-        request.setDarkAvatarNegativePrompt(darkNegativePrompt);
-        request.setLightHeaderImage(lightHeaderImage);
-        request.setDarkHeaderImage(darkHeaderImage);
-
+    public void updateAvatarFull(UUID sprintId, AvatarUpdateRequest request) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/sprint/{id}/avatar/full",
                 HttpMethod.PUT,
@@ -389,9 +365,9 @@ public class SprintApi extends AbstractApi {
      * @param darkHeaderPrompt   Prompt used to generate the dark header, or null to skip
      */
     public void updateAvatarFull(UUID sprintId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage, String darkPrompt, String negativePrompt,
-            String darkNegativePrompt, byte[] lightHeaderImage, byte[] darkHeaderImage, String lightHeaderPrompt,
-            String darkHeaderPrompt) {
+                                 byte[] darkResizedImage, byte[] darkOriginalImage, String darkPrompt, String negativePrompt,
+                                 String darkNegativePrompt, byte[] lightHeaderImage, byte[] darkHeaderImage, String lightHeaderPrompt,
+                                 String darkHeaderPrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
         request.setLightAvatarImage(resizedImage);
         request.setLightAvatarImageOriginal(originalImage);

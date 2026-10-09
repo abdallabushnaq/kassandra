@@ -74,7 +74,6 @@ public interface IconPrompt {
      *
      * @return The default negative prompt string
      */
-    @JsonIgnore
     static String getDefaultLightAvatarNegativePrompt() {
         return StableDiffusionService.NEGATIVE_PROMPT + ", person";
     }

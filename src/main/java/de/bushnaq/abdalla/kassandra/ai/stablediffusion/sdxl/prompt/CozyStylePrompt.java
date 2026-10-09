@@ -21,8 +21,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public enum CozyStylePrompt {
 
+    DEFAULT(""),
     GHIBLI_INSPIRED(
-            ", Studio Ghibli"
+            "Studio Ghibli"
 //            """
 //                    hand-painted Japanese fantasy animation aesthetic,
 //                    inspired by the visual language of Hayao Miyazaki and Studio Ghibli,
@@ -32,16 +33,16 @@ public enum CozyStylePrompt {
 //                    """
     ),
 
-    BEATRIX_POTTER(", Beatrix Potter"
+//    BEATRIX_POTTER("Beatrix Potter"
 //            "delicate English storybook illustration aesthetic, inspired by the watercolor illustrations "
 //                    + "of Beatrix Potter, "
 //                    + "finely detailed natural environments, charming woodland animals, wildflowers, "
 //                    + "small cottages, gardens, winding paths, intricate botanical details, "
 //                    + "soft watercolor washes, fine ink linework, intimate handcrafted appearance, "
 //                    + "whimsical countryside atmosphere"
-    ),
+//    ),
 
-    RICHARD_SCARRY(", Richard Scarry"
+    RICHARD_SCARRY("Richard Scarry"
 //            "playful vintage children's book illustration aesthetic, inspired by the illustrations "
 //                    + "of Richard Scarry, "
 //                    + "busy miniature environments filled with charming characters and small activities, "
@@ -50,14 +51,14 @@ public enum CozyStylePrompt {
 //                    + "high visual density, delightful storytelling details"
     ),
 
-    TOVE_JANSSON("Tove Jansson"
+//    TOVE_JANSSON("Tove Jansson"
 //            "whimsical Scandinavian children's illustration aesthetic, inspired by the artwork "
 //                    + "of Tove Jansson, "
 //                    + "charming fantastical landscapes, expressive small characters, unusual plants, "
 //                    + "cozy architecture, winding paths, forests and seaside environments, "
 //                    + "delicate ink linework, restrained watercolor colors, organic shapes, "
 //                    + "quietly magical atmosphere, sophisticated simplicity"
-    ),
+//    ),
 
     MARY_BLAIR(
             "Mary Blair"
@@ -69,15 +70,15 @@ public enum CozyStylePrompt {
 //                    + "dreamlike children's book atmosphere"
     ),
 
-    EYVIND_EARLE(
-            "Eyvind Earle"
+//    EYVIND_EARLE(
+//            "Eyvind Earle"
 //            "highly stylized storybook landscape illustration aesthetic, inspired by the artwork "
 //                    + "of Eyvind Earle, "
 //                    + "layered forests, elegant trees, rolling hills, distant villages, "
 //                    + "ornamental foliage, stylized architecture, intricate repeating shapes, "
 //                    + "decorative silhouettes, rich natural colors, simplified perspective, "
-                    + "beautifully composed panoramic scenery"
-    ),
+//                    + "beautifully composed panoramic scenery"
+//    ),
 
     MOEBIUS_ADVENTURE(
             "Moebius"
@@ -106,7 +107,7 @@ public enum CozyStylePrompt {
 //                    + "fine pen details, transparent watercolor washes, delicate textures, "
 //                    + "gentle colors, intricate environmental storytelling, charming handcrafted feel"
 //    ),
-    BRAMBLY_HEDGE(", Brambly Hedge"
+//    BRAMBLY_HEDGE(", Brambly Hedge"
 //            "detailed English woodland storybook illustration aesthetic, inspired by the "
 //                    + "illustrations of Jill Barklem and Brambly Hedge, "
 //                    + "charming miniature woodland villages, cozy cottages, winding paths, "
@@ -115,7 +116,8 @@ public enum CozyStylePrompt {
 //                    + "delicate pen and watercolor illustration, finely rendered textures, "
 //                    + "warm natural colors, handcrafted children's book aesthetic, "
 //                    + "rich panoramic environmental storytelling, charming and inviting atmosphere"
-    );
+//    )
+    ;
 
     private final String prompt;
 

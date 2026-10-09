@@ -31,62 +31,51 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AvatarUpdateRequest {
     /**
-     * Resized avatar image (e.g., 64x64) for the light theme.
-     */
-    private byte[] lightAvatarImage;
-
-    /**
-     * Original avatar image (e.g., 512x512) for the light theme.
-     */
-    private byte[] lightAvatarImageOriginal;
-
-    /**
-     * The negative prompt used when generating the light avatar.
-     */
-    private String lightAvatarNegativePrompt;
-
-    /**
-     * The prompt used to generate the light avatar.
-     */
-    private String lightAvatarPrompt;
-
-    /**
-     * The prompt used to generate the light header.
-     */
-    private String lightHeaderPrompt;
-
-    /**
-     * Header image (1024x48) for the light theme.
-     */
-    private byte[] lightHeaderImage;
-
-    /**
      * Resized dark-mode avatar image (e.g., 64x64).
      */
     private byte[] darkAvatarImage;
-
     /**
      * Original dark-mode avatar image (e.g., 512x512).
      */
     private byte[] darkAvatarImageOriginal;
-
     /**
      * The negative prompt used when generating the dark avatar.
      */
     private String darkAvatarNegativePrompt;
-
     /**
      * The prompt used to generate the dark avatar (includes dark-background suffix).
      */
     private String darkAvatarPrompt;
-
-    /**
-     * The prompt used to generate the dark header.
-     */
-    private String darkHeaderPrompt;
-
     /**
      * Header image (1024x48) for the dark theme.
      */
     private byte[] darkHeaderImage;
+    /**
+     * The prompt used to generate the dark header.
+     */
+    private String darkHeaderPrompt;
+    /**
+     * Resized avatar image (e.g., 64x64) for the light theme.
+     */
+    private byte[] lightAvatarImage;
+    /**
+     * Original avatar image (e.g., 512x512) for the light theme.
+     */
+    private byte[] lightAvatarImageOriginal;
+    /**
+     * The negative prompt used when generating the light avatar.
+     */
+    private String lightAvatarNegativePrompt;
+    /**
+     * The prompt used to generate the light avatar.
+     */
+    private String lightAvatarPrompt;
+    /**
+     * Header image (1024x48) for the light theme.
+     */
+    private byte[] lightHeaderImage;
+    /**
+     * The prompt used to generate the light header.
+     */
+    private String lightHeaderPrompt;
 }

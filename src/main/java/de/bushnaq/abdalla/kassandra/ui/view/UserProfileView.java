@@ -119,7 +119,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                     // Create a new user since one wasn't found
                     User newUser = createDefaultUser(userEmail);
                     //generate default avatar if none exists
-                    GeneratedImageResult image               = stableDiffusionService.generateDefaultAvatar("user");
+                    GeneratedImageResult image               = stableDiffusionService.generateDefaultLightAvatar("user");
                     byte[]               avatarImage         = image.getResizedImage();
                     byte[]               avatarImageOriginal = image.getOriginalImage();
                     String               avatarPrompt        = image.getPrompt();
@@ -463,7 +463,7 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
                 currentUser.setLightAvatarHash(newHash);
             } else if (avatarUpdateRequest == null) {
                 //generate default avatar if none exists
-                GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("user");
+                GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("user");
                 avatarImage         = image.getResizedImage();
                 avatarImageOriginal = image.getOriginalImage();
                 avatarPrompt        = image.getPrompt();

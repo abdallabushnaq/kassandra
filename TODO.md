@@ -15,6 +15,10 @@
 10. sort db printout
 11. remove fallback parameter in ColorUtils.intToHex
 12. TiledDiffusionOptions should be server settings.
+13. remove legacy classes
+    1. AbstractLegacyGanttTestUtil
+    2. OllamaTestHelper
+    3. HumanizedSeleniumHandler
 
 ## Feature
 
@@ -41,6 +45,8 @@
 19. gantt chart task tooltip is missing many items from legacy code.
 20. Gantt chart is drawn until now although they are closed.
 21. there is currently no way to move the backlog back to independence if it was moved by mistake into a story.
+22. after generating an image you cannot download it
+23. image download button sometimes downloads 2 images,
 
 # Latest Bugs
 

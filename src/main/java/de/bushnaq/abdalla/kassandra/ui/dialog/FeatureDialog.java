@@ -369,7 +369,7 @@ public class FeatureDialog extends Dialog {
             featureToSave.setLightAvatarHash(newHash);
         } else if (avatarUpdateRequest == null) {
             //generate default avatar if none exists
-            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("lightbulb");
+            GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("lightbulb");
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();

@@ -702,7 +702,7 @@ public class UserDialog extends Dialog {
             userToSave.setLightAvatarHash(newHash);
         } else if (avatarUpdateRequest == null) {
             //generate default avatar if none exists
-            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("user");
+            GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("user");
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();

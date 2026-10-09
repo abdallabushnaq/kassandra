@@ -30,8 +30,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ProductApi extends AbstractApi {
@@ -121,6 +121,39 @@ public class ProductApi extends AbstractApi {
         }
     }
 
+    public Product getById(UUID id) {
+        ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                getBaseUrl() + "/product/{id}",
+                HttpMethod.GET,
+                createHttpEntity(),
+                Product.class,
+                id
+        ));
+        return response.getBody();
+    }
+
+    /**
+     * Get a product by its name (case-insensitive, exact match).
+     * Returns null if not found.
+     */
+    public Optional<Product> getByName(String name) {
+        try {
+            ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/product/by-name/{name}",
+                    HttpMethod.GET,
+                    createHttpEntity(),
+                    Product.class,
+                    name
+            ));
+            return Optional.of(response.getBody());
+        } catch (ErrorResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw e;
+        }
+    }
+
     /**
      * Get the dark-mode avatar image bytes for a product.
      * The server falls back to the light image automatically if no dark variant has been stored yet.
@@ -132,27 +165,6 @@ public class ProductApi extends AbstractApi {
         try {
             ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
                     getBaseUrl() + "/product/{id}/dark-avatar",
-                    HttpMethod.GET,
-                    createHttpEntity(),
-                    AvatarWrapper.class,
-                    productId
-            ));
-            return response.getBody();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     * Get the light-mode header image bytes for a product.
-     *
-     * @param productId The product ID
-     * @return The header image, or null if not found
-     */
-    public AvatarWrapper getHeaderImage(UUID productId) {
-        try {
-            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                    getBaseUrl() + "/product/{id}/header",
                     HttpMethod.GET,
                     createHttpEntity(),
                     AvatarWrapper.class,
@@ -185,36 +197,24 @@ public class ProductApi extends AbstractApi {
         }
     }
 
-    public Product getById(UUID id) {
-        ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                getBaseUrl() + "/product/{id}",
-                HttpMethod.GET,
-                createHttpEntity(),
-                Product.class,
-                id
-        ));
-        return response.getBody();
-    }
-
     /**
-     * Get a product by its name (case-insensitive, exact match).
-     * Returns null if not found.
+     * Get the light-mode header image bytes for a product.
+     *
+     * @param productId The product ID
+     * @return The header image, or null if not found
      */
-    public Optional<Product> getByName(String name) {
+    public AvatarWrapper getHeaderImage(UUID productId) {
         try {
-            ResponseEntity<Product> response = executeWithErrorHandling(() -> restTemplate.exchange(
-                    getBaseUrl() + "/product/by-name/{name}",
+            ResponseEntity<AvatarWrapper> response = executeWithErrorHandling(() -> restTemplate.exchange(
+                    getBaseUrl() + "/product/{id}/header",
                     HttpMethod.GET,
                     createHttpEntity(),
-                    Product.class,
-                    name
+                    AvatarWrapper.class,
+                    productId
             ));
-            return Optional.of(response.getBody());
-        } catch (ErrorResponseException e) {
-            if (e.getStatusCode().value() == 404) {
-                return Optional.empty();
-            }
-            throw e;
+            return response.getBody();
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -254,15 +254,15 @@ public class ProductApi extends AbstractApi {
      * Update product avatar with both light and dark theme fields in a single request.
      * Delegates to the full overload with null negative-prompt fields.
      *
-     * @param productId          The product ID
-     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
+     * @param productId         The product ID
+     * @param resizedImage      Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage     Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt            Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage  Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage Original dark avatar image bytes (e.g., 512x512), or null to skip
      */
     public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage) {
+                                 byte[] darkResizedImage, byte[] darkOriginalImage) {
         updateAvatarFull(productId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
     }
 
@@ -270,19 +270,19 @@ public class ProductApi extends AbstractApi {
      * Update product avatar with all light, dark, and prompt fields in a single request.
      * All fields are optional — pass {@code null} to leave the stored value unchanged.
      *
-     * @param productId               The product ID
-     * @param resizedImage            Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage           Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt                  Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage        Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage       Original dark avatar image bytes (e.g., 512x512), or null to skip
-     * @param darkPrompt              Prompt used to generate the dark avatar (includes dark suffix), or null to skip
-     * @param negativePrompt          Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
+     * @param productId          The product ID
+     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
+     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
+     * @param prompt             Prompt used to generate the light avatar, or null to skip
+     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
+     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
+     * @param darkPrompt         Prompt used to generate the dark avatar (includes dark suffix), or null to skip
+     * @param negativePrompt     Negative prompt for the light avatar, or null to skip
+     * @param darkNegativePrompt Negative prompt for the dark avatar, or null to skip
      */
     public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage,
-            String darkPrompt, String negativePrompt, String darkNegativePrompt) {
+                                 byte[] darkResizedImage, byte[] darkOriginalImage,
+                                 String darkPrompt, String negativePrompt, String darkNegativePrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
 
         if (resizedImage != null) {
@@ -314,34 +314,10 @@ public class ProductApi extends AbstractApi {
     /**
      * Update product avatar and matching light/dark header images in a single request.
      *
-     * @param productId          The product ID
-     * @param resizedImage       Resized light avatar image bytes, or null to skip
-     * @param originalImage      Original light avatar image bytes, or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes, or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes, or null to skip
-     * @param darkPrompt         Prompt used to generate the dark avatar, or null to skip
-     * @param negativePrompt     Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt Negative prompt for the dark avatar, or null to skip
-     * @param lightHeaderImage   Light header image bytes, or null to skip
-     * @param darkHeaderImage    Dark header image bytes, or null to skip
+     * @param productId The product ID
+     * @param request   The AvatarUpdateRequest containing all fields to update (light/dark avatar images, prompts, and header images)
      */
-    public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage,
-            String darkPrompt, String negativePrompt, String darkNegativePrompt,
-            byte[] lightHeaderImage, byte[] darkHeaderImage) {
-        AvatarUpdateRequest request = new AvatarUpdateRequest();
-        request.setLightAvatarImage(resizedImage);
-        request.setLightAvatarImageOriginal(originalImage);
-        request.setLightAvatarPrompt(prompt);
-        request.setDarkAvatarImage(darkResizedImage);
-        request.setDarkAvatarImageOriginal(darkOriginalImage);
-        request.setDarkAvatarPrompt(darkPrompt);
-        request.setLightAvatarNegativePrompt(negativePrompt);
-        request.setDarkAvatarNegativePrompt(darkNegativePrompt);
-        request.setLightHeaderImage(lightHeaderImage);
-        request.setDarkHeaderImage(darkHeaderImage);
-
+    public void updateAvatarFull(UUID productId, AvatarUpdateRequest request) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/product/{id}/avatar/full",
                 HttpMethod.PUT,
@@ -369,9 +345,9 @@ public class ProductApi extends AbstractApi {
      * @param darkHeaderPrompt   Prompt used to generate the dark header, or null to skip
      */
     public void updateAvatarFull(UUID productId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage, String darkPrompt, String negativePrompt,
-            String darkNegativePrompt, byte[] lightHeaderImage, byte[] darkHeaderImage, String lightHeaderPrompt,
-            String darkHeaderPrompt) {
+                                 byte[] darkResizedImage, byte[] darkOriginalImage, String darkPrompt, String negativePrompt,
+                                 String darkNegativePrompt, byte[] lightHeaderImage, byte[] darkHeaderImage, String lightHeaderPrompt,
+                                 String darkHeaderPrompt) {
         AvatarUpdateRequest request = new AvatarUpdateRequest();
         request.setLightAvatarImage(resizedImage);
         request.setLightAvatarImageOriginal(originalImage);

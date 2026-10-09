@@ -374,7 +374,7 @@ public class SprintDialog extends Dialog {
             sprintToSave.setLightAvatarHash(newHash);
         } else if (avatarUpdateRequest == null) {
             //generate default avatar if none exists
-            GeneratedImageResult image = stableDiffusionService.generateDefaultAvatar("exit");
+            GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("exit");
             avatarImage         = image.getResizedImage();
             avatarImageOriginal = image.getOriginalImage();
             avatarPrompt        = image.getPrompt();
