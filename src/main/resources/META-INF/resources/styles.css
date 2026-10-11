@@ -42,6 +42,10 @@ body {
     background-color: transparent;
 }
 
+#main-layout-breadcrumbs {
+    background-color: transparent;
+}
+
 [theme~="dark"] .navbar-custom {
     background-color: transparent;
 }
@@ -178,6 +182,7 @@ body {
     text-align: center;
     text-decoration: none;
 }
+
 .planning-history-pane {
     transition: width 0.3s ease;
 }

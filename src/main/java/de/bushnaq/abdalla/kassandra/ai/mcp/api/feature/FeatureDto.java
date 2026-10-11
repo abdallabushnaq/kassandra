@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
 import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -69,7 +70,7 @@ public class FeatureDto {
                 feature.getVersionId(),
                 feature.getCreated(),
                 feature.getUpdated(),
-                feature.getDefaultLightAvatarPrompt()
+                feature.getDefaultAvatarPrompt()
         );
     }
 

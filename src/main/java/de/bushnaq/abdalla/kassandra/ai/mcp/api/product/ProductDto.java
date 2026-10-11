@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import java.util.UUID;
+
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.bushnaq.abdalla.kassandra.dto.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -66,7 +67,7 @@ public class ProductDto {
                 product.getName(),
                 product.getCreated(),
                 product.getUpdated(),
-                product.getDefaultLightAvatarPrompt()
+                product.getDefaultAvatarPrompt()
         );
     }
 

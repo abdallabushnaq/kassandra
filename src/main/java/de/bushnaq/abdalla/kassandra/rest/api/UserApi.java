@@ -220,61 +220,13 @@ public class UserApi extends AbstractApi {
     }
 
     /**
-     * Update user avatar with light-theme fields only (resized, original, and prompt).
-     * Delegates to the full overload with null dark and negative-prompt fields.
+     * Updates image variants and theme-independent generation metadata.
+     * Null fields leave stored values unchanged.
      *
-     * @param userId        The user ID
-     * @param resizedImage  The resized light avatar image bytes (e.g., 64x64)
-     * @param originalImage The original light avatar image bytes (e.g., 512x512)
-     * @param prompt        The prompt used to generate the light avatar
+     * @param userId  the entity ID
+     * @param request images and editable generation inputs
      */
-    public void updateAvatarFull(UUID userId, byte[] resizedImage, byte[] originalImage, String prompt) {
-        updateAvatarFull(userId, resizedImage, originalImage, prompt, null, null, null, null, null);
-    }
-
-    /**
-     * Update user avatar with both light and dark theme fields in a single request.
-     * Delegates to the full overload with null negative-prompt fields.
-     *
-     * @param userId             The user ID
-     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
-     */
-    public void updateAvatarFull(UUID userId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage) {
-        updateAvatarFull(userId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
-    }
-
-    /**
-     * Update user avatar with all light, dark, and prompt fields in a single request.
-     * All fields are optional — pass {@code null} to leave the stored value unchanged.
-     *
-     * @param userId                  The user ID
-     * @param resizedImage            Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage           Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt                  Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage        Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage       Original dark avatar image bytes (e.g., 512x512), or null to skip
-     * @param darkPrompt              Prompt used to generate the dark avatar (includes dark suffix), or null to skip
-     * @param negativePrompt          Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt      Negative prompt for the dark avatar, or null to skip
-     */
-    public void updateAvatarFull(UUID userId, byte[] resizedImage, byte[] originalImage, String prompt,
-            byte[] darkResizedImage, byte[] darkOriginalImage,
-            String darkPrompt, String negativePrompt, String darkNegativePrompt) {
-        AvatarUpdateRequest request = new AvatarUpdateRequest();
-        request.setLightAvatarImage(resizedImage);
-        request.setLightAvatarImageOriginal(originalImage);
-        request.setLightAvatarPrompt(prompt);
-        request.setDarkAvatarImage(darkResizedImage);
-        request.setDarkAvatarImageOriginal(darkOriginalImage);
-        request.setDarkAvatarPrompt(darkPrompt);
-        request.setLightAvatarNegativePrompt(negativePrompt);
-        request.setDarkAvatarNegativePrompt(darkNegativePrompt);
-
+    public void updateAvatarFull(UUID userId, AvatarUpdateRequest request) {
         executeWithErrorHandling(() -> restTemplate.exchange(
                 getBaseUrl() + "/user/{id}/avatar/full",
                 HttpMethod.PUT,

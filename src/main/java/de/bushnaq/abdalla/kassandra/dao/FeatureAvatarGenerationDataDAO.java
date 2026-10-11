@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
@@ -35,31 +36,26 @@ public class FeatureAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
 
     @Lob
     @Column(name = "dark_avatar_image_original")
-    private byte[] darkAvatarImageOriginal;
-    @Column(name = "dark_avatar_negative_prompt", length = 1000)
-    private String darkAvatarNegativePrompt;
-    @Column(name = "dark_avatar_prompt", length = 1000)
-    private String darkAvatarPrompt;
-    @Column(name = "dark_header_prompt", length = 1000)
-    private String darkHeaderPrompt;
+    private byte[]          darkAvatarImageOriginal;
+    @Column(name = "avatar_prompt", length = 1000)
+    private String          avatarPrompt;
+    @Column(name = "header_prompt", length = 1000)
+    private String          headerPrompt;
     @Column(name = "feature_id", unique = true, nullable = false)
-    private UUID   featureId;
+    private UUID            featureId;
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
-    private UUID   id;
+    private UUID            id;
     @Lob
     @Column(name = "light_avatar_image_original")
-    private byte[] lightAvatarImageOriginal;
-    @Column(name = "light_avatar_negative_prompt", length = 1000)
-    private String lightAvatarNegativePrompt;
-    @Column(name = "light_avatar_prompt", length = 1000)
-    private String lightAvatarPrompt;
-    @Column(name = "light_header_prompt", length = 1000)
-    private String lightHeaderPrompt;
+    private byte[]          lightAvatarImageOriginal;
+    @Column(name = "negative_prompt", length = 1000)
+    private String          negativePrompt;
     /**
      * The style of the image. This is used to generate a prompt for the AI to generate a new header image.
      */
     @Column(name = "style", length = 1000)
-    private String style;
+    @Enumerated(EnumType.STRING)
+    private CozyStylePrompt style;
 }

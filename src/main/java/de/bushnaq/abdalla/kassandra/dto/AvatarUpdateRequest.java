@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.dto;
 
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,51 +32,43 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AvatarUpdateRequest {
     /**
+     * Theme-independent avatar description.
+     */
+    private String          avatarPrompt;
+    /**
+     * Theme-independent header description, without style instructions.
+     */
+    private String          headerPrompt;
+    /**
+     * Things to avoid when generating either avatar variant.
+     */
+    private String          negativePrompt;
+    /**
+     * Style shared by both header variants; never applied to avatars.
+     */
+    private CozyStylePrompt style;
+    /**
      * Resized dark-mode avatar image (e.g., 64x64).
      */
-    private byte[] darkAvatarImage;
+    private byte[]          darkAvatarImage;
     /**
      * Original dark-mode avatar image (e.g., 512x512).
      */
-    private byte[] darkAvatarImageOriginal;
-    /**
-     * The negative prompt used when generating the dark avatar.
-     */
-    private String darkAvatarNegativePrompt;
-    /**
-     * The prompt used to generate the dark avatar (includes dark-background suffix).
-     */
-    private String darkAvatarPrompt;
+    private byte[]          darkAvatarImageOriginal;
     /**
      * Header image (1024x48) for the dark theme.
      */
-    private byte[] darkHeaderImage;
-    /**
-     * The prompt used to generate the dark header.
-     */
-    private String darkHeaderPrompt;
+    private byte[]          darkHeaderImage;
     /**
      * Resized avatar image (e.g., 64x64) for the light theme.
      */
-    private byte[] lightAvatarImage;
+    private byte[]          lightAvatarImage;
     /**
      * Original avatar image (e.g., 512x512) for the light theme.
      */
-    private byte[] lightAvatarImageOriginal;
-    /**
-     * The negative prompt used when generating the light avatar.
-     */
-    private String lightAvatarNegativePrompt;
-    /**
-     * The prompt used to generate the light avatar.
-     */
-    private String lightAvatarPrompt;
+    private byte[]          lightAvatarImageOriginal;
     /**
      * Header image (1024x48) for the light theme.
      */
-    private byte[] lightHeaderImage;
-    /**
-     * The prompt used to generate the light header.
-     */
-    private String lightHeaderPrompt;
+    private byte[]          lightHeaderImage;
 }

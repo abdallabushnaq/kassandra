@@ -141,6 +141,12 @@ public class ProductController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Returns image variants and their theme-independent generation inputs.
+     *
+     * @param id the product ID
+     * @return the stored images and editable metadata
+     */
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
@@ -160,12 +166,10 @@ public class ProductController {
                 .ifPresent(genData -> {
                     response.setLightAvatarImageOriginal(genData.getLightAvatarImageOriginal());
                     response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
-                    response.setLightAvatarPrompt(genData.getLightAvatarPrompt());
-                    response.setLightHeaderPrompt(genData.getLightHeaderPrompt());
-                    response.setDarkAvatarPrompt(genData.getDarkAvatarPrompt());
-                    response.setDarkHeaderPrompt(genData.getDarkHeaderPrompt());
-                    response.setLightAvatarNegativePrompt(genData.getLightAvatarNegativePrompt());
-                    response.setDarkAvatarNegativePrompt(genData.getDarkAvatarNegativePrompt());
+                    response.setAvatarPrompt(genData.getAvatarPrompt());
+                    response.setHeaderPrompt(genData.getHeaderPrompt());
+                    response.setNegativePrompt(genData.getNegativePrompt());
+                    response.setStyle(genData.getStyle());
                 });
 
         return ResponseEntity.ok(response);
@@ -310,6 +314,13 @@ public class ProductController {
         planningChangeService.update(product, "Updated product");
     }
 
+    /**
+     * Updates image variants and generation inputs, preserving omitted fields.
+     *
+     * @param id      the product ID
+     * @param request images and metadata to update
+     * @return success, or an error if the entity is missing or access is denied
+     */
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("@aclSecurityService.hasProductAccess(#id) or hasRole('ADMIN')")
     @Transactional
@@ -367,9 +378,8 @@ public class ProductController {
 
         // Update or create generation data (light + dark originals + prompts)
         if (request.getLightAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
-                || request.getLightAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
-                || request.getLightHeaderPrompt() != null || request.getDarkHeaderPrompt() != null
-                || request.getLightAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
+                || request.getAvatarPrompt() != null || request.getHeaderPrompt() != null
+                || request.getNegativePrompt() != null || request.getStyle() != null) {
             ProductAvatarGenerationDataDAO genData = productAvatarGenerationDataRepository.findByProductId(id)
                     .orElse(new ProductAvatarGenerationDataDAO());
             genData.setProductId(id);
@@ -382,26 +392,17 @@ public class ProductController {
                 genData.setDarkAvatarImageOriginal(request.getDarkAvatarImageOriginal());
             }
 
-            if (request.getLightAvatarPrompt() != null) {
-                genData.setLightAvatarPrompt(request.getLightAvatarPrompt());
+            if (request.getAvatarPrompt() != null) {
+                genData.setAvatarPrompt(request.getAvatarPrompt());
             }
-
-            if (request.getDarkAvatarPrompt() != null) {
-                genData.setDarkAvatarPrompt(request.getDarkAvatarPrompt());
+            if (request.getHeaderPrompt() != null) {
+                genData.setHeaderPrompt(request.getHeaderPrompt());
             }
-            if (request.getLightHeaderPrompt() != null) {
-                genData.setLightHeaderPrompt(request.getLightHeaderPrompt());
+            if (request.getNegativePrompt() != null) {
+                genData.setNegativePrompt(request.getNegativePrompt());
             }
-            if (request.getDarkHeaderPrompt() != null) {
-                genData.setDarkHeaderPrompt(request.getDarkHeaderPrompt());
-            }
-
-            if (request.getLightAvatarNegativePrompt() != null) {
-                genData.setLightAvatarNegativePrompt(request.getLightAvatarNegativePrompt());
-            }
-
-            if (request.getDarkAvatarNegativePrompt() != null) {
-                genData.setDarkAvatarNegativePrompt(request.getDarkAvatarNegativePrompt());
+            if (request.getStyle() != null) {
+                genData.setStyle(request.getStyle());
             }
 
             productAvatarGenerationDataRepository.save(genData);

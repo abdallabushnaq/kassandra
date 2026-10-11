@@ -36,10 +36,8 @@ public class UserAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @Lob
     @Column(name = "dark_avatar_image_original")
     private byte[] darkAvatarImageOriginal;
-    @Column(name = "dark_avatar_negative_prompt", length = 1000)
-    private String darkAvatarNegativePrompt;
-    @Column(name = "dark_avatar_prompt", length = 1000)
-    private String darkAvatarPrompt;
+    @Column(name = "avatar_prompt", length = 1000)
+    private String avatarPrompt;
     @Id
     @UuidGenerator(style = UuidGenerator.Style.RANDOM)
     @Column(name = "id")
@@ -47,16 +45,8 @@ public class UserAvatarGenerationDataDAO extends AbstractTimeAwareDAO {
     @Lob
     @Column(name = "light_avatar_image_original")
     private byte[] lightAvatarImageOriginal;
-    @Column(name = "light_avatar_negative_prompt", length = 1000)
-    private String lightAvatarNegativePrompt;
-    @Column(name = "light_avatar_prompt", length = 1000)
-    private String lightAvatarPrompt;
-    /**
-     * The style of the image. This is used to generate a prompt for the AI to generate a new header image.
-     */
-    @Column(name = "style", length = 1000)
-    private String style;
+    @Column(name = "negative_prompt", length = 1000)
+    private String negativePrompt;
     @Column(name = "user_id", unique = true, nullable = false)
     private UUID   userId;
 }
-

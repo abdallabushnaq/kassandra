@@ -84,18 +84,11 @@ public class UserDialog extends Dialog {
     private final       Image                  avatarPreview;
     private final       AvatarService          avatarService;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
+    private             AvatarUpdateRequest    generatedImages;
     private final       Binder<User>           binder;
     private final       EmailField             emailField;
     private final       Span                   errorMessage;
     private final       DatePicker             firstWorkingDayPicker;
-    private volatile    byte[]                 generatedDarkImageBytes;
-    private volatile    byte[]                 generatedDarkImageBytesOriginal;
-    private             String                 generatedDarkImagePrompt;
-    private             String                 generatedDarkNegativePrompt;
-    private             byte[]                 generatedImageBytes;
-    private             byte[]                 generatedImageBytesOriginal;
-    private             String                 generatedImagePrompt;
-    private             String                 generatedNegativePrompt;
     private final       Image                  headerAvatar;
     private final       boolean                isEditMode;
     private final       DatePicker             lastWorkingDayPicker;
@@ -480,21 +473,11 @@ public class UserDialog extends Dialog {
     // Validation helpers
     // -------------------------------------------------------------------------
 
-    private void handleGeneratedImage(GeneratedImageResult lightResult, GeneratedImageResult darkResult) {
-        generatedImageBytes         = lightResult.getResizedImage();
-        generatedImageBytesOriginal = lightResult.getOriginalImage();
-        generatedImagePrompt        = lightResult.getPrompt();
-        generatedNegativePrompt     = lightResult.getNegativePrompt();
-        generatedDarkNegativePrompt = darkResult != null ? darkResult.getNegativePrompt() : null;
-        if (darkResult != null) {
-            generatedDarkImageBytes         = darkResult.getResizedImage();
-            generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
-            generatedDarkImagePrompt        = darkResult.getPrompt();
-        }
-
+    private void handleGeneratedImage(AvatarUpdateRequest request) {
+        generatedImages = request;
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            String imageUrl = VaadinUtil.dataUriFromBytes(lightResult.getResizedImage());
+            String imageUrl = VaadinUtil.dataUriFromBytes(request.getLightAvatarImage());
             if (imageUrl != null) {
                 // Show preview
                 avatarPreview.setSrc(imageUrl);
@@ -530,40 +513,19 @@ public class UserDialog extends Dialog {
     }
 
     private void openImagePromptDialog() {
-        // Use stored prompt if available, otherwise generate default prompt
-        String defaultPrompt;
-        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
-            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
-        } else {
-            defaultPrompt = AvatarPrompt.getDefaultLightAvatarPrompt(nameField.getValue());
+        AvatarUpdateRequest values = generatedImages != null ? generatedImages : avatarUpdateRequest;
+        if (values == null) {
+            values = new AvatarUpdateRequest();
+        }
+        if (values.getAvatarPrompt() == null) {
+            values.setAvatarPrompt(AvatarPrompt.getDefaultAvatarPrompt(nameField.getValue()));
+        }
+        if (values.getNegativePrompt() == null) {
+            values.setNegativePrompt(AvatarPrompt.getDefaultAvatarNegativePrompt());
         }
 
-        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
-                ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : AvatarPrompt.getDefaultDarkAvatarPrompt(nameField.getValue());
-
-        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : AvatarPrompt.getDefaultLightAvatarNegativePrompt();
-
-        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
-
-        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
-        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
         ImagePromptDialog imageDialog = new ImagePromptDialog(
-                avatarService,
-                stableDiffusionService,
-                defaultPrompt,
-                "user",
-                this::handleGeneratedImage,
-                initialImage,
-                initialDarkImage,
-                defaultDarkPrompt,
-                defaultNegativePrompt,
-                defaultDarkNegativePrompt
-        );
+                avatarService, stableDiffusionService, values, "user", false, this::handleGeneratedImage);
         imageDialog.open();
     }
 
@@ -687,76 +649,52 @@ public class UserDialog extends Dialog {
         userToSave.setFirstWorkingDay(firstWorkingDayPicker.getValue());
         userToSave.setLastWorkingDay(lastWorkingDayPicker.getValue());
 
-        // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-        byte[] avatarImage             = generatedImageBytes;
-        byte[] avatarImageOriginal     = generatedImageBytesOriginal;
-        String avatarPrompt            = generatedImagePrompt;
-        byte[] darkAvatarImage         = generatedDarkImageBytes;
-        byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
-        String darkAvatarPrompt        = generatedDarkImagePrompt;
-        String negativePrompt          = generatedNegativePrompt;
-        String darkNegativePrompt      = generatedDarkNegativePrompt;
-
-        if (avatarImage != null) {
-            String newHash = AvatarUtil.computeHash(avatarImage);
-            userToSave.setLightAvatarHash(newHash);
-        } else if (avatarUpdateRequest == null) {
-            //generate default avatar if none exists
-            GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("user");
-            avatarImage         = image.getResizedImage();
-            avatarImageOriginal = image.getOriginalImage();
-            avatarPrompt        = image.getPrompt();
-            negativePrompt      = image.getNegativePrompt();
-            String newHash = AvatarUtil.computeHash(image.getResizedImage());
-            userToSave.setLightAvatarHash(newHash);
+        AvatarUpdateRequest images = generatedImages;
+        if (images == null && avatarUpdateRequest == null) {
+            images = new AvatarUpdateRequest();
         }
-        if (darkAvatarImage != null) {
-            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
-            userToSave.setDarkAvatarHash(darkHash);
-        } else if (avatarUpdateRequest == null) {
-            // Also generate a dark default programmatically
-            GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("user");
-            darkAvatarImage         = darkImage.getResizedImage();
-            darkAvatarImageOriginal = darkImage.getOriginalImage();
-            darkAvatarPrompt        = darkImage.getPrompt();
-            darkNegativePrompt      = darkImage.getNegativePrompt();
-            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
-            userToSave.setDarkAvatarHash(darkHash);
-        }
+        if (images != null) {
+            if (avatarUpdateRequest == null) {
+                if (images.getLightAvatarImage() == null) {
+                    GeneratedImageResult light = stableDiffusionService.generateDefaultLightAvatar("user");
+                    images.setLightAvatarImage(light.getResizedImage());
+                    images.setLightAvatarImageOriginal(light.getOriginalImage());
+                }
+                if (images.getDarkAvatarImage() == null) {
+                    GeneratedImageResult dark = stableDiffusionService.generateDefaultDarkAvatar("user");
+                    images.setDarkAvatarImage(dark.getResizedImage());
+                    images.setDarkAvatarImageOriginal(dark.getOriginalImage());
+                }
+                if (images.getAvatarPrompt() == null) {
+                    images.setAvatarPrompt(AvatarPrompt.getDefaultAvatarPrompt(nameField.getValue()));
+                }
+                if (images.getNegativePrompt() == null) {
+                    images.setNegativePrompt(AvatarPrompt.getDefaultAvatarNegativePrompt());
+                }
+            }
+            if (images.getLightAvatarImage() != null) {
+                userToSave.setLightAvatarHash(AvatarUtil.computeHash(images.getLightAvatarImage()));
+            }
+            if (images.getDarkAvatarImage() != null) {
+                userToSave.setDarkAvatarHash(AvatarUtil.computeHash(images.getDarkAvatarImage()));
+            }
 
+        }
         try {
             // Save user to backend
             if (isEditMode) {
                 userApi.update(userToSave);
-                if (avatarImage != null && avatarImageOriginal != null) {
+                if (images != null) {
                     userApi.updateAvatarFull(
-                            userToSave.getId(),
-                            avatarImage,
-                            avatarImageOriginal,
-                            avatarPrompt,
-                            darkAvatarImage,
-                            darkAvatarImageOriginal,
-                            darkAvatarPrompt,
-                            negativePrompt,
-                            darkNegativePrompt
-                    );
+                            userToSave.getId(), images);
                 }
             } else {
                 User saved = userApi.persist(userToSave);
 
                 // For create mode, save avatar now since user didn't exist before
-                if (avatarImage != null && avatarImageOriginal != null) {
+                if (images != null) {
                     userApi.updateAvatarFull(
-                            saved.getId(),
-                            avatarImage,
-                            avatarImageOriginal,
-                            avatarPrompt,
-                            darkAvatarImage,
-                            darkAvatarImageOriginal,
-                            darkAvatarPrompt,
-                            negativePrompt,
-                            darkNegativePrompt
-                    );
+                            saved.getId(), images);
                 }
 
                 // Create the initial work week assignment

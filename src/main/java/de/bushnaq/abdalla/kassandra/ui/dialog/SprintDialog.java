@@ -40,7 +40,6 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
@@ -64,21 +63,10 @@ public class SprintDialog extends Dialog {
     private final       Image                  avatarPreview;
     private final       AvatarService          avatarService;
     private final       AvatarUpdateRequest    avatarUpdateRequest;
+    private             AvatarUpdateRequest    generatedImages;
     private final       Binder<Sprint>         binder;
     private final       Span                   errorMessage;
     private final       UUID                   featureId;
-    private             byte[]                 generatedDarkHeaderImage;
-    private             String                 generatedDarkHeaderPrompt;
-    private volatile    byte[]                 generatedDarkImageBytes;
-    private volatile    byte[]                 generatedDarkImageBytesOriginal;
-    private             String                 generatedDarkImagePrompt;
-    private             String                 generatedDarkNegativePrompt;
-    private             byte[]                 generatedImageBytes;
-    private             byte[]                 generatedImageBytesOriginal;
-    private             String                 generatedImagePrompt;
-    private             byte[]                 generatedLightHeaderImage;
-    private             String                 generatedLightHeaderPrompt;
-    private             String                 generatedNegativePrompt;
     private final       Image                  headerIcon;
     private final       boolean                isEditMode;
     private final       TextField              nameField;
@@ -259,30 +247,11 @@ public class SprintDialog extends Dialog {
         Shortcuts.addShortcutListener(this, e -> save(), Key.ENTER);
     }
 
-    private void handleGeneratedImage(GeneratedImageResult result, GeneratedImageResult darkResult,
-                                      GeneratedImageResult lightHeaderResult, GeneratedImageResult darkHeaderResult) {
-        this.generatedImageBytes         = result.getResizedImage();
-        this.generatedImageBytesOriginal = result.getOriginalImage();
-        this.generatedImagePrompt        = result.getPrompt();
-        this.generatedNegativePrompt     = result.getNegativePrompt();
-        this.generatedDarkNegativePrompt = darkResult != null ? darkResult.getNegativePrompt() : null;
-        if (darkResult != null) {
-            this.generatedDarkImageBytes         = darkResult.getResizedImage();
-            this.generatedDarkImageBytesOriginal = darkResult.getOriginalImage();
-            this.generatedDarkImagePrompt        = darkResult.getPrompt();
-        }
-        if (lightHeaderResult != null) {
-            generatedLightHeaderImage  = lightHeaderResult.getResizedImage();
-            generatedLightHeaderPrompt = lightHeaderResult.getPrompt();
-        }
-        if (darkHeaderResult != null) {
-            generatedDarkHeaderImage  = darkHeaderResult.getResizedImage();
-            generatedDarkHeaderPrompt = darkHeaderResult.getPrompt();
-        }
-
+    private void handleGeneratedImage(AvatarUpdateRequest request) {
+        generatedImages = request;
         // Update UI from callback (might be from async thread)
         getUI().ifPresent(ui -> ui.access(() -> {
-            String imageUrl = VaadinUtil.dataUriFromBytes(result.getResizedImage());
+            String imageUrl = VaadinUtil.dataUriFromBytes(request.getLightAvatarImage());
             if (imageUrl != null) {
                 // Show preview
                 avatarPreview.setSrc(imageUrl);
@@ -301,47 +270,21 @@ public class SprintDialog extends Dialog {
     }
 
     private void openImagePromptDialog() {
-        // Use stored prompt if available, otherwise generate default prompt
-        String defaultPrompt;
-        if (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarPrompt() != null && !avatarUpdateRequest.getLightAvatarPrompt().isEmpty()) {
-            defaultPrompt = avatarUpdateRequest.getLightAvatarPrompt();
-        } else {
-            defaultPrompt = AvatarPrompt.getDefaultLightAvatarPrompt(nameField.getValue());
+        AvatarUpdateRequest values = generatedImages != null ? generatedImages : avatarUpdateRequest;
+        if (values == null) {
+            values = new AvatarUpdateRequest();
         }
-
-        String defaultDarkPrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarPrompt() != null && !avatarUpdateRequest.getDarkAvatarPrompt().isEmpty())
-                ? avatarUpdateRequest.getDarkAvatarPrompt()
-                : AvatarPrompt.getDefaultDarkAvatarPrompt(nameField.getValue());
-
-        String defaultNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarNegativePrompt() != null && !avatarUpdateRequest.getLightAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getLightAvatarNegativePrompt()
-                : IconPrompt.getDefaultLightAvatarNegativePrompt();
-
-        String defaultDarkNegativePrompt = (avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarNegativePrompt() != null && !avatarUpdateRequest.getDarkAvatarNegativePrompt().isEmpty())
-                ? avatarUpdateRequest.getDarkAvatarNegativePrompt()
-                : IconPrompt.getDefaultDarkAvatarNegativePrompt();
-
-        byte[] initialImage     = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getLightAvatarImageOriginal() != null && avatarUpdateRequest.getLightAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getLightAvatarImageOriginal() : null;
-        byte[] initialDarkImage = isEditMode && avatarUpdateRequest != null && avatarUpdateRequest.getDarkAvatarImageOriginal() != null && avatarUpdateRequest.getDarkAvatarImageOriginal().length > 0 ? avatarUpdateRequest.getDarkAvatarImageOriginal() : null;
+        if (values.getAvatarPrompt() == null) {
+            values.setAvatarPrompt(IconPrompt.getDefaultAvatarPrompt(nameField.getValue()));
+        }
+        if (values.getNegativePrompt() == null) {
+            values.setNegativePrompt(IconPrompt.getDefaultAvatarNegativePrompt());
+        }
+        if (values.getHeaderPrompt() == null) {
+            values.setHeaderPrompt(HeaderPrompt.getDefaultHeaderPrompt(nameField.getValue()));
+        }
         ImagePromptDialog imageDialog = new ImagePromptDialog(
-                avatarService,
-                stableDiffusionService,
-                defaultPrompt,
-                "exit",
-                null,
-                this::handleGeneratedImage,
-                initialImage,
-                initialDarkImage,
-                avatarUpdateRequest != null ? avatarUpdateRequest.getLightHeaderImage() : null,
-                avatarUpdateRequest != null ? avatarUpdateRequest.getDarkHeaderImage() : null,
-                defaultDarkPrompt,
-                defaultNegativePrompt,
-                defaultDarkNegativePrompt,
-                avatarUpdateRequest != null && avatarUpdateRequest.getLightHeaderPrompt() != null
-                        ? avatarUpdateRequest.getLightHeaderPrompt() : HeaderPrompt.getDefaultLightHeaderPrompt(nameField.getValue()),
-                avatarUpdateRequest != null && avatarUpdateRequest.getDarkHeaderPrompt() != null
-                        ? avatarUpdateRequest.getDarkHeaderPrompt() : HeaderPrompt.getDefaultDarkHeaderPrompt(nameField.getValue())
-        );
+                avatarService, stableDiffusionService, values, "exit", true, this::handleGeneratedImage);
         imageDialog.open();
     }
 
@@ -359,59 +302,49 @@ public class SprintDialog extends Dialog {
             sprintToSave.setFeatureId(featureId);
         }
 
-        // Extract avatar data before save (fields are @JsonIgnore so won't be sent via normal update)
-        byte[] avatarImage             = generatedImageBytes;
-        byte[] avatarImageOriginal     = generatedImageBytesOriginal;
-        String avatarPrompt            = generatedImagePrompt;
-        byte[] darkAvatarImage         = generatedDarkImageBytes;
-        byte[] darkAvatarImageOriginal = generatedDarkImageBytesOriginal;
-        String darkAvatarPrompt        = generatedDarkImagePrompt;
-        String negativePrompt          = generatedNegativePrompt;
-        String darkNegativePrompt      = generatedDarkNegativePrompt;
-
-        if (avatarImage != null) {
-            String newHash = AvatarUtil.computeHash(avatarImage);
-            sprintToSave.setLightAvatarHash(newHash);
-        } else if (avatarUpdateRequest == null) {
-            //generate default avatar if none exists
-            GeneratedImageResult image = stableDiffusionService.generateDefaultLightAvatar("exit");
-            avatarImage         = image.getResizedImage();
-            avatarImageOriginal = image.getOriginalImage();
-            avatarPrompt        = image.getPrompt();
-            negativePrompt      = image.getNegativePrompt();
-            String newHash = AvatarUtil.computeHash(image.getResizedImage());
-            sprintToSave.setLightAvatarHash(newHash);
+        AvatarUpdateRequest images = generatedImages;
+        if (images == null && avatarUpdateRequest == null) {
+            images = new AvatarUpdateRequest();
         }
-        if (darkAvatarImage != null) {
-            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
-            sprintToSave.setDarkAvatarHash(darkHash);
-        } else if (avatarUpdateRequest == null) {
-            // Also generate a dark default programmatically
-            GeneratedImageResult darkImage = stableDiffusionService.generateDefaultDarkAvatar("exit");
-            darkAvatarImage         = darkImage.getResizedImage();
-            darkAvatarImageOriginal = darkImage.getOriginalImage();
-            darkAvatarPrompt        = darkImage.getPrompt();
-            darkNegativePrompt      = darkImage.getNegativePrompt();
-            String darkHash = AvatarUtil.computeHash(darkAvatarImage);
-            sprintToSave.setDarkAvatarHash(darkHash);
-        }
-        byte[] lightHeaderImage = generatedLightHeaderImage;
-        byte[] darkHeaderImage  = generatedDarkHeaderImage;
-        if (lightHeaderImage != null) {
-            sprintToSave.setLightHeaderHash(AvatarUtil.computeHash(lightHeaderImage));
-        }
-        if (darkHeaderImage != null) {
-            sprintToSave.setDarkHeaderHash(AvatarUtil.computeHash(darkHeaderImage));
+        if (images != null) {
+            if (avatarUpdateRequest == null) {
+                if (images.getLightAvatarImage() == null) {
+                    GeneratedImageResult light = stableDiffusionService.generateDefaultLightAvatar("exit");
+                    images.setLightAvatarImage(light.getResizedImage());
+                    images.setLightAvatarImageOriginal(light.getOriginalImage());
+                }
+                if (images.getDarkAvatarImage() == null) {
+                    GeneratedImageResult dark = stableDiffusionService.generateDefaultDarkAvatar("exit");
+                    images.setDarkAvatarImage(dark.getResizedImage());
+                    images.setDarkAvatarImageOriginal(dark.getOriginalImage());
+                }
+                if (images.getAvatarPrompt() == null) {
+                    images.setAvatarPrompt(IconPrompt.getDefaultAvatarPrompt(nameField.getValue()));
+                }
+                if (images.getNegativePrompt() == null) {
+                    images.setNegativePrompt(IconPrompt.getDefaultAvatarNegativePrompt());
+                }
+            }
+            if (images.getLightAvatarImage() != null) {
+                sprintToSave.setLightAvatarHash(AvatarUtil.computeHash(images.getLightAvatarImage()));
+            }
+            if (images.getDarkAvatarImage() != null) {
+                sprintToSave.setDarkAvatarHash(AvatarUtil.computeHash(images.getDarkAvatarImage()));
+            }
+            if (images.getLightHeaderImage() != null) {
+                sprintToSave.setLightHeaderHash(AvatarUtil.computeHash(images.getLightHeaderImage()));
+            }
+            if (images.getDarkHeaderImage() != null) {
+                sprintToSave.setDarkHeaderHash(AvatarUtil.computeHash(images.getDarkHeaderImage()));
+            }
         }
         try {
             if (isEditMode) {
                 // Edit mode
                 sprintApi.update(sprintToSave);
 
-                if (avatarImage != null && avatarImageOriginal != null) {
-                    sprintApi.updateAvatarFull(sprintToSave.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
-                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
+                if (images != null) {
+                    sprintApi.updateAvatarFull(sprintToSave.getId(), images);
                 }
 
                 Notification.show("Sprint updated", 3000, Notification.Position.BOTTOM_START);
@@ -419,10 +352,8 @@ public class SprintDialog extends Dialog {
                 // Create mode
                 Sprint createdSprint = sprintApi.persist(sprintToSave);
 
-                if (avatarImage != null && avatarImageOriginal != null && createdSprint != null) {
-                    sprintApi.updateAvatarFull(createdSprint.getId(), avatarImage, avatarImageOriginal, avatarPrompt,
-                            darkAvatarImage, darkAvatarImageOriginal, darkAvatarPrompt, negativePrompt, darkNegativePrompt,
-                            lightHeaderImage, darkHeaderImage, generatedLightHeaderPrompt, generatedDarkHeaderPrompt);
+                if (images != null && createdSprint != null) {
+                    sprintApi.updateAvatarFull(createdSprint.getId(), images);
                 }
 
                 Notification.show("Sprint created", 3000, Notification.Position.BOTTOM_START);

@@ -19,11 +19,12 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.product;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Product;
-import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
+import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.ProductApi;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +61,8 @@ public class ProductTools {
     private   ProductApi             productApi;
     @Autowired
     protected StableDiffusionService stableDiffusionService;
+    @Autowired
+    private   AvatarService          avatarService;
 
     @Tool(description = "Create a new product. Returns the created Product including its productId.", resultConverter = KassandraToolCallResultConverter.class)
     public ProductDto createProduct(
@@ -68,12 +71,12 @@ public class ProductTools {
         Product product = new Product();
         product.setName(name);
         if (avatarPrompt == null || avatarPrompt.isEmpty()) {
-            avatarPrompt = product.getDefaultLightAvatarPrompt();
+            avatarPrompt = product.getDefaultAvatarPrompt();
         }
         GeneratedImageResult image;
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
-                image = generateProductAvatar(name);
+                image = generateProductAvatar(avatarPrompt);
             } catch (StableDiffusionException e) {
                 log.warn("Failed to generate image for product {}: {}", name, e.getMessage());
                 image = stableDiffusionService.generateDefaultLightAvatar("cube");
@@ -109,10 +112,9 @@ public class ProductTools {
         ToolActivityContextHolder.reportActivity("Deleted product: " + name);
     }
 
-    private @NonNull GeneratedImageResult generateProductAvatar(String name) throws StableDiffusionException {
-        String prompt = AvatarPrompt.getDefaultLightAvatarPrompt(name);
-        log.trace("Generating image for product: {} with prompt: {}", name, prompt);
-        return stableDiffusionService.text2ImgWithOriginal(prompt);
+    private @NonNull GeneratedImageResult generateProductAvatar(String prompt) throws StableDiffusionException {
+        log.trace("Generating product image with prompt: {}", prompt);
+        return avatarService.generateLightAvatar(prompt, IconPrompt.getDefaultAvatarNegativePrompt(), null);
     }
 
     @Tool(description = "Get all products accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)

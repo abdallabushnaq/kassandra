@@ -153,6 +153,12 @@ public class UserController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Returns image variants and their theme-independent generation inputs.
+     *
+     * @param id the user ID
+     * @return the stored images and editable metadata
+     */
     @GetMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<AvatarUpdateRequest> getAvatarFull(@PathVariable UUID id) {
@@ -170,10 +176,8 @@ public class UserController {
                 .ifPresent(genData -> {
                     response.setLightAvatarImageOriginal(genData.getLightAvatarImageOriginal());
                     response.setDarkAvatarImageOriginal(genData.getDarkAvatarImageOriginal());
-                    response.setLightAvatarPrompt(genData.getLightAvatarPrompt());
-                    response.setDarkAvatarPrompt(genData.getDarkAvatarPrompt());
-                    response.setLightAvatarNegativePrompt(genData.getLightAvatarNegativePrompt());
-                    response.setDarkAvatarNegativePrompt(genData.getDarkAvatarNegativePrompt());
+                    response.setAvatarPrompt(genData.getAvatarPrompt());
+                    response.setNegativePrompt(genData.getNegativePrompt());
                 });
 
         return ResponseEntity.ok(response);
@@ -267,6 +271,13 @@ public class UserController {
         userRepository.save(user);
     }
 
+    /**
+     * Updates image variants and generation inputs, preserving omitted fields.
+     *
+     * @param id      the user ID
+     * @param request images and metadata to update
+     * @return success, or an error if the entity is missing or access is denied
+     */
     @PutMapping("/{id}/avatar/full")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @Transactional
@@ -306,8 +317,7 @@ public class UserController {
 
         // Update or create generation data (light + dark originals + prompts)
         if (request.getLightAvatarImageOriginal() != null || request.getDarkAvatarImageOriginal() != null
-                || request.getLightAvatarPrompt() != null || request.getDarkAvatarPrompt() != null
-                || request.getLightAvatarNegativePrompt() != null || request.getDarkAvatarNegativePrompt() != null) {
+                || request.getAvatarPrompt() != null || request.getNegativePrompt() != null) {
             UserAvatarGenerationDataDAO genData = userAvatarGenerationDataRepository.findByUserId(id)
                     .orElse(new UserAvatarGenerationDataDAO());
             genData.setUserId(id);
@@ -320,20 +330,11 @@ public class UserController {
                 genData.setDarkAvatarImageOriginal(request.getDarkAvatarImageOriginal());
             }
 
-            if (request.getLightAvatarPrompt() != null) {
-                genData.setLightAvatarPrompt(request.getLightAvatarPrompt());
+            if (request.getAvatarPrompt() != null) {
+                genData.setAvatarPrompt(request.getAvatarPrompt());
             }
-
-            if (request.getDarkAvatarPrompt() != null) {
-                genData.setDarkAvatarPrompt(request.getDarkAvatarPrompt());
-            }
-
-            if (request.getLightAvatarNegativePrompt() != null) {
-                genData.setLightAvatarNegativePrompt(request.getLightAvatarNegativePrompt());
-            }
-
-            if (request.getDarkAvatarNegativePrompt() != null) {
-                genData.setDarkAvatarNegativePrompt(request.getDarkAvatarNegativePrompt());
+            if (request.getNegativePrompt() != null) {
+                genData.setNegativePrompt(request.getNegativePrompt());
             }
 
             userAvatarGenerationDataRepository.save(genData);

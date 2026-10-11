@@ -178,10 +178,10 @@ public class StableDiffusionServiceIT {
     @Test
     public void testGenerateImage_FeatureAvatar() throws Exception {
         String featureName        = "Analytics";
-        String lightBasePrompt    = AvatarPrompt.getDefaultLightAvatarPrompt(featureName);
-        String darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(featureName);
-        String negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-        String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+        String lightBasePrompt    = AvatarPrompt.getDefaultAvatarPrompt(featureName);
+        String darkBasePrompt     = AvatarPrompt.getDefaultAvatarPrompt(featureName);
+        String negativePrompt     = IconPrompt.getDefaultAvatarNegativePrompt();
+        String darkNegativePrompt = IconPrompt.getDefaultAvatarNegativePrompt();
 
         // Light avatar via AvatarService
         GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
@@ -201,10 +201,10 @@ public class StableDiffusionServiceIT {
     @Test
     public void testGenerateImage_KassandraAvatar() throws Exception {
         String productName        = "Kassandra project management server";
-        String lightBasePrompt    = AvatarPrompt.getDefaultLightAvatarPrompt(productName);
-        String darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(productName);
-        String negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-        String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+        String lightBasePrompt    = AvatarPrompt.getDefaultAvatarPrompt(productName);
+        String darkBasePrompt     = AvatarPrompt.getDefaultAvatarPrompt(productName);
+        String negativePrompt     = IconPrompt.getDefaultAvatarNegativePrompt();
+        String darkNegativePrompt = IconPrompt.getDefaultAvatarNegativePrompt();
 
         // Light avatar via AvatarService
         GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
@@ -230,10 +230,10 @@ public class StableDiffusionServiceIT {
     @Test
     public void testGenerateImage_ProductAvatar() throws Exception {
         String productName        = "Mars";
-        String lightBasePrompt    = AvatarPrompt.getDefaultLightAvatarPrompt(productName);
-        String darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(productName);
-        String negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-        String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+        String lightBasePrompt    = AvatarPrompt.getDefaultAvatarPrompt(productName);
+        String darkBasePrompt     = AvatarPrompt.getDefaultAvatarPrompt(productName);
+        String negativePrompt     = IconPrompt.getDefaultAvatarNegativePrompt();
+        String darkNegativePrompt = IconPrompt.getDefaultAvatarNegativePrompt();
 
         // Light avatar via AvatarService
         GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
@@ -259,10 +259,10 @@ public class StableDiffusionServiceIT {
     @Test
     public void testGenerateImage_SprintAvatar() throws Exception {
         String sprintName         = "frankfurt 4";
-        String lightBasePrompt    = AvatarPrompt.getDefaultLightAvatarPrompt(sprintName);
-        String darkBasePrompt     = AvatarPrompt.getDefaultDarkAvatarPrompt(sprintName);
-        String negativePrompt     = IconPrompt.getDefaultLightAvatarNegativePrompt();
-        String darkNegativePrompt = IconPrompt.getDefaultDarkAvatarNegativePrompt();
+        String lightBasePrompt    = AvatarPrompt.getDefaultAvatarPrompt(sprintName);
+        String darkBasePrompt     = AvatarPrompt.getDefaultAvatarPrompt(sprintName);
+        String negativePrompt     = IconPrompt.getDefaultAvatarNegativePrompt();
+        String darkNegativePrompt = IconPrompt.getDefaultAvatarNegativePrompt();
 
         // Light avatar via AvatarService
         GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightBasePrompt, negativePrompt, null);
@@ -284,10 +284,10 @@ public class StableDiffusionServiceIT {
         // Mirror the exact flow used by ImagePromptDialog for a user named "Abdalla",
         // delegated through AvatarService.
         String userName           = "Abdalla";
-        String lightPrompt        = AvatarPrompt.getDefaultLightAvatarPrompt(userName);
-        String darkPrompt         = AvatarPrompt.getDefaultDarkAvatarPrompt(userName);
-        String negativePrompt     = AvatarPrompt.getDefaultLightAvatarNegativePrompt();
-        String darkNegativePrompt = AvatarPrompt.getDefaultDarkAvatarNegativePrompt();
+        String lightPrompt        = AvatarPrompt.getDefaultAvatarPrompt(userName);
+        String darkPrompt         = AvatarPrompt.getDefaultAvatarPrompt(userName);
+        String negativePrompt     = AvatarPrompt.getDefaultAvatarNegativePrompt();
+        String darkNegativePrompt = AvatarPrompt.getDefaultAvatarNegativePrompt();
 
         // ── Light avatar via AvatarService ────────────────────────────────────
         GeneratedImageResult lightResult = avatarService.generateLightAvatar(lightPrompt, negativePrompt, null);

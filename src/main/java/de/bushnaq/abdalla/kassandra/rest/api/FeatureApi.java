@@ -236,84 +236,11 @@ public class FeatureApi extends AbstractApi {
     }
 
     /**
-     * Update feature avatar with light-theme fields only (resized, original, and prompt).
-     * Delegates to the full overload with null dark and negative-prompt fields.
+     * Updates image variants and theme-independent generation metadata.
+     * Null fields leave stored values unchanged.
      *
-     * @param featureId     The feature ID
-     * @param resizedImage  The resized light avatar image bytes (e.g., 64x64)
-     * @param originalImage The original light avatar image bytes (e.g., 512x512)
-     * @param prompt        The prompt used to generate the light avatar
-     */
-    public void updateAvatarFull(UUID featureId, byte[] resizedImage, byte[] originalImage, String prompt) {
-        updateAvatarFull(featureId, resizedImage, originalImage, prompt, null, null, null, null, null);
-    }
-
-    /**
-     * Update feature avatar with both light and dark theme fields in a single request.
-     * Delegates to the full overload with null negative-prompt fields.
-     *
-     * @param featureId         The feature ID
-     * @param resizedImage      Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage     Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt            Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage  Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage Original dark avatar image bytes (e.g., 512x512), or null to skip
-     */
-    public void updateAvatarFull(UUID featureId, byte[] resizedImage, byte[] originalImage, String prompt,
-                                 byte[] darkResizedImage, byte[] darkOriginalImage) {
-        updateAvatarFull(featureId, resizedImage, originalImage, prompt, darkResizedImage, darkOriginalImage, null, null, null);
-    }
-
-    /**
-     * Update feature avatar with all light, dark, and prompt fields in a single request.
-     * All fields are optional — pass {@code null} to leave the stored value unchanged.
-     *
-     * @param featureId          The feature ID
-     * @param resizedImage       Resized light avatar image bytes (e.g., 64x64), or null to skip
-     * @param originalImage      Original light avatar image bytes (e.g., 512x512), or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes (e.g., 64x64), or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes (e.g., 512x512), or null to skip
-     * @param darkPrompt         Prompt used to generate the dark avatar (includes dark suffix), or null to skip
-     * @param negativePrompt     Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt Negative prompt for the dark avatar, or null to skip
-     */
-    public void updateAvatarFull(UUID featureId, byte[] resizedImage, byte[] originalImage, String prompt,
-                                 byte[] darkResizedImage, byte[] darkOriginalImage,
-                                 String darkPrompt, String negativePrompt, String darkNegativePrompt) {
-        AvatarUpdateRequest request = new AvatarUpdateRequest();
-
-        if (resizedImage != null) {
-            request.setLightAvatarImage(resizedImage);
-        }
-        if (originalImage != null) {
-            request.setLightAvatarImageOriginal(originalImage);
-        }
-        request.setLightAvatarPrompt(prompt);
-        if (darkResizedImage != null) {
-            request.setDarkAvatarImage(darkResizedImage);
-        }
-        if (darkOriginalImage != null) {
-            request.setDarkAvatarImageOriginal(darkOriginalImage);
-        }
-        request.setDarkAvatarPrompt(darkPrompt);
-        request.setLightAvatarNegativePrompt(negativePrompt);
-        request.setDarkAvatarNegativePrompt(darkNegativePrompt);
-
-        executeWithErrorHandling(() -> restTemplate.exchange(
-                getBaseUrl() + "/feature/{id}/avatar/full",
-                HttpMethod.PUT,
-                createHttpEntity(request),
-                Void.class,
-                featureId
-        ));
-    }
-
-    /**
-     * Update feature avatar and matching light/dark header images in a single request.
-     *
-     * @param featureId The feature ID
-     * @param request   The AvatarUpdateRequest containing all fields to update (light/dark avatar images, prompts, and header images)
+     * @param featureId the entity ID
+     * @param request   images and editable generation inputs
      */
     public void updateAvatarFull(UUID featureId, AvatarUpdateRequest request) {
         executeWithErrorHandling(() -> restTemplate.exchange(
@@ -323,43 +250,5 @@ public class FeatureApi extends AbstractApi {
                 Void.class,
                 featureId
         ));
-    }
-
-    /**
-     * Update feature avatar, header images, and their editable generation prompts.
-     *
-     * @param featureId          The feature ID
-     * @param resizedImage       Resized light avatar image bytes, or null to skip
-     * @param originalImage      Original light avatar image bytes, or null to skip
-     * @param prompt             Prompt used to generate the light avatar, or null to skip
-     * @param darkResizedImage   Resized dark avatar image bytes, or null to skip
-     * @param darkOriginalImage  Original dark avatar image bytes, or null to skip
-     * @param darkPrompt         Prompt used to generate the dark avatar, or null to skip
-     * @param negativePrompt     Negative prompt for the light avatar, or null to skip
-     * @param darkNegativePrompt Negative prompt for the dark avatar, or null to skip
-     * @param lightHeaderImage   Light header image bytes, or null to skip
-     * @param darkHeaderImage    Dark header image bytes, or null to skip
-     * @param lightHeaderPrompt  Prompt used to generate the light header, or null to skip
-     * @param darkHeaderPrompt   Prompt used to generate the dark header, or null to skip
-     */
-    public void updateAvatarFull(UUID featureId, byte[] resizedImage, byte[] originalImage, String prompt,
-                                 byte[] darkResizedImage, byte[] darkOriginalImage, String darkPrompt, String negativePrompt,
-                                 String darkNegativePrompt, byte[] lightHeaderImage, byte[] darkHeaderImage, String lightHeaderPrompt,
-                                 String darkHeaderPrompt) {
-        AvatarUpdateRequest request = new AvatarUpdateRequest();
-        request.setLightAvatarImage(resizedImage);
-        request.setLightAvatarImageOriginal(originalImage);
-        request.setLightAvatarPrompt(prompt);
-        request.setDarkAvatarImage(darkResizedImage);
-        request.setDarkAvatarImageOriginal(darkOriginalImage);
-        request.setDarkAvatarPrompt(darkPrompt);
-        request.setLightAvatarNegativePrompt(negativePrompt);
-        request.setDarkAvatarNegativePrompt(darkNegativePrompt);
-        request.setLightHeaderImage(lightHeaderImage);
-        request.setDarkHeaderImage(darkHeaderImage);
-        request.setLightHeaderPrompt(lightHeaderPrompt);
-        request.setDarkHeaderPrompt(darkHeaderPrompt);
-        executeWithErrorHandling(() -> restTemplate.exchange(getBaseUrl() + "/feature/{id}/avatar/full",
-                HttpMethod.PUT, createHttpEntity(request), Void.class, featureId));
     }
 }

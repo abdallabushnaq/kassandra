@@ -19,11 +19,13 @@ package de.bushnaq.abdalla.kassandra.ai.mcp.api.feature;
 
 import de.bushnaq.abdalla.kassandra.ai.mcp.KassandraToolCallResultConverter;
 import de.bushnaq.abdalla.kassandra.ai.mcp.ToolActivityContextHolder;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.Feature;
-import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
+import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.FeatureApi;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +63,8 @@ public class FeatureTools {
     private   FeatureApi             featureApi;
     @Autowired
     protected StableDiffusionService stableDiffusionService;
+    @Autowired
+    private   AvatarService          avatarService;
 
     @Tool(description = "Create a new feature for a version.", resultConverter = KassandraToolCallResultConverter.class)
     public FeatureDto createFeature(
@@ -71,12 +75,12 @@ public class FeatureTools {
         feature.setName(name);
         feature.setVersionId(versionId);
         if (avatarPrompt == null || avatarPrompt.isEmpty()) {
-            avatarPrompt = feature.getDefaultLightAvatarPrompt();
+            avatarPrompt = feature.getDefaultAvatarPrompt();
         }
         GeneratedImageResult image;
         if (stableDiffusionService != null && stableDiffusionService.isAvailable()) {
             try {
-                image = generateFeatureAvatar(name);
+                image = generateFeatureAvatar(avatarPrompt);
             } catch (StableDiffusionException e) {
                 log.warn("Failed to generate image for feature {}: {}", name, e.getMessage());
                 image = stableDiffusionService.generateDefaultLightAvatar("lightbulb");
@@ -86,8 +90,13 @@ public class FeatureTools {
             image = stableDiffusionService.generateDefaultLightAvatar("lightbulb");
         }
         feature.setLightAvatarHash(AvatarUtil.computeHash(image.getResizedImage()));
-        Feature savedFeature = featureApi.persist(feature);
-        featureApi.updateAvatarFull(savedFeature.getId(), image.getResizedImage(), image.getOriginalImage(), image.getPrompt());
+        Feature             savedFeature = featureApi.persist(feature);
+        AvatarUpdateRequest request      = new AvatarUpdateRequest();
+        request.setLightAvatarImage(image.getResizedImage());
+        request.setLightAvatarImageOriginal(image.getOriginalImage());
+        request.setAvatarPrompt(avatarPrompt);
+        request.setNegativePrompt(IconPrompt.getDefaultAvatarNegativePrompt());
+        featureApi.updateAvatarFull(savedFeature.getId(), request);
         ToolActivityContextHolder.reportActivity("created feature '" + savedFeature.getName() + "' with ID: " + savedFeature.getId());
         return FeatureDto.from(savedFeature);
     }
@@ -104,10 +113,9 @@ public class FeatureTools {
         ToolActivityContextHolder.reportActivity("Deleted feature '" + feature.getName() + "' (ID: " + featureId + ")");
     }
 
-    private @NonNull GeneratedImageResult generateFeatureAvatar(String name) throws StableDiffusionException {
-        String prompt = AvatarPrompt.getDefaultLightAvatarPrompt(name);
-        log.trace("Generating image for feature: {} with prompt: {}", name, prompt);
-        return stableDiffusionService.text2ImgWithOriginal(prompt);
+    private @NonNull GeneratedImageResult generateFeatureAvatar(String prompt) throws StableDiffusionException {
+        log.trace("Generating feature image with prompt: {}", prompt);
+        return avatarService.generateLightAvatar(prompt, IconPrompt.getDefaultAvatarNegativePrompt(), null);
     }
 
     @Tool(description = "Get all features accessible to the current user.", resultConverter = KassandraToolCallResultConverter.class)

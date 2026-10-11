@@ -1,21 +1,20 @@
 # TODO
 
 1. fix GenerateScreenshotsIT.
-2. PersistingEntityGenerator should generate entities with correct user logged in.
-3. test should not create default user with avatar to speed up test execution.
-4. rename all mcp tpo IDs
-5. GENERATOR. ensure some projects show delay, are not started or are finished closed.
-6. add better error handling in api.
-7. remove default test password from AbstractApi.
-8. make sure getAll will filter via alc in db, not in memory.
-9. make all entities client side id generated
+2. test should not create default user with avatar to speed up test execution.
+3. rename all mcp tpo IDs
+4. GENERATOR. ensure some projects show delay, are not started or are finished closed.
+5. add better error handling in api.
+6. remove default test password from AbstractApi.
+7. make sure getAll will filter via alc in db, not in memory.
+8. make all entities client side id generated
     1. dto and dao need default constructors that set the id
     2. remove the generator annotation
     3. use entitymanager to persist
-10. sort db printout
-11. remove fallback parameter in ColorUtils.intToHex
-12. TiledDiffusionOptions should be server settings.
-13. remove legacy classes
+9. sort db printout
+10. remove fallback parameter in ColorUtils.intToHex
+11. TiledDiffusionOptions should be server settings.
+12. remove legacy classes
     1. AbstractLegacyGanttTestUtil
     2. OllamaTestHelper
     3. HumanizedSeleniumHandler
@@ -46,7 +45,9 @@
 20. Gantt chart is drawn until now although they are closed.
 21. there is currently no way to move the backlog back to independence if it was moved by mistake into a story.
 22. after generating an image you cannot download it
-23. image download button sometimes downloads 2 images,
+23. image download button sometimes downloads 2 images.
+24. UserTools.createUser does not generate images.
+25. SprintTools.createSprint does not generate images.
 
 # Latest Bugs
 

@@ -30,6 +30,7 @@ import java.util.Map;
 
 public class Breadcrumbs extends HorizontalLayout {
 
+    private       String               itemBackgroundColor;
     private final List<BreadcrumbItem> items = new ArrayList<>();
 
 
@@ -67,9 +68,26 @@ public class Breadcrumbs extends HorizontalLayout {
         updateUI();
     }
 
+    private void applyItemBackgroundColor() {
+        if (itemBackgroundColor == null) {
+            return;
+        }
+        getChildren().forEach(child -> child.getElement().getStyle().set("background-color", itemBackgroundColor));
+    }
+
     public void clear() {
         items.clear();
         updateUI();
+    }
+
+    /**
+     * Sets the background color applied to breadcrumb items and separators, including those added later.
+     *
+     * @param backgroundColor CSS background-color value
+     */
+    public void setBackgroundColor(String backgroundColor) {
+        itemBackgroundColor = backgroundColor;
+        applyItemBackgroundColor();
     }
 
     private void updateUI() {
@@ -103,19 +121,13 @@ public class Breadcrumbs extends HorizontalLayout {
                 add(link);
             }
         }
+        applyItemBackgroundColor();
     }
 
-    private static class BreadcrumbItem {
-        private final String                     id;
-        private final Map<String, String>        params;
-        private final String                     title;
-        private final Class<? extends Component> view;
-
+    private record BreadcrumbItem(String id, Map<String, String> params, String title,
+                                  Class<? extends Component> view) {
         public BreadcrumbItem(String title, Class<? extends Component> view, String id, Map<String, String> params) {
-            this.title  = title;
-            this.view   = view;
-            this.params = params;
-            this.id     = id;
+            this(id, params, title, view);
         }
     }
 }

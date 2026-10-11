@@ -17,51 +17,38 @@
 
 package de.bushnaq.abdalla.kassandra.dto.util;
 
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 
 public interface HeaderPrompt extends IconPrompt {
 
     /**
-     * Return the default negative prompt used when generating dark-background headers.
+     * Returns the fixed exclusions used for both header variants.
      *
-     * @return The default dark negative prompt string
+     * @return the header negative prompt
      */
-    static String getDefaultDarkHeaderNegativePrompt() {
+    static String getDefaultHeaderNegativePrompt() {
         return StableDiffusionService.NEGATIVE_PROMPT + ", person";
     }
 
     /**
-     * Generate a default dark-background header prompt for a given product name.
+     * Creates a theme-independent header description without style instructions.
      *
      * @param productName The name of the product
-     * @return A default dark header prompt string
+     * @return the base header prompt
      */
-    static String getDefaultDarkHeaderPrompt(String productName) {
-        return getDefaultHeaderPrompt(productName) + AvatarService.DARK_PROMPT_SUFFIX;
-    }
-
-    private static String getDefaultHeaderPrompt(String productName) {
+    static String getDefaultHeaderPrompt(String productName) {
         return "panoramic view of (" + productName + ":2), web page header, detailed, high resolution";
     }
 
     /**
-     * Return the default negative prompt used when generating light-background headers.
+     * Creates a theme-independent header description for this entity.
      *
-     * @return The default negative prompt string
+     * @return the base header prompt
      */
-    static String getDefaultLightHeaderNegativePrompt() {
-        return StableDiffusionService.NEGATIVE_PROMPT + ", person";
-    }
-
-    /**
-     * Generate a default light-background header prompt for a given product name.
-     *
-     * @param productName The name of the product
-     * @return A default light header prompt string
-     */
-    static String getDefaultLightHeaderPrompt(String productName) {
-        return getDefaultHeaderPrompt(productName) + AvatarService.LIGHT_PROMPT_SUFFIX;
+    @JsonIgnore
+    default String getDefaultHeaderPrompt() {
+        return getDefaultHeaderPrompt(getName());
     }
 
 }
