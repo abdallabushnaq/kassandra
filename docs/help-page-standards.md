@@ -140,9 +140,35 @@ include other files. Missing files and malformed/nested directives fail explicit
 Do not duplicate shared chapter text across help pages or include it where the
 underlying page does not support the described behavior.
 
-The drawer supplies the page title. Start Markdown at `##` rather than repeating
-a top-level title. Use ordinary headings, paragraphs, lists, tables, images and
-fenced Mermaid. Avoid custom HTML and scripts.
+The drawer supplies the page title. For ordinary help pages, start Markdown at
+`##` rather than repeating a top-level title; the collapsible pilot below starts
+with an introduction instead. Use ordinary headings, paragraphs, lists, tables,
+images and fenced Mermaid. Avoid custom HTML and scripts.
+
+### Collapsible chapters: Features pilot
+
+Features opts in using `new HelpDrawer("Features", "help/feature-list.md", true)`.
+The existing two-argument constructor keeps other pages and dialog help unchanged.
+`HelpMarkdown` composes native Vaadin `Details` components containing native
+Markdown; no custom HTML or additional dependency is needed.
+
+Write a short, always-visible introduction before the first `##` heading.
+Each `##` heading starts an initially collapsed, task-oriented chapter;
+use `###` for headings inside it. Chapters can be opened independently.
+**Expand all** makes the complete help readable and available to browser Find;
+**Collapse all** restores the overview. Closing and reopening the same drawer
+retains chapter choices; a newly created view starts collapsed.
+
+Chapter boundaries are determined before shared includes are expanded. Included
+headings remain inside their owning chapter, and headings inside backtick or tilde
+code fences are not chapter boundaries. Use plain text for chapter titles.
+Do not introduce nested collapsible sections or a chapter for every control.
+
+The Features pilot groups finding/comparing work, creating/editing/deleting,
+recovery, main-menu/header guidance, AI assistance and troubleshooting.
+Reusable main-menu guidance lives in `help\shared\main-menu.md`; keep
+page-specific creation, history and assistant context in the page's own content.
+Existing screenshot pairs and theme switching still apply inside chapters.
 
 Document observed behavior, not intended future behavior. Confirm existing
 introduction-video narration against current UI code and screenshots. The pilot's

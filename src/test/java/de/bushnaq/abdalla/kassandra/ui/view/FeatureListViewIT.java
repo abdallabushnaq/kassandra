@@ -34,6 +34,7 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,7 +117,7 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
     }
 
     /**
-     * Exercises Features help with named element images in both themes and on narrow screens.
+     * Exercises collapsible Features help, element images, themes and narrow screens.
      */
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
@@ -130,16 +131,43 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
                 + "-drawer vaadin-button[aria-label='Close help']");
         driver.findElement(toggle).click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
-        String text = driver.findElement(drawer).getDomProperty("textContent");
-        assertTrue(text.contains("Choose versions"));
-        assertTrue(text.contains("Filtering and sorting"));
-        assertTrue(text.contains("Undo and redo"));
-        assertTrue(!text.contains("The table"));
-        assertTrue(!text.contains("Open and close page help"));
-        assertTrue(Boolean.TRUE.equals(javascript.executeScript(
+        By chapters = By.cssSelector("#" + FeatureListView.FEATURE_HELP_BUTTON + "-drawer vaadin-details.help-chapter");
+        wait.until(webDriver -> driver.findElements(chapters).size() == 6);
+        assertTrue(driver.findElements(chapters).stream().noneMatch(chapter -> chapter.getDomAttribute("opened") != null));
+        assertTrue(driver.findElement(drawer).getText().contains("A feature groups related work"));
+        assertTrue(driver.findElement(drawer).getText().contains("Use the main menu and header"));
+        wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                "return [...document.querySelectorAll('#' + arguments[0] + ' vaadin-details vaadin-markdown')]"
+                        + ".every(markdown => markdown.getClientRects().length === 0)",
+                FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
+
+        WebElement firstChapter = driver.findElements(chapters).getFirst();
+        firstChapter.findElement(By.tagName("h2")).click();
+        wait.until(webDriver -> firstChapter.getDomAttribute("opened") != null);
+        assertTrue(driver.findElements(chapters).stream().skip(1).noneMatch(chapter -> chapter.getDomAttribute("opened") != null));
+        WebElement summary = firstChapter.findElement(By.tagName("vaadin-details-summary"));
+        summary.sendKeys(Keys.SPACE);
+        wait.until(webDriver -> firstChapter.getDomAttribute("opened") == null);
+        summary.sendKeys(Keys.ENTER);
+        wait.until(webDriver -> firstChapter.getDomAttribute("opened") != null);
+
+        By expand   = By.xpath("//*[@id='" + FeatureListView.FEATURE_HELP_BUTTON + "-drawer']//vaadin-button[normalize-space(.)='Expand all']");
+        By collapse = By.xpath("//*[@id='" + FeatureListView.FEATURE_HELP_BUTTON + "-drawer']//vaadin-button[normalize-space(.)='Collapse all']");
+        driver.findElement(expand).click();
+        wait.until(webDriver -> driver.findElements(chapters).stream().allMatch(chapter -> chapter.getDomAttribute("opened") != null));
+        wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                "return [...document.querySelectorAll('#' + arguments[0] + ' vaadin-details vaadin-markdown')]"
+                        + ".every(markdown => markdown.getBoundingClientRect().height > 0)",
+                FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
+        String text = driver.findElement(drawer).getDomProperty("textContent").replaceAll("\\s+", " ");
+        assertTrue(text.contains("Current filtering behavior:"), text);
+        assertTrue(text.contains("Manage Availability"), text);
+        assertTrue(text.contains("Manage Work Week"), text);
+        assertTrue(text.contains("Undo history"), text);
+        wait.withMessage("Sorting guidance must follow the feature filter image").until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
                 "const root = document.getElementById(arguments[0]);"
                         + " const image = root.querySelector('img[src$=\"feature-global-filter.png\"]');"
-                        + " const sorting = [...root.querySelectorAll('h3')].find(h => h.textContent === 'Change the order');"
+                        + " const sorting = [...root.querySelectorAll('h3')].find(h => h.textContent.trim() === 'Compare the results');"
                         + " return !!image && !!sorting && !!(image.compareDocumentPosition(sorting) & Node.DOCUMENT_POSITION_FOLLOWING);",
                 FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
         for (int theme = 0; theme < 2; theme++) {
@@ -174,6 +202,12 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
         } finally {
             driver.manage().window().setSize(original);
         }
+        driver.findElement(collapse).click();
+        wait.until(webDriver -> driver.findElements(chapters).stream().noneMatch(chapter -> chapter.getDomAttribute("opened") != null));
+        wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
+                "return [...document.querySelectorAll('#' + arguments[0] + ' vaadin-details vaadin-markdown')]"
+                        + ".every(markdown => markdown.getClientRects().length === 0)",
+                FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
         driver.findElement(close).sendKeys(Keys.ESCAPE);
         wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));
         wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(

@@ -48,6 +48,26 @@ kassandra-help-markdown {
     overflow-wrap: anywhere;
 }
 
+kassandra-help-markdown .help-chapter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--lumo-space-s);
+    margin-bottom: var(--lumo-space-s);
+}
+
+kassandra-help-markdown .help-chapter {
+    display: block;
+    margin: 0;
+    border-bottom: 1px solid var(--lumo-contrast-10pct);
+}
+
+kassandra-help-markdown .help-chapter h2 {
+    display: inline;
+    margin: 0;
+    font-size: var(--lumo-font-size-l);
+    white-space: normal;
+}
+
 /*
 kassandra-help-markdown p,
 kassandra-help-markdown ul,

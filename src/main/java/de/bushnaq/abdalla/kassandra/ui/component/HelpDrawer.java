@@ -35,6 +35,7 @@ import java.io.UncheckedIOException;
 @CssImport("./help/help.css")
 public class HelpDrawer extends Dialog {
     private final Div     content = new Div();
+    private final boolean collapsibleChapters;
     private final Button  closeButton;
     private final String  resourcePath;
     private final String  title;
@@ -48,8 +49,20 @@ public class HelpDrawer extends Dialog {
      * @param resourcePath the classpath help Markdown resource
      */
     public HelpDrawer(String title, String resourcePath) {
-        this.title        = title;
-        this.resourcePath = resourcePath;
+        this(title, resourcePath, false);
+    }
+
+    /**
+     * Creates a closed drawer with optional collapsible Markdown chapters.
+     *
+     * @param title               the page name shown in the drawer
+     * @param resourcePath        the classpath help Markdown resource
+     * @param collapsibleChapters whether level-two headings become expandable chapters
+     */
+    public HelpDrawer(String title, String resourcePath, boolean collapsibleChapters) {
+        this.title               = title;
+        this.resourcePath        = resourcePath;
+        this.collapsibleChapters = collapsibleChapters;
         addClassName("help-drawer");
         setHeaderTitle("Help: " + title);
         setModality(ModalityMode.MODELESS);
@@ -118,7 +131,7 @@ public class HelpDrawer extends Dialog {
     public void open() {
         if (!loaded) {
             try {
-                content.add(new HelpMarkdown(resourcePath));
+                content.add(new HelpMarkdown(resourcePath, collapsibleChapters));
                 loaded = true;
             } catch (UncheckedIOException e) {
                 Notification.show("Help could not be loaded. Please contact your administrator.", 5000,

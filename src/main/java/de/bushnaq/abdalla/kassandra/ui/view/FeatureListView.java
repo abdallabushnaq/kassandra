@@ -160,7 +160,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 
-        HelpDrawer helpDrawer = new HelpDrawer("Features", "help/feature-list.md");
+        HelpDrawer helpDrawer = new HelpDrawer("Features", "help/feature-list.md", true);
         addHeaderButton(helpDrawer.createToggleButton(FEATURE_HELP_BUTTON));
         add(helpDrawer);
 
