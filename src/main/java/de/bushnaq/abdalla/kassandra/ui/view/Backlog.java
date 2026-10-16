@@ -49,6 +49,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
@@ -76,6 +77,8 @@ import java.util.concurrent.ExecutionException;
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Slf4j
 public class Backlog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "backlog-help-button";
     public static final String                       BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
     /**
      * Identifier of the selected sprint's task grid.
@@ -656,6 +659,9 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.add(leftHeaderLayout, actionLayout);
 
+        HelpDrawer helpDrawer = new HelpDrawer("Backlog", "help/backlog.md", true);
+        actionLayout.add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
         return header;
     }
 

@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.dto.OidcProvider;
 import de.bushnaq.abdalla.kassandra.dto.OidcProviderCreateRequest;
 import de.bushnaq.abdalla.kassandra.rest.api.OidcProviderApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -44,6 +45,8 @@ import java.util.List;
 @PageTitle("Identity Providers")
 @RolesAllowed("ADMIN")
 public class OidcProviderManagementView extends VerticalLayout {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "identity-provider-help-button";
     /**
      * Identifier of the identity-provider page title.
      */
@@ -105,7 +108,10 @@ public class OidcProviderManagementView extends VerticalLayout {
         setSizeFull();
         H1 title = new H1("Identity Providers");
         title.setId(PAGE_TITLE_ID);
-        add(title,
+        HelpDrawer helpDrawer = new HelpDrawer("Identity Providers", "help/oidc-provider-management.md", true);
+        HorizontalLayout header = new HorizontalLayout(title, helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        header.setAlignItems(Alignment.CENTER);
+        add(header, helpDrawer,
                 new Paragraph("Client secrets are encrypted and are never displayed after they have been saved."),
                 createProviderForm());
         configureGrid();

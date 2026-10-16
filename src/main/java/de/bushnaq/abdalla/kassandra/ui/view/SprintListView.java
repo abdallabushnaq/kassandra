@@ -54,6 +54,7 @@ import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
@@ -93,6 +94,8 @@ import java.util.stream.Collectors;
 @PermitAll
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "sprint-help-button";
     public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button";
     public static final  String                       FEATURE_SELECTOR                 = "feature-selector";
     /**
@@ -217,6 +220,10 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
+
+        HelpDrawer helpDrawer = new HelpDrawer("Sprints", "help/sprint-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();

@@ -42,6 +42,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -68,7 +69,6 @@ import java.util.stream.Collectors;
 @PermitAll
 public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         implements BeforeEnterObserver, AfterNavigationObserver {
-
     public static final String                   CREATE_BUTTON             = "create-user-work-week-button";
     public static final String                   GLOBAL_FILTER             = "user-work-week-global-filter";
     public static final String                   GRID                      = "user-work-week-grid";
@@ -76,14 +76,18 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
     public static final String                   GRID_EDIT_BUTTON_PREFIX   = "user-work-week-edit-button-";
     public static final String                   GRID_NAME_PREFIX          = "user-work-week-name-";
     public static final String                   GRID_START_DATE_PREFIX    = "user-work-week-start-";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final String HELP_BUTTON_ID = "user-work-week-help-button";
     public static final String                   PAGE_TITLE                = "user-work-week-page-title";
     public static final String                   ROUTE                     = "user-work-week";
     public static final String                   ROW_COUNTER               = "user-work-week-row-counter";
     private             Registration             avatarThemeRegistration;
     private             User                     currentUser;
-    private final       DateTimeFormatter        dateFormatter             = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private             Image                    headerAvatarImage;
-    private final       UserApi                  userApi;
+    private final DateTimeFormatter dateFormatter             = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final Image             headerAvatarImage;
+    private final UserApi           userApi;
     private final       UserWorkWeekApi          userWorkWeekApi;
     private final       WorkWeekApi              workWeekApi;
     private             OffDaysCalendarComponent yearCalendar;
@@ -126,6 +130,9 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                 ),
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
+        HelpDrawer helpDrawer = new HelpDrawer("User Work Week", "help/user-work-week-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
     }
 
     @Override
@@ -160,22 +167,6 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         updateHeaderAvatar();
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        avatarThemeRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (avatarThemeRegistration != null) {
-            avatarThemeRegistration.remove();
-            avatarThemeRegistration = null;
-        }
-        super.onDetach(detachEvent);
-    }
-
     private void confirmDelete(UserWorkWeek userWorkWeek) {
         if (getDataProvider().getItems().size() <= 1) {
             Notification notification = Notification.show(
@@ -198,14 +189,6 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                     }
                 });
         dialog.open();
-    }
-
-    private void updateHeaderAvatar() {
-        if (currentUser == null || headerAvatarImage == null) {
-            return;
-        }
-        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private OffDaysCalendarComponent createCalendar() {
@@ -288,6 +271,22 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
         );
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
     private void openDialog(UserWorkWeek userWorkWeek) {
         UserWorkWeekDialog dialog = new UserWorkWeekDialog(
                 userWorkWeek, currentUser, userWorkWeekApi, workWeekApi, this::refreshGrid);
@@ -312,5 +311,12 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
             }
         }
     }
-}
 
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
+    }
+}

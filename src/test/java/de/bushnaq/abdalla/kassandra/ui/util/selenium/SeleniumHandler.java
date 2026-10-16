@@ -66,6 +66,10 @@ class SeleniumHandler {
     private              Integer         browserChromeHeight           = null; // Cached browser chrome height
     private              WebDriver       driver;
     @Setter
+    private              Integer         documentationScreenshotTolerance;
+    @Setter
+    private              boolean         forceDocumentationScreenshotRefresh;
+    @Setter
     private              boolean         enabled                       = true;
     private final        Duration        implicitWaitDuration;
     private final        Stack<Duration> implicitWaitStack             = new Stack<>();
@@ -639,6 +643,27 @@ class SeleniumHandler {
         return getDriver().getTitle();
     }
 
+    private Path helpImagePath(Class<?> pageClass, String elementId) {
+        return helpImagePath(pageClass, elementId, null);
+    }
+
+    private Path helpImagePath(Class<?> pageClass, String elementId, String variant) {
+        if (!elementId.matches("[a-zA-Z0-9_.-]+")) {
+            throw new IllegalArgumentException("Invalid help image element ID: " + elementId);
+        }
+        boolean dark = Boolean.TRUE.equals(executeJavaScript(
+                "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
+        Path folder = Path.of("src", "main", "resources", "META-INF", "resources", "ui", "images", "help",
+                dark ? "dark" : "light", pageClass.getSimpleName());
+        if (variant != null) {
+            if (!variant.matches("[a-z0-9]+(?:-[a-z0-9]+)*")) {
+                throw new IllegalArgumentException("Invalid help image variant: " + variant);
+            }
+            folder = folder.resolve(variant);
+        }
+        return folder.resolve(elementId + ".png");
+    }
+
     /**
      * Helper method to initialize WebDriverWait if it hasn't been initialized yet.
      * This is used by methods that need to wait for elements or conditions.
@@ -725,6 +750,17 @@ class SeleniumHandler {
         if (!waitDurationStack.isEmpty()) {
             setWaitDuration(waitDurationStack.pop());
         }
+    }
+
+    /**
+     * Moves the pointer away from controls and waits for fonts before help capture.
+     *
+     * @param titleId the page heading used as a neutral pointer position
+     */
+    public void prepareHelpScreenshots(String titleId) {
+        WebElement title = waitForHelpElement(By.id(titleId));
+        new Actions(driver).moveToElement(title).perform();
+        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript("return document.fonts.status === 'loaded'")));
     }
 
     /**
@@ -1051,6 +1087,22 @@ class SeleniumHandler {
         }
     }
 
+    /**
+     * Selects the UI theme before capturing help images.
+     *
+     * @param theme the theme to capture
+     */
+    public void setHelpScreenshotTheme(ETheme theme) {
+        boolean dark = Boolean.TRUE.equals(executeJavaScript(
+                "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
+        if (dark != ETheme.dark.equals(theme)) {
+            click(MainLayout.ID_THEME_TOGGLE);
+            waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
+                    "return (document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')) === arguments[0]",
+                    ETheme.dark.equals(theme))));
+        }
+    }
+
     public void setImplicitWaitDuration(Duration duration) {
         if (!isEnabled())
             return;
@@ -1213,37 +1265,37 @@ class SeleniumHandler {
         return null;
     }
 
+    /**
+     * Captures a dialog, retaining equivalent documentation images when comparison is enabled.
+     *
+     * @param overlayElement the dialog overlay to capture
+     * @param dialogId the dialog identifier for logging
+     * @param fileName the destination filename, or {@code null} to skip capture
+     */
     public void takeElementScreenShot(WebElement overlayElement, String dialogId, String fileName) {
         if (!isEnabled())
             return;
-        ScreenShotCreator.takeElementScreenshot(getDriver(), overlayElement, dialogId, fileName);
+        ScreenShotCreator.takeElementScreenshot(getDriver(), overlayElement, dialogId, fileName,
+                fileName == null ? null : documentationScreenshotTolerance(Path.of(fileName)), forceDocumentationScreenshotRefresh);
     }
 
     /**
-     * Selects the UI theme before capturing help images.
+     * Captures a horizontal group without unused space after its visible children.
      *
-     * @param theme the theme to capture
+     * @param pageClass the view or layout owning the image
+     * @param elementId the group's DOM ID
+     * @param variant   the presentation variant, or {@code null}
+     * @throws IOException if the group cannot be captured or its dimensions are invalid
      */
-    public void setHelpScreenshotTheme(ETheme theme) {
-        boolean dark = Boolean.TRUE.equals(executeJavaScript(
-                "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
-        if (dark != ETheme.dark.equals(theme)) {
-            click(MainLayout.ID_THEME_TOGGLE);
-            waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
-                    "return (document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')) === arguments[0]",
-                    ETheme.dark.equals(theme))));
-        }
-    }
-
-    /**
-     * Moves the pointer away from controls and waits for fonts before help capture.
-     *
-     * @param titleId the page heading used as a neutral pointer position
-     */
-    public void prepareHelpScreenshots(String titleId) {
-        WebElement title = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id(titleId)));
-        new Actions(driver).moveToElement(title).perform();
-        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript("return document.fonts.status === 'loaded'")));
+    public void takeHelpContentScreenshot(Class<?> pageClass, String elementId, String variant) throws IOException {
+        WebElement element = waitForHelpElement(By.id(elementId));
+        Number width = (Number) executeJavaScript(
+                "const element = arguments[0], rect = element.getBoundingClientRect();"
+                        + " const right = Math.max(rect.left, ...[...element.children]"
+                        + ".filter(child => child.getClientRects().length > 0).map(child => child.getBoundingClientRect().right));"
+                        + " return Math.min(rect.width, Math.ceil(right - rect.left + parseFloat(getComputedStyle(element).paddingRight)));",
+                element);
+        writeHelpElement(helpImagePath(pageClass, elementId, variant), element, width.doubleValue(), element.getRect().getHeight());
     }
 
     /**
@@ -1272,22 +1324,22 @@ class SeleniumHandler {
     }
 
     /**
-     * Captures a horizontal group without unused space after its visible children.
+     * Captures a Vaadin grid's headings and first populated row.
      *
-     * @param pageClass the view or layout owning the image
-     * @param elementId the group's DOM ID
-     * @param variant   the presentation variant, or {@code null}
-     * @throws IOException if the group cannot be captured or its dimensions are invalid
+     * @param pageClass the view owning the help images
+     * @param gridId    the grid's DOM ID
+     * @throws IOException if the image cannot be captured or written
      */
-    public void takeHelpContentScreenshot(Class<?> pageClass, String elementId, String variant) throws IOException {
-        WebElement element = waitForHelpElement(By.id(elementId));
-        Number width = (Number) executeJavaScript(
-                "const element = arguments[0], rect = element.getBoundingClientRect();"
-                        + " const right = Math.max(rect.left, ...[...element.children]"
-                        + ".filter(child => child.getClientRects().length > 0).map(child => child.getBoundingClientRect().right));"
-                        + " return Math.min(rect.width, Math.ceil(right - rect.left + parseFloat(getComputedStyle(element).paddingRight)));",
-                element);
-        writeHelpElement(helpImagePath(pageClass, elementId, variant), element, width.doubleValue(), element.getRect().getHeight());
+    public void takeHelpGridScreenshot(Class<?> pageClass, String gridId) throws IOException {
+        WebElement grid = waitForHelpElement(By.id(gridId));
+        executeJavaScript("arguments[0].scrollToIndex(0)", grid);
+        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
+                "const row = arguments[0].shadowRoot.querySelector('#items tr:not([hidden])');"
+                        + " return !!row && row.index === 0 && !row.hasAttribute('loading') && arguments[0].size > 0;", grid)));
+        Number cropHeight = (Number) executeJavaScript(
+                "const grid = arguments[0]; const row = grid.shadowRoot.querySelector('#items tr:not([hidden])');"
+                        + " return Math.ceil(row.getBoundingClientRect().bottom - grid.getBoundingClientRect().top);", grid);
+        writeHelpElement(helpImagePath(pageClass, gridId), grid, cropHeight.doubleValue());
     }
 
     /**
@@ -1321,78 +1373,27 @@ class SeleniumHandler {
     }
 
     /**
-     * Captures a Vaadin grid's headings and first populated row.
+     * Captures the page, retaining equivalent documentation images when comparison is enabled.
      *
-     * @param pageClass the view owning the help images
-     * @param gridId    the grid's DOM ID
-     * @throws IOException if the image cannot be captured or written
+     * @param fileName the destination filename
      */
-    public void takeHelpGridScreenshot(Class<?> pageClass, String gridId) throws IOException {
-        WebElement grid = waitForHelpElement(By.id(gridId));
-        executeJavaScript("arguments[0].scrollToIndex(0)", grid);
-        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
-                "const row = arguments[0].shadowRoot.querySelector('#items tr:not([hidden])');"
-                        + " return !!row && row.index === 0 && !row.hasAttribute('loading') && arguments[0].size > 0;", grid)));
-        Number cropHeight = (Number) executeJavaScript(
-                "const grid = arguments[0]; const row = grid.shadowRoot.querySelector('#items tr:not([hidden])');"
-                        + " return Math.ceil(row.getBoundingClientRect().bottom - grid.getBoundingClientRect().top);", grid);
-        writeHelpElement(helpImagePath(pageClass, gridId), grid, cropHeight.doubleValue());
-    }
-
-    private Path helpImagePath(Class<?> pageClass, String elementId) {
-        return helpImagePath(pageClass, elementId, null);
-    }
-
-    private Path helpImagePath(Class<?> pageClass, String elementId, String variant) {
-        if (!elementId.matches("[a-zA-Z0-9_.-]+")) {
-            throw new IllegalArgumentException("Invalid help image element ID: " + elementId);
-        }
-        boolean dark = Boolean.TRUE.equals(executeJavaScript(
-                "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
-        Path folder = Path.of("src", "main", "resources", "META-INF", "resources", "ui", "images", "help",
-                dark ? "dark" : "light", pageClass.getSimpleName());
-        if (variant != null) {
-            if (!variant.matches("[a-z0-9]+(?:-[a-z0-9]+)*")) {
-                throw new IllegalArgumentException("Invalid help image variant: " + variant);
-            }
-            folder = folder.resolve(variant);
-        }
-        return folder.resolve(elementId + ".png");
-    }
-
-    private WebElement waitForHelpElement(By locator) {
-        WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
-        executeJavaScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest', behavior: 'instant'})", element);
-        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
-                "return document.fonts.status === 'loaded' && [...arguments[0].querySelectorAll('img')]"
-                        + ".every(i => i.complete && i.naturalWidth > 0)", element)));
-        return element;
-    }
-
-    private void writeHelpElement(Path destination, WebElement element, double cssHeight) throws IOException {
-        writeHelpElement(destination, element, element.getRect().getWidth(), cssHeight);
-    }
-
-    private void writeHelpElement(Path destination, WebElement element, double cssWidth, double cssHeight) throws IOException {
-        BufferedImage image = ImageIO.read(new ByteArrayInputStream(element.getScreenshotAs(OutputType.BYTES)));
-        if (image == null || cssWidth <= 0 || cssWidth > element.getRect().getWidth()
-                || cssHeight <= 0 || cssHeight > element.getRect().getHeight()) {
-            throw new IOException("Invalid element screenshot dimensions for " + destination);
-        }
-        int           width  = (int) Math.ceil(cssWidth * image.getWidth() / element.getRect().getWidth());
-        int           height = (int) Math.ceil(cssHeight * image.getHeight() / element.getRect().getHeight());
-        BufferedImage crop   = image.getSubimage(0, 0, Math.min(width, image.getWidth()), Math.min(height, image.getHeight()));
-        Files.createDirectories(destination.getParent());
-        if (!ImageIO.write(crop, "png", destination.toFile())) {
-            throw new IOException("No PNG writer available for " + destination);
-        }
-        log.info("Help element screenshot saved to {}", destination);
-    }
-
     public void takeScreenShot(String fileName) {
         if (!isEnabled())
             return;
-        ScreenShotCreator.takeScreenShot(getDriver(), fileName);
+        ScreenShotCreator.takeScreenShot(getDriver(), fileName, documentationScreenshotTolerance(Path.of(fileName)), forceDocumentationScreenshotRefresh);
+    }
+
+    Integer documentationScreenshotTolerance(Path destination) {
+        Path target = destination.toAbsolutePath().normalize();
+        for (Path root : List.of(
+                Path.of("src", "main", "resources", "META-INF", "resources", "ui", "images", "help"),
+                Path.of("..", "kassandra.wiki", "light-screenshots"),
+                Path.of("..", "kassandra.wiki", "dark-screenshots"))) {
+            if (target.startsWith(root.toAbsolutePath().normalize())) {
+                return documentationScreenshotTolerance;
+            }
+        }
+        return null;
     }
 
     private void testForAnyError() {
@@ -1575,6 +1576,16 @@ class SeleniumHandler {
         waitUntil(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
+    private WebElement waitForHelpElement(By locator) {
+        WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+        executeJavaScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest', behavior: 'instant'})", element);
+        wait.until(ExpectedConditions.visibilityOf(element));
+        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
+                "return document.fonts.status === 'loaded' && [...arguments[0].querySelectorAll('img')]"
+                        + ".every(i => i.complete && i.naturalWidth > 0)", element)));
+        return element;
+    }
+
     /**
      * Waits for a notification of a specific type to appear.
      * <p>
@@ -1687,6 +1698,31 @@ class SeleniumHandler {
                 return true;
             }
         }
+    }
+
+    private void writeHelpElement(Path destination, WebElement element, double cssHeight) throws IOException {
+        writeHelpElement(destination, element, element.getRect().getWidth(), cssHeight);
+    }
+
+    private void writeHelpElement(Path destination, WebElement element, double cssWidth, double cssHeight) throws IOException {
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(element.getScreenshotAs(OutputType.BYTES)));
+        if (image == null || cssWidth <= 0 || cssWidth > element.getRect().getWidth()
+                || cssHeight <= 0 || cssHeight > element.getRect().getHeight()) {
+            throw new IOException("Invalid element screenshot dimensions for " + destination);
+        }
+        int           width  = (int) Math.ceil(cssWidth * image.getWidth() / element.getRect().getWidth());
+        int           height = (int) Math.ceil(cssHeight * image.getHeight() / element.getRect().getHeight());
+        BufferedImage crop   = image.getSubimage(0, 0, Math.min(width, image.getWidth()), Math.min(height, image.getHeight()));
+        Integer tolerance = documentationScreenshotTolerance(destination);
+        if (tolerance != null) {
+            ScreenshotImageWriter.writeIfChanged(destination, crop, tolerance, forceDocumentationScreenshotRefresh);
+            return;
+        }
+        Files.createDirectories(destination.getParent());
+        if (!ImageIO.write(crop, "png", destination.toFile())) {
+            throw new IOException("No PNG writer available for " + destination);
+        }
+        log.info("Help element screenshot saved to {}", destination);
     }
 
 }

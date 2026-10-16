@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.UserGroupDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -46,6 +47,8 @@ import java.time.format.FormatStyle;
 @PageTitle("User Group List Page")
 @RolesAllowed("ADMIN") // Only admins can access this view
 public class UserGroupListView extends AbstractMainGrid<UserGroup> implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "user-group-help-button";
     public static final String       CREATE_GROUP_BUTTON             = "create-user-group-button";
     public static final String       GROUP_GLOBAL_FILTER             = "user-group-global-filter";
     public static final String       GROUP_GRID                      = "user-group-grid";
@@ -76,6 +79,9 @@ public class UserGroupListView extends AbstractMainGrid<UserGroup> implements Af
                 ),
                 getGridPanelWrapper()
         );
+        HelpDrawer helpDrawer = new HelpDrawer("User Groups", "help/user-group-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
     }
 
     @Override

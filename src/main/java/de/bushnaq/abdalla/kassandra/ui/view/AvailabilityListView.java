@@ -44,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.AvailabilityCalendarComponent;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.AvailabilityDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -74,12 +75,16 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
     public static final String                        AVAILABILITY_LIST_PAGE_TITLE           = "availability-page-title";
     public static final String                        AVAILABILITY_ROW_COUNTER               = "availability-row-counter";
     public static final String                        CREATE_AVAILABILITY_BUTTON             = "create-availability-button";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final String                        HELP_BUTTON_ID                         = "availability-help-button";
     public static final String                        ROUTE                                  = "availability";
-    private             Registration                  avatarThemeRegistration;
     private final       AvailabilityApi               availabilityApi;
+    private             Registration                  avatarThemeRegistration;
     private             User                          currentUser;
     private final       DateTimeFormatter             dateFormatter                          = DateTimeFormatter.ISO_LOCAL_DATE /*DateTimeFormatter.ofPattern("yyyy-MM-dd")*/;// Format dates consistently
-    private             Image                         headerAvatarImage;
+    private final       Image                         headerAvatarImage;
     private final       UserApi                       userApi;
     private             AvailabilityCalendarComponent yearCalendar;
 
@@ -109,6 +114,9 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                 ),
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
+        HelpDrawer helpDrawer = new HelpDrawer("Availability", "help/availability-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
     }
 
     @Override
@@ -149,22 +157,6 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
         updateHeaderAvatar();
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        avatarThemeRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (avatarThemeRegistration != null) {
-            avatarThemeRegistration.remove();
-            avatarThemeRegistration = null;
-        }
-        super.onDetach(detachEvent);
-    }
-
     private void confirmDelete(Availability availability) {
         if (getDataProvider().getItems().size() <= 1) {
             Notification notification = Notification.show("Cannot delete - Users must have at least one availability", 3000, Notification.Position.MIDDLE);
@@ -186,14 +178,6 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                     }
                 });
         dialog.open();
-    }
-
-    private void updateHeaderAvatar() {
-        if (currentUser == null || headerAvatarImage == null) {
-            return;
-        }
-        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private AvailabilityCalendarComponent createCalendar() {
@@ -305,6 +289,22 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
 
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
     private void openAvailabilityDialog(Availability availability) {
         // Create new or edit existing availability
         AvailabilityDialog dialog = new AvailabilityDialog(
@@ -331,5 +331,13 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                 yearCalendar.updateCalendar(currentUser, sortedAvailabilities);
             }
         }
+    }
+
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 }

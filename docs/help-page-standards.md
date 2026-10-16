@@ -210,21 +210,22 @@ continues to explain filter syntax.
 
 ## Screenshots
 
-### Element-image pilot: Features
+### Page and control images
 
-The Features help page uses independently captured controls instead of numbered
-full-page images. Keep the Products pilot unchanged for comparison.
+Page help uses independently captured controls instead of numbered full-page images.
 Use a control image followed by editable Markdown describing its label, location
 and outcome. Images supplement the text; they must not be the only instructions.
 Small controls retain their natural size rather than being enlarged to drawer width.
 
-`GenerateScreenshotsIT.takeFeatureHelpScreenshots` captures the Features controls
-in both themes without running the full wiki capture or waiting for browser closure.
-It uses synthetic Jupiter / 1.0.0 / Config server data, no AI image generation.
+`GenerateScreenshotsIT.takeScreenshots` is the sole screenshot-generation entry point.
+It restores the existing showcase database snapshot, or generates and saves it when
+no usable snapshot exists. The same populated fixture is used for full-page and
+dialog screenshots, page-help controls, and shared administrator/user navigation
+in both themes. Features is part of this tour, not a separate minimal-data capture.
 Run it from the IDE or use the existing production frontend for a headless capture:
 
 ```bash
-mvn -Pproduction test -Dtest="GenerateScreenshotsIT#takeFeatureHelpScreenshots" -Dselenium.headless=true -Dvaadin.productionMode=true
+mvn -Pproduction test -Dtest="GenerateScreenshotsIT#takeScreenshots" -Dselenium.headless=true -Dvaadin.productionMode=true
 ```
 
 Generated files belong to the application, not the wiki:
@@ -251,20 +252,20 @@ screenshot-safe IDs to inner tab content instead.
 Use `takeHelpContentScreenshot` for horizontal groups such as breadcrumbs and
 navigation strips to crop unused trailing space without resizing the live UI.
 
-`GenerateScreenshotsIT.takeMainLayoutHelpScreenshots` regenerates the logo,
-navigation entries, breadcrumbs, history/theme toggles, account trigger/popup
-and individual account-menu entries in both themes. It uses isolated browser
-sessions for Christopher Paul (administrator) and Jennifer Holleman (regular user),
-checks the signed-in account and verifies role-specific menu/help contents.
-Run it from the IDE or headlessly:
+The tour's private MainLayout capture helper regenerates the logo, navigation
+entries, breadcrumbs, history/theme toggles, account trigger/popup and individual
+account-menu entries in both themes. It uses isolated browser sessions for
+Christopher Paul (administrator) and Jennifer Holleman (regular user), checks the
+signed-in account and captures both roles against the showcase product/version.
+Add future page and dialog elements incrementally to explicit capture lists,
+reusing these helpers and stable IDs rather than introducing a DOM crawler.
 
-```bash
-mvn test -Dtest="GenerateScreenshotsIT#takeMainLayoutHelpScreenshots" -Dselenium.headless=true
-```
-
-The full `takeHelpScreenshots` tour also invokes this capture. Add future page
-and dialog elements incrementally to explicit capture lists, reusing these
-helpers and stable IDs rather than introducing a DOM crawler.
+Non-capture verification belongs outside `GenerateScreenshotsIT`.
+`PageHelpResourcesTest` checks packaged Markdown, shared includes and referenced
+image variants as a lightweight `UnitTest`, without Spring, a database or a browser.
+`PageHelpIT` checks empty/rebuilt views, collapsible chapters, theme-specific images
+and administrator/user help using isolated UI test data. Neither generates images
+or loads the expensive showcase fixture.
 
 The capture routine explicitly lists help-referenced elements; it does not crawl
 every DOM node. Buttons and selectors are captured individually; grids include
@@ -284,6 +285,30 @@ Review and commit regenerated light/dark pairs together. Rebuild after capture
 to include refreshed source images in the packaged application; an already
 running server can still have the previous classpath copies. Help uses the existing
 theme switching and UI image serving; no external files or new endpoint are needed.
+
+### Avoiding unchanged screenshot commits
+
+`GenerateScreenshotsIT` compares each new help or wiki screenshot with the existing
+destination before writing it. Equivalent images leave the existing file untouched,
+including its PNG bytes and modification time. The candidate stays in memory; no
+second baseline directory or Git maintenance command is needed.
+
+The default comparison requires identical dimensions and alpha, with a maximum
+difference of **4 out of 255 in each RGB channel at every pixel**. This ignores small
+colour-rendering differences and PNG encoding/metadata differences, but not shifted
+text or a small high-contrast change. Small intentional colour changes within the
+tolerance are also ignored. Comparison always uses the retained image, preventing
+cumulative drift from being hidden by successive discarded captures.
+
+Set `-Dscreenshot.channel-tolerance=0` in the test run's JVM options for exact pixel
+comparison, or another integer from 0 to 255 to adjust the tolerance. Set
+`-Dscreenshot.force-refresh=true` to replace all captured documentation images,
+including intentional changes below the tolerance. Unreadable existing images and
+write failures fail the capture rather than being treated as unchanged.
+
+These options apply only to bundled help images and the wiki's light/dark screenshot
+directories during `GenerateScreenshotsIT`. Ordinary diagnostic screenshots remain
+unconditional. Existing modified PNGs are not reverted to their committed versions.
 
 ### Full-page images
 

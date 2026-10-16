@@ -97,6 +97,46 @@ Create the markdown page.
 How can we reference specific elements like buttons or select boxes? The user does not know their names. could we take
 them from the screenshots we have at: ../kassandra.wiki/light-screenshots or ../kassandra.wiki/dark-screenshots?
 Create the vaadin markdown renderer.
-Create a document to define help page design and standards. 
+Create a document to define help page design and standards.
 
+# help panel for all pages
 
+feature-list.md for FeatureListView is now our template for all other page help panels.
+
+Let's align the ProductListView to this new standard.
+
+1. referencing elements using its screenshot. if a screenshot is missing, we need to add it to GenerateScreenshotsIT to
+   generate it.
+2. always light/dark versions.
+3. Includes the main menu chapter.
+4. all chapters are collapsible.
+
+after that we will create help panels for most other pages:
+
+1. AboutView
+2. ActiveSprints
+3. AuditLogView
+4. AvailabilityListView
+5. Backlog
+6. Kassandra
+7. LocationListView
+8. OffDayListView
+9. OidcProviderManagementView
+10. ProductListView
+11. QualityBoard
+12. ServerSettingsView
+13. SprintListView
+14. UserGroupListView
+15. UserListView
+16. UserProfileView
+17. UserWorkWeekListView
+18. VersionLIstView
+19. WorkWeekListView
+
+I left out pages that:
+
+1. are legacy (@Deprecated)
+2. are related to first time installation and configuration because i am not sure they have access to the resources
+   needed for the help page. eventually we do want to add help pages for them too, but let's start with the main pages
+   first.
+3. we also left out all Dialogs, we will come back to them later.

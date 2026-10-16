@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -33,6 +34,7 @@ import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import jakarta.annotation.security.RolesAllowed;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +47,8 @@ import lombok.extern.slf4j.Slf4j;
 @RolesAllowed("ADMIN")
 @Slf4j
 public class Kassandra extends VerticalLayout implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "kassandra-help-button";
 
     // Re-exported for backwards compatibility with tests that reference Kassandra.AI_*
     public static final  String                AI_CLEAR_BUTTON  = ChatAgentPanel.AI_CLEAR_BUTTON;
@@ -70,11 +74,22 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
         setSpacing(false);
         addClassNames(LumoUtility.Background.BASE);
 
+        H2 title = new H2("Kassandra");
+        title.setId(AI_VIEW_TITLE);
+        title.addClassNames(LumoUtility.Margin.NONE);
+        HelpDrawer helpDrawer = new HelpDrawer("Kassandra", "help/kassandra.md", true);
+        HorizontalLayout header = new HorizontalLayout(title, helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        header.setAlignItems(Alignment.CENTER);
+        header.getStyle().set("padding", "var(--lumo-space-xs)");
+        header.setFlexShrink(0);
+        add(header, helpDrawer);
+
         // Main horizontal layout: left (future audit log) | right (chat)
         HorizontalLayout mainContent = new HorizontalLayout();
         mainContent.setSizeFull();
         mainContent.setSpacing(false);
         mainContent.setPadding(false);
+        mainContent.setMinHeight("0");
 
         // Left panel - placeholder for future audit log
         VerticalLayout leftPanel = new VerticalLayout();
@@ -108,6 +123,7 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
 
         mainContent.add(leftPanel, rightPanel);
         add(mainContent);
+        expand(mainContent);
     }
 
     @Override

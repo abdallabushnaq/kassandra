@@ -23,6 +23,7 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
@@ -33,6 +34,7 @@ import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.service.AboutBoxService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
@@ -43,6 +45,8 @@ import java.time.Year;
 @PageTitle("About Kassandra")
 @PermitAll
 public class AboutView extends Main implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "about-help-button";
 
     /**
      * Vaadin component ID for the page title.
@@ -85,7 +89,8 @@ public class AboutView extends Main implements AfterNavigationObserver {
         setSizeFull();
         getStyle()
                 .set("display", "flex")
-                .set("align-items", "center")
+                .set("align-items", "safe center")
+                .set("overflow", "auto")
                 .set("justify-content", "center");
 
         VerticalLayout center = new VerticalLayout();
@@ -132,8 +137,11 @@ public class AboutView extends Main implements AfterNavigationObserver {
         githubLink.setId(GITHUB_LINK_ID);
         githubLink.setTarget("_blank");
 
-        center.add(loadingText, bannerImage, appName, versionSpan, copyright, licenseLink, githubLink);
-        add(center);
+        HelpDrawer helpDrawer = new HelpDrawer("About", "help/about.md", true);
+        HorizontalLayout title = new HorizontalLayout(appName, helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        title.setAlignItems(FlexComponent.Alignment.CENTER);
+        center.add(loadingText, bannerImage, title, versionSpan, copyright, licenseLink, githubLink);
+        add(center, helpDrawer);
     }
 
     private void loadImage(UI ui, ETheme theme) {

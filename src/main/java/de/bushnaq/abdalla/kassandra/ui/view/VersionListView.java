@@ -24,9 +24,12 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
@@ -45,6 +48,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -66,6 +70,10 @@ import java.util.stream.Collectors;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class VersionListView extends AbstractMainGrid<Version> implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "version-help-button";
+    private final HelpDrawer helpDrawer = new HelpDrawer("Versions", "help/version-list.md", true);
+    private final Button helpButton = helpDrawer.createToggleButton(HELP_BUTTON_ID);
     public static final  String                              CREATE_VERSION_BUTTON             = "create-version-button";
     public static final  String                              PRODUCT_SELECTOR                  = "product-selector";
     public static final  String                              ROUTE                             = "version-list";
@@ -114,6 +122,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
         this.mapper             = mapper;
         this.aiAssistantService = aiAssistantService;
         this.sessionState       = chatPanelSessionState;
+        add(helpDrawer);
 
         // AI toggle button — added to header later in addHeader() once we have the product
         aiToggleButton = new Button("AI");
@@ -174,7 +183,14 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                     if (component instanceof MainLayout mainLayout) {
                         mainLayout.setActiveProductId(productId);
                         if (productId == null) {
-                            log.warn("No products available; skipping VersionListView header setup");
+                            if (headerComponent == null) {
+                                H2 title = new H2("Versions");
+                                title.setId(VERSION_LIST_PAGE_TITLE);
+                                HorizontalLayout header = new HorizontalLayout(title, helpButton);
+                                header.setAlignItems(FlexComponent.Alignment.CENTER);
+                                headerComponent = header;
+                                add(headerComponent, bodySplit);
+                            }
                             return;
                         }
                         mainLayout.getBreadcrumbs().clear();
@@ -229,6 +245,7 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         addHeaderLeftComponent(productSelector);
 
                         addHeaderButton(aiToggleButton);
+                        addHeaderButton(helpButton);
                         add(bodySplit);
 
                         // Pass navigation context to the AI panel so the LLM knows which product

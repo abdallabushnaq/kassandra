@@ -42,6 +42,7 @@ import de.bushnaq.abdalla.kassandra.dto.ServerSettingTestResult;
 import de.bushnaq.abdalla.kassandra.dto.ServerSettingUpdateRequest;
 import de.bushnaq.abdalla.kassandra.rest.api.ServerSettingsApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -57,6 +58,10 @@ import java.util.Map;
 @PageTitle("Server Settings")
 @RolesAllowed("ADMIN")
 public class ServerSettingsView extends VerticalLayout {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "server-settings-help-button";
+    private final HelpDrawer helpDrawer = new HelpDrawer("Server Settings", "help/server-settings.md", true);
+    private final Button helpButton = helpDrawer.createToggleButton(HELP_BUTTON_ID);
     /**
      * Identifier of the server-settings page title.
      */
@@ -203,7 +208,9 @@ public class ServerSettingsView extends VerticalLayout {
         removeAll();
         H1 title = new H1("Server Settings");
         title.setId(PAGE_TITLE_ID);
-        add(title, new Paragraph(
+        HorizontalLayout header = new HorizontalLayout(title, helpButton);
+        header.setAlignItems(Alignment.CENTER);
+        add(header, helpDrawer, new Paragraph(
                 "Changes apply immediately unless a setting is marked as requiring a restart."));
         VerticalLayout categories = new VerticalLayout();
         categories.setPadding(false);

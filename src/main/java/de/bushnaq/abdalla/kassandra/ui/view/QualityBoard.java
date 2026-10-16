@@ -51,6 +51,7 @@ import de.bushnaq.abdalla.kassandra.service.GanttBurndownExcelExportService;
 import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -83,6 +84,8 @@ import java.util.stream.Collectors;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class QualityBoard extends Main implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "quality-board-help-button";
     /**
      * Identifier of the JSON export button.
      */
@@ -230,6 +233,9 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         header.getStyle().set("padding", "var(--lumo-space-xs)");
         header.setSpacing(true);
         header.setId("page-header");
+        HelpDrawer helpDrawer = new HelpDrawer("Quality Board", "help/quality-board.md", true);
+        headerControlsLayout.add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        header.add(helpDrawer);
         add(header);
     }
 

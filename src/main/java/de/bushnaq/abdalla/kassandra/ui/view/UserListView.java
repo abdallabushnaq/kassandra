@@ -48,6 +48,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -70,6 +71,8 @@ import java.util.Locale;
 @PageTitle("User List Page")
 @RolesAllowed("ADMIN") // Only admins can access this view
 public class UserListView extends AbstractMainGrid<User> implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "user-help-button";
     public static final  String                 CREATE_USER_BUTTON             = "create-user-button";
     private static final String                 PARAM_AI_PANEL                 = "aiPanel";
     public static final  String                 ROUTE                          = "user-list";
@@ -124,6 +127,10 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
+
+        HelpDrawer helpDrawer = new HelpDrawer("Users", "help/user-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();

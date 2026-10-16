@@ -50,6 +50,7 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -65,6 +66,10 @@ import java.util.List;
 @PageTitle("User Profile")
 @PermitAll
 public class UserProfileView extends Main implements BeforeEnterObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "profile-help-button";
+    private final HelpDrawer helpDrawer = new HelpDrawer("User Profile", "help/user-profile.md", true);
+    private final Button helpButton = helpDrawer.createToggleButton(HELP_BUTTON_ID);
     public static final String                                        GENERATE_AVATAR_BUTTON = "generate-avatar-button";
     public static final String                                        PROFILE_PAGE_TITLE     = "profile-page-title";
     public static final String                                        ROUTE                  = "profile";
@@ -254,7 +259,8 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         titleLayout.setSpacing(false);
         titleLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
 
-        headerLayout.add(titleLayout);
+        headerLayout.add(titleLayout, helpButton);
+        add(helpDrawer);
 
         // User info
         nameField = new com.vaadin.flow.component.textfield.TextField("Name");

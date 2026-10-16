@@ -24,8 +24,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
 
 public class ScreenShotCreator {
     private static final Logger logger = LoggerFactory.getLogger(ScreenShotCreator.class);
@@ -43,8 +46,9 @@ public class ScreenShotCreator {
     /**
      * Takes a screenshot of a specific element identified by its ID
      *
-     * @param driver
+     * @param driver         the browser to capture
      * @param overlayElement The element to capture
+     * @param dialogId       the dialog identifier for logging
      * @param fileName       The filename where the screenshot should be saved
      */
     public static void takeElementScreenshot(WebDriver driver, WebElement overlayElement, String dialogId, String fileName) {
@@ -52,32 +56,7 @@ public class ScreenShotCreator {
             try {
                 if (overlayElement != null) {
 
-                    // Take screenshot of the entire page
-                    wait(1000);
-                    File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-                    wait(1000);
-                    // Read the screenshot file into a BufferedImage
-                    BufferedImage fullImg = ImageIO.read(screenshot);
-
-                    // Get the location and size of the element
-                    org.openqa.selenium.Point     location = overlayElement.getLocation();
-                    org.openqa.selenium.Dimension size     = overlayElement.getSize();
-
-                    logger.info("Taking screenshot of dialog overlay: {} at x: {}, y: {}, width: {}, height: {}", dialogId, location.x, location.y, size.getWidth(), size.getHeight());
-                    // Make sure width and height are positive
-                    if (size.getWidth() <= 0 || size.getHeight() <= 0) {
-                        logger.warn("Dialog overlay has invalid dimensions: {}x{}", size.getWidth(), size.getHeight());
-                        // Fallback to taking a full screenshot
-                        takeScreenShot(driver, fileName);
-                        return;
-                    }
-                    // Crop the image to only include the dialog
-                    BufferedImage elementImg = fullImg.getSubimage(
-                            location.getX(),
-                            location.getY(),
-                            size.getWidth(),
-                            size.getHeight()
-                    );
+                    BufferedImage elementImg = captureElementImage(driver, overlayElement, dialogId);
 
                     // Ensure the directory exists
                     File file = new File(fileName);
@@ -105,6 +84,56 @@ public class ScreenShotCreator {
         }
     }
 
+    static void takeElementScreenshot(WebDriver driver, WebElement overlayElement, String dialogId, String fileName,
+                                      Integer channelTolerance, boolean force) {
+        if (channelTolerance == null) {
+            takeElementScreenshot(driver, overlayElement, dialogId, fileName);
+            return;
+        }
+        try {
+            ScreenshotImageWriter.writeIfChanged(Path.of(fileName), captureElementImage(driver, overlayElement, dialogId), channelTolerance, force);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not save documentation screenshot " + fileName, e);
+        }
+    }
+
+    private static BufferedImage captureElementImage(WebDriver driver, WebElement element, String dialogId) throws IOException {
+        if (element == null) {
+            throw new IOException("Could not find overlay element for dialog " + dialogId);
+        }
+        wait(1000);
+        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        wait(1000);
+        BufferedImage image = ImageIO.read(screenshot);
+        Point location = element.getLocation();
+        Dimension size = element.getSize();
+        if (image == null || size.getWidth() <= 0 || size.getHeight() <= 0) {
+            throw new IOException("Invalid dialog screenshot dimensions for " + dialogId);
+        }
+        logger.info("Taking screenshot of dialog overlay: {} at x: {}, y: {}, width: {}, height: {}", dialogId,
+                location.x, location.y, size.getWidth(), size.getHeight());
+        return image.getSubimage(location.getX(), location.getY(), size.getWidth(), size.getHeight());
+    }
+
+    static void takeScreenShot(WebDriver driver, String fileName, Integer channelTolerance, boolean force) {
+        if (channelTolerance == null) {
+            takeScreenShot(driver, fileName);
+            return;
+        }
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+            ScreenshotImageWriter.writeIfChanged(Path.of(fileName), image, channelTolerance, force);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not save documentation screenshot " + fileName, e);
+        }
+    }
+
+    /**
+     * Captures the current browser page without comparing it to previous captures.
+     *
+     * @param driver the browser to capture
+     * @param fileName the destination PNG filename
+     */
     public static void takeScreenShot(WebDriver driver, String fileName) {
         try {
             File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);

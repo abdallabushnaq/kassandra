@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
 import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.WorkWeekDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -48,6 +49,8 @@ import java.time.Clock;
 @PageTitle("Work Week List")
 @RolesAllowed("ADMIN")
 public class WorkWeekListView extends AbstractMainGrid<WorkWeek> implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "work-week-help-button";
 
     public static final String CREATE_BUTTON             = "create-work-week-button";
     public static final String GLOBAL_FILTER             = "work-week-global-filter";
@@ -89,6 +92,9 @@ public class WorkWeekListView extends AbstractMainGrid<WorkWeek> implements Afte
                 ),
                 getGridPanelWrapper()
         );
+        HelpDrawer helpDrawer = new HelpDrawer("Work Weeks", "help/work-week-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
     }
 
     @Override
@@ -221,4 +227,3 @@ public class WorkWeekListView extends AbstractMainGrid<WorkWeek> implements Afte
         getDataProvider().refreshAll();
     }
 }
-

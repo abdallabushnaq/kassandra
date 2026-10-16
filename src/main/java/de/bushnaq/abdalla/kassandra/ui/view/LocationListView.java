@@ -42,6 +42,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -66,6 +67,10 @@ import java.util.stream.Collectors;
 @PermitAll
 public class LocationListView extends AbstractMainGrid<Location> implements BeforeEnterObserver, AfterNavigationObserver {
     public static final String                   CREATE_LOCATION_BUTTON             = "create-location-button";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final String                   HELP_BUTTON_ID                     = "location-help-button";
     public static final String                   LOCATION_GLOBAL_FILTER             = "location-global-filter";
     public static final String                   LOCATION_GRID                      = "location-grid";
     public static final String                   LOCATION_GRID_COUNTRY_PREFIX       = "location-country-";
@@ -78,7 +83,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
     public static final String                   ROUTE                              = "location";
     private             Registration             avatarThemeRegistration;
     private             User                     currentUser;
-    private             Image                    headerAvatarImage;
+    private final       Image                    headerAvatarImage;
     private final       LocationApi              locationApi;
     private final       UserApi                  userApi;
     private             OffDaysCalendarComponent yearCalendar;
@@ -109,6 +114,9 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                 ),
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
+        HelpDrawer helpDrawer = new HelpDrawer("Location", "help/location-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
     }
 
     @Override
@@ -152,22 +160,6 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
         updateHeaderAvatar();
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        avatarThemeRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (avatarThemeRegistration != null) {
-            avatarThemeRegistration.remove();
-            avatarThemeRegistration = null;
-        }
-        super.onDetach(detachEvent);
-    }
-
     private void confirmDelete(Location location) {
         if (getDataProvider().getItems().size() <= 1) {
             Notification notification = Notification.show("Cannot delete - Users must have at least one location", 3000, Notification.Position.MIDDLE);
@@ -192,14 +184,6 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                     }
                 });
         dialog.open();
-    }
-
-    private void updateHeaderAvatar() {
-        if (currentUser == null || headerAvatarImage == null) {
-            return;
-        }
-        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private OffDaysCalendarComponent createCalendar() {
@@ -364,6 +348,22 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
 
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
     private void openLocationDialog(Location location) {
         // Create new or edit existing location
         LocationDialog dialog = new LocationDialog(
@@ -393,5 +393,13 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                 yearCalendar.updateCalendar(currentUser);
             }
         }
+    }
+
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 }

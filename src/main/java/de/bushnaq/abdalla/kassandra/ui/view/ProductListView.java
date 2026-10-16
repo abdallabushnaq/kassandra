@@ -142,7 +142,7 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
         addHeaderButton(aiToggleButton);
 
-        HelpDrawer helpDrawer = new HelpDrawer("Products", "help/product-list.md");
+        HelpDrawer helpDrawer = new HelpDrawer("Products", "help/product-list.md", true);
         addHeaderButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
         add(helpDrawer);
 

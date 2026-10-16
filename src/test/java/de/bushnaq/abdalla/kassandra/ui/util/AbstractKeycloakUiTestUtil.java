@@ -58,33 +58,56 @@ import java.util.Map;
  */
 @Testcontainers
 public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
-    private static final String                     KEYCLOAK_CLIENT_ID     = "kassandra-client";
-    private static final String                     KEYCLOAK_CLIENT_SECRET = "test-client-secret";
-    private static final String                     KEYCLOAK_REALM         = "project-hub-realm";
-    private static final String                     KEYCLOAK_PROVIDER_NAME = "Test Keycloak";
-    private static final String                     TEST_USER_EMAIL        = "christopher.paul@kassandra.org";
-    private static final Logger                     logger                 = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
-    protected static     int                        allocatedPort;
-    private static       KeycloakContainer          keycloakInstance;
-    private static final KeycloakContainer          keycloak               = getKeycloakContainer();// Start Keycloak container with realm configuration
-    @Autowired
-    protected            PlatformTransactionManager transactionManager;
-    @Autowired
-    protected            OidcIdentityService        oidcIdentityService;
-    @Autowired
-    protected            OidcProviderService        oidcProviderService;
-    @Autowired
-    private              OidcProviderRepository     oidcProviderRepository;
+    private static final String                               KEYCLOAK_CLIENT_ID     = "kassandra-client";
+    private static final String                               KEYCLOAK_CLIENT_SECRET = "test-client-secret";
+    private static final String                               KEYCLOAK_PROVIDER_NAME = "Test Keycloak";
+    private static final String                               KEYCLOAK_REALM         = "project-hub-realm";
+    private static final String                               TEST_USER_EMAIL        = "christopher.paul@kassandra.org";
+    private static final Logger                               logger                 = LoggerFactory.getLogger(AbstractKeycloakUiTestUtil.class);
+    protected static     int                                  allocatedPort;
     @Autowired
     private              DatabaseClientRegistrationRepository clientRegistrationRepository;
+    private static       KeycloakContainer                    keycloakInstance;
+    private static final KeycloakContainer                    keycloak               = getKeycloakContainer();// Start Keycloak container with realm configuration
     @Autowired
     private              OidcAuthenticationManagerResolver    oidcAuthenticationManagerResolver;
     @Autowired
-    protected            UserRepository             userRepository;
+    protected            OidcIdentityService                  oidcIdentityService;
+    @Autowired
+    private              OidcProviderRepository               oidcProviderRepository;
+    @Autowired
+    protected            OidcProviderService                  oidcProviderService;
+    @Autowired
+    protected            PlatformTransactionManager           transactionManager;
+    @Autowired
+    protected            UserRepository                       userRepository;
 
     @BeforeAll
     static void beforeAll() {
         StableDiffusionService.setEnabled(false);
+    }
+
+    @Override
+    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
+        generateProductsIfNeeded(testInfo, randomCase, true);
+    }
+
+    /**
+     * Creates or restores a fixture with optional GPU-backed image generation.
+     *
+     * @param testInfo       current test metadata
+     * @param randomCase     deterministic fixture configuration
+     * @param generateImages whether image generation is enabled during fixture creation
+     * @throws Exception if fixture creation or restoration fails
+     */
+    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean generateImages) throws Exception {
+//        StableDiffusionService.setEnabled(generateImages);
+        super.generateProductsIfNeeded(testInfo, randomCase);
+        refreshRestoredKeycloakProvider();
+    }
+
+    private static String getIssuerUri() {
+        return getPublicFacingUrl(keycloak) + "/realms/" + KEYCLOAK_REALM;
     }
 
     private static synchronized KeycloakContainer getKeycloakContainer() {
@@ -120,94 +143,6 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         return keycloakInstance;
     }
 
-    // Method to get the public-facing URL, fixing potential redirect issues
-    private static String getPublicFacingUrl(KeycloakContainer container) {
-        return String.format("http://%s:%s",
-                container.getHost(),
-                container.getMappedPort(8080));
-    }
-
-    // Starts Keycloak before the Spring test context is created.
-    @DynamicPropertySource
-    static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
-        // Ensure container is started
-        if (!keycloak.isRunning()) {
-            System.out.println("=== STARTING KEYCLOAK CONTAINER ===");
-            keycloak.start();
-            updateKeycloakClientRedirectUri(allocatedPort);
-        } else {
-            System.out.println("=== KEYCLOAK CONTAINER ALREADY RUNNING === ON PORT " + keycloakInstance.getHttpPort());
-        }
-
-    }
-
-    /**
-     * Creates the persisted OIDC provider and links the Keycloak test administrator before each test.
-     * <p>
-     * Uses explicit transaction management to ensure the user is committed
-     * and visible to all subsequent transactions including API calls.
-     */
-    @BeforeEach
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void setupTestUser() {
-        StableDiffusionService.setEnabled(false);
-        LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
-        var provider = oidcProviderService.createProvider(
-                KEYCLOAK_PROVIDER_NAME,
-                getIssuerUri(),
-                KEYCLOAK_CLIENT_ID,
-                KEYCLOAK_CLIENT_SECRET,
-                List.of("openid", "profile", "email"));
-        var testUser = userRepository.findByEmail(TEST_USER_EMAIL)
-                .orElseThrow(() -> new IllegalStateException("The Keycloak test user was not created"));
-        oidcIdentityService.linkIdentity(testUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(TEST_USER_EMAIL));
-        //ensure tests that generate more users will find the correct expectations.
-        peg.getUsers().clear();
-        peg.setUserIndex(peg.getUserIndex() - 1);//ensure Christopher Paul is always the first user created
-    }
-
-    @Override
-    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
-        generateProductsIfNeeded(testInfo, randomCase, true);
-    }
-
-    /**
-     * Creates or restores a fixture with optional GPU-backed image generation.
-     *
-     * @param testInfo       current test metadata
-     * @param randomCase     deterministic fixture configuration
-     * @param generateImages whether image generation is enabled during fixture creation
-     * @throws Exception if fixture creation or restoration fails
-     */
-    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean generateImages) throws Exception {
-        StableDiffusionService.setEnabled(generateImages);
-        super.generateProductsIfNeeded(testInfo, randomCase);
-        refreshRestoredKeycloakProvider();
-    }
-
-    private static String getIssuerUri() {
-        return getPublicFacingUrl(keycloak) + "/realms/" + KEYCLOAK_REALM;
-    }
-
-    private void refreshRestoredKeycloakProvider() {
-        String issuerUri = getIssuerUri();
-        var provider = oidcProviderRepository.findAll().stream()
-                .filter(candidate -> KEYCLOAK_PROVIDER_NAME.equals(candidate.getDisplayName()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("The Keycloak test provider was not restored"));
-        if (issuerUri.equals(provider.getIssuerUri())) {
-            return;
-        }
-
-        String previousIssuerUri = provider.getIssuerUri();
-        provider.setIssuerUri(issuerUri);
-        oidcProviderRepository.save(provider);
-        clientRegistrationRepository.invalidate(provider.getRegistrationId());
-        oidcAuthenticationManagerResolver.invalidate(previousIssuerUri);
-        oidcAuthenticationManagerResolver.invalidate(issuerUri);
-    }
-
     /**
      * Resolves an imported Keycloak fixture account for explicit application identity linking.
      *
@@ -234,6 +169,71 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         } finally {
             adminClient.close();
         }
+    }
+
+    // Method to get the public-facing URL, fixing potential redirect issues
+    private static String getPublicFacingUrl(KeycloakContainer container) {
+        return String.format("http://%s:%s",
+                container.getHost(),
+                container.getMappedPort(8080));
+    }
+
+    private void refreshRestoredKeycloakProvider() {
+        String issuerUri = getIssuerUri();
+        var provider = oidcProviderRepository.findAll().stream()
+                .filter(candidate -> KEYCLOAK_PROVIDER_NAME.equals(candidate.getDisplayName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("The Keycloak test provider was not restored"));
+        if (issuerUri.equals(provider.getIssuerUri())) {
+            return;
+        }
+
+        String previousIssuerUri = provider.getIssuerUri();
+        provider.setIssuerUri(issuerUri);
+        oidcProviderRepository.save(provider);
+        clientRegistrationRepository.invalidate(provider.getRegistrationId());
+        oidcAuthenticationManagerResolver.invalidate(previousIssuerUri);
+        oidcAuthenticationManagerResolver.invalidate(issuerUri);
+    }
+
+    // Starts Keycloak before the Spring test context is created.
+    @DynamicPropertySource
+    static void registerKeycloakProperties(DynamicPropertyRegistry registry) {
+        // Ensure container is started
+        if (!keycloak.isRunning()) {
+            System.out.println("=== STARTING KEYCLOAK CONTAINER ===");
+            keycloak.start();
+            updateKeycloakClientRedirectUri(allocatedPort);
+        } else {
+            System.out.println("=== KEYCLOAK CONTAINER ALREADY RUNNING === ON PORT " + keycloakInstance.getHttpPort());
+        }
+
+    }
+
+    /**
+     * Creates the persisted OIDC provider and links the Keycloak test administrator before each test.
+     * <p>
+     * Uses explicit transaction management to ensure the user is committed
+     * and visible to all subsequent transactions including API calls.
+     */
+    @BeforeEach
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void setupTestUser() {
+        StableDiffusionService.setEnabled(false);
+        LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
+        peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
+        var provider = oidcProviderService.createProvider(
+                KEYCLOAK_PROVIDER_NAME,
+                getIssuerUri(),
+                KEYCLOAK_CLIENT_ID,
+                KEYCLOAK_CLIENT_SECRET,
+                List.of("openid", "profile", "email"));
+        var testUser = userRepository.findByEmail(TEST_USER_EMAIL)
+                .orElseThrow(() -> new IllegalStateException("The Keycloak test user was not created"));
+        oidcIdentityService.linkIdentity(testUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(TEST_USER_EMAIL));
+        //ensure tests that generate more users will find the correct expectations.
+        peg.getUsers().clear();
+        peg.setUserIndex(peg.getUserIndex() - 1);//ensure Christopher Paul is always the first user created
     }
 
     @AfterAll

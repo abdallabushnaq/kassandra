@@ -16,15 +16,15 @@ limitations under the License.
 ### Administer the server
 
 Your account menu includes the following administration entries. These affect
-server configuration, people or shared planning rules, not just the current feature.
+server configuration, people or shared planning rules, not just the current page.
 
 #### Identity Providers
 
 ![Identity Providers menu entry](images/help/light/MainLayout/main-layout-user-menu-identity-providers.png)
 
 Configure the OIDC providers offered on the sign-in page: their display name,
-issuer, client ID, client secret and scopes. You can enable/disable a provider,
-update its configuration or delete it. Saved client secrets are not displayed
+issuer, client ID, client secret and scopes. You can add, enable/disable or
+delete a provider. Saved client secrets are not displayed
 again. Check the issuer and client configuration before changing sign-in access;
 this page configures authentication, not product access.
 
@@ -42,8 +42,8 @@ to a group does not make them an administrator.
 ![Manage Users menu entry](images/help/light/MainLayout/main-layout-user-menu-manage-users.png)
 
 Create or edit application users, their profile/planning information and their
-**USER**/**ADMIN** roles. You can also open a user's planning records and remove
-a user through the available row actions. Application user records are not
+**USER**/**ADMIN** roles. Use the row actions to edit or remove a user.
+Application user records are not
 accounts created at the external identity provider. Assign **ADMIN** only to
 people who should manage the server; the last administrator's role is protected.
 
@@ -82,6 +82,6 @@ use **Undo history** to reverse or reapply supported planning changes.
 ![Kassandra menu entry](images/help/light/MainLayout/main-layout-tab-kassandra.png)
 
 The **Kassandra** entry in the top navigation opens the administrator's standalone
-AI assistant. It requires configured, available AI services. Unlike the Features
+AI assistant. It requires configured, available AI services. Unlike a planning
 page's **AI** pane, it is not tied to the version you are currently viewing;
 state the intended product, version and work explicitly in requests.

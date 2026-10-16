@@ -13,12 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## Organize work by product
-
 A **product** is the starting point for planning and tracking a body of work.
 Use this page to open an existing product, start a new one, or manage who can
 work on it. You see only products you have access to; administrators see all
 products.
+
+Open a chapter for the task you need. Use **Expand all** to read or search the
+whole page, and **Collapse all** to return to the chapter overview.
+
+## Organize work by product
 
 ```mermaid
 flowchart TD
@@ -33,7 +36,7 @@ A product can have multiple **versions**, each version multiple **features**, an
 each feature multiple **sprints**. Stories, tasks and their worklogs belong to
 the work planned inside those sprints.
 
-## Open the work you want to plan
+### Open the work you want to plan
 
 Choose a product row to open its **versions**. From there, choose a version to
 reach its **features**, then a feature to reach its **sprints**. Opening a row
@@ -60,7 +63,9 @@ help.
 
 {{include:sorting}}
 
-## Start a new product
+## Create, edit and delete products
+
+### Start a new product
 
 ![Create product button](images/help/light/ProductListView/create-product-button.png)
 
@@ -71,7 +76,7 @@ Choose a required, unique product name and any collaborators, then **Save**.
 Creating a product does not create its versions, features or sprints.
 The dialog's own **Help** explains access settings and optional images.
 
-## Change a product or its collaborators
+### Change a product or its collaborators
 
 ![Edit product button](images/help/light/ProductListView/product-grid-edit-button-prefix-.png)
 
@@ -96,7 +101,7 @@ Removing a user's explicit grant does not remove access they still have through
 a granted group or an administrator role. Conversely, removing your own last
 grant can make the product disappear from your list.
 
-## Remove a product and its work
+### Remove a product and its work
 
 ![Delete product button](images/help/light/ProductListView/product-grid-delete-button-prefix-.png)
 
@@ -108,11 +113,30 @@ the product's access grants to change its collaborators.
 Check the product named in the confirmation before proceeding. To recover a
 recorded deletion, open history from the Products page.
 
-## Recover a recorded change
+## Recover changes
 
-![Product history button](images/help/light/ProductListView/main-layout-action-history-button.png)
+![Product history button](images/help/light/MainLayout/main-layout-action-history-button.png)
 
 {{include:undo-redo}}
+
+On Products, history includes your accessible products rather than one selected
+product. Check each operation's product and affected work before confirming a replay.
+
+## Use the main menu and header
+
+{{include:main-menu}}
+
+{{include-admin:main-menu-admin}}
+
+### Understand the Products page header
+
+The **filter** and matching row count help you find products. **Create (+)**
+adds a new product, while **AI** opens the assistant.
+
+![Products page help button](images/help/light/ProductListView/product-help-button.png)
+
+The page's **question-mark icon** opens this help. The separate question mark
+beside the filter opens search examples.
 
 ## Ask the assistant for help with your work
 

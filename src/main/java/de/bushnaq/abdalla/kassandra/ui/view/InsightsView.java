@@ -60,6 +60,7 @@ import java.util.concurrent.ExecutionException;
 @PageTitle("Insights Page")
 @Menu(order = 0, icon = "vaadin:lightbulb", title = "Insights")
 @PermitAll // When security is enabled, allow all authenticated users
+@Deprecated
 public class InsightsView extends Main implements AfterNavigationObserver {
 
     @Autowired

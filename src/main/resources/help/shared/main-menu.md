@@ -64,16 +64,18 @@ investigate issues rather than assuming that every warning is a missing feature.
 
 The **breadcrumb links below the main menu** take you back through the planning
 hierarchy, for example from Features to its version or product. The final entry
-identifies the current page and is not a link. The breadcrumbs describe your
-navigation context, not every product/version currently selected in the table.
+identifies the current page and is not a link. On pages with context selectors,
+the breadcrumbs describe your navigation context, not every selected item.
 
 ### Review history or change the theme
 
 ![Undo history toggle](images/help/light/MainLayout/main-layout-action-history-button.png)
 
 The **backward-clock icon**, with tooltip **Undo history**, opens or closes
-recorded planning changes alongside the page. See **Recover changes** for the
-scope used on this page and how to replay a change.
+recorded planning changes alongside the page. History is available on supported
+planning pages; return to **Products** to inspect changes across accessible
+products. Check the history scope and replay preview before confirming.
+Account and server settings are not recovered through planning history.
 
 ![Theme switcher](images/help/light/MainLayout/main-layout-theme-toggle.png)
 
@@ -86,7 +88,7 @@ The preference is remembered in this browser; help screenshots follow the theme.
 ![Account menu button](images/help/light/MainLayout/{{audience}}/main-layout-user-menu.png)
 
 Open the **avatar and email menu at the upper right**. Its entries concern your
-account or the server, not the feature row you last selected.
+account or the server, not the table row you last selected.
 The screenshots use demonstration accounts; your name, email and avatar can differ.
 
 ![Expanded account menu](images/help/light/MainLayout/{{audience}}/main-layout-user-menu-popup.png)

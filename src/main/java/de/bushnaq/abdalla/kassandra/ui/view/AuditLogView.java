@@ -34,6 +34,7 @@ import de.bushnaq.abdalla.kassandra.dto.AuditEvent;
 import de.bushnaq.abdalla.kassandra.dto.AuditPage;
 import de.bushnaq.abdalla.kassandra.rest.api.AuditLogApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import jakarta.annotation.security.RolesAllowed;
 
 import java.time.ZoneId;
@@ -47,6 +48,8 @@ import java.time.format.DateTimeFormatter;
 @PageTitle("Audit")
 @RolesAllowed("ADMIN")
 public class AuditLogView extends VerticalLayout {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "audit-help-button";
     /**
      * Identifier of the audit page title.
      */
@@ -226,7 +229,10 @@ public class AuditLogView extends VerticalLayout {
         paging.setAlignItems(Alignment.CENTER);
         H1 title = new H1("Audit");
         title.setId(PAGE_TITLE_ID);
-        add(title, filters, grid, paging);
+        HelpDrawer helpDrawer = new HelpDrawer("Audit", "help/audit-log.md", true);
+        HorizontalLayout header = new HorizontalLayout(title, helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        header.setAlignItems(Alignment.CENTER);
+        add(header, filters, grid, paging, helpDrawer);
         refresh();
     }
 

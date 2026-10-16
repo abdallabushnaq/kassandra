@@ -50,6 +50,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -69,6 +70,8 @@ import java.util.stream.Collectors;
 @RolesAllowed({"USER", "ADMIN"})
 @Slf4j
 public class ActiveSprints extends Main implements AfterNavigationObserver {
+    /** Identifier of the page help button. */
+    public static final String HELP_BUTTON_ID = "active-sprints-help-button";
     /**
      * Identifier of the merged task board below the chart.
      */
@@ -522,6 +525,9 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
         header.add(headerTitleLayout, headerControlsLayout);
 
+        HelpDrawer helpDrawer = new HelpDrawer("Active Sprints", "help/active-sprints.md", true);
+        headerControlsLayout.add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
         return header;
     }
 

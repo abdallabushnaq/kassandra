@@ -41,6 +41,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.OffDaysCalendarComponent;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
@@ -62,6 +63,10 @@ import java.util.stream.Collectors;
 @PermitAll
 public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEnterObserver, AfterNavigationObserver {
     public static final String                   CREATE_OFFDAY_BUTTON             = "create-offday-button";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final String                   HELP_BUTTON_ID                   = "offday-help-button";
     public static final String                   OFFDAY_GLOBAL_FILTER             = "offday-global-filter";
     public static final String                   OFFDAY_GRID                      = "offday-grid";
     public static final String                   OFFDAY_GRID_DELETE_BUTTON_PREFIX = "offday-delete-button-";
@@ -73,9 +78,9 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
     public static final String                   OFFDAY_ROW_COUNTER               = "offday-row-counter";
     public static final String                   ROUTE                            = "offday";
     private             Registration             avatarThemeRegistration;
-    private             User                     currentUser;
-    private             Image                    headerAvatarImage;
-    private final       OffDayApi                offDayApi;
+    private       User      currentUser;
+    private final Image     headerAvatarImage;
+    private final OffDayApi offDayApi;
     private final       UserApi                  userApi;
     private             OffDaysCalendarComponent yearCalendar;
 
@@ -106,6 +111,9 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
                 ),
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
+        HelpDrawer helpDrawer = new HelpDrawer("Off Days", "help/off-day-list.md", true);
+        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
     }
 
     @Override
@@ -151,22 +159,6 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
         updateHeaderAvatar();
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        super.onAttach(attachEvent);
-        avatarThemeRegistration = ComponentUtil.addListener(
-                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        if (avatarThemeRegistration != null) {
-            avatarThemeRegistration.remove();
-            avatarThemeRegistration = null;
-        }
-        super.onDetach(detachEvent);
-    }
-
     private void confirmDelete(OffDay offDay) {
         ConfirmDialog dialog = new ConfirmDialog("Confirm Delete", "Are you sure you want to delete this off day record?", "Delete",
                 () -> {
@@ -184,14 +176,6 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
                     }
                 });
         dialog.open();
-    }
-
-    private void updateHeaderAvatar() {
-        if (currentUser == null || headerAvatarImage == null) {
-            return;
-        }
-        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
     private OffDaysCalendarComponent createCalendar() {
@@ -320,6 +304,22 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
 
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        avatarThemeRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, e -> updateHeaderAvatar());
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (avatarThemeRegistration != null) {
+            avatarThemeRegistration.remove();
+            avatarThemeRegistration = null;
+        }
+        super.onDetach(detachEvent);
+    }
+
     private void openOffDayDialog(OffDay offDay) {
         // Create new or edit existing off day
         OffDayDialog dialog = new OffDayDialog(
@@ -335,7 +335,6 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
                 });
         dialog.open();
     }
-
 
     private void refreshOffDayGrid() {
         if (currentUser != null) {
@@ -365,6 +364,14 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
 
             yearCalendar.updateCalendar(currentUser);
         }
+    }
+
+    private void updateHeaderAvatar() {
+        if (currentUser == null || headerAvatarImage == null) {
+            return;
+        }
+        boolean isDark = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        headerAvatarImage.setSrc(currentUser.getAvatarUrl(isDark));
     }
 
 }
