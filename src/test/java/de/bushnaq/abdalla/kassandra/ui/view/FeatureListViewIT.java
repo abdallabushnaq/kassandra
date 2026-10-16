@@ -164,6 +164,8 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
         assertTrue(text.contains("Manage Availability"), text);
         assertTrue(text.contains("Manage Work Week"), text);
         assertTrue(text.contains("Undo history"), text);
+        assertTrue(text.contains("Administer the server"), text);
+        assertTrue(!text.contains("{{audience}}"), text);
         wait.withMessage("Sorting guidance must follow the feature filter image").until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
                 "const root = document.getElementById(arguments[0]);"
                         + " const image = root.querySelector('img[src$=\"feature-global-filter.png\"]');"
@@ -175,9 +177,10 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
                     .until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
                             "const images = [...document.querySelectorAll('#' + arguments[0] + ' img')];"
                                     + " const dark = document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]');"
-                                    + " return images.length === 9 && images.every(i => i.complete && i.naturalWidth > 0"
+                                    + " return images.length === 38 && images.every(i => i.complete && i.naturalWidth > 0"
                                     + " && /^[a-z0-9-]+\\.png$/.test(i.src.split('/').pop())"
-                                    + " && i.src.includes('/' + (dark ? 'dark' : 'light') + '/FeatureListView/'))",
+                                    + " && ['/FeatureListView/', '/MainLayout/'].some(owner =>"
+                                    + " i.src.includes('/' + (dark ? 'dark' : 'light') + owner)))",
                             FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
             assertTrue(Boolean.TRUE.equals(javascript.executeScript(
                     "return [...document.querySelectorAll('#' + arguments[0] + ' img')]"

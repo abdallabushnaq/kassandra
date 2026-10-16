@@ -132,7 +132,7 @@ intended work.
 
 ## Recover changes
 
-![Product-scoped history button](images/help/light/FeatureListView/main-layout-action-history-button.png)
+![Product-scoped history button](images/help/light/MainLayout/main-layout-action-history-button.png)
 
 {{include:undo-redo}}
 
@@ -143,6 +143,8 @@ from another product, return to **Products** to find that product's history.
 ## Use the main menu and header
 
 {{include:main-menu}}
+
+{{include-admin:main-menu-admin}}
 
 ### Understand the Features page header
 
@@ -155,6 +157,8 @@ see **Find and compare features**. **Create (+)** adds work to your
 navigation-context version; see **Create, edit and delete features**.
 **AI** toggles the assistant. The page's **question-mark icon** opens this
 help; the separate question mark beside the filter opens search examples.
+
+![Features page help button](images/help/light/FeatureListView/feature-help-button.png)
 
 ## Work with the AI assistant
 

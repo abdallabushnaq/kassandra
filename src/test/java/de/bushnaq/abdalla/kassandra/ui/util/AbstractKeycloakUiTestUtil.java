@@ -208,7 +208,14 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
         oidcAuthenticationManagerResolver.invalidate(issuerUri);
     }
 
-    private static String getKeycloakUserSubject(String username) {
+    /**
+     * Resolves an imported Keycloak fixture account for explicit application identity linking.
+     *
+     * @param username imported fixture username
+     * @return the account's OIDC subject
+     * @throws IllegalStateException if the account is missing
+     */
+    protected static String getKeycloakUserSubject(String username) {
         var adminClient = org.keycloak.admin.client.KeycloakBuilder.builder()
                 .serverUrl(keycloak.getAuthServerUrl())
                 .realm("master")

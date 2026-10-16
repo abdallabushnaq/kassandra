@@ -25,6 +25,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.repository.SecurityConfigurationRepository;
 import de.bushnaq.abdalla.kassandra.rest.api.AuditLogApi;
+import de.bushnaq.abdalla.kassandra.rest.api.ProductAclApi;
 import de.bushnaq.abdalla.kassandra.rest.api.ServerSettingsApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UndoRedoApi;
 import de.bushnaq.abdalla.kassandra.service.SecurityConfigurationService;
@@ -75,6 +76,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -119,6 +124,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private       PasswordEncoder                 passwordEncoder;
     @Autowired
     private       ProductListViewTester           productListViewTester;
+    @Autowired
+    private       ProductAclApi                   productAclApi;
     private       String                          productName;
     @Autowired
     private       SecurityConfigurationRepository securityConfigurationRepository;
@@ -761,6 +768,130 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     }
 
     /**
+     * Captures shared navigation and account-menu controls for real user/admin sessions in both themes.
+     *
+     * @param testInfo current test metadata
+     * @throws Exception if fixture creation, login or screenshot capture fails
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void takeMainLayoutHelpScreenshots(TestInfo testInfo) throws Exception {
+        seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
+        StableDiffusionService.setEnabled(false);
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null,
+                testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        productListViewTester.switchToProductListView();
+        productListViewTester.createProductConfirm("Jupiter");
+        productListViewTester.selectProduct("Jupiter");
+        versionListViewTester.createVersionConfirm("1.0.0");
+        versionListViewTester.selectVersion("1.0.0");
+        featureListViewTester.createFeatureConfirm("Config server");
+        aboutViewTester.logout();
+        takeMainLayoutHelpScreenshots(testInfo, "Jupiter", "1.0.0");
+    }
+
+    private void takeMainLayoutHelpScreenshots(TestInfo testInfo, String captureProduct, String captureVersion) throws Exception {
+        String userEmail = "jennifer.holleman@kassandra.org";
+        User helpUser = peg.userApi.getAll().stream().filter(user -> userEmail.equals(user.getEmail())).findFirst().orElse(null);
+        if (helpUser == null) {
+            helpUser = peg.addUser("Jennifer Holleman", userEmail, "USER", "de", "nw",
+                    firstDay, peg.generateUserColor(peg.getUserIndex()), 1f, null);
+        }
+        assertEquals("USER", helpUser.getRoles(), "The help account must be a regular user");
+        var provider = oidcProviderService.getProviders().stream()
+                .filter(candidate -> "Test Keycloak".equals(candidate.getDisplayName())).findFirst().orElseThrow();
+        oidcIdentityService.linkIdentity(helpUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(userEmail));
+        Product product = peg.productApi.getAll().stream().filter(candidate -> captureProduct.equals(candidate.getName())).findFirst().orElseThrow();
+        productAclApi.grantUserAccess(product.getId(), helpUser.getId());
+        for (String audience : List.of("admin", "user")) {
+            boolean admin = "admin".equals(audience);
+            String loginEmail = admin ? "christopher.paul@kassandra.org" : userEmail;
+            // A local logout can leave Keycloak SSO cookies; isolate both origins between accounts.
+            seleniumHandler.destroy();
+            aboutViewTester.login(loginEmail, "password", null,
+                    testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            try {
+                assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail),
+                        "The browser must be signed in as " + loginEmail);
+                productListViewTester.switchToProductListView();
+                productListViewTester.selectProduct(captureProduct);
+                versionListViewTester.selectVersion(captureVersion);
+                for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+                    takeMainLayoutElementScreenshots(theme, audience);
+                }
+                verifyMainLayoutHelp(admin);
+            } finally {
+                aboutViewTester.logout();
+            }
+        }
+    }
+
+    private void takeMainLayoutElementScreenshots(ETheme theme, String audience) throws IOException {
+        boolean admin = "admin".equals(audience);
+        seleniumHandler.setHelpScreenshotTheme(theme);
+        seleniumHandler.prepareHelpScreenshots(FeatureListView.FEATURE_LIST_PAGE_TITLE);
+        seleniumHandler.takeHelpContentScreenshot(MainLayout.class, MainLayout.ID_NAVIGATION, audience);
+        seleniumHandler.takeHelpElementScreenshot(MainLayout.class, MainLayout.ID_USER_MENU, audience);
+        if (admin) {
+            seleniumHandler.takeHelpContentScreenshot(MainLayout.class, MainLayout.ID_BREADCRUMBS, null);
+            for (String id : List.of(MainLayout.ID_LOGO,
+                    MainLayout.ID_ACTION_HISTORY_BUTTON, MainLayout.ID_THEME_TOGGLE)) {
+                seleniumHandler.takeHelpElementScreenshot(MainLayout.class, id);
+            }
+            for (String route : List.of("product-list", "version-list", "feature-list", "sprint-list",
+                    "backlog", "active-sprints", "quality-board", "kassandra")) {
+                seleniumHandler.takeHelpElementScreenshot(MainLayout.class, MainLayout.ID_TAB_BASE + route);
+            }
+        }
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.waitForElementToBeClickable(MainLayout.ID_USER_MENU_AVAILABILITY);
+        seleniumHandler.takeHelpMenuScreenshot(MainLayout.class, MainLayout.ID_USER_MENU, audience);
+        List<String> adminItems = List.of(MainLayout.ID_USER_MENU_IDENTITY_PROVIDERS, MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS,
+                MainLayout.ID_USER_MENU_MANAGE_USERS, MainLayout.ID_USER_MENU_MANAGE_WORK_WEEKS,
+                MainLayout.ID_USER_MENU_MANAGE_SETTINGS, MainLayout.ID_USER_MENU_AUDIT);
+        if (admin) {
+            for (String id : List.of(MainLayout.ID_USER_MENU_AVAILABILITY, MainLayout.ID_USER_MENU_LOCATION,
+                    MainLayout.ID_USER_MENU_OFF_DAYS, MainLayout.ID_USER_MENU_WORK_WEEK,
+                    MainLayout.ID_USER_MENU_VIEW_PROFILE, MainLayout.ID_USER_MENU_ABOUT, MainLayout.ID_USER_MENU_LOGOUT)) {
+                seleniumHandler.takeHelpElementScreenshot(MainLayout.class, id);
+            }
+            for (String id : adminItems) {
+                seleniumHandler.takeHelpElementScreenshot(MainLayout.class, id);
+            }
+        } else {
+            seleniumHandler.pushImplicitWait(Duration.ZERO);
+            try {
+                assertTrue(seleniumHandler.getDriver().findElements(By.id(MainLayout.ID_TAB_BASE + "kassandra")).isEmpty(),
+                        "User navigation must not contain the administrator assistant");
+                for (String id : adminItems) {
+                    assertTrue(seleniumHandler.getDriver().findElements(By.id(id)).isEmpty(), "User menu must not contain " + id);
+                }
+            } finally {
+                seleniumHandler.popImplicitWait();
+            }
+        }
+        seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU_AVAILABILITY)).sendKeys(Keys.ESCAPE);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(MainLayout.ID_USER_MENU_AVAILABILITY)));
+        seleniumHandler.prepareHelpScreenshots(FeatureListView.FEATURE_LIST_PAGE_TITLE);
+    }
+
+    private void verifyMainLayoutHelp(boolean admin) {
+        seleniumHandler.click(FeatureListView.FEATURE_HELP_BUTTON);
+        String drawerId = FeatureListView.FEATURE_HELP_BUTTON + "-drawer";
+        seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id(drawerId)));
+        seleniumHandler.waitUntil(driver -> !driver.findElements(By.cssSelector("#" + drawerId + " vaadin-details")).isEmpty());
+        WebElement drawer = seleniumHandler.findElement(By.id(drawerId));
+        seleniumHandler.waitUntil(driver -> drawer.getDomProperty("textContent").contains("Manage Availability"));
+        String text = drawer.getDomProperty("textContent");
+        assertTrue(text.contains("Manage Availability"));
+        assertEquals(admin, text.contains("Administer the server"));
+        assertEquals(admin, text.contains("Saved client secrets are not displayed"));
+        assertFalse(drawer.getDomProperty("innerHTML").contains(admin ? "/MainLayout/user/" : "/MainLayout/admin/"));
+        drawer.findElement(By.cssSelector("vaadin-button[aria-label='Close help']")).click();
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(drawerId)));
+    }
+
+    /**
      * Takes screenshots of Location create, edit and delete dialogs
      */
     private void takeLocationDialogScreenshots(String folder) {
@@ -1142,6 +1273,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
             takeScreenshot(testInfo, null, theme);
         }
+        takeMainLayoutHelpScreenshots(testInfo, productName, versionName);
     }
 
     private void prepareScreenshotFixture(RandomCase randomCase, TestInfo testInfo) throws Exception {

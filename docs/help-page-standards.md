@@ -170,6 +170,19 @@ Reusable main-menu guidance lives in `help\shared\main-menu.md`; keep
 page-specific creation, history and assistant context in the page's own content.
 Existing screenshot pairs and theme switching still apply inside chapters.
 
+### Role-aware shared help
+
+Use `{{include:main-menu}}` for common navigation/account guidance and
+`{{include-admin:main-menu-admin}}` for the administrator supplement.
+`HelpMarkdown` includes the supplement server-side only when `SecurityUtils.isAdmin()`
+is true, matching the actual menu. Do not duplicate complete user/admin help pages.
+The same one-level include and filename restrictions apply to both directives.
+
+The trusted `{{audience}}` placeholder resolves to `user` or `admin` for
+role-specific screenshot paths. Use it for navigation and expanded account menus
+whose visible contents differ by role. This is documentation selection, not a
+replacement for endpoint or view authorization.
+
 Document observed behavior, not intended future behavior. Confirm existing
 introduction-video narration against current UI code and screenshots. The pilot's
 workflow reference is
@@ -227,6 +240,31 @@ Reusable capture code belongs in `SeleniumHandler`: `takeHelpElementScreenshot`,
 the output folder and active theme automatically. Use `setHelpScreenshotTheme`
 and `prepareHelpScreenshots` before capturing a page. `GenerateScreenshotsIT`
 owns the page-specific element list and fixture/navigation setup only.
+
+Shared header controls belong to `MainLayout`, not the page used to capture them:
+`src\main\resources\META-INF\resources\ui\images\help\<theme>\MainLayout\`.
+Role-dependent images use `admin\` and `user\` subfolders. The optional variant
+argument to `takeHelpElementScreenshot` selects that subfolder.
+`takeHelpMenuScreenshot` captures the expanded popup as `<menu-id>-popup.png`,
+separately from its trigger. Preserve route IDs used for navigation; assign
+screenshot-safe IDs to inner tab content instead.
+Use `takeHelpContentScreenshot` for horizontal groups such as breadcrumbs and
+navigation strips to crop unused trailing space without resizing the live UI.
+
+`GenerateScreenshotsIT.takeMainLayoutHelpScreenshots` regenerates the logo,
+navigation entries, breadcrumbs, history/theme toggles, account trigger/popup
+and individual account-menu entries in both themes. It uses isolated browser
+sessions for Christopher Paul (administrator) and Jennifer Holleman (regular user),
+checks the signed-in account and verifies role-specific menu/help contents.
+Run it from the IDE or headlessly:
+
+```bash
+mvn test -Dtest="GenerateScreenshotsIT#takeMainLayoutHelpScreenshots" -Dselenium.headless=true
+```
+
+The full `takeHelpScreenshots` tour also invokes this capture. Add future page
+and dialog elements incrementally to explicit capture lists, reusing these
+helpers and stable IDs rather than introducing a DOM crawler.
 
 The capture routine explicitly lists help-referenced elements; it does not crawl
 every DOM node. Buttons and selectors are captured individually; grids include

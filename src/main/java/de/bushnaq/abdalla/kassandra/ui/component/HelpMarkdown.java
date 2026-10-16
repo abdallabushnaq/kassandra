@@ -28,6 +28,7 @@ import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.markdown.Markdown;
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 
@@ -50,7 +51,7 @@ import java.util.regex.Pattern;
 public class HelpMarkdown extends Component {
     private static final Pattern CHAPTER_HEADING = Pattern.compile("^ {0,3}##[ \\t]+(.+?)(?:[ \\t]+#+)?[ \\t]*$");
     private static final Pattern CODE_FENCE      = Pattern.compile("^ {0,3}(`{3,}|~{3,})(.*)$");
-    private static final Pattern SHARED_CHAPTER  = Pattern.compile("(?m)^\\{\\{include:([a-z0-9-]+)}}[ \\t]*$");
+    private static final Pattern SHARED_CHAPTER  = Pattern.compile("(?m)^\\{\\{include(-admin)?:([a-z0-9-]+)}}[ \\t]*$");
     private final        String  resourcePath;
 
     /**
@@ -138,19 +139,23 @@ public class HelpMarkdown extends Component {
     }
 
     private Markdown createMarkdown(String content) {
-        var chapters = SHARED_CHAPTER.matcher(content);
+        boolean admin    = SecurityUtils.isAdmin();
+        var     chapters = SHARED_CHAPTER.matcher(content);
         content = chapters.replaceAll(match -> {
-            String chapterPath = "help/shared/" + match.group(1) + ".md";
+            if (match.group(1) != null && !admin) {
+                return "";
+            }
+            String chapterPath = "help/shared/" + match.group(2) + ".md";
             String chapter     = loadResource(chapterPath);
-            if (chapter.contains("{{include:")) {
+            if (chapter.contains("{{include")) {
                 throw new IllegalArgumentException("Nested help chapters are not supported: " + chapterPath);
             }
             return Matcher.quoteReplacement(chapter);
         });
-        if (content.contains("{{include:")) {
+        if (content.contains("{{include")) {
             throw new IllegalArgumentException("Invalid shared help chapter directive in " + resourcePath);
         }
-        return new Markdown(content);
+        return new Markdown(content.replace("{{audience}}", admin ? "admin" : "user"));
     }
 
     private String loadResource(String resourcePath) {

@@ -85,12 +85,20 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String             ID_ACTION_HISTORY_PANE          = "main-layout-action-history-pane";
     public static final String             ID_BREADCRUMBS                  = "main-layout-breadcrumbs";
     public static final String             ID_LOGO                         = "main-layout-logo";
+    /**
+     * Stable ID for the shared planning navigation.
+     */
+    public static final String             ID_NAVIGATION                   = "main-layout-navigation";
     public static final String             ID_TAB_BASE                     = "main-layout-tab-";
     //    public static final String           ID_TAB_USERS                 = "main-layout-tab-users";
     public static final String             ID_THEME_TOGGLE                 = "main-layout-theme-toggle";
     public static final String             ID_USER_MENU                    = "main-layout-user-menu";
     public static final String             ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
     public static final String             ID_USER_MENU_AUDIT              = "main-layout-user-menu-audit";
+    /**
+     * Stable ID for the administrator's identity-provider menu entry.
+     */
+    public static final String             ID_USER_MENU_IDENTITY_PROVIDERS = "main-layout-user-menu-identity-providers";
     public static final String             ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
     public static final String             ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
     public static final String             ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
@@ -410,12 +418,15 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             label.getStyle().set("font-size", "var(--lumo-font-size-xs)");
 
             HorizontalLayout tabLayout = new HorizontalLayout(icon, label);
+            tabLayout.setId(ID_TAB_BASE + menuEntry.path().replaceFirst("^/", ""));
             tabLayout.setSpacing(false);
             tabLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
             tab.add(tabLayout);
         } else {
-            tab.add(new Span(menuEntry.title()));
+            Span label = new Span(menuEntry.title());
+            label.setId(ID_TAB_BASE + menuEntry.path().replaceFirst("^/", ""));
+            tab.add(label);
         }
 //        tab.setId(menuEntry.title().substring(1));
 
@@ -424,6 +435,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     private Tabs createTabs() {
         var tabs = new Tabs();
+        tabs.setId(ID_NAVIGATION);
         tabs.setOrientation(Tabs.Orientation.HORIZONTAL);
 
         // Create tabs from menu configuration
@@ -553,8 +565,9 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         if (SecurityUtils.isAdmin()) {
             userMenuItem.getSubMenu().addSeparator();
 
-            userMenuItem.getSubMenu().addItem("Identity Providers",
+            var identityProvidersItem = userMenuItem.getSubMenu().addItem("Identity Providers",
                     e -> UI.getCurrent().navigate(OidcProviderManagementView.class));
+            identityProvidersItem.setId(ID_USER_MENU_IDENTITY_PROVIDERS);
 
             var manageUserGroupsItem = userMenuItem.getSubMenu().addItem("Manage User Groups", e -> navigateToUserGroups());
             manageUserGroupsItem.setId(ID_USER_MENU_MANAGE_USER_GROUPS);

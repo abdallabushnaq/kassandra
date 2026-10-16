@@ -1254,8 +1254,57 @@ class SeleniumHandler {
      * @throws IOException if the image cannot be captured or written
      */
     public void takeHelpElementScreenshot(Class<?> pageClass, String elementId) throws IOException {
+        takeHelpElementScreenshot(pageClass, elementId, null);
+    }
+
+    /**
+     * Captures a control with an optional named presentation variant.
+     *
+     * @param pageClass the view or layout owning the image
+     * @param elementId the control's DOM ID
+     * @param variant   a single folder name such as {@code user} or {@code admin}, or {@code null}
+     * @throws IOException              if the image cannot be captured or written
+     * @throws IllegalArgumentException if the variant is not a safe folder name
+     */
+    public void takeHelpElementScreenshot(Class<?> pageClass, String elementId, String variant) throws IOException {
         WebElement element = waitForHelpElement(By.id(elementId));
-        writeHelpElement(helpImagePath(pageClass, elementId), element, element.getRect().getHeight());
+        writeHelpElement(helpImagePath(pageClass, elementId, variant), element, element.getRect().getHeight());
+    }
+
+    /**
+     * Captures a horizontal group without unused space after its visible children.
+     *
+     * @param pageClass the view or layout owning the image
+     * @param elementId the group's DOM ID
+     * @param variant   the presentation variant, or {@code null}
+     * @throws IOException if the group cannot be captured or its dimensions are invalid
+     */
+    public void takeHelpContentScreenshot(Class<?> pageClass, String elementId, String variant) throws IOException {
+        WebElement element = waitForHelpElement(By.id(elementId));
+        Number width = (Number) executeJavaScript(
+                "const element = arguments[0], rect = element.getBoundingClientRect();"
+                        + " const right = Math.max(rect.left, ...[...element.children]"
+                        + ".filter(child => child.getClientRects().length > 0).map(child => child.getBoundingClientRect().right));"
+                        + " return Math.min(rect.width, Math.ceil(right - rect.left + parseFloat(getComputedStyle(element).paddingRight)));",
+                element);
+        writeHelpElement(helpImagePath(pageClass, elementId, variant), element, width.doubleValue(), element.getRect().getHeight());
+    }
+
+    /**
+     * Captures the open menu-bar popup as a presentation state of its owning control.
+     *
+     * @param pageClass the view or layout owning the image
+     * @param menuId    the menu's DOM ID; the image name appends {@code -popup}
+     * @param variant   the presentation variant, or {@code null}
+     * @throws IOException if the open popup cannot be captured or written
+     */
+    public void takeHelpMenuScreenshot(Class<?> pageClass, String menuId, String variant) throws IOException {
+        WebElement menu = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id(menuId)));
+        WebElement overlay = (WebElement) executeJavaScript(
+                "return arguments[0].querySelector('vaadin-menu-bar-submenu').shadowRoot"
+                        + ".querySelector('vaadin-menu-bar-overlay').shadowRoot.querySelector('[part=\"overlay\"]')", menu);
+        wait.until(ExpectedConditions.visibilityOf(overlay));
+        writeHelpElement(helpImagePath(pageClass, menuId + "-popup", variant), overlay, overlay.getRect().getHeight());
     }
 
     /**
@@ -1291,13 +1340,24 @@ class SeleniumHandler {
     }
 
     private Path helpImagePath(Class<?> pageClass, String elementId) {
+        return helpImagePath(pageClass, elementId, null);
+    }
+
+    private Path helpImagePath(Class<?> pageClass, String elementId, String variant) {
         if (!elementId.matches("[a-zA-Z0-9_.-]+")) {
             throw new IllegalArgumentException("Invalid help image element ID: " + elementId);
         }
         boolean dark = Boolean.TRUE.equals(executeJavaScript(
                 "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
-        return Path.of("src", "main", "resources", "META-INF", "resources", "ui", "images", "help",
-                dark ? "dark" : "light", pageClass.getSimpleName(), elementId + ".png");
+        Path folder = Path.of("src", "main", "resources", "META-INF", "resources", "ui", "images", "help",
+                dark ? "dark" : "light", pageClass.getSimpleName());
+        if (variant != null) {
+            if (!variant.matches("[a-z0-9]+(?:-[a-z0-9]+)*")) {
+                throw new IllegalArgumentException("Invalid help image variant: " + variant);
+            }
+            folder = folder.resolve(variant);
+        }
+        return folder.resolve(elementId + ".png");
     }
 
     private WebElement waitForHelpElement(By locator) {
@@ -1310,12 +1370,18 @@ class SeleniumHandler {
     }
 
     private void writeHelpElement(Path destination, WebElement element, double cssHeight) throws IOException {
+        writeHelpElement(destination, element, element.getRect().getWidth(), cssHeight);
+    }
+
+    private void writeHelpElement(Path destination, WebElement element, double cssWidth, double cssHeight) throws IOException {
         BufferedImage image = ImageIO.read(new ByteArrayInputStream(element.getScreenshotAs(OutputType.BYTES)));
-        if (image == null || cssHeight <= 0 || cssHeight > element.getRect().getHeight()) {
+        if (image == null || cssWidth <= 0 || cssWidth > element.getRect().getWidth()
+                || cssHeight <= 0 || cssHeight > element.getRect().getHeight()) {
             throw new IOException("Invalid element screenshot dimensions for " + destination);
         }
+        int           width  = (int) Math.ceil(cssWidth * image.getWidth() / element.getRect().getWidth());
         int           height = (int) Math.ceil(cssHeight * image.getHeight() / element.getRect().getHeight());
-        BufferedImage crop   = image.getSubimage(0, 0, image.getWidth(), Math.min(height, image.getHeight()));
+        BufferedImage crop   = image.getSubimage(0, 0, Math.min(width, image.getWidth()), Math.min(height, image.getHeight()));
         Files.createDirectories(destination.getParent());
         if (!ImageIO.write(crop, "png", destination.toFile())) {
             throw new IOException("No PNG writer available for " + destination);
