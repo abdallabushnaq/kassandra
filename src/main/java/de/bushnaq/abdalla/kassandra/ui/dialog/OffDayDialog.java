@@ -34,6 +34,7 @@ import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.OffDayApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
@@ -47,6 +48,8 @@ import java.util.List;
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
 public class OffDayDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "offday-dialog-help-button";
     public static final String               CANCEL_BUTTON           = "offday-dialog-cancel";
     public static final String               CONFIRM_BUTTON          = "offday-dialog-confirm";
     public static final String               OFFDAY_DIALOG           = "offday-dialog";
@@ -73,6 +76,14 @@ public class OffDayDialog extends Dialog {
         // Set the dialog title with an icon
         String title = offDay == null ? "Create Off Day" : "Edit Off Day";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CALENDAR));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/off-day-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(OFFDAY_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);

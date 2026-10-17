@@ -34,11 +34,13 @@ import com.vaadin.flow.component.timepicker.TimePicker;
 import de.bushnaq.abdalla.kassandra.dto.WorkDaySchedule;
 import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
 import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Dialog for creating and editing global {@link WorkWeek} definitions.
@@ -46,6 +48,10 @@ import java.util.List;
  * a working-day toggle and four time pickers (work start/end, lunch start/end).
  */
 public class WorkWeekDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "work-week-dialog-help-button";
+    /** Prefix for a complete weekday schedule row. */
+    public static final String DAY_ROW_ID_PREFIX = "work-week-dialog-day-";
 
     public static final String CANCEL_BUTTON              = "work-week-dialog-cancel";
     public static final String CONFIRM_BUTTON             = "work-week-dialog-confirm";
@@ -92,6 +98,14 @@ public class WorkWeekDialog extends Dialog {
 
         String title = isEditMode ? "Edit Work Week" : "Create Work Week";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CALENDAR));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/work-week-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(WORK_WEEK_DIALOG);
         setWidth("860px");
@@ -168,6 +182,7 @@ public class WorkWeekDialog extends Dialog {
         check.addValueChangeListener(e -> setTimePickersEnabled(index, e.getValue()));
 
         HorizontalLayout row = new HorizontalLayout();
+        row.setId(DAY_ROW_ID_PREFIX + DAY_LABELS[index].toLowerCase(Locale.ROOT));
         row.setWidthFull();
         row.setAlignItems(FlexComponent.Alignment.BASELINE);
         row.add(styledLabel(DAY_LABELS[index], "120px"));
@@ -273,8 +288,6 @@ public class WorkWeekDialog extends Dialog {
         }
     }
 }
-
-
 
 
 

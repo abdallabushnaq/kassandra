@@ -149,6 +149,25 @@ The source code may reveal important behavior that is not obvious from the scree
 
 ## Use Screenshots Intelligently
 
+### Dialog Help Standard
+
+Dialog help follows the same task-focused writing rules, but describes only
+the open dialog rather than repeating the main-menu chapters.
+
+- Use a dialog-owned `HelpDrawer` with collapsible level-two chapters, initially
+  closed, and the existing Expand all / Collapse all controls.
+- Keep unsaved form input when help opens or closes. Close help when its owning
+  dialog closes, including nested dialogs.
+- Illustrate controls with cropped screenshots next to the guidance that needs
+  them. Generate missing images through `GenerateScreenshotsIT`, using stable
+  control IDs and meaningful grouped sections where context matters.
+- Package matching light and dark assets under each dialog's help-image folder.
+  Markdown references the light path; the help renderer selects the current theme.
+- Explain create/edit differences, conditional controls, validation, side effects,
+  and whether Save, Accept or a callback actually persists the change.
+- Exclude deprecated dialogs and generic, multi-purpose confirmation dialogs
+  unless a task explicitly includes them.
+
 A screenshot tells you what is visible.
 
 The source code may tell you why it is visible and how it behaves.

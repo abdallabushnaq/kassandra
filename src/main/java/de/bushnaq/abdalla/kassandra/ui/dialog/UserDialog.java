@@ -50,6 +50,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserWorkWeekApi;
 import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.focus_shift.jollyday.core.HolidayManager;
 import de.focus_shift.jollyday.core.ManagerParameters;
@@ -69,6 +70,10 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  */
 @Slf4j
 public class UserDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "user-dialog-help-button";
+    /** Stable ID of the role selection. */
+    public static final String ROLES_FIELD_ID = "user-dialog-roles";
 
     public static final String                 CANCEL_BUTTON                 = "cancel-user-button";
     public static final String                 CONFIRM_BUTTON                = "save-user-button";
@@ -157,6 +162,14 @@ public class UserDialog extends Dialog {
         }
         // For create mode, leave image src empty - will show broken image icon or can be replaced with VaadinIcon
         getHeader().add(VaadinUtil.createDialogHeader(title, headerAvatar));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/user-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(USER_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
@@ -324,6 +337,7 @@ public class UserDialog extends Dialog {
         // Roles selection (checkbox group)
         {
             rolesCheckboxGroup = new CheckboxGroup<>();
+            rolesCheckboxGroup.setId(ROLES_FIELD_ID);
             rolesCheckboxGroup.setLabel("Roles");
             rolesCheckboxGroup.setItems("ADMIN", "USER");
             rolesCheckboxGroup.addThemeVariants();

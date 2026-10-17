@@ -279,7 +279,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      *
      * @param folder destination folder for the screenshot files
      */
-    private void takeActiveSprintsDialogScreenshots(String folder) {
+    private void takeActiveSprintsDialogScreenshots(String folder) throws IOException {
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
                 .filter(s -> s.getStatus() == Status.STARTED)
@@ -304,6 +304,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(taskCardId);
         seleniumHandler.waitForElementToBeClickable(WorklogDialog.TITLE_ID);
         seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "1h");
+        takeWorklogHelpScreenshots();
         seleniumHandler.takeElementScreenShot(
                 seleniumHandler.findDialogOverlayElement(WorklogDialog.WORKLOG_DIALOG),
                 WorklogDialog.WORKLOG_DIALOG,
@@ -314,6 +315,17 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         String taskTitleId = TaskCard.TASK_CARD_TITLE_ID_PREFIX + leafTask.getKey();
         seleniumHandler.click(taskTitleId);
         seleniumHandler.waitForElementToBeClickable(TaskDialog.CANCEL_BUTTON);
+        takeDialogHelpElements(TaskDialog.class, TaskDialog.HELP_BUTTON_ID, TaskDialog.CALCULATIONS_ID,
+                TaskDialog.NAME_FIELD_ID, TaskDialog.NOTES_FIELD_ID, TaskDialog.ESTIMATES_ID,
+                TaskDialog.MANUAL_SCHEDULING_ID, TaskDialog.WORKLOGS_ID,
+                TaskDialog.SAVE_TASK_BUTTON, TaskDialog.CANCEL_BUTTON, TaskDialog.LOG_WORK_BUTTON_ID);
+        boolean manual = seleniumHandler.getCheckbox(TaskDialog.MANUAL_SCHEDULING_ID);
+        try {
+            seleniumHandler.setCheckCheckbox(TaskDialog.MANUAL_SCHEDULING_ID, true);
+            seleniumHandler.takeHelpElementScreenshot(TaskDialog.class, TaskDialog.START_FIELD_ID);
+        } finally {
+            seleniumHandler.setCheckCheckbox(TaskDialog.MANUAL_SCHEDULING_ID, manual);
+        }
         seleniumHandler.takeElementScreenShot(
                 seleniumHandler.findDialogOverlayElement(TaskDialog.TASK_DIALOG),
                 TaskDialog.TASK_DIALOG,
@@ -322,6 +334,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         Worklog worklog = worklogs.stream().filter(w -> leafTask.getId().equals(w.getTaskId())).findFirst().orElseThrow();
         seleniumHandler.click(TaskDialog.WORKLOG_EDIT_BUTTON_PREFIX + worklog.getId());
         seleniumHandler.waitForElementToBeClickable(WorklogDialog.CANCEL_BUTTON);
+        takeDialogHelpElements(WorklogDialog.class, WorklogDialog.HELP_BUTTON_ID);
         takeDialogScreenshot(WorklogDialog.WORKLOG_DIALOG, folder + "/worklog-edit-dialog.png");
         seleniumHandler.click(WorklogDialog.CANCEL_BUTTON);
         seleniumHandler.waitForElementToBeClickable(TaskDialog.WORKLOG_DELETE_BUTTON_PREFIX + worklog.getId());
@@ -462,11 +475,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of Availability create, edit and delete dialogs
      */
-    private void takeAvailabilityDialogScreenshots(String folder) {
+    private void takeAvailabilityDialogScreenshots(String folder) throws IOException {
         // Create availability dialog
         {
             seleniumHandler.click(AvailabilityListView.CREATE_AVAILABILITY_BUTTON);
             seleniumHandler.waitForElementToBeClickable(AvailabilityDialog.CANCEL_BUTTON); // Wait for dialog
+            takeDialogHelpElements(AvailabilityDialog.class, AvailabilityDialog.HELP_BUTTON_ID,
+                    AvailabilityDialog.AVAILABILITY_START_DATE_FIELD, AvailabilityDialog.AVAILABILITY_PERCENTAGE_FIELD,
+                    AvailabilityDialog.CONFIRM_BUTTON, AvailabilityDialog.CANCEL_BUTTON);
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(AvailabilityDialog.AVAILABILITY_DIALOG), AvailabilityDialog.AVAILABILITY_DIALOG, folder + "/availability-create-dialog.png");
             availabilityListViewTester.closeDialog(AvailabilityDialog.CANCEL_BUTTON);
         }
@@ -536,7 +552,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      *
      * @param folder destination folder for the screenshot file
      */
-    private void takeDependencyDialogScreenshots(String folder) {
+    private void takeDependencyDialogScreenshots(String folder) throws IOException {
         // Resolve a leaf task in the currently-selected sprint
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
@@ -558,6 +574,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         // Click the dependency cell for the leaf task to open DependencyDialog
         seleniumHandler.click(TaskGrid.TASK_GRID_DEPENDENCY_PREFIX + leafTask.getName());
         seleniumHandler.waitForElementToBeClickable(DependencyDialog.CANCEL_BUTTON);
+        takeDialogHelpElements(DependencyDialog.class, DependencyDialog.HELP_BUTTON_ID, DependencyDialog.CHOICES_ID,
+                DependencyDialog.QUICK_EDIT_ID, DependencyDialog.SAVE_BUTTON, DependencyDialog.CANCEL_BUTTON);
         seleniumHandler.takeElementScreenShot(
                 seleniumHandler.findDialogOverlayElement(DependencyDialog.DEPENDENCY_DIALOG),
                 DependencyDialog.DEPENDENCY_DIALOG,
@@ -602,16 +620,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of Project create, edit and delete dialogs
      */
-    private void takeFeatureDialogScreenshots(String folder) {
+    private void takeFeatureDialogScreenshots(String folder) throws IOException {
         // Create project dialog
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
         seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(FeatureDialog.class, FeatureDialog.HELP_BUTTON_ID,
+                FeatureDialog.CONFIRM_BUTTON, FeatureDialog.CANCEL_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, folder + "/feature-create-dialog.png");
         featureListViewTester.closeDialog(FeatureDialog.CANCEL_BUTTON);
 
         // Edit project dialog - open action menu first, then edit
         seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + featureName);
         seleniumHandler.waitForElementToBeClickable(FeatureDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(FeatureDialog.class, FeatureDialog.HELP_BUTTON_ID,
+                FeatureDialog.FEATURE_NAME_FIELD, FeatureDialog.GENERATE_IMAGE_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(FeatureDialog.FEATURE_DIALOG), FeatureDialog.FEATURE_DIALOG, folder + "/feature-edit-dialog.png");
         featureListViewTester.closeDialog(FeatureDialog.CANCEL_BUTTON);
 
@@ -651,6 +673,58 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.prepareHelpScreenshots(titleId);
     }
 
+    private void takeDialogHelpElements(Class<?> dialog, String helpButtonId, String... elementIds) throws IOException {
+        seleniumHandler.prepareHelpScreenshots(elementIds.length == 0 ? helpButtonId : elementIds[0]);
+        seleniumHandler.takeHelpElementScreenshot(dialog, helpButtonId);
+        for (String elementId : elementIds) {
+            seleniumHandler.takeHelpElementScreenshot(dialog, elementId);
+        }
+    }
+
+    private void takeWorklogHelpScreenshots() throws IOException {
+        takeDialogHelpElements(WorklogDialog.class, WorklogDialog.HELP_BUTTON_ID,
+                WorklogDialog.TIME_SPENT_FIELD, WorklogDialog.TIME_REMAINING_FIELD,
+                WorklogDialog.DATETIME_PICKER, WorklogDialog.COMMENT_FIELD,
+                WorklogDialog.SAVE_BUTTON, WorklogDialog.CANCEL_BUTTON);
+    }
+
+    private void takeImagePromptHelpScreenshots(String buttonId, boolean headers) throws IOException {
+        seleniumHandler.click(buttonId);
+        try {
+            seleniumHandler.waitForElementToBeClickable(ImagePromptDialog.ID_CANCEL_BUTTON);
+            if (headers) {
+                takeDialogHelpElements(ImagePromptDialog.class, ImagePromptDialog.HELP_BUTTON_ID,
+                        ImagePromptDialog.ID_AVATAR_PROMPT_FIELD, ImagePromptDialog.ID_NEGATIVE_PROMPT_FIELD,
+                        ImagePromptDialog.ID_HEADER_PROMPT_FIELD, ImagePromptDialog.ID_STYLE_SELECT,
+                        ImagePromptDialog.ID_RANDOM_STYLE_BUTTON, "light-column", "dark-column",
+                        "light-header-column", "dark-header-column", ImagePromptDialog.ID_GENERATE_BUTTON,
+                        ImagePromptDialog.ID_ACCEPT_BUTTON, ImagePromptDialog.ID_CANCEL_BUTTON);
+            } else {
+                // Avatar-only forms use the same controls but have no header editors.
+                assertTrue(seleniumHandler.getDriver().findElements(By.id(ImagePromptDialog.ID_HEADER_PROMPT_FIELD)).isEmpty());
+                assertTrue(seleniumHandler.findElement(By.id(ImagePromptDialog.HELP_BUTTON_ID)).isDisplayed());
+            }
+        } finally {
+            seleniumHandler.click(ImagePromptDialog.ID_CANCEL_BUTTON);
+        }
+    }
+
+    private void takeReplayHelpScreenshots(String direction) throws IOException {
+        seleniumHandler.prepareHelpScreenshots(UndoHistoryConfirmationDialog.CANCEL_BUTTON);
+        for (String id : List.of(UndoHistoryConfirmationDialog.HELP_BUTTON_ID,
+                UndoHistoryConfirmationDialog.CONFIRM_BUTTON, UndoHistoryConfirmationDialog.CANCEL_BUTTON)) {
+            seleniumHandler.takeHelpElementScreenshot(UndoHistoryConfirmationDialog.class, id, direction);
+        }
+        WebElement operations = seleniumHandler.findElement(By.id(UndoHistoryConfirmationDialog.OPERATIONS_ID));
+        for (WebElement details : operations.findElements(By.cssSelector("vaadin-details"))) {
+            if (details.getDomAttribute("opened") == null) {
+                details.click();
+            }
+        }
+        seleniumHandler.takeHelpElementScreenshot(UndoHistoryConfirmationDialog.class,
+                UndoHistoryConfirmationDialog.OPERATIONS_ID, direction);
+    }
+
     private void takeHelpListElements(Class<?> view, String titleId, ETheme theme, String gridId,
                                       String createId, String filterId, String counterId,
                                       String editPrefix, String deletePrefix, String... additionalIds) throws IOException {
@@ -674,11 +748,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of Location create, edit and delete dialogs
      */
-    private void takeLocationDialogScreenshots(String folder) {
+    private void takeLocationDialogScreenshots(String folder) throws IOException {
         // Create location dialog
         {
             seleniumHandler.click(LocationListView.CREATE_LOCATION_BUTTON);
             seleniumHandler.waitForElementToBeClickable(LocationDialog.CANCEL_BUTTON); // Wait for dialog
+            takeDialogHelpElements(LocationDialog.class, LocationDialog.HELP_BUTTON_ID,
+                    LocationDialog.LOCATION_COUNTRY_FIELD, LocationDialog.LOCATION_STATE_FIELD,
+                    LocationDialog.LOCATION_START_DATE_FIELD, LocationDialog.CONFIRM_BUTTON, LocationDialog.CANCEL_BUTTON);
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(LocationDialog.LOCATION_DIALOG), LocationDialog.LOCATION_DIALOG, folder + "/location-create-dialog.png");
             locationListViewTester.closeDialog(LocationDialog.CANCEL_BUTTON);
         }
@@ -814,7 +891,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of OffDay create, edit and delete dialogs
      */
-    private void takeOffDayDialogScreenshots(String folder) {
+    private void takeOffDayDialogScreenshots(String folder) throws IOException {
         // Create availability dialog
         {
             seleniumHandler.click(OffDayListView.CREATE_OFFDAY_BUTTON);
@@ -822,6 +899,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
             seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, OffDayType.VACATION.name());
             seleniumHandler.waitForElementToBeClickable(OffDayDialog.CANCEL_BUTTON); // Wait for dialog
+            takeDialogHelpElements(OffDayDialog.class, OffDayDialog.HELP_BUTTON_ID,
+                    OffDayDialog.OFFDAY_START_DATE_FIELD, OffDayDialog.OFFDAY_END_DATE_FIELD, OffDayDialog.OFFDAY_TYPE_FIELD,
+                    OffDayDialog.CONFIRM_BUTTON, OffDayDialog.CANCEL_BUTTON);
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(OffDayDialog.OFFDAY_DIALOG), OffDayDialog.OFFDAY_DIALOG, folder + "/offday-create-dialog.png");
             offDayListViewTester.closeDialog(OffDayDialog.CANCEL_BUTTON);
         }
@@ -874,10 +954,13 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of Product create, edit and delete dialogs
      */
-    private void takeProductDialogScreenshots(String folder) {
+    private void takeProductDialogScreenshots(String folder) throws IOException {
         // Create product dialog
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.waitForElementToBeClickable(ProductDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(ProductDialog.class, ProductDialog.PRODUCT_HELP_BUTTON,
+                ProductDialog.PRODUCT_ACL_USERS_FIELD, ProductDialog.PRODUCT_ACL_GROUPS_FIELD,
+                ProductDialog.CONFIRM_BUTTON, ProductDialog.CANCEL_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ProductDialog.PRODUCT_DIALOG), ProductDialog.PRODUCT_DIALOG, folder + "/product-create-dialog.png");
         productListViewTester.closeDialog(ProductDialog.CANCEL_BUTTON);
 
@@ -885,6 +968,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         // Edit product dialog - open action menu first, then edit
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + productName);
         seleniumHandler.waitForElementToBeClickable(ProductDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(ProductDialog.class, ProductDialog.PRODUCT_HELP_BUTTON,
+                ProductDialog.PRODUCT_NAME_FIELD, ProductDialog.GENERATE_IMAGE_BUTTON);
+        takeImagePromptHelpScreenshots(ProductDialog.GENERATE_IMAGE_BUTTON, true);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ProductDialog.PRODUCT_DIALOG), ProductDialog.PRODUCT_DIALOG, folder + "/product-edit-dialog.png");
         productListViewTester.closeDialog(ProductDialog.CANCEL_BUTTON);
 
@@ -905,7 +991,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
     }
 
-    private void takeProductHistoryScreenshots(String folder) {
+    private void takeProductHistoryScreenshots(String folder) throws IOException {
         Product product = peg.productApi.getAll().stream().filter(p -> productName.equals(p.getName()))
                 .findFirst().orElseThrow();
         try {
@@ -923,6 +1009,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
             seleniumHandler.click(UndoHistoryOperationDetails.ACTION_ID_PREFIX + operation.getId());
             seleniumHandler.waitForElementToBeClickable(UndoHistoryConfirmationDialog.CONFIRM_BUTTON);
+            takeReplayHelpScreenshots("undo");
             takeDialogScreenshot(UndoHistoryConfirmationDialog.DIALOG_ID, folder + "/undo-history-confirmation-dialog.png");
             seleniumHandler.click(UndoHistoryConfirmationDialog.CONFIRM_BUTTON);
             seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_GRID_NAME_PREFIX + productName);
@@ -933,6 +1020,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             seleniumHandler.takeScreenShot(folder + "/product-history-undone.png");
             seleniumHandler.click(UndoHistoryOperationDetails.ACTION_ID_PREFIX + operation.getId());
             seleniumHandler.waitForElementToBeClickable(UndoHistoryConfirmationDialog.CANCEL_BUTTON);
+            takeReplayHelpScreenshots("redo");
             takeDialogScreenshot(UndoHistoryConfirmationDialog.DIALOG_ID, folder + "/redo-history-confirmation-dialog.png");
             // Complete the replay before restoring a regular revision as the next theme's baseline.
             seleniumHandler.click(UndoHistoryConfirmationDialog.CONFIRM_BUTTON);
@@ -1133,6 +1221,26 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
+    /**
+     * Refreshes Task Details and worklog help captures without recapturing unrelated pages.
+     *
+     * @param randomCase deterministic screenshot fixture
+     * @param testInfo current test metadata
+     * @throws Exception when fixture restoration or screenshot capture fails
+     */
+    @ParameterizedTest
+    @MethodSource("listRandomCases")
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void takeTaskDialogHelpScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
+        prepareScreenshotFixture(randomCase, testInfo);
+        for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+            aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+            seleniumHandler.setHelpScreenshotTheme(theme);
+            takeActiveSprintsDialogScreenshots("../kassandra.wiki/" + theme.name() + "-screenshots/");
+            aboutViewTester.logout();
+        }
+    }
+
     private void takeScrollableScreenshots(String id, String filePrefix) {
         WebElement scroller = seleniumHandler.findElement(By.id(id));
         seleniumHandler.executeJavaScript("arguments[0].scrollTop = 0;", scroller);
@@ -1170,16 +1278,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of Sprint create, edit and delete dialogs
      */
-    private void takeSprintDialogScreenshots(String folder) {
+    private void takeSprintDialogScreenshots(String folder) throws IOException {
         // Create sprint dialog
         seleniumHandler.click(SprintListView.CREATE_SPRINT_BUTTON);
         seleniumHandler.waitForElementToBeClickable(SprintDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(SprintDialog.class, SprintDialog.HELP_BUTTON_ID,
+                SprintDialog.CONFIRM_BUTTON, SprintDialog.CANCEL_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(SprintDialog.SPRINT_DIALOG), SprintDialog.SPRINT_DIALOG, folder + "/sprint-create-dialog.png");
         sprintListViewTester.closeDialog(SprintDialog.CANCEL_BUTTON);
 
         // Edit sprint dialog - open action menu first, then edit
         seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + sprintName);
         seleniumHandler.waitForElementToBeClickable(SprintDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(SprintDialog.class, SprintDialog.HELP_BUTTON_ID,
+                SprintDialog.SPRINT_NAME_FIELD, SprintDialog.GENERATE_IMAGE_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(SprintDialog.SPRINT_DIALOG), SprintDialog.SPRINT_DIALOG, folder + "/sprint-edit-dialog.png");
         sprintListViewTester.closeDialog(SprintDialog.CANCEL_BUTTON);
 
@@ -1205,10 +1317,15 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of User create, edit and delete dialogs
      */
-    private void takeUserDialogScreenshots(String folder) {
+    private void takeUserDialogScreenshots(String folder) throws IOException {
         // Create user dialog
         seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID,
+                UserDialog.USER_EMAIL_FIELD, UserDialog.ROLES_FIELD_ID,
+                UserDialog.USER_FIRST_WORKING_DAY_PICKER, UserDialog.USER_LAST_WORKING_DAY_PICKER,
+                UserDialog.USER_LOCATION_COUNTRY_COMBO, UserDialog.USER_LOCATION_STATE_COMBO, UserDialog.USER_WORK_WEEK_COMBO,
+                UserDialog.CONFIRM_BUTTON, UserDialog.CANCEL_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, folder + "/user-create-dialog.png");
         userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);
 
@@ -1218,6 +1335,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.wait(300);
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID,
+                UserDialog.USER_NAME_FIELD, UserDialog.GENERATE_IMAGE_BUTTON);
+        takeImagePromptHelpScreenshots(UserDialog.GENERATE_IMAGE_BUTTON, false);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, folder + "/user-edit-dialog.png");
         userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);
 
@@ -1245,11 +1365,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      *
      * @param folder destination folder for the screenshot files
      */
-    private void takeUserGroupDialogScreenshots(String folder) {
+    private void takeUserGroupDialogScreenshots(String folder) throws IOException {
         // Create dialog
         {
             seleniumHandler.click(UserGroupListView.CREATE_GROUP_BUTTON);
             seleniumHandler.waitForElementToBeClickable(UserGroupDialog.CANCEL_BUTTON);
+            takeDialogHelpElements(UserGroupDialog.class, UserGroupDialog.HELP_BUTTON_ID,
+                    UserGroupDialog.GROUP_NAME_FIELD, UserGroupDialog.GROUP_DESCRIPTION_FIELD, UserGroupDialog.GROUP_MEMBERS_FIELD,
+                    UserGroupDialog.CONFIRM_BUTTON, UserGroupDialog.CANCEL_BUTTON);
             seleniumHandler.takeElementScreenShot(
                     seleniumHandler.findDialogOverlayElement(UserGroupDialog.GROUP_DIALOG),
                     UserGroupDialog.GROUP_DIALOG,
@@ -1312,11 +1435,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of UserWorkWeek create, edit and delete dialogs.
      */
-    private void takeUserWorkWeekDialogScreenshots(String folder) {
+    private void takeUserWorkWeekDialogScreenshots(String folder) throws IOException {
         // Create dialog
         {
             seleniumHandler.click(UserWorkWeekListView.CREATE_BUTTON);
             seleniumHandler.waitForElementToBeClickable(UserWorkWeekDialog.CANCEL_BUTTON);
+            takeDialogHelpElements(UserWorkWeekDialog.class, UserWorkWeekDialog.HELP_BUTTON_ID,
+                    UserWorkWeekDialog.WORK_WEEK_COMBO_FIELD, UserWorkWeekDialog.START_DATE_FIELD,
+                    UserWorkWeekDialog.CONFIRM_BUTTON, UserWorkWeekDialog.CANCEL_BUTTON);
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserWorkWeekDialog.USER_WORK_WEEK_DIALOG), UserWorkWeekDialog.USER_WORK_WEEK_DIALOG, folder + "/user-work-week-create-dialog.png");
             userWorkWeekListViewTester.closeDialog(UserWorkWeekDialog.CANCEL_BUTTON);
         }
@@ -1353,10 +1479,12 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of Version create, edit and delete dialogs.
      */
-    private void takeVersionDialogScreenshots(String folder) {
+    private void takeVersionDialogScreenshots(String folder) throws IOException {
         // Create version dialog
         seleniumHandler.click(VersionListView.CREATE_VERSION_BUTTON);
         seleniumHandler.waitForElementToBeClickable(VersionDialog.CANCEL_BUTTON); // Wait for dialog
+        takeDialogHelpElements(VersionDialog.class, VersionDialog.HELP_BUTTON_ID, VersionDialog.VERSION_NAME_FIELD,
+                VersionDialog.CONFIRM_BUTTON, VersionDialog.CANCEL_BUTTON);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(VersionDialog.VERSION_DIALOG), VersionDialog.VERSION_DIALOG, folder + "/version-create-dialog.png");
         versionListViewTester.closeDialog(VersionDialog.CANCEL_BUTTON);
 
@@ -1386,11 +1514,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of WorkWeek create, edit and delete dialogs.
      */
-    private void takeWorkWeekDialogScreenshots(String folder) {
+    private void takeWorkWeekDialogScreenshots(String folder) throws IOException {
         // Create dialog
         {
             seleniumHandler.click(WorkWeekListView.CREATE_BUTTON);
             seleniumHandler.waitForElementToBeClickable(WorkWeekDialog.CANCEL_BUTTON);
+            takeDialogHelpElements(WorkWeekDialog.class, WorkWeekDialog.HELP_BUTTON_ID,
+                    WorkWeekDialog.NAME_FIELD, WorkWeekDialog.DESCRIPTION_FIELD,
+                    WorkWeekDialog.DAY_ROW_ID_PREFIX + "monday", WorkWeekDialog.CONFIRM_BUTTON, WorkWeekDialog.CANCEL_BUTTON);
             seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(WorkWeekDialog.WORK_WEEK_DIALOG), WorkWeekDialog.WORK_WEEK_DIALOG, folder + "/work-week-create-dialog.png");
             workWeekListViewTester.closeDialog(WorkWeekDialog.CANCEL_BUTTON);
         }

@@ -502,11 +502,16 @@ public class ProductListViewIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setTextField(ProductDialog.PRODUCT_NAME_FIELD, "Jupiter help example");
         driver.findElement(toggle).click();
         wait.until(ExpectedConditions.visibilityOfElementLocated(drawer));
-        assertTrue(driver.findElement(drawer).getText().contains("Who has access by default?"));
+        By chapters = By.cssSelector("#" + ProductDialog.PRODUCT_HELP_BUTTON + "-drawer vaadin-details.help-chapter");
+        wait.until(webDriver -> !driver.findElements(chapters).isEmpty());
+        assertTrue(driver.findElements(chapters).stream().noneMatch(chapter -> chapter.getDomAttribute("opened") != null));
+        driver.findElement(drawer).findElement(By.xpath(".//vaadin-button[normalize-space(.)='Expand all']")).click();
+        wait.until(webDriver -> driver.findElements(chapters).stream().allMatch(chapter -> chapter.getDomAttribute("opened") != null));
+        assertTrue(driver.findElement(drawer).getText().contains("creator, receive access automatically"));
         assertTrue(driver.findElement(drawer).getText().contains("Administrators can access all"));
         wait.until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
                 "const images = [...document.querySelectorAll('#' + arguments[0] + ' img')];"
-                        + " return images.length === 1 && images.every(i => i.complete && i.naturalWidth > 0)",
+                        + " return images.length > 0 && images.every(i => i.complete && i.naturalWidth > 0)",
                 ProductDialog.PRODUCT_HELP_BUTTON + "-drawer")));
         driver.findElement(close).sendKeys(Keys.ESCAPE);
         wait.until(ExpectedConditions.invisibilityOfElementLocated(drawer));

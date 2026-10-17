@@ -35,6 +35,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.time.LocalDate;
@@ -42,6 +43,8 @@ import java.time.LocalDate;
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
 public class AvailabilityDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "availability-dialog-help-button";
     public static final String               AVAILABILITY_DIALOG           = "availability-dialog";
     public static final String               AVAILABILITY_PERCENTAGE_FIELD = "availability-percentage-field";
     public static final String               AVAILABILITY_START_DATE_FIELD = "availability-start-date-field";
@@ -66,6 +69,14 @@ public class AvailabilityDialog extends Dialog {
         // Set the dialog title with an icon
         String title = availability == null ? "Create Availability" : "Edit Availability";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CHART));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/availability-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(AVAILABILITY_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);

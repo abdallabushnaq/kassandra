@@ -34,6 +34,7 @@ import com.vaadin.flow.data.binder.ValidationException;
 import de.bushnaq.abdalla.kassandra.dto.Location;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.LocationApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.focus_shift.jollyday.core.HolidayManager;
 import de.focus_shift.jollyday.core.ManagerParameters;
@@ -46,6 +47,8 @@ import java.util.stream.Collectors;
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
 
 public class LocationDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "location-dialog-help-button";
     public static final String           CANCEL_BUTTON             = "location-dialog-cancel";
     public static final String           CONFIRM_BUTTON            = "location-dialog-confirm";
     public static final String           LOCATION_COUNTRY_FIELD    = "location-country-field";
@@ -72,6 +75,14 @@ public class LocationDialog extends Dialog {
         // Set the dialog title with an icon
         String title = isEditMode ? "Edit Location" : "Create Location";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.MAP_MARKER));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/location-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(LOCATION_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);

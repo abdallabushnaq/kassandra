@@ -44,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
 import de.bushnaq.abdalla.kassandra.rest.api.SprintApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.UUID;
@@ -54,6 +55,8 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  * A reusable dialog for creating and editing sprints.
  */
 public class SprintDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "sprint-dialog-help-button";
 
     public static final String                 CANCEL_BUTTON         = "cancel-sprint-button";
     public static final String                 CONFIRM_BUTTON        = "save-sprint-button";
@@ -115,6 +118,14 @@ public class SprintDialog extends Dialog {
         }
         // For create mode, leave image src empty
         getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/sprint-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);

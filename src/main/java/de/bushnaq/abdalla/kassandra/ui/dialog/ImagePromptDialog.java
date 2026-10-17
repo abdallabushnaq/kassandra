@@ -44,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.TiledDiffusionOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
 import de.bushnaq.abdalla.kassandra.dto.AvatarUpdateRequest;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,6 +61,8 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class ImagePromptDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "image-prompt-dialog-help-button";
 
     public static final String                        DARK_THEMED_BACKGROUND_COLOR    = "#111111";
     // Button ID constants for Selenium tests
@@ -167,6 +170,14 @@ public class ImagePromptDialog extends Dialog {
         setWidth("1000px");
         setMaxHeight("95vh");
         getHeader().add(VaadinUtil.createDialogHeader("Generate AI Image", VaadinIcon.MAGIC));
+        HelpDrawer helpDrawer = new HelpDrawer("Generate AI Image", "help/image-prompt-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);

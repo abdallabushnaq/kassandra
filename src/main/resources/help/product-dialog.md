@@ -13,7 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+Create a product or change its name, collaborators and optional identifying
+images without replacing its existing work.
+
+Open a chapter for the task you need. **Expand all** opens every chapter;
+**Collapse all** returns to the overview.
+
 ## Set up a product or change an existing one
+
+![Product name](images/help/light/ProductDialog/product-name-field.png)
 
 Use **Create Product** to start a separate body of work. Use **Edit Product**
 to rename an existing product or change its collaborators and optional images
@@ -28,6 +36,10 @@ Creating a product does not automatically add versions or planned work.
 Renaming an existing product keeps its identity and contained work.
 
 ## Decide who should be able to work on it
+
+![Individual access grants](images/help/light/ProductDialog/product-acl-users-field.png)
+
+![Group access grants](images/help/light/ProductDialog/product-acl-groups-field.png)
 
 When you create a product and leave both access selectors empty, **you, the
 creator, receive access automatically**. **Administrators can access all
@@ -54,6 +66,8 @@ selectors.
 
 ## Choose optional identifying images
 
+![Open image generation](images/help/light/ProductDialog/generate-product-image-button.png)
+
 When AI image generation is configured and available, a **magic-wand button
 beside Product Name** opens the image-generation dialog. Enter a name first to
 enable it. If the button is absent, the Stable Diffusion service was unavailable
@@ -67,6 +81,10 @@ to the product. **Accept is not Save**: cancelling the product form discards
 those unsaved choices along with your other form changes.
 
 ## Apply the changes or leave the product unchanged
+
+![Save product](images/help/light/ProductDialog/save-product-button.png)
+
+![Cancel product changes](images/help/light/ProductDialog/cancel-product-button.png)
 
 **Save** applies the name, optional images and access-grant changes. After a
 successful save, the dialog closes and the list refreshes; a product can

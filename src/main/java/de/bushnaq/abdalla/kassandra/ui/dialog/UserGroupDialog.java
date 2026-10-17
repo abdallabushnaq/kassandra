@@ -37,6 +37,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.UserGroup;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserGroupApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.util.HashSet;
@@ -51,6 +52,8 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  * A reusable dialog for creating and editing user groups.
  */
 public class UserGroupDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "user-group-dialog-help-button";
 
     public static final String                    CANCEL_BUTTON           = "cancel-user-group-button";
     public static final String                    CONFIRM_BUTTON          = "save-user-group-button";
@@ -88,6 +91,14 @@ public class UserGroupDialog extends Dialog {
         String title      = isEditMode ? "Edit User Group" : "Create User Group";
         Icon   headerIcon = new Icon(VaadinIcon.GROUP);
         getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/user-group-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(GROUP_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
@@ -273,4 +284,3 @@ public class UserGroupDialog extends Dialog {
         nameField.setErrorMessage(errorMessage);
     }
 }
-

@@ -35,6 +35,7 @@ import de.bushnaq.abdalla.kassandra.dto.UserWorkWeek;
 import de.bushnaq.abdalla.kassandra.dto.WorkWeek;
 import de.bushnaq.abdalla.kassandra.rest.api.UserWorkWeekApi;
 import de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import java.time.LocalDate;
@@ -47,6 +48,8 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  * Mirrors the pattern of {@link LocationDialog}.
  */
 public class UserWorkWeekDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "user-work-week-dialog-help-button";
 
     public static final String CANCEL_BUTTON         = "user-work-week-dialog-cancel";
     public static final String CONFIRM_BUTTON        = "user-work-week-dialog-confirm";
@@ -84,6 +87,14 @@ public class UserWorkWeekDialog extends Dialog {
 
         String title = isEditMode ? "Edit Work Week Assignment" : "Assign Work Week";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.CALENDAR));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/user-work-week-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(USER_WORK_WEEK_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);
@@ -177,4 +188,3 @@ public class UserWorkWeekDialog extends Dialog {
                 .noneMatch(uww -> date.equals(uww.getStart()));
     }
 }
-

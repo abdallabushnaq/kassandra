@@ -29,6 +29,7 @@ import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import de.bushnaq.abdalla.kassandra.dto.Version;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 
 import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WIDTH;
@@ -37,6 +38,8 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  * A reusable dialog for creating and editing versions.
  */
 public class VersionDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "version-dialog-help-button";
 
     public static final String          CANCEL_BUTTON      = "cancel-version-button";
     public static final String          CONFIRM_BUTTON     = "save-version-button";
@@ -64,6 +67,14 @@ public class VersionDialog extends Dialog {
         // Set the dialog title with an icon
         String title = isEditMode ? "Edit Version" : "Create Version";
         getHeader().add(VaadinUtil.createDialogHeader(title, VaadinIcon.TAG));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/version-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         setId(VERSION_DIALOG);
         setWidth(DIALOG_DEFAULT_WIDTH);

@@ -22,6 +22,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryOperationDetails;
 
 import java.util.UUID;
@@ -31,6 +32,10 @@ import java.util.function.Function;
  * Confirms the complete server-selected range of planning operations to undo or redo.
  */
 public class UndoHistoryConfirmationDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "undo-history-confirmation-help-button";
+    /** Stable ID of the complete replay preview. */
+    public static final String OPERATIONS_ID = "undo-history-confirmation-operations";
     /**
      * Identifier of the replay confirmation dialog.
      */
@@ -62,8 +67,17 @@ public class UndoHistoryConfirmationDialog extends Dialog {
         this.userAvatarUrlResolver    = userAvatarUrlResolver;
         setId(DIALOG_ID);
         setHeaderTitle(undo ? "Confirm undo" : "Confirm redo");
+        HelpDrawer helpDrawer = new HelpDrawer(undo ? "Confirm Undo" : "Confirm Redo", "help/undo-history-confirmation-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         VerticalLayout operations = new VerticalLayout();
+        operations.setId(OPERATIONS_ID);
         operations.setPadding(false);
         operations.setSpacing(true);
         preview.getOperations().forEach(operation -> operations.add(new UndoHistoryOperationDetails(operation,

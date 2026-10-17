@@ -36,6 +36,7 @@ import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
 import de.bushnaq.abdalla.kassandra.rest.api.PlanningOperationContext;
 import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,8 @@ import static de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil.DIALOG_DEFAULT_WID
  */
 @Slf4j
 public class WorklogDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "worklog-dialog-help-button";
 
     public static final String            CANCEL_BUTTON        = "cancel-worklog-button";
     public static final String            COMMENT_FIELD        = "worklog-comment-field";
@@ -114,6 +117,14 @@ public class WorklogDialog extends Dialog {
         // Set dialog header with clock icon
         String title = isEditMode ? "Edit Work Log" : "Log Work";
         getHeader().add(VaadinUtil.createDialogHeader(title, TITLE_ID, VaadinIcon.CLOCK));
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/worklog-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         VerticalLayout dialogLayout = new VerticalLayout();
         dialogLayout.setPadding(false);

@@ -42,6 +42,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
 import de.bushnaq.abdalla.kassandra.rest.api.WorklogApi;
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,24 @@ import java.util.Map;
  */
 @Slf4j
 public class TaskDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "task-dialog-help-button";
+    /** Stable ID of calculated task values. */
+    public static final String CALCULATIONS_ID = "task-dialog-calculations";
+    /** Stable ID of the manual-scheduling toggle. */
+    public static final String MANUAL_SCHEDULING_ID = "task-dialog-manual-scheduling";
+    /** Stable ID of the manually scheduled start. */
+    public static final String START_FIELD_ID = "task-dialog-start";
+    /** Stable ID of the task name editor. */
+    public static final String NAME_FIELD_ID = "task-dialog-name";
+    /** Stable ID of the task notes editor. */
+    public static final String NOTES_FIELD_ID = "task-dialog-notes";
+    /** Stable ID of the estimate range. */
+    public static final String ESTIMATES_ID = "task-dialog-estimates";
+    /** Stable ID of the worklog section. */
+    public static final String WORKLOGS_ID = "task-dialog-worklogs";
+    /** Stable ID of the Log Work button. */
+    public static final String LOG_WORK_BUTTON_ID = "task-dialog-log-work";
     /**
      * Prefix for a worklog edit button, followed by the worklog ID.
      */
@@ -124,6 +143,14 @@ public class TaskDialog extends Dialog {
         setResizable(true);
 
         getHeader().add(VaadinUtil.createDialogHeader(task.getKey() + " — " + task.getName(), VaadinIcon.CLIPBOARD_TEXT));
+        HelpDrawer helpDrawer = new HelpDrawer("Task Details", "help/task-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
 
         VerticalLayout content = new VerticalLayout();
         content.setPadding(false);
@@ -176,6 +203,7 @@ public class TaskDialog extends Dialog {
         wrapper.setSpacing(false);
 
         FormLayout form = new FormLayout();
+        form.setId(CALCULATIONS_ID);
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("480px", 2)
@@ -210,6 +238,7 @@ public class TaskDialog extends Dialog {
         boolean isManual = task.getTaskMode() == TaskMode.MANUALLY_SCHEDULED;
 
         Checkbox manualCheckbox = new Checkbox(); // label is the Span above, not inline
+        manualCheckbox.setId(MANUAL_SCHEDULING_ID);
         binder.forField(manualCheckbox)
                 .withConverter(
                         b -> b ? TaskMode.MANUALLY_SCHEDULED : TaskMode.AUTO_SCHEDULED,
@@ -231,6 +260,7 @@ public class TaskDialog extends Dialog {
         checkboxWrapper.getStyle().set("gap", "var(--lumo-space-xs)");
 
         startField = new DateTimePicker("Start");
+        startField.setId(START_FIELD_ID);
         binder.forField(startField)
                 .bind(Task::getStart, Task::setStart);
 
@@ -294,6 +324,7 @@ public class TaskDialog extends Dialog {
 
         // Name
         TextField nameField = new TextField("Name");
+        nameField.setId(NAME_FIELD_ID);
         nameField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         nameField.setWidthFull();
         nameField.setValueChangeMode(com.vaadin.flow.data.value.ValueChangeMode.EAGER);
@@ -308,6 +339,7 @@ public class TaskDialog extends Dialog {
 
         // Notes
         TextArea notesField = new TextArea("Notes");
+        notesField.setId(NOTES_FIELD_ID);
         notesField.setWidthFull();
         notesField.setHeight("80px");
         binder.forField(notesField)
@@ -316,6 +348,7 @@ public class TaskDialog extends Dialog {
 
         // Min / Max estimate side by side
         FormLayout estimateForm = new FormLayout();
+        estimateForm.setId(ESTIMATES_ID);
         estimateForm.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 2));
 
         TextField minEstField = new TextField("Min Estimate");
@@ -422,6 +455,7 @@ public class TaskDialog extends Dialog {
      */
     private VerticalLayout buildWorklogSection() {
         VerticalLayout section = new VerticalLayout();
+        section.setId(WORKLOGS_ID);
         section.setPadding(false);
         section.setSpacing(true);
 
@@ -437,6 +471,7 @@ public class TaskDialog extends Dialog {
                 .set("font-size", "var(--lumo-font-size-m)");
 
         Button logWorkButton = new Button("Log Work", new Icon(VaadinIcon.CLOCK));
+        logWorkButton.setId(LOG_WORK_BUTTON_ID);
         logWorkButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
         // Only the assigned user may log work
         boolean canLogWork = currentUserId != null && currentUserId.equals(task.getResourceId());
@@ -692,4 +727,3 @@ public class TaskDialog extends Dialog {
         n.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 }
-

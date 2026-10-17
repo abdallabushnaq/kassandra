@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.kassandra.ui.dialog;
 
+import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
+
 import java.util.UUID;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
@@ -43,6 +45,12 @@ import java.util.stream.Collectors;
  * A reusable dialog for editing task dependencies.
  */
 public class DependencyDialog extends Dialog {
+    /** Stable ID of the dialog help button. */
+    public static final String HELP_BUTTON_ID = "dependency-dialog-help-button";
+    /** Stable ID of the predecessor choices. */
+    public static final String CHOICES_ID = "dependency-dialog-choices";
+    /** Stable ID of the order-number editor. */
+    public static final String QUICK_EDIT_ID = "dependency-dialog-quick-edit";
 
     /** Element ID of the Cancel button. */
     public static final String CANCEL_BUTTON     = "cancel-dependency-button";
@@ -74,6 +82,14 @@ public class DependencyDialog extends Dialog {
 
         setId(DEPENDENCY_DIALOG);
         setHeaderTitle("Edit Dependencies for Task #" + task.getOrderId());
+        HelpDrawer helpDrawer = new HelpDrawer("Task Dependencies", "help/dependency-dialog.md", true);
+        getHeader().add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(helpDrawer);
+        addOpenedChangeListener(event -> {
+            if (!event.isOpened()) {
+                helpDrawer.close();
+            }
+        });
         setWidth("600px");
         setHeight("500px");
 
@@ -95,6 +111,7 @@ public class DependencyDialog extends Dialog {
 
         // Create checkbox group for task selection
         VerticalLayout checkboxContainer = new VerticalLayout();
+        checkboxContainer.setId(CHOICES_ID);
         checkboxContainer.setSpacing(false);
         checkboxContainer.setPadding(false);
         checkboxContainer.getStyle()
@@ -182,6 +199,7 @@ public class DependencyDialog extends Dialog {
 
         // Quick edit text field (alternative input method)
         TextField quickEditField = new TextField("Quick Edit (comma-separated #s)");
+        quickEditField.setId(QUICK_EDIT_ID);
         quickEditField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
         quickEditField.setWidthFull();
         quickEditField.setPlaceholder("e.g., 3, 5, 12");
@@ -347,4 +365,3 @@ public class DependencyDialog extends Dialog {
         void save(Task task, Set<UUID> selectedTaskIds);
     }
 }
-

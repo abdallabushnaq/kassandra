@@ -42,6 +42,31 @@ class PageHelpResourcesTest {
     }
 
     @Test
+    void testBundledDialogHelpResources() throws IOException {
+        Pattern images = Pattern.compile("!\\[[^]]+]\\((images/help/light/[^)]+)\\)");
+        for (String dialog : List.of("availability", "dependency", "feature", "image-prompt", "location",
+                "off-day", "product", "sprint", "task", "undo-history-confirmation", "user",
+                "user-group", "user-work-week", "version", "worklog", "work-week")) {
+            String markdown = readBundledHelp("help/" + dialog + "-dialog.md");
+            assertTrue(markdown.contains("## "), dialog);
+            assertTrue(markdown.contains("**Expand all**"), dialog);
+            assertTrue(markdown.contains("**Collapse all**"), dialog);
+            assertFalse(markdown.contains("{{include:main-menu}}"), dialog);
+            Matcher image = images.matcher(markdown);
+            int imageCount = 0;
+            while (image.find()) {
+                imageCount++;
+                for (String theme : List.of("light", "dark")) {
+                    String path = image.group(1).replace("/light/", "/" + theme + "/");
+                    assertNotNull(getClass().getClassLoader().getResource("META-INF/resources/ui/" + path),
+                            dialog + ": missing bundled image " + path);
+                }
+            }
+            assertTrue(imageCount > 0, dialog);
+        }
+    }
+
+    @Test
     void testBundledPageHelpResources() throws IOException {
         Pattern includes = Pattern.compile("\\{\\{include(?:-admin)?:([a-z0-9-]+)}}");
         Pattern images   = Pattern.compile("!\\[[^]]*]\\((images/help/light/[^)]+)\\)");

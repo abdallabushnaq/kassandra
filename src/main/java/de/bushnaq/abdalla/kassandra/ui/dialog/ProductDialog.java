@@ -159,7 +159,7 @@ public class ProductDialog extends Dialog {
         // For create mode, leave image src empty
         getHeader().add(VaadinUtil.createDialogHeader(title, headerIcon));
 
-        HelpDrawer helpDrawer = new HelpDrawer(title, "help/product-dialog.md");
+        HelpDrawer helpDrawer = new HelpDrawer(title, "help/product-dialog.md", true);
         getHeader().add(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
         add(helpDrawer);
         addOpenedChangeListener(event -> {
