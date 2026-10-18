@@ -40,11 +40,17 @@ import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +77,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("IntegrationUiTest")
 @ExtendWith(SpringExtension.class)
@@ -613,6 +620,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForChartRendered(chartId);
     }
 
+    private void takeDialogHelpElements(Class<?> dialog, String helpButtonId, String... elementIds) throws IOException {
+        seleniumHandler.prepareHelpScreenshots(elementIds.length == 0 ? helpButtonId : elementIds[0]);
+        seleniumHandler.takeHelpElementScreenshot(dialog, helpButtonId);
+        for (String elementId : elementIds) {
+            seleniumHandler.takeHelpElementScreenshot(dialog, elementId);
+        }
+    }
+
     private void takeDialogScreenshot(String dialogId, String fileName) {
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(dialogId), dialogId, fileName);
     }
@@ -673,19 +688,17 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.prepareHelpScreenshots(titleId);
     }
 
-    private void takeDialogHelpElements(Class<?> dialog, String helpButtonId, String... elementIds) throws IOException {
-        seleniumHandler.prepareHelpScreenshots(elementIds.length == 0 ? helpButtonId : elementIds[0]);
-        seleniumHandler.takeHelpElementScreenshot(dialog, helpButtonId);
-        for (String elementId : elementIds) {
-            seleniumHandler.takeHelpElementScreenshot(dialog, elementId);
+    private void takeHelpListElements(Class<?> view, String titleId, ETheme theme, String gridId,
+                                      String createId, String filterId, String counterId,
+                                      String editPrefix, String deletePrefix, String... additionalIds) throws IOException {
+        takeHelpElements(view, titleId, theme, createId, filterId, filterId + "-help-button", counterId);
+        for (String elementId : additionalIds) {
+            seleniumHandler.takeHelpElementScreenshot(view, elementId);
         }
-    }
-
-    private void takeWorklogHelpScreenshots() throws IOException {
-        takeDialogHelpElements(WorklogDialog.class, WorklogDialog.HELP_BUTTON_ID,
-                WorklogDialog.TIME_SPENT_FIELD, WorklogDialog.TIME_REMAINING_FIELD,
-                WorklogDialog.DATETIME_PICKER, WorklogDialog.COMMENT_FIELD,
-                WorklogDialog.SAVE_BUTTON, WorklogDialog.CANCEL_BUTTON);
+        seleniumHandler.takeHelpGridScreenshot(view, gridId);
+        seleniumHandler.takeHelpRowActionScreenshot(view, editPrefix);
+        seleniumHandler.takeHelpRowActionScreenshot(view, deletePrefix);
+        seleniumHandler.prepareHelpScreenshots(titleId);
     }
 
     private void takeImagePromptHelpScreenshots(String buttonId, boolean headers) throws IOException {
@@ -707,35 +720,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         } finally {
             seleniumHandler.click(ImagePromptDialog.ID_CANCEL_BUTTON);
         }
-    }
-
-    private void takeReplayHelpScreenshots(String direction) throws IOException {
-        seleniumHandler.prepareHelpScreenshots(UndoHistoryConfirmationDialog.CANCEL_BUTTON);
-        for (String id : List.of(UndoHistoryConfirmationDialog.HELP_BUTTON_ID,
-                UndoHistoryConfirmationDialog.CONFIRM_BUTTON, UndoHistoryConfirmationDialog.CANCEL_BUTTON)) {
-            seleniumHandler.takeHelpElementScreenshot(UndoHistoryConfirmationDialog.class, id, direction);
-        }
-        WebElement operations = seleniumHandler.findElement(By.id(UndoHistoryConfirmationDialog.OPERATIONS_ID));
-        for (WebElement details : operations.findElements(By.cssSelector("vaadin-details"))) {
-            if (details.getDomAttribute("opened") == null) {
-                details.click();
-            }
-        }
-        seleniumHandler.takeHelpElementScreenshot(UndoHistoryConfirmationDialog.class,
-                UndoHistoryConfirmationDialog.OPERATIONS_ID, direction);
-    }
-
-    private void takeHelpListElements(Class<?> view, String titleId, ETheme theme, String gridId,
-                                      String createId, String filterId, String counterId,
-                                      String editPrefix, String deletePrefix, String... additionalIds) throws IOException {
-        takeHelpElements(view, titleId, theme, createId, filterId, filterId + "-help-button", counterId);
-        for (String elementId : additionalIds) {
-            seleniumHandler.takeHelpElementScreenshot(view, elementId);
-        }
-        seleniumHandler.takeHelpGridScreenshot(view, gridId);
-        seleniumHandler.takeHelpRowActionScreenshot(view, editPrefix);
-        seleniumHandler.takeHelpRowActionScreenshot(view, deletePrefix);
-        seleniumHandler.prepareHelpScreenshots(titleId);
     }
 
     private void takeKassandraElementScreenshots(ETheme theme) throws IOException {
@@ -1036,6 +1020,22 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         }
     }
 
+    private void takeReplayHelpScreenshots(String direction) throws IOException {
+        seleniumHandler.prepareHelpScreenshots(UndoHistoryConfirmationDialog.CANCEL_BUTTON);
+        for (String id : List.of(UndoHistoryConfirmationDialog.HELP_BUTTON_ID,
+                UndoHistoryConfirmationDialog.CONFIRM_BUTTON, UndoHistoryConfirmationDialog.CANCEL_BUTTON)) {
+            seleniumHandler.takeHelpElementScreenshot(UndoHistoryConfirmationDialog.class, id, direction);
+        }
+        WebElement operations = seleniumHandler.findElement(By.id(UndoHistoryConfirmationDialog.OPERATIONS_ID));
+        for (WebElement details : operations.findElements(By.cssSelector("vaadin-details"))) {
+            if (details.getDomAttribute("opened") == null) {
+                details.click();
+            }
+        }
+        seleniumHandler.takeHelpElementScreenshot(UndoHistoryConfirmationDialog.class,
+                UndoHistoryConfirmationDialog.OPERATIONS_ID, direction);
+    }
+
     private void takeScreenshot(TestInfo testInfo, String folder, ETheme eTheme) throws Exception {
 
         //-----------------
@@ -1219,26 +1219,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takeMainLayoutHelpScreenshots(testInfo, productName, versionName);
 
         seleniumHandler.waitUntilBrowserClosed(5000);
-    }
-
-    /**
-     * Refreshes Task Details and worklog help captures without recapturing unrelated pages.
-     *
-     * @param randomCase deterministic screenshot fixture
-     * @param testInfo current test metadata
-     * @throws Exception when fixture restoration or screenshot capture fails
-     */
-    @ParameterizedTest
-    @MethodSource("listRandomCases")
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void takeTaskDialogHelpScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
-        prepareScreenshotFixture(randomCase, testInfo);
-        for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
-            aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
-            seleniumHandler.setHelpScreenshotTheme(theme);
-            takeActiveSprintsDialogScreenshots("../kassandra.wiki/" + theme.name() + "-screenshots/");
-            aboutViewTester.logout();
-        }
     }
 
     private void takeScrollableScreenshots(String id, String filePrefix) {
@@ -1544,25 +1524,18 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         }
     }
 
-//    private void takeTaskDialogScreenshots(String folder) {
-//        seleniumHandler.click(Backlog.CREATE_MILESTONE_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Milestone-34");
-//        seleniumHandler.click(Backlog.CREATE_STORY_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Story-2");
-//        seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
-//        seleniumHandler.ensureIsInList(ProductListView.PRODUCT_GRID_NAME_PREFIX, "New Task-3");
-//        // select the milestone
-//        seleniumHandler.click(TaskGrid.TASK_GRID_NAME_PREFIX + "New Milestone-34");
-//        // select start cell
-//        seleniumHandler.click(TaskGrid.TASK_GRID_START_PREFIX + "New Milestone-34");
-//        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/task-view-list.png");
-//    }
-
     private void takeWorkWeekElementScreenshots(ETheme theme) throws IOException {
         takeHelpListElements(WorkWeekListView.class, WorkWeekListView.PAGE_TITLE, theme,
                 WorkWeekListView.GRID, WorkWeekListView.CREATE_BUTTON, WorkWeekListView.GLOBAL_FILTER,
                 WorkWeekListView.ROW_COUNTER, WorkWeekListView.GRID_EDIT_BUTTON_PREFIX, WorkWeekListView.GRID_DELETE_BUTTON_PREFIX);
         takePageHelpScreenshot(WorkWeekListView.class, WorkWeekListView.HELP_BUTTON_ID);
+    }
+
+    private void takeWorklogHelpScreenshots() throws IOException {
+        takeDialogHelpElements(WorklogDialog.class, WorklogDialog.HELP_BUTTON_ID,
+                WorklogDialog.TIME_SPENT_FIELD, WorklogDialog.TIME_REMAINING_FIELD,
+                WorklogDialog.DATETIME_PICKER, WorklogDialog.COMMENT_FIELD,
+                WorklogDialog.SAVE_BUTTON, WorklogDialog.CANCEL_BUTTON);
     }
 
 }
