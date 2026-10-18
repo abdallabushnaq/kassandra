@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.util.selenium;
 
+import de.bushnaq.abdalla.kassandra.ui.util.selenium.ScreenshotComparisonReport.Difference;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.imageio.ImageIO;
@@ -44,29 +45,54 @@ final class ScreenshotImageWriter {
             throw new IOException("Could not decode screenshot for " + destination);
         }
         Path target = destination.toAbsolutePath().normalize();
+        BufferedImage previous = null;
+        Difference difference = null;
         if (!force && Files.exists(target)) {
-            BufferedImage previous = ImageIO.read(target.toFile());
+            previous = ImageIO.read(target.toFile());
             if (previous == null) {
                 throw new IOException("Could not decode existing screenshot " + target);
             }
             if (previous.getWidth() == candidate.getWidth() && previous.getHeight() == candidate.getHeight()) {
                 int     maxDifference = 0;
-                boolean alphaChanged  = false;
+                long changedPixels = 0;
+                long alphaChangedPixels = 0;
+                long pixelsAbove8 = 0;
+                long pixelsAbove16 = 0;
+                long pixelsAbove32 = 0;
                 for (int y = 0; y < candidate.getHeight(); y++) {
                     for (int x = 0; x < candidate.getWidth(); x++) {
                         int oldPixel = previous.getRGB(x, y);
                         int newPixel = candidate.getRGB(x, y);
-                        alphaChanged |= (oldPixel >>> 24) != (newPixel >>> 24);
+                        if (oldPixel != newPixel) {
+                            changedPixels++;
+                        }
+                        if ((oldPixel >>> 24) != (newPixel >>> 24)) {
+                            alphaChangedPixels++;
+                        }
+                        int pixelDifference = 0;
                         for (int shift = 0; shift <= 16; shift += 8) {
-                            maxDifference = Math.max(maxDifference, Math.abs(((oldPixel >>> shift) & 255) - ((newPixel >>> shift) & 255)));
+                            pixelDifference = Math.max(pixelDifference, Math.abs(((oldPixel >>> shift) & 255) - ((newPixel >>> shift) & 255)));
+                        }
+                        maxDifference = Math.max(maxDifference, pixelDifference);
+                        if (pixelDifference > 8) {
+                            pixelsAbove8++;
+                        }
+                        if (pixelDifference > 16) {
+                            pixelsAbove16++;
+                        }
+                        if (pixelDifference > 32) {
+                            pixelsAbove32++;
                         }
                     }
                 }
-                if (!alphaChanged && maxDifference <= channelTolerance) {
+                difference = new Difference(maxDifference, changedPixels, alphaChangedPixels,
+                        pixelsAbove8, pixelsAbove16, pixelsAbove32);
+                if (alphaChangedPixels == 0 && maxDifference <= channelTolerance) {
                     log.info("Retained screenshot {} (maximum RGB difference {}, tolerance {})", destination, maxDifference, channelTolerance);
+                    ScreenshotComparisonReport.record(destination, candidate, previous, difference, channelTolerance, force, false);
                     return false;
                 }
-                log.info("Updating screenshot {} (maximum RGB difference {}, alpha changed: {})", destination, maxDifference, alphaChanged);
+                log.info("Updating screenshot {} (maximum RGB difference {}, alpha changed: {})", destination, maxDifference, alphaChangedPixels != 0);
             } else {
                 log.info("Updating screenshot {} (dimensions changed from {}x{} to {}x{})", destination,
                         previous.getWidth(), previous.getHeight(), candidate.getWidth(), candidate.getHeight());
@@ -92,6 +118,7 @@ final class ScreenshotImageWriter {
             Files.deleteIfExists(temporary);
         }
         log.info("Saved screenshot {} (force refresh: {})", destination, force);
+        ScreenshotComparisonReport.record(destination, candidate, previous, difference, channelTolerance, force, true);
         return true;
     }
 }

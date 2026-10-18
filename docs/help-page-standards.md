@@ -251,6 +251,23 @@ separately from its trigger. Preserve route IDs used for navigation; assign
 screenshot-safe IDs to inner tab content instead.
 Use `takeHelpContentScreenshot` for horizontal groups such as breadcrumbs and
 navigation strips to crop unused trailing space without resizing the live UI.
+Help controls are cropped from a viewport screenshot, not captured with Selenium's
+native element-screenshot command. Already-visible capture areas do not scroll;
+off-screen areas use only the necessary scrolling in their containers and the page,
+then wait two animation frames before capture. Crops account for screenshot pixel
+scaling. Scroll distances round outward to avoid leaving fractional-pixel edges
+clipped when the browser rounds scroll positions. Scroll-container bounds also
+respect fractional border-box edges because integer client dimensions can round
+past the actual clipping edge. A clipped area fails explicitly
+instead of saving a partial image.
+Large panels explicitly captured with `takeHelpVisibleElementScreenshot` are the
+exception: the Active Sprints chart and board use a top-left-aligned visible crop
+when they exceed their scroll container. The cropped CSS dimensions are logged.
+This does not relax complete-image checks for ordinary controls, resize the live
+panel, or invoke native element screenshots. These panel images intentionally
+show only the portion that fits on screen.
+Help preparation parks the pointer at the viewport corner without scrolling to or
+hovering the first control. No elements are cloned, repositioned or resized.
 
 The tour's private MainLayout capture helper regenerates the logo, navigation
 entries, breadcrumbs, history/theme toggles, account trigger/popup and individual
@@ -309,6 +326,28 @@ write failures fail the capture rather than being treated as unchanged.
 These options apply only to bundled help images and the wiki's light/dark screenshot
 directories during `GenerateScreenshotsIT`. Ordinary diagnostic screenshots remain
 unconditional. Existing modified PNGs are not reverted to their committed versions.
+
+### Screenshot discrepancy report
+
+At the end of `GenerateScreenshotsIT`, including failed capture runs, a UTF-8 CSV is
+written to `target\screenshot-discrepancies.csv`. It covers all completed help and wiki
+captures across the test's parameterized invocations. The summary logs the maximum
+RGB-channel difference (0–255) and every PNG tied for that maximum.
+
+Rows are sorted by descending maximum RGB difference, then PNG path. Each row includes
+the absolute PNG path, retained/updated status, configured tolerance, force-refresh flag,
+old/new dimensions, maximum RGB difference, changed-pixel count and percentage,
+alpha-changed-pixel count, and pixel counts exceeding RGB tolerances **8, 16, and 32**.
+A pixel exceeds a threshold when **any** RGB channel exceeds it; it is counted only once.
+Changed pixels include RGB or alpha differences. Alpha must still match exactly,
+regardless of RGB tolerance. A high maximum affecting very few pixels differs from
+widespread changes; use the counts to assess whether increasing tolerance is appropriate.
+
+New images (`CREATED`), dimension changes (`DIMENSIONS_CHANGED`), and forced captures
+(`FORCED`) sort after comparable pairs and have blank difference metrics, not zeroes.
+Force-refresh continues to bypass baseline decoding/comparison; its previous dimensions
+are therefore also blank. The report observes the existing replacement rules and does
+not change tolerance or preserve copies of overwritten baselines.
 
 ### Full-page images
 

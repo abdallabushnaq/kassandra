@@ -35,15 +35,13 @@ import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
+import de.bushnaq.abdalla.kassandra.ui.util.selenium.ScreenshotComparisonReport;
 import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -68,6 +66,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -131,6 +130,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @Autowired
     private       ProductListViewTester           productListViewTester;
     private       String                          productName;
+    private static ScreenshotComparisonReport screenshotComparisonReport;
     @Autowired
     private       SecurityConfigurationRepository securityConfigurationRepository;
     @Autowired
@@ -184,6 +184,12 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         }
         seleniumHandler.setDocumentationScreenshotTolerance(tolerance);
         seleniumHandler.setForceDocumentationScreenshotRefresh(Boolean.parseBoolean(force));
+        screenshotComparisonReport.startCollection();
+    }
+
+    @AfterAll
+    static void exportScreenshotComparisonReport() throws IOException {
+        screenshotComparisonReport.write(Path.of("target", "screenshot-discrepancies.csv"));
     }
 
     // Method to get the public-facing URL, fixing potential redirect issues
@@ -191,6 +197,11 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         return String.format("http://%s:%s",
                 container.getHost(),
                 container.getMappedPort(8080));
+    }
+
+    @BeforeAll
+    static void initializeScreenshotComparisonReport() {
+        screenshotComparisonReport = new ScreenshotComparisonReport();
     }
 
     private static List<RandomCase> listRandomCases() {
@@ -257,6 +268,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
     @AfterEach
     void restoreDocumentationScreenshots() {
+        screenshotComparisonReport.stopCollection();
         seleniumHandler.setDocumentationScreenshotTolerance(previousScreenshotTolerance);
         seleniumHandler.setForceDocumentationScreenshotRefresh(previousForceScreenshotRefresh);
     }
@@ -357,9 +369,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private void takeActiveSprintsElementScreenshots(ETheme theme) throws IOException {
         takeHelpElements(ActiveSprints.class, "page-header", theme, ActiveSprints.ID_SEARCH_FIELD,
                 ActiveSprints.ID_USER_SELECTOR, ActiveSprints.ID_SPRINT_SELECTOR, ActiveSprints.ID_GROUPING_MODE_SELECTOR,
-                ActiveSprints.ID_CLEAR_FILTERS_BUTTON, ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
-                ActiveSprints.GANTT_BURNDOWN_CONTAINER_ID);
-        seleniumHandler.takeHelpElementScreenshot(ActiveSprints.class, ActiveSprints.BOARD_ID);
+                ActiveSprints.ID_CLEAR_FILTERS_BUTTON, ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID);
+        seleniumHandler.takeHelpVisibleElementScreenshot(ActiveSprints.class, ActiveSprints.GANTT_BURNDOWN_CONTAINER_ID);
+        seleniumHandler.takeHelpVisibleElementScreenshot(ActiveSprints.class, ActiveSprints.BOARD_ID);
         seleniumHandler.takeHelpRowActionScreenshot(ActiveSprints.class, TaskCard.TASK_CARD_TITLE_ID_PREFIX);
         seleniumHandler.prepareHelpScreenshots("page-header");
         takePageHelpScreenshot(ActiveSprints.class, ActiveSprints.HELP_BUTTON_ID);
@@ -1203,6 +1215,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      * and help controls in light and dark themes, including shared administrator/user navigation.
      * Setup is excluded because it requires an unconfigured installation; AI interactions
      * are excluded because they need separate GPU-backed services.
+     * Runs for about 12 min.
      *
      * @param randomCase deterministic screenshot fixture
      * @param testInfo   current test metadata

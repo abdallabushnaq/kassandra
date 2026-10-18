@@ -15,19 +15,6 @@
     4. AboutView
 3. Use InsightsView as a good example of how to update breadcrumbs.
 
-# Disable Stable Diffusion for Most Tests
-
-a lot of our tests will trigger stable diffusion when creating a user a product a featrure or a sprint.
-most of them actually do not need to generate these images, as they are never shown in a ui.
-lets ensure these tests will disable stable diffusion service .
-
-test that need the service are
-
-1. all introduction video tests
-2. Demo
-3. GenerateScreenshotsIT
-4. all tests in the de.bushnaq.abdalla.kassandra.ui.view package
-
 ## Add GDPR support
 
 To add GDPR support we need several intermediate steps:
@@ -61,6 +48,7 @@ To add GDPR support we need several intermediate steps:
 7. It should be possible to move the predicted Date of deletion to a later date, e.g. if a user is on vacation and will
    be back in 2 months, we should be able to move the predicted Date of deletion to 3 months from now. It should not be
    possible to stop the predicted Date of deletion, as this would be a GDPR violation.
+8. Any GDPR related deletion must not be undoable. It must not be available in Hibernate Envers.
 
 # Update Audit Log
 
@@ -98,94 +86,29 @@ Most pages have some kind of smart header. With smart header we mean a header on
 breadcrumbs that shows information and allows placing buttons.<br>
 Some, like ProductListView, are based on AbstractMainGrid that handles the smart header.
 Some, like Backlog, just create it from scratch.<br>
+Some, are missing such a header totally.
 
-# Create Help Pages
+We want to harmonize the smart headers across all pages, so that they look similar and behave similar and use the same
+case.
 
-Let's create a plan on how to add help pages to the UI pages using markdown.
-Vaadin renders it inside a Help drawer.
-Let's first implement it for one page, e.g. ProductListView.
-Create the help icon and the drawer.
-Create the markdown page.
-How can we reference specific elements like buttons or select boxes? The user does not know their names. could we take
-them from the screenshots we have at: ../kassandra.wiki/light-screenshots or ../kassandra.wiki/dark-screenshots?
-Create the vaadin markdown renderer.
-Create a document to define help page design and standards.
+Let's extract the smart header from AbstractMainGrid and pages like Backlog into a new class AbstractSmartHeader that
+can be used by all pages.
+It might be good if AbstractMainGrid extends AbstractSmartHeader, but please check your options are select the one that
+best harmonizes all pages, reduces similar code and is easiest to maintain.
 
-# help panel for all pages
+The look and feel of the headers should be similar. the user should find elements always at similar locations.
+The location of the Avatar/Icon, the Title, the smart filter, all other filters, the buttons and the help icon
+e.g. the buttons should be on the right side.
 
-feature-list.md for FeatureListView is now our template for all other page help panels.
+# Optimizing Screenshots
 
-Let's align the ProductListView to this new standard.
-
-1. referencing elements using its screenshot. if a screenshot is missing, we need to add it to GenerateScreenshotsIT to
-   generate it.
-2. always light/dark versions.
-3. Includes the main menu chapter.
-4. all chapters are collapsible.
-
-after that we will create help panels for most other pages:
-
-1. AboutView
-2. ActiveSprints
-3. AuditLogView
-4. AvailabilityListView
-5. Backlog
-6. Kassandra
-7. LocationListView
-8. OffDayListView
-9. OidcProviderManagementView
-10. ProductListView
-11. QualityBoard
-12. ServerSettingsView
-13. SprintListView
-14. UserGroupListView
-15. UserListView
-16. UserProfileView
-17. UserWorkWeekListView
-18. VersionLIstView
-19. WorkWeekListView
-
-I left out pages that:
-
-1. are legacy (@Deprecated)
-2. are related to first time installation and configuration because i am not sure they have access to the resources
-   needed for the help page. eventually we do want to add help pages for them too, but let's start with the main pages
-   first.
-3. we also left out all Dialogs, we will come back to them later.
-
-# Dialog Help Pages
-
-We created for all kassandra pages help pages, e.g. FeatureListView.
-We created one example of a help page for the ProductDialog.
-
-Now we want to create help pages for all dialogs.
-
-1. AvailabilityDialog
-2. DependencyDialog
-3. FeatureDialog
-4. ImagePromptDialog
-5. LocationDialog
-6. OffDayDialog
-7. SprintDialog
-8. TaskDialog
-9. UndoHistoryConfirmationDialog
-10. UserDialog
-11. UserGroupDialog
-12. UserWorkWeekDialog
-13. VersionDialog
-14. WorklogDialog
-15. WorkWeekDialog
-
-I left out dialogs that:
-
-1. are legacy (@Deprecated)
-2. are used for many different use cases (ConfirmDialog).
-
-Let's align the dialog help to our standard.
-
-1. referencing elements using its screenshot. if a screenshot is missing, we need to add it to GenerateScreenshotsIT to
-   generate it.
-2. always light/dark versions.
-3. all chapters are collapsible (see FeatureListView).
-
-see help-page-prompt.md and help-page-prompt.md for details on how to create good help page.
+GenerateScreenshotsIT currently generates screenshots for all pages. It uses a tolerance level of 4 (I already raised it
+to 8).
+This tolerance level is not enough. If we generate all screenshots with same database, it still overwrites many
+screenshots.
+We need to collect the maximum level of discrepancy we found in a pair of screenshots and print this out at the end of
+the test so that we can see how far we need to go with our tolerance level.
+We should also list the png with that high discrepancy.
+Maybe we should keep a sorted list that we can export to a file so that we can analyze the situation, just in case some
+images are actually different. After we take a look at the result, we will decide how to better handle this situation.
+Maybe we need to add a new tolerance level, e.g. 16 or 32, or maybe we need to change the way we check the differences.

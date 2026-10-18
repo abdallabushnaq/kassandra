@@ -23,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.TakesScreenshot;
@@ -47,6 +48,116 @@ import static org.mockito.Mockito.*;
 class ScreenshotImageWriterTest {
     @TempDir
     private Path directory;
+
+    @Test
+    void exportsSortedComparisonsWithPixelCountsAndExactThresholdBoundaries() throws IOException {
+        ScreenshotComparisonReport report = new ScreenshotComparisonReport();
+        BufferedImage previous = image(7, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        Path high = directory.resolve("b,detail.png");
+        Path tied = directory.resolve("a.png");
+        Path low = directory.resolve("c.png");
+        for (Path destination : List.of(high, tied, low)) {
+            assertTrue(ImageIO.write(previous, "png", destination.toFile()));
+        }
+        BufferedImage candidate = image(7, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        int[] differences = {8, 9, 16, 17, 32, 33};
+        for (int x = 0; x < differences.length; x++) {
+            int delta = differences[x];
+            candidate.setRGB(x, 0, 0xff808080 + delta + (delta << 8) + (delta << 16));
+        }
+        candidate.setRGB(6, 0, 0xfe808080);
+        report.startCollection();
+        try {
+            assertTrue(ScreenshotImageWriter.writeIfChanged(high, candidate, 8, false));
+            report.stopCollection();
+            report.startCollection();
+            BufferedImage singlePixel = image(7, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+            singlePixel.setRGB(0, 0, 0xff8080a1);
+            assertTrue(ScreenshotImageWriter.writeIfChanged(tied, singlePixel, 8, false));
+            singlePixel.setRGB(0, 0, 0xff808088);
+            assertFalse(ScreenshotImageWriter.writeIfChanged(low, singlePixel, 8, false));
+        } finally {
+            report.stopCollection();
+        }
+
+        Path csv = directory.resolve("reports").resolve("discrepancies.csv");
+        report.write(csv);
+        List<String> lines = Files.readAllLines(csv);
+        assertEquals(4, lines.size());
+        assertTrue(lines.get(1).startsWith("\"" + tied.toAbsolutePath() + "\","));
+        assertTrue(lines.get(1).endsWith(",UPDATED,8,false,7,1,7,1,33,1,14.285714,0,1,1,1"));
+        assertTrue(lines.get(2).startsWith("\"" + high.toAbsolutePath() + "\","));
+        assertTrue(lines.get(2).endsWith(",UPDATED,8,false,7,1,7,1,33,7,100.000000,1,5,3,1"));
+        assertTrue(lines.get(3).endsWith(",RETAINED,8,false,7,1,7,1,8,1,14.285714,0,0,0,0"));
+    }
+
+    @Test
+    void reportsNonComparableCapturesSeparatelyWithoutChangingForceRefresh() throws IOException {
+        ScreenshotComparisonReport report = new ScreenshotComparisonReport();
+        Path created = directory.resolve("a-new.png");
+        Path resized = directory.resolve("b-resized.png");
+        Path forced = directory.resolve("c-forced.png");
+        assertTrue(ImageIO.write(image(2, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080), "png", resized.toFile()));
+        Files.writeString(forced, "undecodable baseline deliberately bypassed by force refresh");
+        report.startCollection();
+        try {
+            assertTrue(ScreenshotImageWriter.writeIfChanged(created, image(3, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080), 8, false));
+            assertTrue(ScreenshotImageWriter.writeIfChanged(resized, image(3, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080), 8, false));
+            assertTrue(ScreenshotImageWriter.writeIfChanged(forced, image(3, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080), 8, true));
+        } finally {
+            report.stopCollection();
+        }
+        Path csv = directory.resolve("discrepancies.csv");
+        report.write(csv);
+        List<String> lines = Files.readAllLines(csv);
+        assertEquals(4, lines.size());
+        assertTrue(lines.get(1).endsWith(",CREATED,8,false,,,3,1,,,,,,,"));
+        assertTrue(lines.get(2).endsWith(",DIMENSIONS_CHANGED,8,false,2,1,3,1,,,,,,,"));
+        assertTrue(lines.get(3).endsWith(",FORCED,8,true,,,3,1,,,,,,,"));
+        for (String line : lines) {
+            assertEquals(15, line.split(",", -1).length);
+        }
+    }
+
+    @Test
+    void reportsAlphaOnlyChangesAndRetainsCompletedResultsAfterFailure() throws IOException {
+        ScreenshotComparisonReport report = new ScreenshotComparisonReport();
+        Path destination = baseline(image(2, 2, BufferedImage.TYPE_INT_ARGB, 0xff808080));
+        report.startCollection();
+        try {
+            assertTrue(ScreenshotImageWriter.writeIfChanged(destination, image(2, 2, BufferedImage.TYPE_INT_ARGB, 0xfe808080), 255, false));
+            Path invalid = directory.resolve("invalid.png");
+            Files.writeString(invalid, "not a PNG");
+            assertThrows(IOException.class, () -> ScreenshotImageWriter.writeIfChanged(invalid,
+                    image(2, 2, BufferedImage.TYPE_INT_ARGB, 0xff808080), 8, false));
+        } finally {
+            report.stopCollection();
+        }
+        Path csv = directory.resolve("discrepancies.csv");
+        report.write(csv);
+        List<String> lines = Files.readAllLines(csv);
+        assertEquals(2, lines.size());
+        assertTrue(lines.get(1).endsWith(",UPDATED,255,false,2,2,2,2,0,4,100.000000,4,0,0,0"));
+    }
+
+    @Test
+    void scopesCollectionAndOverwritesPreviousReportIncludingEmptyRuns() throws IOException {
+        ScreenshotComparisonReport report = new ScreenshotComparisonReport();
+        report.startCollection();
+        try {
+            assertThrows(IllegalStateException.class, report::startCollection);
+            ScreenshotImageWriter.writeIfChanged(directory.resolve("collected.png"), image(1, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080), 8, false);
+        } finally {
+            report.stopCollection();
+        }
+        ScreenshotImageWriter.writeIfChanged(directory.resolve("not-collected.png"), image(1, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080), 8, false);
+        Path csv = directory.resolve("discrepancies.csv");
+        report.write(csv);
+        assertEquals(2, Files.readAllLines(csv).size());
+        new ScreenshotComparisonReport().write(csv);
+        assertEquals(1, Files.readAllLines(csv).size());
+        assertThrows(IOException.class, () -> report.write(directory));
+    }
 
     @Test
     void retainsIdenticalPixelsDespiteDifferentImageTypesAndPngBytes() throws IOException {
@@ -226,6 +337,169 @@ class ScreenshotImageWriterTest {
         assertEquals("not a PNG", Files.readString(destination));
         verify((TakesScreenshot) driver, times(2)).getScreenshotAs(OutputType.FILE);
         assertThrows(UncheckedIOException.class, () -> ScreenShotCreator.takeElementScreenshot(driver, null, "dialog", destination.toString(), 4, false));
+    }
+
+    @Test
+    void cropsVisibleHelpFromViewportWithoutScrollingOrNativeElementCapture() throws IOException {
+        BufferedImage viewport = image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        viewport.setRGB(2, 3, 0xff123456);
+        viewport.setRGB(3, 4, 0xffabcdef);
+        WebDriver driver = helpCaptureDriver(viewport);
+        WebElement element = mock(WebElement.class);
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        when(javascript.executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(2, 3, 2, 2, 10, 8, true, true));
+
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2);
+
+        assertEquals(2, crop.getWidth());
+        assertEquals(2, crop.getHeight());
+        assertEquals(0xff123456, crop.getRGB(0, 0));
+        assertEquals(0xffabcdef, crop.getRGB(1, 1));
+        verify(javascript, never()).executeScript(contains("scrollBy"), any(), any(), any());
+        verify(javascript).executeAsyncScript(contains("requestAnimationFrame"));
+        verify(element, never()).getScreenshotAs(any());
+    }
+
+    @Test
+    void cropsHelpUsingViewportPixelScaleAndOutwardRoundedFractionalBounds() throws IOException {
+        BufferedImage viewport = image(12, 10, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        viewport.setRGB(2, 1, 0xff123456);
+        viewport.setRGB(6, 4, 0xffabcdef);
+        WebDriver driver = helpCaptureDriver(viewport);
+        WebElement element = mock(WebElement.class);
+        when(((JavascriptExecutor) driver).executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(1.25, 0.5, 2, 2, 6, 5, true, true));
+
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2);
+
+        assertEquals(5, crop.getWidth());
+        assertEquals(4, crop.getHeight());
+        assertEquals(0xff123456, crop.getRGB(0, 0));
+        assertEquals(0xffabcdef, crop.getRGB(4, 3));
+    }
+
+    @Test
+    void scrollsOffscreenHelpOnceThenUsesUpdatedViewportCoordinates() throws IOException {
+        BufferedImage viewport = image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        viewport.setRGB(2, 3, 0xff123456);
+        WebDriver driver = helpCaptureDriver(viewport);
+        WebElement element = mock(WebElement.class);
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        when(javascript.executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(2, 12, 2, 2, 10, 8, false, true), List.of(2, 3, 2, 2, 10, 8, true, true));
+
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2);
+
+        assertEquals(0xff123456, crop.getRGB(0, 0));
+        verify(javascript).executeScript(contains("scrollBy"), same(element), eq(2.0), eq(2.0));
+        verify(element, never()).getScreenshotAs(any());
+    }
+
+    @Test
+    void rejectsClippedHelpInsteadOfSavingPartialImages() throws IOException {
+        WebDriver driver = helpCaptureDriver(image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff808080));
+        WebElement element = mock(WebElement.class);
+        when(((JavascriptExecutor) driver).executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(2, 12, 2, 2, 10, 8, false, true));
+
+        IOException error = assertThrows(IOException.class, () -> ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2));
+
+        assertTrue(error.getMessage().contains("clipped"));
+        verify((TakesScreenshot) driver, never()).getScreenshotAs(any());
+    }
+
+    @Test
+    void capturesTopLeftVisibleAreaOnlyForExplicitlyOversizedPanels() throws IOException {
+        BufferedImage viewport = image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        viewport.setRGB(1, 2, 0xff123456);
+        viewport.setRGB(4, 7, 0xffabcdef);
+        WebDriver driver = helpCaptureDriver(viewport);
+        WebElement element = mock(WebElement.class);
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        when(javascript.executeAsyncScript(contains("done([rect.left"), same(element), eq(4.0), eq(20.0)))
+                .thenReturn(List.of(1, 15, 4, 20, 10, 8, false, true), List.of(1, 2, 4, 6, 10, 8, true, true));
+
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 4, 20, true);
+
+        assertEquals(4, crop.getWidth());
+        assertEquals(6, crop.getHeight());
+        assertEquals(0xff123456, crop.getRGB(0, 0));
+        assertEquals(0xffabcdef, crop.getRGB(3, 5));
+        verify(javascript).executeScript(contains("visiblePanel = true"), same(element), eq(4.0), eq(20.0));
+        verify(javascript).executeAsyncScript(contains("const visiblePanel = true"), same(element), eq(4.0), eq(20.0));
+        verify(element, never()).getScreenshotAs(any());
+    }
+
+    @Test
+    void visiblePanelModeDoesNotScrollWhenTheWholePanelAlreadyFits() throws IOException {
+        WebDriver driver = helpCaptureDriver(image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff123456));
+        WebElement element = mock(WebElement.class);
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        when(javascript.executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(2, 3, 2, 2, 10, 8, true, true));
+
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2, true);
+
+        assertEquals(2, crop.getWidth());
+        assertEquals(2, crop.getHeight());
+        assertEquals(0xff123456, crop.getRGB(0, 0));
+        verify(javascript, never()).executeScript(contains("scrollBy"), any(), any(), any());
+    }
+
+    @Test
+    void rejectsVisiblePanelCaptureWhenItsTopLeftRemainsClipped() throws IOException {
+        WebDriver driver = helpCaptureDriver(image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff808080));
+        WebElement element = mock(WebElement.class);
+        when(((JavascriptExecutor) driver).executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(20.0)))
+                .thenReturn(List.of(2, -3, 2, 20, 10, 8, false, true), List.of(2, -3, 2, 8, 10, 8, false, true));
+
+        IOException error = assertThrows(IOException.class, () -> ScreenShotCreator.captureHelpElementImage(driver, element, 2, 20, true));
+
+        assertTrue(error.getMessage().contains("clipped"));
+        verify((TakesScreenshot) driver, never()).getScreenshotAs(any());
+    }
+
+    @Test
+    void scalesVisiblePanelCropsAtFractionalCoordinates() throws IOException {
+        BufferedImage viewport = image(20, 16, BufferedImage.TYPE_INT_ARGB, 0xff808080);
+        viewport.setRGB(2, 5, 0xff123456);
+        viewport.setRGB(10, 15, 0xffabcdef);
+        WebDriver driver = helpCaptureDriver(viewport);
+        WebElement element = mock(WebElement.class);
+        when(((JavascriptExecutor) driver).executeAsyncScript(contains("done([rect.left"), same(element), eq(4.0), eq(20.0)))
+                .thenReturn(List.of(1.25, -10, 4, 20, 10, 8, false, true), List.of(1.25, 2.5, 4, 5.5, 10, 8, true, true));
+
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 4, 20, true);
+
+        assertEquals(9, crop.getWidth());
+        assertEquals(11, crop.getHeight());
+        assertEquals(0xff123456, crop.getRGB(0, 0));
+        assertEquals(0xffabcdef, crop.getRGB(8, 10));
+    }
+
+    @Test
+    void rejectsInvalidHelpDimensionsBoundsAndUndecodableViewports() throws IOException {
+        WebDriver driver = helpCaptureDriver(image(10, 8, BufferedImage.TYPE_INT_ARGB, 0xff808080));
+        WebElement element = mock(WebElement.class);
+        for (double invalid : new double[]{0, -1, Double.NaN, Double.POSITIVE_INFINITY}) {
+            assertThrows(IOException.class, () -> ScreenShotCreator.captureHelpElementImage(driver, element, invalid, 2));
+            assertThrows(IOException.class, () -> ScreenShotCreator.captureHelpElementImage(driver, element, 2, invalid));
+        }
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        when(javascript.executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(2, 3, 2, 2, 10, 8, true, false));
+        assertThrows(IOException.class, () -> ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2));
+        when(javascript.executeAsyncScript(contains("done([rect.left"), same(element), eq(2.0), eq(2.0)))
+                .thenReturn(List.of(2, 3, 2, 2, 10, 8, true, true));
+        when(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)).thenReturn(new byte[]{1, 2, 3});
+        assertThrows(IOException.class, () -> ScreenShotCreator.captureHelpElementImage(driver, element, 2, 2));
+    }
+
+    private WebDriver helpCaptureDriver(BufferedImage viewport) throws IOException {
+        WebDriver driver = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class, JavascriptExecutor.class));
+        when(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)).thenReturn(png(viewport));
+        return driver;
     }
 
     private Path baseline(BufferedImage image) throws IOException {

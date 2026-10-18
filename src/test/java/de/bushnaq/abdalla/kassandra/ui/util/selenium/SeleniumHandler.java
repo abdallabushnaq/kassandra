@@ -40,7 +40,6 @@ import org.springframework.stereotype.Component;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -753,13 +752,13 @@ class SeleniumHandler {
     }
 
     /**
-     * Moves the pointer away from controls and waits for fonts before help capture.
+     * Moves the pointer to the viewport corner without scrolling and waits for fonts before help capture.
      *
-     * @param titleId the page heading used as a neutral pointer position
+     * @param titleId the page heading or control used to wait for page readiness
      */
     public void prepareHelpScreenshots(String titleId) {
-        WebElement title = waitForHelpElement(By.id(titleId));
-        new Actions(driver).moveToElement(title).perform();
+        waitForHelpElement(By.id(titleId));
+        new Actions(driver).moveToLocation(0, 0).perform();
         waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript("return document.fonts.status === 'loaded'")));
     }
 
@@ -1324,6 +1323,18 @@ class SeleniumHandler {
     }
 
     /**
+     * Captures the top-left visible portion of a panel that may exceed its scroll container.
+     *
+     * @param pageClass the view owning the help image
+     * @param elementId the panel's DOM ID
+     * @throws IOException if the panel's top-left area cannot be captured or the image cannot be written
+     */
+    public void takeHelpVisibleElementScreenshot(Class<?> pageClass, String elementId) throws IOException {
+        WebElement element = waitForHelpElement(By.id(elementId));
+        writeHelpElement(helpImagePath(pageClass, elementId), element, element.getRect().getWidth(), element.getRect().getHeight(), true);
+    }
+
+    /**
      * Captures a Vaadin grid's headings and first populated row.
      *
      * @param pageClass the view owning the help images
@@ -1578,7 +1589,6 @@ class SeleniumHandler {
 
     private WebElement waitForHelpElement(By locator) {
         WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
-        executeJavaScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest', behavior: 'instant'})", element);
         wait.until(ExpectedConditions.visibilityOf(element));
         waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
                 "return document.fonts.status === 'loaded' && [...arguments[0].querySelectorAll('img')]"
@@ -1705,14 +1715,11 @@ class SeleniumHandler {
     }
 
     private void writeHelpElement(Path destination, WebElement element, double cssWidth, double cssHeight) throws IOException {
-        BufferedImage image = ImageIO.read(new ByteArrayInputStream(element.getScreenshotAs(OutputType.BYTES)));
-        if (image == null || cssWidth <= 0 || cssWidth > element.getRect().getWidth()
-                || cssHeight <= 0 || cssHeight > element.getRect().getHeight()) {
-            throw new IOException("Invalid element screenshot dimensions for " + destination);
-        }
-        int           width  = (int) Math.ceil(cssWidth * image.getWidth() / element.getRect().getWidth());
-        int           height = (int) Math.ceil(cssHeight * image.getHeight() / element.getRect().getHeight());
-        BufferedImage crop   = image.getSubimage(0, 0, Math.min(width, image.getWidth()), Math.min(height, image.getHeight()));
+        writeHelpElement(destination, element, cssWidth, cssHeight, false);
+    }
+
+    private void writeHelpElement(Path destination, WebElement element, double cssWidth, double cssHeight, boolean visiblePanel) throws IOException {
+        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(getDriver(), element, cssWidth, cssHeight, visiblePanel);
         Integer tolerance = documentationScreenshotTolerance(destination);
         if (tolerance != null) {
             ScreenshotImageWriter.writeIfChanged(destination, crop, tolerance, forceDocumentationScreenshotRefresh);
