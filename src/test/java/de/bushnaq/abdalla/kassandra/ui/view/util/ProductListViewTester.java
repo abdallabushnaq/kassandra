@@ -60,11 +60,9 @@ public class ProductListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String buttonId) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(buttonId);
+        seleniumHandler.closeDialog(buttonId);
         seleniumHandler.waitForElementToBeClickable(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         seleniumHandler.waitForPageLoaded();
-        seleniumHandler.wait(200);
     }
 
     /**

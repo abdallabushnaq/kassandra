@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.ColorGenerator;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -26,10 +27,15 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -68,6 +74,8 @@ public class EntityGenerator {
     private final List<Version>         versions       = new ArrayList<>();
     @Getter
     private final List<Worklog>         worklogs       = new ArrayList<>();
+    private long timestampIndex;
+    private final Set<Instant> creationTimestamps = new HashSet<>();
 
     protected Availability addAvailability(User user, float availability, LocalDate start) {
         return addAvailability(user, availability, start, UnaryOperator.identity());
@@ -76,8 +84,7 @@ public class EntityGenerator {
     protected Availability addAvailability(User user, float availability, LocalDate start, UnaryOperator<Availability> persister) {
         Availability a = new Availability(availability, start);
         a.setId(UUID.randomUUID());
-        a.setCreated(user.getCreated());
-        a.setUpdated(user.getUpdated());
+        initializeTimestamps(a, user.getCreated());
 
         Availability saved = persister.apply(a);
 //        if (saved.getUser() == null)
@@ -96,6 +103,7 @@ public class EntityGenerator {
         feature.setId(UUID.randomUUID());
         feature.setName(name);
         feature.setVersionId(version.getId());
+        initializeTimestamps(feature);
 
         Feature saved = persister.apply(feature);
         saved.setVersion(version);
@@ -112,8 +120,7 @@ public class EntityGenerator {
     protected Location addLocation(User user, String country, String state, LocalDate start, UnaryOperator<Location> persister) {
         Location location = new Location(country, state, start);
         location.setId(UUID.randomUUID());
-        location.setCreated(user.getCreated());
-        location.setUpdated(user.getUpdated());
+        initializeTimestamps(location, user.getCreated());
 
         Location saved = persister.apply(location);
         saved.setUser(user);
@@ -134,6 +141,7 @@ public class EntityGenerator {
         Product product = new Product();
         product.setId(UUID.randomUUID());
         product.setName(name);
+        initializeTimestamps(product);
 
         Product saved = persister.apply(product);
 
@@ -152,6 +160,7 @@ public class EntityGenerator {
         sprint.setName(name);
         sprint.setStatus(Status.STARTED);
         sprint.setFeatureId(feature.getId());
+        initializeTimestamps(sprint);
 
         Sprint saved = persister.apply(sprint);
         saved.setFeature(feature);
@@ -253,10 +262,7 @@ public class EntityGenerator {
         user.setFirstWorkingDay(start);
         user.setRoles(roles);
         user.setColor(color);
-        if (start != null) {
-            user.setCreated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
-            user.setUpdated(DateUtil.localDateToOffsetDateTime(start).plusHours(8));
-        }
+        initializeTimestamps(user, start == null ? null : DateUtil.localDateToOffsetDateTime(start).plusHours(8));
         User saved = persister.apply(user);
         users.add(saved);
         userIndex++;
@@ -272,6 +278,7 @@ public class EntityGenerator {
         version.setId(UUID.randomUUID());
         version.setName(versionName);
         version.setProductId(product.getId());
+        initializeTimestamps(version);
 
         Version saved = persister.apply(version);
         saved.setProduct(product);
@@ -296,6 +303,7 @@ public class EntityGenerator {
         worklog.setTimeSpent(timeSpent);
         worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(timeSpent));
         worklog.setComment(comment);
+        initializeTimestamps(worklog);
 
         Worklog saved = persister.apply(worklog);
 
@@ -338,7 +346,40 @@ public class EntityGenerator {
         return null;
     }
 
+    /**
+     * Assigns distinct fixture timestamps before an entity is sent to its persister.
+     *
+     * @param entity the generated entity
+     */
+    protected void initializeTimestamps(AbstractTimeAware entity) {
+        initializeTimestamps(entity, null);
+    }
+
+    /**
+     * Assigns timestamps while retaining an explicitly historical creation date.
+     *
+     * @param entity the generated entity
+     * @param historicalTime the historical anchor, or {@code null} for the fixture time
+     */
+    protected void initializeTimestamps(AbstractTimeAware entity, OffsetDateTime historicalTime) {
+        OffsetDateTime timestamp = ParameterOptions.getPersistenceNow();
+        if (historicalTime != null) {
+            timestamp = historicalTime.truncatedTo(ChronoUnit.SECONDS).plusSeconds(timestampIndex + 1);
+        }
+        while (!creationTimestamps.add(timestamp.toInstant())) {
+            timestamp = timestamp.plusSeconds(1);
+        }
+        timestampIndex++;
+        entity.setCreated(timestamp);
+        entity.setUpdated(timestamp);
+    }
+
+    /**
+     * Clears generated entities and resets their historical timestamp offsets.
+     */
     public void init() {
+        timestampIndex = 0;
+        creationTimestamps.clear();
         getAvailabilities().clear();
         userIndex = 0;
         getUsers().clear();

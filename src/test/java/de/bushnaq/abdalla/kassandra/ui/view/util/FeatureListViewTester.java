@@ -56,8 +56,7 @@ public class FeatureListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String cancelButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(cancelButton);
+        seleniumHandler.closeDialog(cancelButton);
         seleniumHandler.waitForElementToBeClickable(FeatureListView.FEATURE_LIST_PAGE_TITLE);
     }
 

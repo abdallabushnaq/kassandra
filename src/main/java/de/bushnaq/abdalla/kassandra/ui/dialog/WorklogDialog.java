@@ -31,6 +31,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.textfield.TextFieldVariant;
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.rest.api.TaskApi;
@@ -250,7 +251,7 @@ public class WorklogDialog extends Dialog {
         dateTimePicker = new DateTimePicker("Date & Time");
         dateTimePicker.setId(DATETIME_PICKER);
         dateTimePicker.setWidthFull();
-        dateTimePicker.setValue(LocalDateTime.now());
+        dateTimePicker.setValue(ParameterOptions.getLocalNow());
         dateTimePicker.setRequiredIndicatorVisible(true);
         dialogLayout.add(dateTimePicker);
 

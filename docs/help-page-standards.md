@@ -303,6 +303,12 @@ to include refreshed source images in the packaged application; an already
 running server can still have the previous classpath copies. Help uses the existing
 theme switching and UI image serving; no external files or new endpoint are needed.
 
+Dialog tester helpers use `SeleniumHandler.closeDialog(buttonId)` to wait for the
+containing Vaadin dialog and its overlay to finish closing before continuing.
+Use this helper instead of a fixed delay or checking only the underlying page's
+visibility. It waits only for the dialog being closed, so parent dialogs can remain
+open when dismissing a nested dialog.
+
 ### Avoiding unchanged screenshot commits
 
 `GenerateScreenshotsIT` compares each new help or wiki screenshot with the existing
@@ -328,6 +334,21 @@ directories during `GenerateScreenshotsIT`. Ordinary diagnostic screenshots rema
 unconditional. Existing modified PNGs are not reverted to their committed versions.
 
 ### Screenshot discrepancy report
+
+Screenshot fixtures use the `RandomCase` time through `ParameterOptions.getNow()`.
+Persistence has a separate, synchronized whole-second sequence so generated records,
+updates, planning operations, and audit revisions have distinct deterministic times
+without advancing the planning/reporting clock. Historical user creation dates are
+retained, with deterministic offsets for related generated records. New entities
+start with equal `created` and `updated` values; updates retain `created`.
+
+After creating or restoring a fixture, capture resumes after the latest stored audit
+revision. This makes subsequent screenshot actions use the same timeline whether
+the fixture was generated or loaded. History displays omit fractional seconds, but
+stored timestamps and historical comparisons retain their original precision.
+Timestamp-generation changes require a one-time fixture snapshot regeneration.
+Keep the old snapshot until the changes are verified; backing it up and removing it
+from snapshot discovery triggers fresh generation on the next capture run.
 
 At the end of `GenerateScreenshotsIT`, including failed capture runs, a UTF-8 CSV is
 written to `target\screenshot-discrepancies.csv`. It covers all completed help and wiki

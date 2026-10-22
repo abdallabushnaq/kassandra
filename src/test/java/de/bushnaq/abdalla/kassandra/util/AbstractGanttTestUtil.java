@@ -266,6 +266,12 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             logger.info("Successfully loaded test data from snapshot. Skipping data generation.");
         }
         ParameterOptions.setNow(randomCase.getNow());
+        Number latestRevisionTime = (Number) entityManager.createNativeQuery("SELECT MAX(timestamp) FROM audit_revisions")
+                .getSingleResult();
+        if (latestRevisionTime != null) {
+            ParameterOptions.getPersistenceNow(Instant.ofEpochMilli(latestRevisionTime.longValue())
+                    .atOffset(randomCase.getNow().getOffset()));
+        }
     }
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {

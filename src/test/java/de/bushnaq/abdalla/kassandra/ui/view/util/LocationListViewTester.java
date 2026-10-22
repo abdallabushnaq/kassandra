@@ -64,8 +64,7 @@ public class LocationListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String confirmButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(confirmButton);
+        seleniumHandler.closeDialog(confirmButton);
         seleniumHandler.waitForElementToBeClickable(LocationListView.LOCATION_LIST_PAGE_TITLE);
     }
 

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.service;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.audit.AuditOperationContextHolder;
 import de.bushnaq.abdalla.kassandra.dao.FeatureDAO;
 import de.bushnaq.abdalla.kassandra.dao.ProductDAO;
@@ -57,7 +58,6 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.ArrayList;
@@ -956,7 +956,7 @@ public class PlanningChangeService {
         operation.setKind(kind);
         operation.setSummary(summary);
         operation.setActor(SecurityUtils.getUserEmail());
-        operation.setCreated(OffsetDateTime.now());
+        operation.setCreated(ParameterOptions.getPersistenceNow());
         operation.setSequenceNumber(undoableOperationRepository.findMaxSequenceNumber(productId) + 1);
         entityManager.persist(operation);
         AuditOperationContextHolder.setOperationId(operation.getId());

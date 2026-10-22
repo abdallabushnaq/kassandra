@@ -117,6 +117,43 @@ class SeleniumHandler {
     }
 
     /**
+     * Clicks a dialog button and waits for its containing dialog to finish closing.
+     * Parent dialogs are left open when closing a nested dialog.
+     *
+     * @param buttonId the identifier of the button that closes the dialog
+     */
+    public void closeDialog(String buttonId) {
+        if (!isEnabled())
+            return;
+        WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id(buttonId)));
+        WebElement dialog = (WebElement) executeJavaScript("""
+                for (let element = arguments[0]; element; element = element.parentElement || element.getRootNode().host) {
+                    if (element.matches('vaadin-dialog, vaadin-confirm-dialog, vaadin-dialog-overlay, vaadin-confirm-dialog-overlay')) {
+                        return element;
+                    }
+                }
+                throw new Error('Close button has no containing Vaadin dialog');
+                """, button);
+        click(buttonId);
+        waitUntil(driver -> {
+            try {
+                return (Boolean) executeJavaScript("""
+                        const dialog = arguments[0];
+                        if (!dialog.isConnected) return true;
+                        const overlay = dialog.shadowRoot?.querySelector('vaadin-dialog-overlay, vaadin-confirm-dialog-overlay');
+                        return [dialog, overlay].filter(Boolean).every(element => {
+                            const style = getComputedStyle(element);
+                            return !element.hasAttribute('closing')
+                                && (style.display === 'none' || style.visibility === 'hidden' || element.getClientRects().length === 0);
+                        });
+                        """, dialog);
+            } catch (StaleElementReferenceException e) {
+                return true;
+            }
+        });
+    }
+
+    /**
      * Clicks the clear button (X) in a Vaadin text field or combo box.
      * This method finds the clear button within the field's shadow DOM and clicks it.
      *

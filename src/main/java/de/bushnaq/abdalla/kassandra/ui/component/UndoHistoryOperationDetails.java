@@ -27,6 +27,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import de.bushnaq.abdalla.kassandra.dto.UndoRedoHistory;
 
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -146,7 +147,8 @@ public class UndoHistoryOperationDetails extends Details {
         summary.setWidthFull();
 
         //created
-        Span created = new Span(String.valueOf(operation.getCreated()));
+        Span created = new Span(operation.getCreated() == null ? "null"
+                : DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX").format(operation.getCreated()));
         created.getStyle().set("font-weight", "600").set("white-space", "normal");
         summary.add(created);
 

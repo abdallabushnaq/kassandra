@@ -81,8 +81,7 @@ public class OffDayListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String confirmButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(confirmButton);
+        seleniumHandler.closeDialog(confirmButton);
         seleniumHandler.waitForElementToBeClickable(OffDayListView.OFFDAY_LIST_PAGE_TITLE);
     }
 

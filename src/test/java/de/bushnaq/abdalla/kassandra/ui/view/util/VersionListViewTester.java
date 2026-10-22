@@ -55,8 +55,7 @@ public class VersionListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String cancelButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(cancelButton);
+        seleniumHandler.closeDialog(cancelButton);
         seleniumHandler.waitForElementToBeClickable(VersionListView.VERSION_LIST_PAGE_TITLE);
     }
 

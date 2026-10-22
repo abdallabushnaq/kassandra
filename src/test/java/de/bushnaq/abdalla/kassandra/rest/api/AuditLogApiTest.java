@@ -17,6 +17,7 @@
 package de.bushnaq.abdalla.kassandra.rest.api;
 
 import de.bushnaq.abdalla.kassandra.dao.OidcProviderDAO;
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.UserGroupDAO;
 import de.bushnaq.abdalla.kassandra.dao.UserDAO;
 import de.bushnaq.abdalla.kassandra.dto.AuditPage;
@@ -139,7 +140,7 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         group.setDescription("Updated description");
         groupRepository.save(group);
 
-        Instant   start  = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant   start  = ParameterOptions.getNow().toInstant().minus(1, ChronoUnit.DAYS);
         AuditPage first  = auditLogApi.getPage("christopher", null, "Audited team", start, null, 0, 1);
         AuditPage second = auditLogApi.getPage("christopher", null, "Audited team", start, null, 1, 1);
         assertEquals(2, first.total());
@@ -150,12 +151,12 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         assertTrue(first.items().stream().anyMatch(event -> event.fieldChanges().stream()
                 .anyMatch(change -> change.contains("description: null -> Updated description"))));
         assertTrue(first.items().stream().allMatch(event -> !event.replay()));
-        AuditPage dated = auditLogApi.getPage(null, null, Instant.now().toString().substring(0, 10),
+        AuditPage dated = auditLogApi.getPage(null, null, ParameterOptions.getNow().toInstant().toString().substring(0, 10),
                 null, null, 0, 50);
         assertTrue(dated.total() >= 2);
         assertTrue(dated.items().stream().anyMatch(event -> "Audited team".equals(event.label())));
         assertEquals(0, auditLogApi.getPage(null, null, "Audited team",
-                Instant.now().plus(1, ChronoUnit.DAYS), null, 0, 50).total());
+                ParameterOptions.getNow().toInstant().plus(1, ChronoUnit.DAYS), null, 0, 50).total());
     }
 
     /**

@@ -151,8 +151,7 @@ public class PersistingEntityGenerator {
     public void addOffDay(User user, LocalDate offDayStart, LocalDate offDayFinish, OffDayType type) {
         OffDay offDay = new OffDay(offDayStart, offDayFinish, type);
         offDay.setUser(user);
-        offDay.setCreated(user.getCreated());
-        offDay.setUpdated(user.getUpdated());
+        eg.initializeTimestamps(offDay, user.getCreated());
         // Add to in-memory state immediately so overlap detection and calendar work during generation.
         // The actual DB persist is deferred – call flushOffDayBuffer(user) when all off days for the
         // user have been accumulated.
@@ -510,8 +509,7 @@ public class PersistingEntityGenerator {
     public void addWorkWeek(User user, WorkWeek workWeek, LocalDate start) {
         UserWorkWeek uww = new UserWorkWeek(workWeek, start);
         uww.setUser(user);
-        uww.setCreated(user.getCreated());
-        uww.setUpdated(user.getUpdated());
+        eg.initializeTimestamps(uww, user.getCreated());
         UserWorkWeek saved = userWorkWeekApi.persist(uww, user.getId());
         user.addUserWorkWeek(saved);
     }
@@ -807,6 +805,7 @@ public class PersistingEntityGenerator {
         if (isSundayWorkingDay) {
             ww.setSunday(new WorkDaySchedule(startTime, endTime, breakStart, breakEnd));
         }
+        eg.initializeTimestamps(ww);
         return workWeekApi.persist(ww);
     }
 

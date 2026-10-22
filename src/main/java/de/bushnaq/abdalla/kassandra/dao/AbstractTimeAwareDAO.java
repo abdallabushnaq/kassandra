@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.dao;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
@@ -44,14 +45,14 @@ public abstract class AbstractTimeAwareDAO {
     @PrePersist
     protected void onCreate() {
         if (created == null)
-            created = OffsetDateTime.now();
+            created = ParameterOptions.getPersistenceNow();
         if (updated == null)
             updated = created;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updated = OffsetDateTime.now();
+        updated = ParameterOptions.getPersistenceNow(updated == null ? created : updated);
     }
 
 }

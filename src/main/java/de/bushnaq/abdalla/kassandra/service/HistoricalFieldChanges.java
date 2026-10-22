@@ -16,6 +16,9 @@
  */
 package de.bushnaq.abdalla.kassandra.service;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -24,11 +27,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * Compares normalized historical values for planning and administrator history.
  */
 public final class HistoricalFieldChanges {
+    private static final Pattern FRACTIONAL_TIMESTAMP = Pattern.compile(
+            "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})\\.\\d+(Z|[+-]\\d{2}:\\d{2})$");
     private HistoricalFieldChanges() {
     }
 
@@ -44,8 +50,20 @@ public final class HistoricalFieldChanges {
         names.addAll(after.keySet());
         return names.stream()
                 .filter(name -> !Objects.equals(normalize(before.get(name)), normalize(after.get(name))))
-                .map(name -> name + ": " + normalize(before.get(name)) + " -> " + normalize(after.get(name)))
+                .map(name -> name + ": " + display(name, before.get(name)) + " -> " + display(name, after.get(name)))
                 .toList();
+    }
+
+    private static String display(String name, Object value) {
+        if ("created".equals(name) || "updated".equals(name)) {
+            if (value instanceof OffsetDateTime timestamp) {
+                return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(timestamp.truncatedTo(ChronoUnit.SECONDS));
+            }
+            if (value instanceof String text) {
+                return FRACTIONAL_TIMESTAMP.matcher(text).replaceFirst("$1$2");
+            }
+        }
+        return String.valueOf(normalize(value));
     }
 
     private static Object normalize(Object value) {

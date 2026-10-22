@@ -59,8 +59,7 @@ public class UserGroupListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String cancelButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(cancelButton);
+        seleniumHandler.closeDialog(cancelButton);
         seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
     }
 
@@ -353,4 +352,3 @@ public class UserGroupListViewTester extends AbstractViewTester {
         // TODO: Implement actual verification of member count in grid
     }
 }
-

@@ -98,70 +98,70 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @Autowired
-    private       AboutViewTester                 aboutViewTester;
+    private        AboutViewTester                 aboutViewTester;
     @Autowired
-    private       ActiveSprintsTester             activeSprintsTester;
+    private        ActiveSprintsTester             activeSprintsTester;
     @Autowired
-    private       AuditLogApi                     auditLogApi;
+    private        AuditLogApi                     auditLogApi;
     @Autowired
-    private       AvailabilityListViewTester      availabilityListViewTester;
+    private        AvailabilityListViewTester      availabilityListViewTester;
     @Autowired
-    private       BacklogTester                   backlogTester;
+    private        BacklogTester                   backlogTester;
     @Autowired
-    private       FeatureListViewTester           featureListViewTester;
-    private       String                          featureName;
-    private final LocalDate                       firstDay         = LocalDate.of(2025, 6, 1);
-    private final LocalDate                       firstDayRecord1  = LocalDate.of(2026, 8, 4);
-    private       Availability                    lastAvailability = null;
-    private final LocalDate                       lastDay          = LocalDate.of(2025, 6, 1);
-    private final LocalDate                       lastDayRecord1   = LocalDate.of(2026, 8, 7);
-    private       Location                        lastLocation     = null;
-    private       UserWorkWeek                    lastUserWorkWeek = null;
+    private        FeatureListViewTester           featureListViewTester;
+    private        String                          featureName;
+    private final  LocalDate                       firstDay         = LocalDate.of(2025, 6, 1);
+    private final  LocalDate                       firstDayRecord1  = LocalDate.of(2026, 8, 4);
+    private        Availability                    lastAvailability = null;
+    private final  LocalDate                       lastDay          = LocalDate.of(2025, 6, 1);
+    private final  LocalDate                       lastDayRecord1   = LocalDate.of(2026, 8, 7);
+    private        Location                        lastLocation     = null;
+    private        UserWorkWeek                    lastUserWorkWeek = null;
     @Autowired
-    private       LocationListViewTester          locationListViewTester;
+    private        LocationListViewTester          locationListViewTester;
     @Autowired
-    private       OffDayListViewTester            offDayListViewTester;
+    private        OffDayListViewTester            offDayListViewTester;
     @Autowired
-    private       PasswordEncoder                 passwordEncoder;
-    private       boolean                         previousForceScreenshotRefresh;
-    private       Integer                         previousScreenshotTolerance;
+    private        PasswordEncoder                 passwordEncoder;
+    private        boolean                         previousForceScreenshotRefresh;
+    private        Integer                         previousScreenshotTolerance;
     @Autowired
-    private       ProductAclApi                   productAclApi;
+    private        ProductAclApi                   productAclApi;
     @Autowired
-    private       ProductListViewTester           productListViewTester;
-    private       String                          productName;
-    private static ScreenshotComparisonReport screenshotComparisonReport;
+    private        ProductListViewTester           productListViewTester;
+    private        String                          productName;
+    private static ScreenshotComparisonReport      screenshotComparisonReport;
     @Autowired
-    private       SecurityConfigurationRepository securityConfigurationRepository;
+    private        SecurityConfigurationRepository securityConfigurationRepository;
     @Autowired
-    private       SecurityConfigurationService    securityConfigurationService;
+    private        SecurityConfigurationService    securityConfigurationService;
     @Autowired
-    private       HumanizedSeleniumHandler        seleniumHandler;
+    private        HumanizedSeleniumHandler        seleniumHandler;
     @Autowired
-    private       ServerSettingsApi               serverSettingsApi;
+    private        ServerSettingsApi               serverSettingsApi;
     @Autowired
-    private       SprintListViewTester            sprintListViewTester;
-    private       String                          sprintName;
+    private        SprintListViewTester            sprintListViewTester;
+    private        String                          sprintName;
     @Autowired
-    private       TaskListViewTester              taskListViewTester;
-    private       String                          taskName;
-    private final OffDayType                      typeRecord1      = OffDayType.VACATION;
+    private        TaskListViewTester              taskListViewTester;
+    private        String                          taskName;
+    private final  OffDayType                      typeRecord1      = OffDayType.VACATION;
     @Autowired
-    private       UndoRedoApi                     undoRedoApi;
+    private        UndoRedoApi                     undoRedoApi;
     @Autowired
-    private       UserGroupListViewTester         userGroupListViewTester;
+    private        UserGroupListViewTester         userGroupListViewTester;
     @Autowired
-    private       UserListViewTester              userListViewTester;
-    private       String                          userName;
+    private        UserListViewTester              userListViewTester;
+    private        String                          userName;
     @Autowired
-    private       UserProfileViewTester           userProfileViewTester;
+    private        UserProfileViewTester           userProfileViewTester;
     @Autowired
-    private       UserWorkWeekListViewTester      userWorkWeekListViewTester;
+    private        UserWorkWeekListViewTester      userWorkWeekListViewTester;
     @Autowired
-    private       VersionListViewTester           versionListViewTester;
-    private       String                          versionName;
+    private        VersionListViewTester           versionListViewTester;
+    private        String                          versionName;
     @Autowired
-    private       WorkWeekListViewTester          workWeekListViewTester;
+    private        WorkWeekListViewTester          workWeekListViewTester;
 
     private void applyLoginTheme(ETheme theme) {
         // Login and recovery have no theme toggle; use the same persisted preference as MainLayout.
@@ -293,7 +293,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of {@link WorklogDialog} and {@link TaskDialog} from the Active Sprints view.
      * <p>
-     * Selects an active sprint and an in-progress task assigned to the signed-in user.
+     * Selects the active Dublin sprint and an in-progress task assigned to the signed-in user.
      * Existing worklogs are edited and deleted only as previews; both dialogs are cancelled.
      *
      * @param folder destination folder for the screenshot files
@@ -301,9 +301,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private void takeActiveSprintsDialogScreenshots(String folder) throws IOException {
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
-                .filter(s -> s.getStatus() == Status.STARTED)
+                .filter(s -> "Dublin".equals(s.getName()) && s.getStatus() == Status.STARTED)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No started sprint found"));
+                .orElseThrow(() -> new IllegalStateException("No started Dublin sprint found"));
         List<Task>    tasks       = peg.taskApi.getAll(sprint.getId());
         List<Worklog> worklogs    = peg.worklogApi.getAll(sprint.getId());
         User          currentUser = peg.userApi.getByEmail("christopher.paul@kassandra.org").orElseThrow();
@@ -1164,7 +1164,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takeUserElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
         takeUserDialogScreenshots(folder);
-
         //-----------------
         //AvailabilityListView
         //-----------------

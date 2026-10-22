@@ -57,8 +57,7 @@ public class SprintListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String cancelButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(cancelButton);
+        seleniumHandler.closeDialog(cancelButton);
         seleniumHandler.waitForElementToBeClickable(SprintListView.SPRINT_LIST_PAGE_TITLE);
     }
 

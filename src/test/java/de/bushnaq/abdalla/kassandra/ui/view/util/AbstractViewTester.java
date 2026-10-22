@@ -35,8 +35,7 @@ public abstract class AbstractViewTester {
     }
 
     protected void closeConfirmDialog(String button, String waitForElementId) {
-        seleniumHandler.wait(300);
-        seleniumHandler.click(button);
+        seleniumHandler.closeDialog(button);
         seleniumHandler.waitForElementToBeClickable(waitForElementId);
     }
 

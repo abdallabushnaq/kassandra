@@ -74,8 +74,7 @@ public class WorkWeekListViewTester extends AbstractViewTester {
      * @param confirmButton the element ID of the button to click
      */
     public void closeDialog(String confirmButton) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(confirmButton);
+        seleniumHandler.closeDialog(confirmButton);
         seleniumHandler.waitForElementToBeClickable(WorkWeekListView.PAGE_TITLE);
     }
 
@@ -283,4 +282,3 @@ public class WorkWeekListViewTester extends AbstractViewTester {
                 "Description mismatch for work week: " + name);
     }
 }
-

@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.audit;
 
+import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import org.hibernate.envers.RevisionListener;
 
@@ -36,5 +37,6 @@ public class AuditRevisionListener implements RevisionListener {
         auditRevision.setActor(SecurityUtils.getUserEmail());
         auditRevision.setOperationId(AuditOperationContextHolder.getOperationId());
         auditRevision.setReplay(AuditOperationContextHolder.isReplay());
+        auditRevision.setTimestamp(ParameterOptions.getPersistenceNow().toInstant().toEpochMilli());
     }
 }

@@ -51,8 +51,7 @@ public class ActiveSprintsTester extends AbstractViewTester {
     }
 
     public void closeDialog(String button) {
-        seleniumHandler.wait(200);
-        seleniumHandler.click(button);
+        seleniumHandler.closeDialog(button);
         seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_CLEAR_FILTERS_BUTTON);
     }
 

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,8 +65,8 @@ public abstract class ParameterOptions {
     public                 Integer         limitProjectOverview                        = null;// 6 * 30;
     public                 Integer         limitResourceUtilization                    = null;// 1 * 30;
     protected final        Logger          logger                                      = LoggerFactory.getLogger(this.getClass());
-    @Setter
-    private static         OffsetDateTime  now;
+    private static volatile OffsetDateTime now;
+    private static OffsetDateTime persistenceTime;
     public                 boolean         outOfOfficeOnly                             = false;//no ramdb cost records
     public                 boolean         queryTeamPlanner;
     public                 boolean         quickMode                                   = false;//only query active projects and resource map
@@ -97,6 +98,44 @@ public abstract class ParameterOptions {
         if (now != null)
             return now;//test time
         return OffsetDateTime.now();//realtime
+    }
+
+    /**
+     * Returns the next persistence timestamp without advancing the planning clock.
+     * Fixed test time advances in whole-second steps; production uses real time.
+     *
+     * @return the timestamp for a new persistence event
+     */
+    public static OffsetDateTime getPersistenceNow() {
+        return getPersistenceNow(null);
+    }
+
+    /**
+     * Returns a persistence timestamp later than the supplied historical value in test mode.
+     *
+     * @param previous the previous entity or restored revision timestamp, or {@code null}
+     * @return the next test timestamp, or real time when no test time is configured
+     */
+    public static synchronized OffsetDateTime getPersistenceNow(OffsetDateTime previous) {
+        if (now == null) {
+            return OffsetDateTime.now();
+        }
+        OffsetDateTime next = persistenceTime == null ? now.truncatedTo(ChronoUnit.SECONDS) : persistenceTime.plusSeconds(1);
+        if (previous != null && !next.isAfter(previous)) {
+            next = previous.withOffsetSameInstant(now.getOffset()).truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
+        }
+        persistenceTime = next;
+        return next;
+    }
+
+    /**
+     * Configures the fixed planning time and resets its independent persistence sequence.
+     *
+     * @param time the fixture time, or {@code null} to restore real time
+     */
+    public static synchronized void setNow(OffsetDateTime time) {
+        now = time;
+        persistenceTime = null;
     }
 
     public abstract void start(String[] args) throws Exception;
