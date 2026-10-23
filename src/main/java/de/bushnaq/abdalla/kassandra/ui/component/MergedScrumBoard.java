@@ -74,6 +74,7 @@ public class MergedScrumBoard extends VerticalLayout {
         this.userMap       = userMap;
         this.filterText    = filterText != null ? filterText.toLowerCase() : "";
         this.groupingMode  = groupingMode;
+        getElement().setAttribute("data-grouping-mode", groupingMode.name());
         this.featureMap    = featureMap;
         this.selectedUsers = selectedUsers;
         this.worklogApi    = worklogApi;
