@@ -606,7 +606,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 folder + "/dependency-dialog.png");
 
         // Close dialog and exit edit mode
-        seleniumHandler.wait(200);
         seleniumHandler.click(DependencyDialog.CANCEL_BUTTON);
         seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
         seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
@@ -1298,7 +1297,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
         // Edit user dialog - open action menu first, then edit
         // Get first user in the list
-        seleniumHandler.wait(300);
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
         takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID,
@@ -1308,7 +1306,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);
 
         // Delete user dialog - open action menu first, then delete
-        seleniumHandler.wait(300);
         seleniumHandler.click(UserListView.USER_GRID_DELETE_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/user-delete-dialog.png");

@@ -90,7 +90,6 @@ public class UserProfileViewTester extends AbstractViewTester {
         // Click on the user menu
         seleniumHandler.click(MainLayout.ID_USER_MENU);
 
-        seleniumHandler.wait(200);
         // Click on "View Profile" menu item
         seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
 
@@ -175,4 +174,3 @@ public class UserProfileViewTester extends AbstractViewTester {
         Assertions.assertEquals(expectedColor, actualColor, "Color mismatch");
     }
 }
-

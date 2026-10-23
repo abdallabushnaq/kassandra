@@ -135,7 +135,6 @@ public class LocationListViewTester extends AbstractViewTester {
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, state);
         closeDialog(LocationDialog.CONFIRM_BUTTON);
 
-        seleniumHandler.wait(300);
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.ensureIsInList(LocationListView.LOCATION_GRID_START_DATE_PREFIX, startDateStr);
@@ -238,7 +237,6 @@ public class LocationListViewTester extends AbstractViewTester {
         seleniumHandler.setComboBoxValue(LocationDialog.LOCATION_STATE_FIELD, newState);
         closeDialog(LocationDialog.CONFIRM_BUTTON);
 
-        seleniumHandler.wait(300);
         String newDateStr = newStartDate.format(dateFormatter);
 
         // Verify the new record exists and the old one is gone (if dates are different)

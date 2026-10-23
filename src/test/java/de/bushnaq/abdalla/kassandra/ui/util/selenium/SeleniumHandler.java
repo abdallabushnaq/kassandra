@@ -236,12 +236,12 @@ class SeleniumHandler {
             return;
         {
             waitForElementToBeLocated(gridId);
-            WebElement grid = getDriver().findElement(By.id(gridId));
-            // Wait a moment for any UI updates to complete
-            wait(500);
-            // Check for the div containing the product name
-            List<WebElement> matchingElements = grid.findElements(By.cssSelector("[id^='" + gridNamePrefix + name + "']"));
-            assertEquals(expectedCount, matchingElements.size(), "Expected 1 element with name '" + name + "' but found " + matchingElements.size());
+            By matchingElementLocator = By.cssSelector("[id^='" + gridNamePrefix + name + "']");
+            List<WebElement> matchingElements = wait.until(ExpectedConditions.refreshed(driver -> {
+                List<WebElement> elements = driver.findElement(By.id(gridId)).findElements(matchingElementLocator);
+                return elements.size() == expectedCount ? elements : null;
+            }));
+            assertEquals(expectedCount, matchingElements.size(), "Expected " + expectedCount + " elements with name '" + name + "' but found " + matchingElements.size());
         }
     }
 
@@ -1598,12 +1598,6 @@ class SeleniumHandler {
             // Finally, wait for it to be clickable
             waitUntil(ExpectedConditions.elementToBeClickable(By.id(id)));
 
-            // Small additional delay to ensure UI is fully ready
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
         } catch (Exception e) {
             log.error("Error waiting for element to be interactable: " + id, e);
             throw e;
@@ -1625,12 +1619,32 @@ class SeleniumHandler {
     }
 
     private WebElement waitForHelpElement(By locator) {
-        WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
-        wait.until(ExpectedConditions.visibilityOf(element));
-        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript(
-                "return document.fonts.status === 'loaded' && [...arguments[0].querySelectorAll('img')]"
-                        + ".every(i => i.complete && i.naturalWidth > 0)", element)));
-        return element;
+        return wait.until(ExpectedConditions.refreshed(driver -> {
+            for (WebElement element : driver.findElements(locator)) {
+                boolean visible = Boolean.TRUE.equals(executeJavaScript("""
+                        let current = arguments[0];
+                        while (current) {
+                            const style = getComputedStyle(current);
+                            if (current.hasAttribute('hidden') || style.display === 'none'
+                                || style.visibility === 'hidden' || style.visibility === 'collapse'
+                                || Number(style.opacity) === 0) return false;
+                            current = current.parentElement || current.getRootNode().host;
+                        }
+                        const rect = arguments[0].getBoundingClientRect();
+                        return rect.width > 0 && rect.height > 0;
+                        """, element));
+                if (!visible) {
+                    continue;
+                }
+                boolean resourcesLoaded = Boolean.TRUE.equals(executeJavaScript(
+                        "return document.fonts.status === 'loaded' && [...arguments[0].querySelectorAll('img')]"
+                                + ".every(i => i.complete && i.naturalWidth > 0)", element));
+                if (visible && resourcesLoaded) {
+                    return element;
+                }
+            }
+            return null;
+        }));
     }
 
     /**

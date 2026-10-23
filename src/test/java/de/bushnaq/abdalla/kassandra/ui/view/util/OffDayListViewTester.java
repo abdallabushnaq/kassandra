@@ -149,7 +149,6 @@ public class OffDayListViewTester extends AbstractViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastDay);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
         closeDialog(OffDayDialog.CONFIRM_BUTTON);
-        seleniumHandler.wait(300);
         // Verify the record appears in the list
         verifyOffDayRecordExists(firstDay, lastDay, type);
     }
@@ -265,7 +264,6 @@ public class OffDayListViewTester extends AbstractViewTester {
 
         // Confirm the edit
         closeDialog(OffDayDialog.CONFIRM_BUTTON);
-        seleniumHandler.wait(300);
 
         // Verify updated record exists with new values
         verifyOffDayRecordExists(newFirstDay, newLastDay, newType);
@@ -286,8 +284,9 @@ public class OffDayListViewTester extends AbstractViewTester {
         String firstDayStr = firstDay.format(dateFormatter);
 
         // Find the span with the start date text
-        WebElement startDateSpan = seleniumHandler.findElement(
-                By.xpath("//span[contains(@id,'" + OffDayListView.OFFDAY_GRID_START_DATE_PREFIX + "') and text()='" + firstDayStr + "']"));
+        By startDateLocator = By.xpath("//span[contains(@id,'" + OffDayListView.OFFDAY_GRID_START_DATE_PREFIX + "') and text()='" + firstDayStr + "']");
+        seleniumHandler.waitForElementToBeVisible(startDateLocator);
+        WebElement startDateSpan = seleniumHandler.findElement(startDateLocator);
 
         // Extract the ID from the span's id attribute
         String fullId = startDateSpan.getAttribute("id");

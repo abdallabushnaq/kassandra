@@ -135,7 +135,6 @@ public class UserWorkWeekListViewTester extends AbstractViewTester {
         seleniumHandler.setComboBoxValue(UserWorkWeekDialog.WORK_WEEK_COMBO_FIELD, workWeekName);
         closeDialog(UserWorkWeekDialog.CONFIRM_BUTTON);
 
-        seleniumHandler.wait(300);
         // Verify the record appears in the list
         String startDateStr = startDate.format(dateFormatter);
         seleniumHandler.ensureIsInList(UserWorkWeekListView.GRID_START_DATE_PREFIX, startDateStr);
@@ -228,7 +227,6 @@ public class UserWorkWeekListViewTester extends AbstractViewTester {
         seleniumHandler.setComboBoxValue(UserWorkWeekDialog.WORK_WEEK_COMBO_FIELD, newWorkWeekName);
         closeDialog(UserWorkWeekDialog.CONFIRM_BUTTON);
 
-        seleniumHandler.wait(300);
         String newDateStr = newStartDate.format(dateFormatter);
 
         // Verify the new record exists and the old one is gone (if dates are different)

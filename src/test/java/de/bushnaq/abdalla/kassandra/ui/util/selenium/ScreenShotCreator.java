@@ -103,9 +103,9 @@ public class ScreenShotCreator {
             throw new IOException("Could not find overlay element for dialog " + dialogId);
         }
         wait(1000);
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        byte[] screenshot = captureScreenshotWithoutCaret(driver);
         wait(1000);
-        BufferedImage image = ImageIO.read(screenshot);
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(screenshot));
         Point location = element.getLocation();
         Dimension size = element.getSize();
         if (image == null || size.getWidth() <= 0 || size.getHeight() <= 0) {
@@ -176,7 +176,7 @@ public class ScreenShotCreator {
             logger.info("Capturing visible help panel {} ({}x{} of requested {}x{} CSS pixels)",
                     element, area.width(), area.height(), cssWidth, cssHeight);
         }
-        BufferedImage viewport = ImageIO.read(new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+        BufferedImage viewport = ImageIO.read(new ByteArrayInputStream(captureScreenshotWithoutCaret(driver)));
         if (viewport == null) {
             throw new IOException("Could not decode viewport screenshot for " + element);
         }
@@ -228,6 +228,38 @@ public class ScreenShotCreator {
         throw new IOException("Invalid help screenshot coordinate: " + values.get(index));
     }
 
+    private static byte[] captureScreenshotWithoutCaret(WebDriver driver) {
+        JavascriptExecutor javascript = (JavascriptExecutor) driver;
+        WebElement caretStyle = (WebElement) javascript.executeScript("""
+                const activeElement = root => {
+                    const active = root.activeElement;
+                    return active && active.shadowRoot && active.shadowRoot.activeElement
+                        ? activeElement(active.shadowRoot)
+                        : active;
+                };
+                const active = activeElement(document);
+                if (!active) return null;
+                const root = active.getRootNode();
+                const style = document.createElement('style');
+                style.textContent = '* { caret-color: transparent !important; }';
+                (root instanceof Document ? root.head || root.documentElement : root).appendChild(style);
+                return style;
+                """);
+        try {
+            if (caretStyle != null) {
+                javascript.executeAsyncScript("""
+                        const done = arguments[arguments.length - 1];
+                        requestAnimationFrame(() => done());
+                        """);
+            }
+            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+        } finally {
+            if (caretStyle != null) {
+                javascript.executeScript("arguments[0].remove()", caretStyle);
+            }
+        }
+    }
+
     private record HelpCaptureArea(double x, double y, double width, double height,
                                    double viewportWidth, double viewportHeight, boolean visible) {
     }
@@ -238,7 +270,7 @@ public class ScreenShotCreator {
             return;
         }
         try {
-            BufferedImage image = ImageIO.read(new ByteArrayInputStream(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)));
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(captureScreenshotWithoutCaret(driver)));
             ScreenshotImageWriter.writeIfChanged(Path.of(fileName), image, channelTolerance, force);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not save documentation screenshot " + fileName, e);
@@ -253,8 +285,7 @@ public class ScreenShotCreator {
      */
     public static void takeScreenShot(WebDriver driver, String fileName) {
         try {
-            File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-            FileUtils.copyFile(screenshotFile, new File(fileName));
+            FileUtils.writeByteArrayToFile(new File(fileName), captureScreenshotWithoutCaret(driver));
             logger.info("Screenshot saved to: {}", fileName);
         } catch (IOException | NoSuchSessionException e) {
             throw new RuntimeException("Could not make screenshot {}" + fileName, e);

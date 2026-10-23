@@ -113,7 +113,6 @@ public class WorkWeekListViewTester extends AbstractViewTester {
         seleniumHandler.setTextField(WorkWeekDialog.DESCRIPTION_FIELD, description);
         closeDialog(WorkWeekDialog.CONFIRM_BUTTON);
 
-        seleniumHandler.wait(300);
         // Verify the record appears in the list by name
         seleniumHandler.ensureIsInList(WorkWeekListView.GRID_NAME_PREFIX, name);
 
@@ -197,8 +196,6 @@ public class WorkWeekListViewTester extends AbstractViewTester {
         seleniumHandler.setTextField(WorkWeekDialog.NAME_FIELD, newName);
         seleniumHandler.setTextField(WorkWeekDialog.DESCRIPTION_FIELD, newDescription);
         closeDialog(WorkWeekDialog.CONFIRM_BUTTON);
-
-        seleniumHandler.wait(300);
 
         // Verify the new name exists and the old one is gone (if names are different)
         seleniumHandler.ensureIsInList(WorkWeekListView.GRID_NAME_PREFIX, newName);
