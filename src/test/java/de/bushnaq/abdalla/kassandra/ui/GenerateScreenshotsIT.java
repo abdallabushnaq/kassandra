@@ -47,7 +47,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -74,7 +73,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -611,30 +609,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
     }
 
-    private void takeDetachedChartScreenshot(String buttonId, String chartId, String fileName) {
-        WebDriver   driver          = seleniumHandler.getDriver();
-        String      originalWindow  = driver.getWindowHandle();
-        Set<String> originalWindows = driver.getWindowHandles();
-        String      chartWindow     = null;
-        try {
-            scrollIntoView(buttonId);
-            seleniumHandler.click(buttonId);
-            seleniumHandler.waitUntil(ExpectedConditions.numberOfWindowsToBe(originalWindows.size() + 1));
-            chartWindow = driver.getWindowHandles().stream().filter(handle -> !originalWindows.contains(handle))
-                    .findFirst().orElseThrow();
-            driver.switchTo().window(chartWindow);
-            seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#chart svg")));
-            seleniumHandler.takeScreenShot(fileName);
-        } finally {
-            if (chartWindow != null && driver.getWindowHandles().contains(chartWindow)) {
-                driver.switchTo().window(chartWindow);
-                driver.close();
-            }
-            driver.switchTo().window(originalWindow);
-        }
-        seleniumHandler.waitForChartRendered(chartId);
-    }
-
     private void takeDialogHelpElements(Class<?> dialog, String helpButtonId, String... elementIds) throws IOException {
         seleniumHandler.prepareHelpScreenshots(elementIds.length == 0 ? helpButtonId : elementIds[0]);
         seleniumHandler.takeHelpElementScreenshot(dialog, helpButtonId);
@@ -1117,8 +1091,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "Lisbon");
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
-        takeDetachedChartScreenshot(QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
-                folder + "/quality-board-detached-chart.png");
 
         //-----------------
         //UserProfileView
@@ -1144,7 +1116,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
         takeBacklogElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/backlog.png");
-        takeDetachedChartScreenshot(Backlog.OPEN_GANTT_CHART_BUTTON_ID, RenderUtil.GANTT_CHART, folder + "/backlog-detached-chart.png");
         takeDependencyDialogScreenshots(folder);
 
         //-----------------
@@ -1154,8 +1125,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         takeActiveSprintsElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
-        takeDetachedChartScreenshot(ActiveSprints.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID, RenderUtil.GANTT_BURNDOWN_CHART,
-                folder + "/active-sprints-detached-chart.png");
         takeActiveSprintsDialogScreenshots(folder);
 
         //-----------------
