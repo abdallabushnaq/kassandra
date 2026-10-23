@@ -215,6 +215,16 @@ public class AvatarMetadataApiTest extends AbstractTestUtil {
         verify(diffusion).text2ImgWithOriginal(eq("Mountains" + AvatarService.LIGHT_PROMPT_SUFFIX),
                 eq(HeaderPrompt.getDefaultHeaderNegativePrompt()), eq(1024), eq(AvatarService.HEADER_GENERATION_HEIGHT),
                 isNull(), eq(-1L), eq(config.getCfgScale()), any(TiledDiffusionOptions.class));
+
+        service.generateLightAvatarWithFallback("Compass", "text", "cube", null, 17L);
+        service.generateLightHeaderWithFallback("Mountains", "cube", null,
+                TiledDiffusionOptions.forHeader(AvatarService.HEADER_WIDTH, AvatarService.HEADER_HEIGHT),
+                CozyStylePrompt.MARY_BLAIR, 23L);
+        verify(diffusion).text2ImgWithOriginal("Compass" + AvatarService.LIGHT_PROMPT_SUFFIX, "text",
+                config.getAvatarOutputSize(), null, 17L, config.getCfgScale());
+        verify(diffusion).text2ImgWithOriginal(eq("Mountains" + AvatarService.LIGHT_PROMPT_SUFFIX + ", " + CozyStylePrompt.MARY_BLAIR.getPrompt()),
+                eq(HeaderPrompt.getDefaultHeaderNegativePrompt()), eq(1024), eq(AvatarService.HEADER_GENERATION_HEIGHT),
+                isNull(), eq(23L), eq(config.getCfgScale()), any(TiledDiffusionOptions.class));
     }
 
     @Test
