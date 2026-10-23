@@ -286,7 +286,11 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
     private void takeActiveSprintsBoardScreenshot(String folder, GroupingMode mode) {
         seleniumHandler.setComboBoxValue(ActiveSprints.ID_GROUPING_MODE_SELECTOR, mode.getDisplayName());
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(
+                By.cssSelector("#" + ActiveSprints.ID_GROUPING_MODE_SELECTOR + " input"),
+                "value", mode.getDisplayName()));
+        seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(
+                By.id(ActiveSprints.BOARD_ID), "data-grouping-mode", mode.name()));
         scrollIntoView(ActiveSprints.BOARD_ID);
         seleniumHandler.takeScreenShot(folder + "/active-sprints-board-" + mode.name().toLowerCase(Locale.ROOT) + ".png");
     }
