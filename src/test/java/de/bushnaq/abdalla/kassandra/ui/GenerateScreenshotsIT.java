@@ -87,6 +87,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         properties = {
                 "server.port=${test.server.port:0}",
                 "spring.security.basic.enabled=false",
+                "kassandra.about.image-seed=1",
+                "kassandra.about.image-lora=<lora:Test_Golden_Patterns.:1> gold patterns, gold and black spirit, "
+                        + "liquid gold explosion, golden smoke magic, star dust, golden milky way, magic fog.",
                 // Serve newly captured assets before the next build copies them onto the classpath.
                 "spring.web.resources.static-locations=file:./src/main/resources/META-INF/resources/,classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/"
         }
@@ -796,7 +799,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private void takeMainLayoutElementScreenshots(ETheme theme, String audience) throws IOException {
         boolean admin = "admin".equals(audience);
         seleniumHandler.setHelpScreenshotTheme(theme);
-        seleniumHandler.prepareHelpScreenshots(FeatureListView.FEATURE_LIST_PAGE_TITLE);
+        seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
         seleniumHandler.takeHelpContentScreenshot(MainLayout.class, MainLayout.ID_NAVIGATION, audience);
         seleniumHandler.takeHelpElementScreenshot(MainLayout.class, MainLayout.ID_USER_MENU, audience);
         if (admin) {
@@ -839,10 +842,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         }
         seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU_AVAILABILITY)).sendKeys(Keys.ESCAPE);
         seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(MainLayout.ID_USER_MENU_AVAILABILITY)));
-        seleniumHandler.prepareHelpScreenshots(FeatureListView.FEATURE_LIST_PAGE_TITLE);
+        seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
     }
 
-    private void takeMainLayoutHelpScreenshots(TestInfo testInfo, String captureProduct, String captureVersion) throws Exception {
+    private void takeMainLayoutHelpScreenshots(TestInfo testInfo, String captureProduct) throws Exception {
         String userEmail = "jennifer.holleman@kassandra.org";
         User   helpUser  = peg.userApi.getAll().stream().filter(user -> userEmail.equals(user.getEmail())).findFirst().orElse(null);
         if (helpUser == null) {
@@ -866,8 +869,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail),
                         "The browser must be signed in as " + loginEmail);
                 productListViewTester.switchToProductListView();
-                productListViewTester.selectProduct(captureProduct);
-                versionListViewTester.selectVersion(captureVersion);
                 for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
                     takeMainLayoutElementScreenshots(theme, audience);
                 }
@@ -1055,6 +1056,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         aboutViewTester.login("christopher.paul@kassandra.org", "password", null,
                 testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        seleniumHandler.setHelpScreenshotTheme(eTheme);
         // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
         new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
                 .withMessage("About View banner did not finish loading before screenshot capture")
@@ -1063,7 +1065,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                         .anyMatch(image -> image.isDisplayed()
                                 && "true".equals(image.getDomProperty("complete"))
                                 && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
-        seleniumHandler.setHelpScreenshotTheme(eTheme);
         takeHelpElements(AboutView.class, AboutView.ABOUT_PAGE_TITLE, eTheme, AboutView.ABOUT_PAGE_TITLE, AboutView.LICENSE_LINK_ID, AboutView.GITHUB_LINK_ID, MainLayout.ID_THEME_TOGGLE, MainLayout.ID_USER_MENU);
         takePageHelpScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
         seleniumHandler.takeScreenShot(folder + "/about-view.png");
@@ -1214,7 +1215,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      * and help controls in light and dark themes, including shared administrator/user navigation.
      * Setup is excluded because it requires an unconfigured installation; AI interactions
      * are excluded because they need separate GPU-backed services.
-     * Runs for about 12 min.
+     * Runs for about 13 min 14 sec.
      *
      * @param randomCase deterministic screenshot fixture
      * @param testInfo   current test metadata
@@ -1228,7 +1229,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
-        takeMainLayoutHelpScreenshots(testInfo, productName, versionName);
+        takeMainLayoutHelpScreenshots(testInfo, productName);
 
         seleniumHandler.waitUntilBrowserClosed(5000);
     }

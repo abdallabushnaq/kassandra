@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dao.AboutImageDAO;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.repository.AboutImageRepository;
@@ -97,6 +98,8 @@ public class AboutBoxService {
     private              StableDiffusionConfig      stableDiffusionConfig;
     @Autowired
     private              StableDiffusionService     stableDiffusionService;
+    @Autowired
+    private              KassandraProperties        kassandraProperties;
     /**
      * The application version, resolved from {@code kassandra.version} in
      * {@code application.properties} via Maven resource filtering at build time.
@@ -198,8 +201,14 @@ public class AboutBoxService {
             String background = theme == ETheme.dark
                     ? "Dark background, low-key lighting, background color " + stableDiffusionConfig.getAvatarDarkBackgroundColor()
                     : "Light background, high-key lighting, background color " + stableDiffusionConfig.getAvatarLightBackgroundColor();
-            String               prompt = SD_PROMPT + " " + SD_LORA[(int) (Math.random() * SD_LORA.length)] + " " + background;
-            GeneratedImageResult result = stableDiffusionService.text2ImgWithOriginal(prompt, 1024, null, -1L, 3.0);
+            Long configuredSeed = kassandraProperties.getAbout().getImageSeed();
+            long seed = configuredSeed != null ? configuredSeed : -1L;
+            String configuredLora = kassandraProperties.getAbout().getImageLora();
+            String lora = configuredLora != null && !configuredLora.isBlank()
+                    ? configuredLora
+                    : SD_LORA[(int) (Math.random() * SD_LORA.length)];
+            String               prompt = SD_PROMPT + " " + lora + " " + background;
+            GeneratedImageResult result = stableDiffusionService.text2ImgWithOriginal(prompt, 1024, null, seed, 3.0);
             byte[]               image  = result.getOriginalImage();
             persistToDb(dbRecord, theme, today, image);
             cachedImages.put(theme, image);

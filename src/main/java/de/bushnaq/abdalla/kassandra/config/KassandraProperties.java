@@ -41,6 +41,10 @@ public class KassandraProperties {
      */
     private        Ai       ai                     = new Ai();
     /**
+     * Bound from {@code kassandra.about.*}.
+     */
+    private        About    about                  = new About();
+    /**
      * Static holder so plain DTOs (e.g. User) can access the value without injection.
      * -- GETTER --
      * Get the number of months to look ahead for holidays.
@@ -112,6 +116,18 @@ public class KassandraProperties {
          * When null the model default is used.
          */
         private Double  temperature   = null;
+    }
+
+    @Data
+    public static class About {
+        /**
+         * Optional Stable Diffusion seed for the About View image. When null, a random seed is used.
+         */
+        private Long   imageSeed = null;
+        /**
+         * Optional Stable Diffusion LoRA prompt for the About View image. When null, a random LoRA is used.
+         */
+        private String imageLora = null;
     }
 
     @Data
