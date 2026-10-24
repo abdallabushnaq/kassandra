@@ -1391,6 +1391,31 @@ class SeleniumHandler {
     }
 
     /**
+     * Disables popup animation and compositor promotion before opening a menu for help screenshots.
+     * This prevents fractional text rasterization from varying between browser runs.
+     *
+     * @param menuId the menu's DOM ID
+     */
+    public void prepareHelpMenuScreenshot(String menuId) {
+        WebElement menu = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id(menuId)));
+        waitUntil(webDriver -> Boolean.TRUE.equals(executeJavaScript("""
+                const submenu = arguments[0].querySelector('vaadin-menu-bar-submenu');
+                const overlay = submenu && submenu.shadowRoot && submenu.shadowRoot.querySelector('vaadin-menu-bar-overlay');
+                if (!overlay || !overlay.shadowRoot) return false;
+                if (!overlay.shadowRoot.getElementById('help-menu-rendering')) {
+                    const style = document.createElement('style');
+                    style.id = 'help-menu-rendering';
+                    style.textContent = `
+                        :host([opening]), :host([closing]) { animation: none !important; }
+                        [part="overlay"] { animation: none !important; will-change: auto !important; }
+                    `;
+                    overlay.shadowRoot.appendChild(style);
+                }
+                return true;
+                """, menu)));
+    }
+
+    /**
      * Captures the open menu-bar popup as a presentation state of its owning control.
      *
      * @param pageClass the view or layout owning the image

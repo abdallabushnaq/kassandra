@@ -790,6 +790,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 seleniumHandler.takeHelpElementScreenshot(MainLayout.class, MainLayout.ID_TAB_BASE + route);
             }
         }
+        seleniumHandler.prepareHelpMenuScreenshot(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.waitForElementToBeClickable(MainLayout.ID_USER_MENU_AVAILABILITY);
         seleniumHandler.takeHelpMenuScreenshot(MainLayout.class, MainLayout.ID_USER_MENU, audience);
@@ -1199,10 +1200,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
         prepareScreenshotFixture(randomCase, testInfo);
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        if (false) {
-            takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
-            takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
-        }
+        takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
+        takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
         takeMainLayoutHelpScreenshots(testInfo, productName);
 
         seleniumHandler.waitUntilBrowserClosed(1000);
