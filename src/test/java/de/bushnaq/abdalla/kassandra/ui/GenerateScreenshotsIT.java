@@ -47,6 +47,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -169,13 +170,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.executeJavaScript(
                 "localStorage.setItem('theme', arguments[0]); document.documentElement.setAttribute('theme', arguments[0]); document.body.setAttribute('theme', arguments[0]);",
                 theme.name());
+        seleniumHandler.settleScreenshotCapture();
     }
 
     @BeforeEach
     void configureDocumentationScreenshots() {
         previousScreenshotTolerance    = seleniumHandler.getDocumentationScreenshotTolerance();
         previousForceScreenshotRefresh = seleniumHandler.isForceDocumentationScreenshotRefresh();
-        int tolerance = Integer.parseInt(System.getProperty("screenshot.channel-tolerance", "4"));
+        int tolerance = Integer.parseInt(System.getProperty("screenshot.channel-tolerance", "8"));
         if (tolerance < 0 || tolerance > 255) {
             throw new IllegalArgumentException("screenshot.channel-tolerance must be between 0 and 255");
         }
@@ -409,6 +411,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
         navigateTo(OidcProviderManagementView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(OidcProviderManagementView.PAGE_TITLE_ID);
+        seleniumHandler.waitForElementToBeClickable(OidcProviderManagementView.ADD_BUTTON_ID);
         seleniumHandler.takeScreenShot(folder + "/identity-providers-view.png");
         takeOidcProviderElementScreenshots(theme);
 

@@ -1480,7 +1480,41 @@ class SeleniumHandler {
     public void takeScreenShot(String fileName) {
         if (!isEnabled())
             return;
+        settleScreenshotCapture();
         ScreenShotCreator.takeScreenShot(getDriver(), fileName, documentationScreenshotTolerance(Path.of(fileName)), forceDocumentationScreenshotRefresh);
+    }
+
+    /**
+     * Normalizes pointer and focus state, then waits for fonts, transitions, and rendering frames to settle.
+     */
+    public void settleScreenshotCapture() {
+        WebDriver driver = getDriver();
+        WebElement documentElement = driver.findElement(By.tagName("html"));
+        Dimension documentSize = documentElement.getSize();
+        new Actions(driver).moveToElement(documentElement,
+                1 - documentSize.getWidth() / 2, 1 - documentSize.getHeight() / 2).perform();
+        executeJavaScript("""
+                const activeElement = root => {
+                    const active = root.activeElement;
+                    return active && active.shadowRoot && active.shadowRoot.activeElement
+                        ? activeElement(active.shadowRoot)
+                        : active;
+                };
+                activeElement(document)?.blur();
+                """);
+        ((JavascriptExecutor) driver).executeAsyncScript("""
+                const done = arguments[arguments.length - 1];
+                const waitForTransitions = () => {
+                    const transitions = document.getAnimations({subtree: true})
+                        .filter(animation => animation instanceof CSSTransition && animation.playState === 'running');
+                    if (transitions.length > 0) {
+                        Promise.allSettled(transitions.map(animation => animation.finished)).then(waitForTransitions);
+                    } else {
+                        requestAnimationFrame(() => requestAnimationFrame(done));
+                    }
+                };
+                document.fonts.ready.then(waitForTransitions);
+                """);
     }
 
     Integer documentationScreenshotTolerance(Path destination) {
