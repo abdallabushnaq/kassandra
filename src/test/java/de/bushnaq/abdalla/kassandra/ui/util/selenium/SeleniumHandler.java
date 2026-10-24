@@ -1416,6 +1416,33 @@ class SeleniumHandler {
     }
 
     /**
+     * Installs a browser hook to disable animations when Vaadin dialog overlays are created.
+     */
+    public void prepareHelpDialogScreenshots() {
+        executeJavaScript("""
+                const prototype = Element.prototype;
+                if (prototype.attachShadow.helpDialogRendering) return;
+                const attachShadow = prototype.attachShadow;
+                const patchedAttachShadow = function(init) {
+                    const shadowRoot = attachShadow.call(this, init);
+                    if (this.localName === 'vaadin-dialog-overlay') {
+                        const style = document.createElement('style');
+                        style.id = 'help-dialog-rendering';
+                        style.textContent = `
+                            :host([opening]), :host([closing]) { animation: none !important; }
+                            [part="overlay"] { animation: none !important; will-change: auto !important; }
+                        `;
+                        shadowRoot.appendChild(style);
+                        console.info('Help screenshot: disabled animation for vaadin-dialog-overlay');
+                    }
+                    return shadowRoot;
+                };
+                patchedAttachShadow.helpDialogRendering = true;
+                prototype.attachShadow = patchedAttachShadow;
+                """);
+    }
+
+    /**
      * Captures the open menu-bar popup as a presentation state of its owning control.
      *
      * @param pageClass the view or layout owning the image

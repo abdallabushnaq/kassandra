@@ -831,8 +831,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                     firstDay, peg.generateUserColor(peg.getUserIndex()), 1f, null);
         }
         assertEquals("USER", helpUser.getRoles(), "The help account must be a regular user");
-        var provider = oidcProviderService.getProviders().stream()
-                .filter(candidate -> "Test Keycloak".equals(candidate.getDisplayName())).findFirst().orElseThrow();
+        var provider = oidcProviderService.getProviders().stream().filter(candidate -> "Test Keycloak".equals(candidate.getDisplayName())).findFirst().orElseThrow();
         oidcIdentityService.linkIdentity(helpUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(userEmail));
         Product product = peg.productApi.getAll().stream().filter(candidate -> captureProduct.equals(candidate.getName())).findFirst().orElseThrow();
         productAclApi.grantUserAccess(product.getId(), helpUser.getId());
@@ -841,11 +840,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             String  loginEmail = admin ? "christopher.paul@kassandra.org" : userEmail;
             // A local logout can leave Keycloak SSO cookies; isolate both origins between accounts.
             seleniumHandler.destroy();
-            aboutViewTester.login(loginEmail, "password", null,
-                    testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            aboutViewTester.login(loginEmail, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
             try {
-                assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail),
-                        "The browser must be signed in as " + loginEmail);
+                assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail), "The browser must be signed in as " + loginEmail);
                 productListViewTester.switchToProductListView();
                 for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
                     takeMainLayoutElementScreenshots(theme, audience);
@@ -931,6 +928,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      */
     private void takeProductDialogScreenshots(String folder) throws IOException {
         // Create product dialog
+        seleniumHandler.prepareHelpDialogScreenshots();
         seleniumHandler.click(ProductListView.CREATE_PRODUCT_BUTTON);
         seleniumHandler.waitForElementToBeClickable(ProductDialog.CANCEL_BUTTON); // Wait for dialog
         takeDialogHelpElements(ProductDialog.class, ProductDialog.PRODUCT_HELP_BUTTON,
