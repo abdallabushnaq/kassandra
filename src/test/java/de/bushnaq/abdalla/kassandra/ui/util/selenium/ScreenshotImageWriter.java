@@ -40,6 +40,11 @@ final class ScreenshotImageWriter {
     }
 
     static boolean writeIfChanged(Path destination, BufferedImage candidate, int channelTolerance, boolean force) throws IOException {
+        return writeIfChanged(destination, candidate, channelTolerance, force, null, null);
+    }
+
+    static boolean writeIfChanged(Path destination, BufferedImage candidate, int channelTolerance, boolean force,
+                                  Double captureX, Double captureY) throws IOException {
         validateTolerance(channelTolerance);
         if (candidate == null) {
             throw new IOException("Could not decode screenshot for " + destination);
@@ -89,7 +94,8 @@ final class ScreenshotImageWriter {
                         pixelsAbove8, pixelsAbove16, pixelsAbove32);
                 if (alphaChangedPixels == 0 && maxDifference <= channelTolerance) {
                     log.info("Retained screenshot {} (maximum RGB difference {}, tolerance {})", destination, maxDifference, channelTolerance);
-                    ScreenshotComparisonReport.record(destination, candidate, previous, difference, channelTolerance, force, false);
+                    ScreenshotComparisonReport.record(destination, candidate, previous, difference, channelTolerance, force, false,
+                            captureX, captureY);
                     return false;
                 }
                 log.info("Updating screenshot {} (maximum RGB difference {}, alpha changed: {})", destination, maxDifference, alphaChangedPixels != 0);
@@ -118,7 +124,8 @@ final class ScreenshotImageWriter {
             Files.deleteIfExists(temporary);
         }
         log.info("Saved screenshot {} (force refresh: {})", destination, force);
-        ScreenshotComparisonReport.record(destination, candidate, previous, difference, channelTolerance, force, true);
+        ScreenshotComparisonReport.record(destination, candidate, previous, difference, channelTolerance, force, true,
+                captureX, captureY);
         return true;
     }
 }

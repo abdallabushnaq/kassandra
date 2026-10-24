@@ -68,7 +68,7 @@ class ScreenshotImageWriterTest {
         candidate.setRGB(6, 0, 0xfe808080);
         report.startCollection();
         try {
-            assertTrue(ScreenshotImageWriter.writeIfChanged(high, candidate, 8, false));
+            assertTrue(ScreenshotImageWriter.writeIfChanged(high, candidate, 8, false, 12.5, 34.75));
             report.stopCollection();
             report.startCollection();
             BufferedImage singlePixel = image(7, 1, BufferedImage.TYPE_INT_ARGB, 0xff808080);
@@ -84,11 +84,14 @@ class ScreenshotImageWriterTest {
         report.write(csv);
         List<String> lines = Files.readAllLines(csv);
         assertEquals(4, lines.size());
+        assertEquals("png,status,tolerance,forced,previous_width,previous_height,width,height,capture_x_css,capture_y_css,"
+                + "max_rgb_difference,changed_pixels,changed_percent,alpha_changed_pixels,pixels_above_8,pixels_above_16,pixels_above_32",
+                lines.getFirst());
         assertTrue(lines.get(1).startsWith("\"" + tied.toAbsolutePath() + "\","));
-        assertTrue(lines.get(1).endsWith(",UPDATED,8,false,7,1,7,1,33,1,14.285714,0,1,1,1"));
+        assertTrue(lines.get(1).endsWith(",UPDATED,8,false,7,1,7,1,,,33,1,14.285714,0,1,1,1"));
         assertTrue(lines.get(2).startsWith("\"" + high.toAbsolutePath() + "\","));
-        assertTrue(lines.get(2).endsWith(",UPDATED,8,false,7,1,7,1,33,7,100.000000,1,5,3,1"));
-        assertTrue(lines.get(3).endsWith(",RETAINED,8,false,7,1,7,1,8,1,14.285714,0,0,0,0"));
+        assertTrue(lines.get(2).endsWith(",UPDATED,8,false,7,1,7,1,12.5,34.75,33,7,100.000000,1,5,3,1"));
+        assertTrue(lines.get(3).endsWith(",RETAINED,8,false,7,1,7,1,,,8,1,14.285714,0,0,0,0"));
     }
 
     @Test
@@ -111,11 +114,11 @@ class ScreenshotImageWriterTest {
         report.write(csv);
         List<String> lines = Files.readAllLines(csv);
         assertEquals(4, lines.size());
-        assertTrue(lines.get(1).endsWith(",CREATED,8,false,,,3,1,,,,,,,"));
-        assertTrue(lines.get(2).endsWith(",DIMENSIONS_CHANGED,8,false,2,1,3,1,,,,,,,"));
-        assertTrue(lines.get(3).endsWith(",FORCED,8,true,,,3,1,,,,,,,"));
+        assertTrue(lines.get(1).endsWith(",CREATED,8,false,,,3,1,,,,,,,,,"));
+        assertTrue(lines.get(2).endsWith(",DIMENSIONS_CHANGED,8,false,2,1,3,1,,,,,,,,,"));
+        assertTrue(lines.get(3).endsWith(",FORCED,8,true,,,3,1,,,,,,,,,"));
         for (String line : lines) {
-            assertEquals(15, line.split(",", -1).length);
+            assertEquals(17, line.split(",", -1).length);
         }
     }
 
@@ -137,7 +140,7 @@ class ScreenshotImageWriterTest {
         report.write(csv);
         List<String> lines = Files.readAllLines(csv);
         assertEquals(2, lines.size());
-        assertTrue(lines.get(1).endsWith(",UPDATED,255,false,2,2,2,2,0,4,100.000000,4,0,0,0"));
+        assertTrue(lines.get(1).endsWith(",UPDATED,255,false,2,2,2,2,,,0,4,100.000000,4,0,0,0"));
     }
 
     @Test
@@ -290,7 +293,7 @@ class ScreenshotImageWriterTest {
         BufferedImage candidate   = image(2, 2, BufferedImage.TYPE_INT_ARGB, 0xff808080);
         Path          destination = baseline(candidate);
         byte[]        before      = Files.readAllBytes(destination);
-        WebDriver     driver      = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
+        WebDriver     driver      = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class, JavascriptExecutor.class));
         when(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)).thenReturn(png(candidate));
 
         ScreenShotCreator.takeScreenShot(driver, destination.toString(), 4, false);
@@ -308,13 +311,13 @@ class ScreenshotImageWriterTest {
         Files.write(source, captured);
         Path destination = directory.resolve("failure.png");
         Files.writeString(destination, "old diagnostic");
-        WebDriver driver = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
-        when(((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE)).thenReturn(source.toFile());
+        WebDriver driver = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class, JavascriptExecutor.class));
+        when(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)).thenReturn(captured);
 
         ScreenShotCreator.takeScreenShot(driver, destination.toString(), null, false);
 
         assertArrayEquals(captured, Files.readAllBytes(destination));
-        verify((TakesScreenshot) driver, never()).getScreenshotAs(OutputType.BYTES);
+        verify((TakesScreenshot) driver, times(1)).getScreenshotAs(OutputType.BYTES);
     }
 
     @Test
@@ -324,18 +327,27 @@ class ScreenshotImageWriterTest {
         Path     destination = baseline(image(2, 2, BufferedImage.TYPE_INT_ARGB, 0xff808080));
         FileTime timestamp   = FileTime.fromMillis(1_600_000_000_000L);
         Files.setLastModifiedTime(destination, timestamp);
-        WebDriver driver = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class));
-        when(((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE)).thenReturn(full.toFile());
+        WebDriver driver = mock(WebDriver.class, withSettings().extraInterfaces(TakesScreenshot.class, JavascriptExecutor.class));
+        when(((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES)).thenReturn(png(ImageIO.read(full.toFile())));
         WebElement element = mock(WebElement.class);
         when(element.getLocation()).thenReturn(new Point(1, 1));
         when(element.getSize()).thenReturn(new Dimension(2, 2));
 
-        ScreenShotCreator.takeElementScreenshot(driver, element, "dialog", destination.toString(), 4, false);
+        ScreenshotComparisonReport report = new ScreenshotComparisonReport();
+        report.startCollection();
+        try {
+            ScreenShotCreator.takeElementScreenshot(driver, element, "dialog", destination.toString(), 4, false);
+        } finally {
+            report.stopCollection();
+        }
         assertEquals(timestamp, Files.getLastModifiedTime(destination));
+        Path csv = directory.resolve("dialog-discrepancies.csv");
+        report.write(csv);
+        assertTrue(Files.readAllLines(csv).get(1).endsWith(",RETAINED,4,false,2,2,2,2,1.0,1.0,0,0,0.000000,0,0,0,0"));
         Files.writeString(destination, "not a PNG");
         assertThrows(UncheckedIOException.class, () -> ScreenShotCreator.takeElementScreenshot(driver, element, "dialog", destination.toString(), 4, false));
         assertEquals("not a PNG", Files.readString(destination));
-        verify((TakesScreenshot) driver, times(2)).getScreenshotAs(OutputType.FILE);
+        verify((TakesScreenshot) driver, times(2)).getScreenshotAs(OutputType.BYTES);
         assertThrows(UncheckedIOException.class, () -> ScreenShotCreator.takeElementScreenshot(driver, null, "dialog", destination.toString(), 4, false));
     }
 
@@ -470,8 +482,11 @@ class ScreenshotImageWriterTest {
         when(((JavascriptExecutor) driver).executeAsyncScript(contains("done([rect.left"), same(element), eq(4.0), eq(20.0)))
                 .thenReturn(List.of(1.25, -10, 4, 20, 10, 8, false, true), List.of(1.25, 2.5, 4, 5.5, 10, 8, true, true));
 
-        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(driver, element, 4, 20, true);
+        ScreenShotCreator.HelpElementCapture capture = ScreenShotCreator.captureHelpElement(driver, element, 4, 20, true);
+        BufferedImage crop = capture.image();
 
+        assertEquals(1.25, capture.x());
+        assertEquals(2.5, capture.y());
         assertEquals(9, crop.getWidth());
         assertEquals(11, crop.getHeight());
         assertEquals(0xff123456, crop.getRGB(0, 0));

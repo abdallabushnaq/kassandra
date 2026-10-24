@@ -1770,10 +1770,13 @@ class SeleniumHandler {
     }
 
     private void writeHelpElement(Path destination, WebElement element, double cssWidth, double cssHeight, boolean visiblePanel) throws IOException {
-        BufferedImage crop = ScreenShotCreator.captureHelpElementImage(getDriver(), element, cssWidth, cssHeight, visiblePanel);
+        ScreenShotCreator.HelpElementCapture capture =
+                ScreenShotCreator.captureHelpElement(getDriver(), element, cssWidth, cssHeight, visiblePanel);
+        BufferedImage crop = capture.image();
         Integer tolerance = documentationScreenshotTolerance(destination);
         if (tolerance != null) {
-            ScreenshotImageWriter.writeIfChanged(destination, crop, tolerance, forceDocumentationScreenshotRefresh);
+            ScreenshotImageWriter.writeIfChanged(destination, crop, tolerance, forceDocumentationScreenshotRefresh,
+                    capture.x(), capture.y());
             return;
         }
         Files.createDirectories(destination.getParent());

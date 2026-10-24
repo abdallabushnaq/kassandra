@@ -57,7 +57,7 @@ public class ScreenShotCreator {
             try {
                 if (overlayElement != null) {
 
-                    BufferedImage elementImg = captureElementImage(driver, overlayElement, dialogId);
+                    BufferedImage elementImg = captureElement(driver, overlayElement, dialogId).image();
 
                     // Ensure the directory exists
                     File file = new File(fileName);
@@ -92,13 +92,15 @@ public class ScreenShotCreator {
             return;
         }
         try {
-            ScreenshotImageWriter.writeIfChanged(Path.of(fileName), captureElementImage(driver, overlayElement, dialogId), channelTolerance, force);
+            ElementCapture capture = captureElement(driver, overlayElement, dialogId);
+            ScreenshotImageWriter.writeIfChanged(Path.of(fileName), capture.image(), channelTolerance, force,
+                    (double) capture.x(), (double) capture.y());
         } catch (IOException e) {
             throw new UncheckedIOException("Could not save documentation screenshot " + fileName, e);
         }
     }
 
-    private static BufferedImage captureElementImage(WebDriver driver, WebElement element, String dialogId) throws IOException {
+    private static ElementCapture captureElement(WebDriver driver, WebElement element, String dialogId) throws IOException {
         if (element == null) {
             throw new IOException("Could not find overlay element for dialog " + dialogId);
         }
@@ -113,14 +115,23 @@ public class ScreenShotCreator {
         }
         logger.info("Taking screenshot of dialog overlay: {} at x: {}, y: {}, width: {}, height: {}", dialogId,
                 location.x, location.y, size.getWidth(), size.getHeight());
-        return image.getSubimage(location.getX(), location.getY(), size.getWidth(), size.getHeight());
+        return new ElementCapture(image.getSubimage(location.getX(), location.getY(), size.getWidth(), size.getHeight()),
+                location.getX(), location.getY());
+    }
+
+    private record ElementCapture(BufferedImage image, int x, int y) {
     }
 
     static BufferedImage captureHelpElementImage(WebDriver driver, WebElement element, double cssWidth, double cssHeight) throws IOException {
-        return captureHelpElementImage(driver, element, cssWidth, cssHeight, false);
+        return captureHelpElement(driver, element, cssWidth, cssHeight, false).image();
     }
 
     static BufferedImage captureHelpElementImage(WebDriver driver, WebElement element, double cssWidth, double cssHeight,
+                                                 boolean visiblePanel) throws IOException {
+        return captureHelpElement(driver, element, cssWidth, cssHeight, visiblePanel).image();
+    }
+
+    static HelpElementCapture captureHelpElement(WebDriver driver, WebElement element, double cssWidth, double cssHeight,
                                                  boolean visiblePanel) throws IOException {
         if (!Double.isFinite(cssWidth) || !Double.isFinite(cssHeight) || cssWidth <= 0 || cssHeight <= 0) {
             throw new IOException("Invalid help screenshot dimensions: " + cssWidth + "x" + cssHeight);
@@ -189,7 +200,10 @@ public class ScreenShotCreator {
         if (left < 0 || top < 0 || right > viewport.getWidth() || bottom > viewport.getHeight() || right <= left || bottom <= top) {
             throw new IOException("Help screenshot crop is outside the captured viewport: " + element);
         }
-        return viewport.getSubimage(left, top, right - left, bottom - top);
+        return new HelpElementCapture(viewport.getSubimage(left, top, right - left, bottom - top), area.x(), area.y());
+    }
+
+    record HelpElementCapture(BufferedImage image, double x, double y) {
     }
 
     private static HelpCaptureArea helpCaptureArea(JavascriptExecutor javascript, WebElement element,
@@ -271,7 +285,7 @@ public class ScreenShotCreator {
         }
         try {
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(captureScreenshotWithoutCaret(driver)));
-            ScreenshotImageWriter.writeIfChanged(Path.of(fileName), image, channelTolerance, force);
+            ScreenshotImageWriter.writeIfChanged(Path.of(fileName), image, channelTolerance, force, 0.0, 0.0);
         } catch (IOException e) {
             throw new UncheckedIOException("Could not save documentation screenshot " + fileName, e);
         }

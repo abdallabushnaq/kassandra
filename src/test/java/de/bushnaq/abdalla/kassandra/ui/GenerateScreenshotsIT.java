@@ -1199,11 +1199,13 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
         prepareScreenshotFixture(randomCase, testInfo);
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
-        takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
+        if (false) {
+            takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
+            takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
+        }
         takeMainLayoutHelpScreenshots(testInfo, productName);
 
-        seleniumHandler.waitUntilBrowserClosed(5000);
+        seleniumHandler.waitUntilBrowserClosed(1000);
     }
 
     private void takeScrollableScreenshots(String id, String filePrefix) {

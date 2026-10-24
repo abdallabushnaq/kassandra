@@ -70,17 +70,17 @@ public final class ScreenshotComparisonReport {
                         .thenComparing(entry -> entry.destination().toString()))
                 .toList();
         List<String> lines = new ArrayList<>();
-        lines.add("png,status,tolerance,forced,previous_width,previous_height,width,height,max_rgb_difference,changed_pixels,changed_percent,alpha_changed_pixels,pixels_above_8,pixels_above_16,pixels_above_32");
+        lines.add("png,status,tolerance,forced,previous_width,previous_height,width,height,capture_x_css,capture_y_css,max_rgb_difference,changed_pixels,changed_percent,alpha_changed_pixels,pixels_above_8,pixels_above_16,pixels_above_32");
         for (Entry entry : sorted) {
             Difference difference = entry.difference();
             String metrics = difference == null ? ",,,,,," : String.format(Locale.ROOT, "%d,%d,%.6f,%d,%d,%d,%d",
                     difference.maxRgbDifference(), difference.changedPixels(),
                     100.0 * difference.changedPixels() / ((long) entry.width() * entry.height()),
                     difference.alphaChangedPixels(), difference.pixelsAbove8(), difference.pixelsAbove16(), difference.pixelsAbove32());
-            lines.add(String.format(Locale.ROOT, "%s,%s,%d,%s,%s,%s,%d,%d,%s",
+            lines.add(String.format(Locale.ROOT, "%s,%s,%d,%s,%s,%s,%d,%d,%s,%s,%s",
                     quote(entry.destination().toString()), entry.status(), entry.tolerance(), entry.forced(),
                     entry.previousWidth() == 0 ? "" : entry.previousWidth(), entry.previousHeight() == 0 ? "" : entry.previousHeight(),
-                    entry.width(), entry.height(), metrics));
+                    entry.width(), entry.height(), coordinate(entry.captureX()), coordinate(entry.captureY()), metrics));
         }
         Path target = destination.toAbsolutePath().normalize();
         Files.createDirectories(target.getParent());
@@ -99,7 +99,7 @@ public final class ScreenshotComparisonReport {
     }
 
     static void record(Path destination, BufferedImage candidate, BufferedImage previous, Difference difference,
-                       int tolerance, boolean force, boolean updated) {
+                       int tolerance, boolean force, boolean updated, Double captureX, Double captureY) {
         ScreenshotComparisonReport report = CURRENT.get();
         if (report != null) {
             String status = force ? "FORCED" : previous == null ? "CREATED"
@@ -107,9 +107,13 @@ public final class ScreenshotComparisonReport {
             synchronized (report) {
                 report.entries.add(new Entry(destination.toAbsolutePath().normalize(), status, tolerance, force,
                         previous == null ? 0 : previous.getWidth(), previous == null ? 0 : previous.getHeight(),
-                        candidate.getWidth(), candidate.getHeight(), difference));
+                        candidate.getWidth(), candidate.getHeight(), captureX, captureY, difference));
             }
         }
+    }
+
+    private static String coordinate(Double value) {
+        return value == null ? "" : Double.toString(value);
     }
 
     private static String quote(String value) {
@@ -121,6 +125,7 @@ public final class ScreenshotComparisonReport {
     }
 
     private record Entry(Path destination, String status, int tolerance, boolean forced,
-                         int previousWidth, int previousHeight, int width, int height, Difference difference) {
+                         int previousWidth, int previousHeight, int width, int height, Double captureX, Double captureY,
+                         Difference difference) {
     }
 }

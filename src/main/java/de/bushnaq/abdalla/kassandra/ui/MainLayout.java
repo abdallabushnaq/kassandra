@@ -95,11 +95,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public static final String             ID_USER_MENU                    = "main-layout-user-menu";
     public static final String             ID_USER_MENU_ABOUT              = "main-layout-user-menu-about";
     public static final String             ID_USER_MENU_AUDIT              = "main-layout-user-menu-audit";
+    public static final String             ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
     /**
      * Stable ID for the administrator's identity-provider menu entry.
      */
     public static final String             ID_USER_MENU_IDENTITY_PROVIDERS = "main-layout-user-menu-identity-providers";
-    public static final String             ID_USER_MENU_AVAILABILITY       = "main-layout-user-menu-availability";
     public static final String             ID_USER_MENU_LOCATION           = "main-layout-user-menu-location";
     public static final String             ID_USER_MENU_LOGOUT             = "main-layout-user-menu-logout";
     public static final String             ID_USER_MENU_MANAGE_SETTINGS    = "main-layout-user-menu-manage-settings";
@@ -181,7 +181,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("top", "0")
                 .set("right", "0")
                 .set("width", "100%")
-                .set("filter", "brightness(0.7) saturate(0.5)")
+//                .set("filter", "brightness(0.7) saturate(0.5)")
                 .set("pointer-events", "none")
                 .set("border-radius", "0");
 
