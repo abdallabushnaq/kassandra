@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Test helper class for interacting with the Product UI components.
  * <p>
@@ -57,14 +59,23 @@ public class AboutViewTester extends AbstractViewTester {
      * <p>
      * Opens the product list URL and handles the OIDC login redirect to Keycloak.
      *
-     * @param username the username to use for OIDC authentication
-     * @param password the password to use for OIDC authentication
+     * @param username            the username to use for OIDC authentication
+     * @param password            the password to use for OIDC authentication
+     * @param screenshotFileName  optional login screenshot destination
+     * @param recordingFolderName destination folder for the recording
+     * @param testName            name used for the recording
+     * @throws Exception when login or screenshot capture fails
      */
     public void login(String username, String password, String screenshotFileName, String recordingFolderName, String testName) throws Exception {
         try {
-            // Navigate to the application login page
-//            System.out.println("OIDC Login: Navigating to login page");
+            // Navigate to the application login page.
+            // If a previous Keycloak session is still active, log out first so a different user can
+            // actually complete a fresh OIDC login instead of silently re-authenticating.
             seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+            if (seleniumHandler.isElementPresent(By.id(MainLayout.ID_USER_MENU))) {
+                logout();
+                seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+            }
             seleniumHandler.startRecording(recordingFolderName, testName);
 //            System.out.println("OIDC Login: Current URL after navigation: " + seleniumHandler.getCurrentUrl());
             // Check if the OIDC login button is present
@@ -96,17 +107,19 @@ public class AboutViewTester extends AbstractViewTester {
                     seleniumHandler.pushImplicitWait(Duration.ofSeconds(1));
                     boolean isReAuthentication = seleniumHandler.isElementPresent(By.id("kc-attempted-username"));
                     seleniumHandler.popImplicitWait();
-                    if (isReAuthentication) {
-                        // Username is pre-filled; only the password is required.
-                        WebElement passwordField = seleniumHandler.findElement(By.id("password"));
-                        seleniumHandler.typeIntoElement(passwordField, password);
-                    } else {
-                        // Normal login: fill in both username and password.
-                        WebElement usernameField = seleniumHandler.findElement(By.id("username"));
-                        WebElement passwordField = seleniumHandler.findElement(By.id("password"));
-                        seleniumHandler.typeIntoElement(usernameField, username);
-                        seleniumHandler.typeIntoElement(passwordField, password);
+                    if (isReAuthentication
+                            && !username.equals(seleniumHandler.findElement(By.id("kc-attempted-username")).getDomProperty("value"))) {
+                        // Keycloak's remembered username is read-only; restart login to switch accounts.
+                        seleniumHandler.click("reset-login");
+                        seleniumHandler.waitForElementToBeClickable("username");
+                        isReAuthentication = false;
                     }
+                    if (!isReAuthentication) {
+                        WebElement usernameField = seleniumHandler.findElement(By.id("username"));
+                        seleniumHandler.typeIntoElement(usernameField, username);
+                    }
+                    WebElement passwordField = seleniumHandler.findElement(By.id("password"));
+                    seleniumHandler.typeIntoElement(passwordField, password);
 
                     // Click login button with mouse movement
                     WebElement loginButton = seleniumHandler.findElement(By.id("kc-login"));
@@ -115,6 +128,8 @@ public class AboutViewTester extends AbstractViewTester {
                     // Wait for redirect back
 //                    System.out.println("OIDC Login: Waiting for redirect back to application");
                     seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
+                    assertEquals(username, seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU))
+                            .getText().lines().findFirst().orElseThrow(), "OIDC login must authenticate the requested user");
 //                    System.out.println("OIDC Login: Successfully logged in with OIDC");
                 } catch (Exception e) {
                     log.error("OIDC Login: Error during Keycloak login: " + e.getMessage());
@@ -131,6 +146,9 @@ public class AboutViewTester extends AbstractViewTester {
         }
     }
 
+    /**
+     * Logs out of the application and waits for the provider sign-in button.
+     */
     public void logout() {
         seleniumHandler.click(MainLayout.ID_USER_MENU);
         seleniumHandler.click(MainLayout.ID_USER_MENU_LOGOUT);

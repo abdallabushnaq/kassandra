@@ -75,7 +75,9 @@ public class OidcSecurityConfig {
     @Order(3)
     public SecurityFilterChain oidcSecurityFilterChain(HttpSecurity http) throws Exception {
         logger.info("Configuring dynamic OAuth2/OIDC security for Vaadin UI");
-        http.with(vaadin(), vaadin -> vaadin.loginView("/login", "/ui/login"));
+        http.with(vaadin(), vaadin -> vaadin
+                .loginView("/login", "/ui/login")
+                .logoutSuccessHandler(oidcLogoutSuccessHandler()));
 
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/").permitAll()
@@ -116,8 +118,7 @@ public class OidcSecurityConfig {
                 .defaultSuccessUrl("/ui/" + SetupView.ROUTE, true)
                 .permitAll());
         http.logout(logout -> logout
-                .logoutRequestMatcher(request -> "/logout".equals(request.getServletPath()))
-                .logoutSuccessHandler(oidcLogoutSuccessHandler()));
+                .logoutRequestMatcher(request -> "/logout".equals(request.getServletPath())));
 
         return http.build();
     }

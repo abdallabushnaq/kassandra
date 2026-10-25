@@ -26,6 +26,7 @@ import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.avatar.AvatarVariant;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
@@ -69,7 +70,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
-import static com.vaadin.flow.theme.lumo.LumoUtility.*;
+import static com.vaadin.flow.theme.lumo.LumoUtility.Margin;
+import static com.vaadin.flow.theme.lumo.LumoUtility.Width;
 
 @RolesAllowed({"ADMIN", "USER"})
 //@JsModule("/tooltips.js")
@@ -182,7 +184,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("top", "0")
                 .set("right", "0")
                 .set("width", "100%")
-//                .set("filter", "brightness(0.7) saturate(0.5)")
+                .set("filter", "brightness(0.7) saturate(0.2)")
                 .set("pointer-events", "none")
                 .set("border-radius", "0");
 
@@ -218,6 +220,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
         pageHeaderBackground.setVisible(true);
         pageHeaderBackground.getStyle().set("background-image", "url('" + backgroundUrl + "')");
+        if (dark) {
+            pageHeaderBackground.getStyle().set("filter", "brightness(0.3) saturate(0.5)");
+        } else {
+            pageHeaderBackground.getStyle().set("filter", "brightness(0.9) saturate(0.5)");
+        }
         updateHeaderTextColorFromImage(backgroundUrl);
     }
 
@@ -226,7 +233,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             return;
         }
         boolean dark            = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        String  glassBackground = dark ? "rgba(15, 15, 15, 0.64)" : "rgba(255, 255, 255, 50%)";
+        String  glassBackground = dark ? "rgba(0, 0, 0, 50%)" : "rgba(255, 255, 255, 50%)";
         String  textColor       = dark ? "rgba(255, 255, 255, 0.96)" : "rgba(17, 17, 17, 0.92)";
 
         // apply background style to menu text
@@ -278,8 +285,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         setHeaderBackgroundUrls(null, null);
         setBreadcrumbsVisible(true);
-        Class<? extends Component> view = event.getNavigationTarget().asSubclass(Component.class);
-        PageTitle pageTitle = view.getAnnotation(PageTitle.class);
+        Class<? extends Component> view      = event.getNavigationTarget().asSubclass(Component.class);
+        PageTitle                  pageTitle = view.getAnnotation(PageTitle.class);
         breadcrumbs.clear();
         breadcrumbs.addItem(pageTitle == null ? view.getSimpleName() : pageTitle.value(), view);
         final String pathToMatch = event.getLocation().getPath();
@@ -326,18 +333,22 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private Div createBreadcrumbs() {
         breadcrumbs.setId(ID_BREADCRUMBS);
         Div breadcrumbContainer = new Div(breadcrumbs);
-        breadcrumbContainer.addClassNames(
-                Padding.Horizontal.MEDIUM,
-                Padding.Vertical.XSMALL,
-                Width.FULL
-        );
-        breadcrumbContainer.getStyle().set("background-color", "transparent");
-
+//        breadcrumbContainer.addClassNames(
+//                Padding.Horizontal.MEDIUM,
+//                Padding.Vertical.XSMALL,
+//                Width.FULL
+//        );
+        breadcrumbContainer.addClassNames(Width.FULL);
+        breadcrumbContainer.getStyle()
+                .set("background-color", "transparent")
+                .set("padding", "0")
+                .set("margin", "0");
         return breadcrumbContainer;
     }
 
     private Div createHeaderBackground() {
         Div banner = new Div();
+        banner.setId("main-layout-header-background");
         banner.addClassNames(Width.FULL);
         banner.getStyle()
                 .set("height", "100%")
@@ -426,7 +437,12 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             icon.getStyle().setMarginRight("4px");
 
             Span label = new Span(menuEntry.title());
-            label.getStyle().set("font-size", "var(--lumo-font-size-xs)");
+            label.getStyle()
+                    .set("font-size", "var(--lumo-font-size-xs)")
+                    .set("margin", "1px")
+                    .set("padding", "1px")
+                    .set("font-weight", "600")
+                    .set("border-radius", "4px");
 
             HorizontalLayout tabLayout = new HorizontalLayout(icon, label);
             tabLayout.setId(ID_TAB_BASE + menuEntry.path().replaceFirst("^/", ""));
@@ -549,27 +565,35 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         userMenu.setId(ID_USER_MENU);
         userMenu.getStyle()
                 .set("background-color", "transparent")
-                .set("border-radius", "0")
                 .set("box-shadow", "none")
-                .set("backdrop-filter", "none");
+                .set("backdrop-filter", "none")
+                .set("padding", "1px")
+                .set("border-radius", "6px")
+                .set("font-weight", "600");
 
         var userMenuItem = userMenu.addItem(avatarComponent);
+        styleVisibleUserMenuItem(userMenuItem);
         userMenuItem.add(userEmail);
 //        userMenuItem.setId(ID_USER_MENU_ITEM);
 
         var availabilityItem = userMenuItem.getSubMenu().addItem("Manage Availability", e -> navigateToAvailability(userEmail));
+        styleVisibleUserMenuItem(availabilityItem);
         availabilityItem.setId(ID_USER_MENU_AVAILABILITY);
 
         var locationItem = userMenuItem.getSubMenu().addItem("Manage Location", e -> navigateToLocation(userEmail));
+        styleVisibleUserMenuItem(locationItem);
         locationItem.setId(ID_USER_MENU_LOCATION);
 
         var offDaysItem = userMenuItem.getSubMenu().addItem("Manage Off Days", e -> navigateToOffDays(userEmail));
+        styleVisibleUserMenuItem(offDaysItem);
         offDaysItem.setId(ID_USER_MENU_OFF_DAYS);
 
         var workWeekItem = userMenuItem.getSubMenu().addItem("Manage Work Week", e -> navigateToUserWorkWeek(userEmail));
+        styleVisibleUserMenuItem(workWeekItem);
         workWeekItem.setId(ID_USER_MENU_WORK_WEEK);
 
         var viewProfileItem = userMenuItem.getSubMenu().addItem("View Profile", e -> navigateToProfile(userEmail));
+        styleVisibleUserMenuItem(viewProfileItem);
         viewProfileItem.setId(ID_USER_MENU_VIEW_PROFILE);
 
         // Add "Manage User Groups" and "Manage Users" menu items for admins only
@@ -578,21 +602,27 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
             var identityProvidersItem = userMenuItem.getSubMenu().addItem("Identity Providers",
                     e -> UI.getCurrent().navigate(OidcProviderManagementView.class));
+            styleVisibleUserMenuItem(identityProvidersItem);
             identityProvidersItem.setId(ID_USER_MENU_IDENTITY_PROVIDERS);
 
             var manageUserGroupsItem = userMenuItem.getSubMenu().addItem("Manage User Groups", e -> navigateToUserGroups());
+            styleVisibleUserMenuItem(manageUserGroupsItem);
             manageUserGroupsItem.setId(ID_USER_MENU_MANAGE_USER_GROUPS);
 
             var manageUsersItem = userMenuItem.getSubMenu().addItem("Manage Users", e -> navigateToUsers());
+            styleVisibleUserMenuItem(manageUsersItem);
             manageUsersItem.setId(ID_USER_MENU_MANAGE_USERS);
 
             var manageWorkWeeksItem = userMenuItem.getSubMenu().addItem("Manage Work Weeks", e -> navigateToWorkWeeks());
+            styleVisibleUserMenuItem(manageWorkWeeksItem);
             manageWorkWeeksItem.setId(ID_USER_MENU_MANAGE_WORK_WEEKS);
 
             var manageSettingsItem = userMenuItem.getSubMenu().addItem("Manage Settings", e -> UI.getCurrent().navigate(ServerSettingsView.class));
+            styleVisibleUserMenuItem(manageSettingsItem);
             manageSettingsItem.setId(ID_USER_MENU_MANAGE_SETTINGS);
 
             var auditItem = userMenuItem.getSubMenu().addItem("Audit", e -> UI.getCurrent().navigate(AuditLogView.class));
+            styleVisibleUserMenuItem(auditItem);
             auditItem.setId(ID_USER_MENU_AUDIT);
         }
 
@@ -601,9 +631,11 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
 
         var aboutItem = userMenuItem.getSubMenu().addItem("About", e -> UI.getCurrent().navigate(AboutView.class));
+        styleVisibleUserMenuItem(aboutItem);
         aboutItem.setId(ID_USER_MENU_ABOUT);
 
         var logoutItem = userMenuItem.getSubMenu().addItem("Logout", e -> logout());
+        styleVisibleUserMenuItem(logoutItem);
         logoutItem.setId(ID_USER_MENU_LOGOUT);
 
         return userMenu;
@@ -838,6 +870,14 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         contentSplit.getStyle().set("position", "relative").set("z-index", "1");
         closeHistoryDrawer();
         setContent(contentSplit);
+    }
+
+    private void styleVisibleUserMenuItem(MenuItem menuItem) {
+        menuItem.getElement().getStyle()
+                .set("margin", "1px")
+                .set("padding", "1px")
+                .set("font-weight", "600")
+                .set("border-radius", "4px");
     }
 
     private void toggleHistoryDrawer() {

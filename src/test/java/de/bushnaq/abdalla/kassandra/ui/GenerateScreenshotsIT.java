@@ -47,7 +47,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -218,7 +217,16 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 //                        2, 2,
 //                        1, 5,
 //                        5, 8, 8, 8, 6, 7)//official demo data
-                new RandomCase(3,
+//                new RandomCase(3,
+//                        OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
+//                        LocalDate.parse("2026-02-01"),
+//                        Duration.ofDays(10),
+//                        6, 6,
+//                        1, 3,
+//                        1, 3,
+//                        1, 3,
+//                        5, 8, 8, 4, 6, 7)//official screenshot data
+                new RandomCase(4,
                         OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
                         LocalDate.parse("2026-02-01"),
                         Duration.ofDays(10),
@@ -226,7 +234,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                         1, 3,
                         1, 3,
                         1, 3,
-                        5, 8, 8, 4, 6, 7)//official screenshot data
+                        5, 5, 8, 4, 5, 7)//official screenshot data
         };
         return Arrays.stream(randomCases).toList();
     }
@@ -300,7 +308,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of {@link WorklogDialog} and {@link TaskDialog} from the Active Sprints view.
      * <p>
-     * Selects the active Dublin sprint and an in-progress task assigned to the signed-in user.
+     * Selects the active Barcelona sprint and an in-progress task assigned to the signed-in user.
      * Existing worklogs are edited and deleted only as previews; both dialogs are cancelled.
      *
      * @param folder destination folder for the screenshot files
@@ -308,12 +316,12 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private void takeActiveSprintsDialogScreenshots(String folder) throws IOException {
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
-                .filter(s -> "Dublin".equals(s.getName()) && s.getStatus() == Status.STARTED)
+                .filter(s -> "Barcelona".equals(s.getName()) && s.getStatus() == Status.STARTED)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No started Dublin sprint found"));
+                .orElseThrow(() -> new IllegalStateException("No started Barcelona sprint found"));
         List<Task>    tasks       = peg.taskApi.getAll(sprint.getId());
         List<Worklog> worklogs    = peg.worklogApi.getAll(sprint.getId());
-        User          currentUser = peg.userApi.getByEmail("christopher.paul@kassandra.org").orElseThrow();
+        User          currentUser = peg.userApi.getByEmail("randy.asmus@kassandra.org").orElseThrow();
         Task leafTask = tasks.stream()
                 .filter(t -> !t.isMilestone() && t.getParentTaskId() != null && t.getTaskStatus().equals(TaskStatus.IN_PROGRESS))
                 .filter(t -> currentUser.getId().equals(t.getResourceId()))
@@ -1033,9 +1041,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //AboutView
         //-----------------
-        aboutViewTester.login("christopher.paul@kassandra.org", "password", null,
-                testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         seleniumHandler.setHelpScreenshotTheme(eTheme);
+
         // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
         new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
                 .withMessage("About View banner did not finish loading before screenshot capture")
@@ -1128,13 +1136,17 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         activeSprintsTester.switchToActiveSprints();
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-        takeActiveSprintsElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+//        takeActiveSprintsElementScreenshots(eTheme);
+//        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+        aboutViewTester.logout();
+        aboutViewTester.login("randy.asmus@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeActiveSprintsDialogScreenshots(folder);
 
         //-----------------
         //UserListView
         //-----------------
+        aboutViewTester.logout();
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeUserElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
@@ -1208,6 +1220,40 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitUntilBrowserClosed(1000);
     }
 
+    private void takeScrollableScreenshots(String id, String filePrefix) {
+        WebElement scroller = seleniumHandler.findElement(By.id(id));
+        seleniumHandler.executeJavaScript("arguments[0].scrollTop = 0;", scroller);
+        int part = 1;
+        while (true) {
+            seleniumHandler.takeScreenShot(filePrefix + (part == 1 ? "" : "-" + part) + ".png");
+            boolean advanced = Boolean.TRUE.equals(seleniumHandler.executeJavaScript(
+                    "const e = arguments[0]; const before = e.scrollTop; e.scrollTop += e.clientHeight; return e.scrollTop > before;",
+                    scroller));
+            if (!advanced)
+                break;
+            part++;
+        }
+    }
+
+    private void takeServerSettingsElementScreenshots(ETheme theme, String category, List<ServerSetting> settings) throws IOException {
+        takeHelpElements(ServerSettingsView.class, ServerSettingsView.PAGE_TITLE_ID, theme,
+                ServerSettingsView.CATEGORY_BUTTON_PREFIX + category, ServerSettingsView.CATEGORY_TITLE_PREFIX + category);
+        ServerSetting definition = settings.stream().filter(setting -> category.equals(setting.getCategoryKey())).findFirst().orElseThrow();
+        if (definition.isCategoryAllowDisable()) {
+            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CATEGORY_ENABLED_PREFIX + category);
+        }
+        for (ServerSetting setting : settings.stream().filter(candidate -> category.equals(candidate.getCategoryKey())).toList()) {
+            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.SETTING_FIELD_PREFIX + setting.getKey());
+            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.SAVE_BUTTON_PREFIX + setting.getKey());
+            if (setting.isTestable()) {
+                seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.TEST_BUTTON_PREFIX + setting.getKey());
+            }
+            if (setting.isSecret() && setting.isConfigured()) {
+                seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CLEAR_BUTTON_PREFIX + setting.getKey());
+            }
+        }
+    }
+
     /**
      * Captures the shared page header and changed heading controls without running the showcase.
      *
@@ -1241,40 +1287,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             }
         } finally {
             aboutViewTester.logout();
-        }
-    }
-
-    private void takeScrollableScreenshots(String id, String filePrefix) {
-        WebElement scroller = seleniumHandler.findElement(By.id(id));
-        seleniumHandler.executeJavaScript("arguments[0].scrollTop = 0;", scroller);
-        int part = 1;
-        while (true) {
-            seleniumHandler.takeScreenShot(filePrefix + (part == 1 ? "" : "-" + part) + ".png");
-            boolean advanced = Boolean.TRUE.equals(seleniumHandler.executeJavaScript(
-                    "const e = arguments[0]; const before = e.scrollTop; e.scrollTop += e.clientHeight; return e.scrollTop > before;",
-                    scroller));
-            if (!advanced)
-                break;
-            part++;
-        }
-    }
-
-    private void takeServerSettingsElementScreenshots(ETheme theme, String category, List<ServerSetting> settings) throws IOException {
-        takeHelpElements(ServerSettingsView.class, ServerSettingsView.PAGE_TITLE_ID, theme,
-                ServerSettingsView.CATEGORY_BUTTON_PREFIX + category, ServerSettingsView.CATEGORY_TITLE_PREFIX + category);
-        ServerSetting definition = settings.stream().filter(setting -> category.equals(setting.getCategoryKey())).findFirst().orElseThrow();
-        if (definition.isCategoryAllowDisable()) {
-            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CATEGORY_ENABLED_PREFIX + category);
-        }
-        for (ServerSetting setting : settings.stream().filter(candidate -> category.equals(candidate.getCategoryKey())).toList()) {
-            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.SETTING_FIELD_PREFIX + setting.getKey());
-            seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.SAVE_BUTTON_PREFIX + setting.getKey());
-            if (setting.isTestable()) {
-                seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.TEST_BUTTON_PREFIX + setting.getKey());
-            }
-            if (setting.isSecret() && setting.isConfigured()) {
-                seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CLEAR_BUTTON_PREFIX + setting.getKey());
-            }
         }
     }
 

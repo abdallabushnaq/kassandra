@@ -38,17 +38,22 @@ body {
 }
 
 
-/* Dark theme specific styles */
 .navbar-custom {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.4);
 }
 
 #main-layout-breadcrumbs {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.4);
 }
 
+/* Dark theme specific styles */
 [theme~="dark"] .navbar-custom {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.2);
+
+}
+
+[theme~="dark"] #main-layout-breadcrumbs {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 [theme~="dark"] .navbar-custom vaadin-tab[selected] {
