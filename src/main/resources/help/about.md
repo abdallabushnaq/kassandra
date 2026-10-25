@@ -49,5 +49,5 @@ neither link saves or exports your server's planning data.
 
 ![About help button](images/help/light/AboutView/about-help-button.png)
 
-The **question-mark button beside Kassandra** opens this help. Use the main
+The **question-mark button at the right of the page header** opens this help. Use the main
 navigation to return to work, or the account menu to open your profile.

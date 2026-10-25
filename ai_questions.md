@@ -102,13 +102,36 @@ e.g. the buttons should be on the right side.
 
 # Optimizing Screenshots
 
-GenerateScreenshotsIT currently generates screenshots for all pages. It uses a tolerance level of 4 (I already raised it
-to 8).
-This tolerance level is not enough. If we generate all screenshots with same database, it still overwrites many
-screenshots.
-We need to collect the maximum level of discrepancy we found in a pair of screenshots and print this out at the end of
-the test so that we can see how far we need to go with our tolerance level.
-We should also list the png with that high discrepancy.
-Maybe we should keep a sorted list that we can export to a file so that we can analyze the situation, just in case some
-images are actually different. After we take a look at the result, we will decide how to better handle this situation.
-Maybe we need to add a new tolerance level, e.g. 16 or 32, or maybe we need to change the way we check the differences.
+Running GenerateScreenshotsIT still produces 21 screenshots that are different anough to be saved on disk.
+We want to try to stabilize the generation of screenshots, so that no new versions are generated everytime we run the
+test, but still want to make sure the screenshots we have represent the current state of the software.
+
+I can see in the report screenshot-discrepancies.csv that 24 screenshots where saved becuase of a discrepancy between
+the old version.
+if i take a look at the image and compare it with the last verson in git, they seem to be identical.
+
+can you try to figure out why these images still differ everytime they are generated?
+can we stabilize this?
+
+# Prevent Video Overwrite
+
+In GenerateScreenshotsIT, it seems that we start and stop the screen capturing during the test. Everytime we do that, we
+overwrite the existing video. The screen capturing should be started and stopped only one time during the test covering
+all the tests, so that we can later take a look at what was done and pinpoint issues.
+We seem to stop the recording by calling seleniumHandler.destroy () (commented with: A local logout can leave Keycloak
+SSO cookies; isolate both origins between accounts.) and restart it by logging into kassandra.
+Can we remove the cookies without having to call destroy?
+Worst case we add an optional parameter boolean stopRecording.
+
+# Updating wiki pages
+
+1. All the screenshots we take and store in kassandra.wiki are suppose to show up on one of the markdown pages in the
+   wiki. We need to make sure it is referenced on one of the pages.
+
+# Resetting header background image when moving to a different page
+
+some pages like VersionListView, FeatureListView, SprintListView, ActiveSprints, Backlog, QualityBoard, SprintListView
+all use a method updateHeaderForSelection to update the header background image, calling setSmartHeaderBackgroundUrls.
+The problem with this is that, this header image represents the currently selected product, feature or sprint, so if we
+move to a different page, that smart header backgroundimage should be removed.
+What would be your proposal to solve this?

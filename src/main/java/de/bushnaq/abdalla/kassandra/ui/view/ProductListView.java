@@ -140,10 +140,10 @@ public class ProductListView extends AbstractMainGrid<Product> implements AfterN
         aiToggleButton.setId(PRODUCT_AI_PANEL_BUTTON);
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
-        addHeaderButton(aiToggleButton);
+        getSmartHeader().addActions(aiToggleButton);
 
         HelpDrawer helpDrawer = new HelpDrawer("Products", "help/product-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
         add(helpDrawer);
 
         // Chat panel (session-aware: reuses conversationId + replays history on F5)

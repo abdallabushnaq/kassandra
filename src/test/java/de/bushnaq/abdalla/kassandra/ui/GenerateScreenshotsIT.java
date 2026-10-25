@@ -1208,6 +1208,42 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitUntilBrowserClosed(1000);
     }
 
+    /**
+     * Captures the shared page header and changed heading controls without running the showcase.
+     *
+     * @throws Exception when navigation or screenshot capture fails
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void takeSmartHeaderScreenshots() throws Exception {
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        try {
+            for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+                seleniumHandler.setWindowSize(1600, 1000);
+                navigateTo(ProductListView.ROUTE);
+                seleniumHandler.setHelpScreenshotTheme(theme);
+                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
+                seleniumHandler.setWindowSize(480, 1000);
+                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
+                seleniumHandler.setWindowSize(1600, 1000);
+
+                navigateTo(AboutView.ROUTE);
+                seleniumHandler.prepareHelpScreenshots(AboutView.ABOUT_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(AboutView.class, AboutView.ABOUT_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
+
+                navigateTo("profile");
+                seleniumHandler.prepareHelpScreenshots(UserProfileView.PROFILE_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(UserProfileView.class, UserProfileView.SAVE_PROFILE_BUTTON);
+                seleniumHandler.takeHelpElementScreenshot(UserProfileView.class, UserProfileView.HELP_BUTTON_ID);
+            }
+        } finally {
+            aboutViewTester.logout();
+        }
+    }
+
     private void takeScrollableScreenshots(String id, String filePrefix) {
         WebElement scroller = seleniumHandler.findElement(By.id(id));
         seleniumHandler.executeJavaScript("arguments[0].scrollTop = 0;", scroller);

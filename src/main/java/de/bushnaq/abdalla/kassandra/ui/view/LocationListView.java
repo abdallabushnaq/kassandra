@@ -115,7 +115,7 @@ public class LocationListView extends AbstractMainGrid<Location> implements Befo
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
         HelpDrawer helpDrawer = new HelpDrawer("Location", "help/location-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
     }
 

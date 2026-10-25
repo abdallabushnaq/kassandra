@@ -58,10 +58,18 @@ existing smart header:
 ```java
 HelpDrawer helpDrawer = new HelpDrawer("Products", "help/product-list.md");
 
-addHeaderButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
+getSmartHeader().setHelpButton(helpDrawer.createToggleButton(PRODUCT_HELP_BUTTON));
 
 add(helpDrawer);
 ```
+
+`AbstractMainGrid` creates a shared `SmartHeader`; other MainLayout views compose
+one directly without changing their page superclass. Use its named slots:
+`setSearch`, `addFilters`, `setSummary`, `addActions`, and `setHelpButton`.
+The icon/avatar and title come first, followed by search, filters, and summary;
+actions are right-aligned and the dedicated Help slot stays last. On narrow
+screens, controls wrap below the title. Keep form-local and chart-local actions
+with their content, and keep drawer ownership in the view rather than the header.
 
 Use a stable, page-specific button ID. The drawer derives its own ID from it
 and uses a native dialog title. Add Javadoc to any new public constants/methods. Do not automatically

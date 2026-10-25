@@ -31,8 +31,6 @@ import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
@@ -52,21 +50,15 @@ public abstract class AbstractMainGrid<T> extends Main {
     private       String              darkHeaderBackgroundUrl;
     private final ListDataProvider<T> dataProvider;
     private final Grid<T>             grid;
-    /**
-     * Holds a reference to the last-built smart-header's right layout so that
-     * callers can append extra buttons after construction.
-     */
     private final VerticalLayout      gridPanelWrapper;
     /**
      * Reference to the {@code H2} title element of the most recently built smart header.
      * Subclasses may call {@code getHeaderPageTitle()} to update the title text dynamically.
      */
     private       H2                  headerPageTitle;
-    private       HorizontalLayout    lastHeaderLeftLayout;
-    private       HorizontalLayout    lastHeaderRightLayout;
     private       String              lightHeaderBackgroundUrl;
-    private       HorizontalLayout    smartHeader;
-    private       HorizontalLayout    smartHeaderTitleLayout;
+    private       SmartHeader         smartHeader;
+    private       Registration        rowCounterRegistration;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
      */
@@ -108,57 +100,6 @@ public abstract class AbstractMainGrid<T> extends Main {
     }
 
     /**
-     * Appends an extra button to the right side of the most recently created
-     * smart header.  Call this immediately after {@code createSmartHeader(...)}.
-     *
-     * @param button the button to add
-     */
-    public void addHeaderButton(Button button) {
-        if (lastHeaderRightLayout != null) {
-            lastHeaderRightLayout.add(button);
-        }
-    }
-
-    /**
-     * Inserts a component into the right side of the most recently created smart
-     * header, placed immediately before the create button (the last component added
-     * by {@code createSmartHeader}).  Use this to add filter widgets such as a
-     * {@link com.vaadin.flow.component.combobox.ComboBox} next to the existing
-     * search field.  Call this immediately after {@code createSmartHeader(...)}.
-     *
-     * @param component the component to insert
-     */
-    public void addHeaderComponent(Component component) {
-        if (lastHeaderRightLayout != null) {
-            int count = lastHeaderRightLayout.getComponentCount();
-            // Insert before the last component (the create button)
-            lastHeaderRightLayout.addComponentAtIndex(Math.max(0, count - 1), component);
-        }
-    }
-
-    /**
-     * Appends a component to the left side of the most recently created smart header.
-     * Call this immediately after {@code createSmartHeader(...)} when the component is a
-     * filter or selector that should stay aligned with the page title and search controls.
-     *
-     * @param component the component to add
-     */
-    public void addHeaderLeftComponent(Component component) {
-        if (lastHeaderLeftLayout != null) {
-            lastHeaderLeftLayout.add(component);
-        }
-    }
-
-    private void applySmartHeaderBackground(boolean dark) {
-        if (smartHeader == null) {
-            return;
-        }
-        // The themed page background now lives in MainLayout directly, just below the breadcrumbs.
-        // Keep the smart header itself visually clean so the image can extend higher in the stack.
-        VaadinUtil.applyHeaderBackground(smartHeader, headerPageTitle, null, smartHeaderTitleLayout, lastHeaderRightLayout);
-    }
-
-    /**
      * Creates a standardized header layout with a title, icon, smart global filter, and create button.
      * The smart filter supports both simple text search and natural language queries.
      *
@@ -173,9 +114,9 @@ public abstract class AbstractMainGrid<T> extends Main {
      * @param aiFilterService          Natural language search service
      * @param mapper                   JsonMapper for JSON serialization
      * @param entityType               The type of entity being searched (e.g., "Product", "Version")
-     * @return A configured HorizontalLayout containing the header elements
+     * @return the configured shared header
      */
-    private <T> HorizontalLayout createSmartHeader(
+    private <T> SmartHeader createSmartHeader(
             String title,
             String titleId,
             Component titleIcon,
@@ -188,34 +129,17 @@ public abstract class AbstractMainGrid<T> extends Main {
             JsonMapper mapper,
             String entityType) {
 
-        HorizontalLayout headerLayout = new HorizontalLayout();
+        SmartHeader headerLayout = new SmartHeader(title, titleId, titleIcon);
+        headerLayout.setFallbackIcon(switch (entityType) {
+            case "Product" -> VaadinIcon.FACTORY;
+            case "Version" -> VaadinIcon.ARCHIVE;
+            case "Feature" -> VaadinIcon.LIGHTBULB;
+            case "Sprint" -> VaadinIcon.CALENDAR;
+            default -> VaadinIcon.GRID;
+        });
         headerLayout.setId("page-layout");
-        headerLayout.setWidthFull();
-        headerLayout.setPadding(false);
-        headerLayout.setSpacing(false);
-        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         smartHeader = headerLayout;
-
-        // Create page title with icon
-        HorizontalLayout titleLayout = new HorizontalLayout();
-        titleLayout.setSpacing(false);
-        titleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        smartHeaderTitleLayout = titleLayout;
-
-        H2 pageTitle = new H2(title);
-        headerPageTitle = pageTitle;
-        pageTitle.setId(titleId);
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-        if (titleIcon != null)
-            titleLayout.add(titleIcon, pageTitle);
-        else
-            titleLayout.add(pageTitle);
-
-        HorizontalLayout leftLayout = new HorizontalLayout();
-        leftLayout.setSpacing(true);
-        leftLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        leftLayout.add(titleLayout);
+        headerPageTitle = headerLayout.getPageTitle();
 
         // Add smart global filter to the left side so filters stay with the title.
         if (globalFilterId != null && grid != null) {
@@ -227,52 +151,57 @@ public abstract class AbstractMainGrid<T> extends Main {
                             mapper,
                             entityType
                     );
-            smartFilter.getStyle().set("margin-right", "var(--lumo-space-m)");
-            leftLayout.add(smartFilter);
+            headerLayout.setSearch(smartFilter);
         }
 
+        if (rowCounterRegistration != null) {
+            rowCounterRegistration.remove();
+            rowCounterRegistration = null;
+        }
         // Add row counter to the left side before the action controls.
         if (grid != null && rowCounterId != null) {
             Span rowCounter = new Span();
             rowCounter.setId(rowCounterId);
-            rowCounter.getStyle().set("margin-right", "var(--lumo-space-m)");
             rowCounter.getStyle().set("color", "var(--lumo-secondary-text-color)");
 
             // Initial counter update
             updateRowCounter(grid, rowCounter);
 
-            DataProvider<T, ?> dataProvider = grid.getDataProvider();
-
             // Register a ComponentEventListener for grid's data changes, will be triggered when filtering
-            grid.getDataProvider().addDataProviderListener(event -> {
+            rowCounterRegistration = grid.getDataProvider().addDataProviderListener(event -> {
                 updateRowCounter(grid, rowCounter);
             });
 
-            leftLayout.add(rowCounter);
+            headerLayout.setSummary(rowCounter);
         }
-
-        HorizontalLayout rightLayout = new HorizontalLayout();
-        rightLayout.setSpacing(true);
-        rightLayout.setAlignItems(FlexComponent.Alignment.CENTER);
 
         Button createButton = new Button("Create", new Icon(VaadinIcon.PLUS));
         createButton.setId(createButtonId);
         createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SMALL);
         createButton.addClickListener(e -> createButtonClickHandler.onClick());
 
-        rightLayout.add(createButton);
-        headerLayout.add(leftLayout, rightLayout);
-        //        headerLayout.getStyle().set("padding-bottom", "var(--lumo-space-m)");
-        // Store for addHeaderButton()/addHeaderLeftComponent() callers.
-        lastHeaderLeftLayout  = leftLayout;
-        lastHeaderRightLayout = rightLayout;
+        headerLayout.addActions(createButton);
         return headerLayout;
     }
 
     /**
-     * Convenience methods that use VaadinIcon instead of Icon with smart global filter
+     * Creates a shared header for the supplied grid.
+     *
+     * @param <T> grid item type
+     * @param title page title
+     * @param titleId title identifier
+     * @param titleIcon page icon
+     * @param createButtonId create action identifier
+     * @param createButtonClickHandler create action
+     * @param grid grid to filter and count
+     * @param rowCounterId counter identifier
+     * @param globalFilterId search identifier
+     * @param aiFilterService natural-language filter service
+     * @param mapper JSON mapper
+     * @param entityType searchable entity type
+     * @return configured shared header
      */
-    public <T> HorizontalLayout createSmartHeader(
+    public <T> SmartHeader createSmartHeader(
             String title,
             String titleId,
             VaadinIcon titleIcon,
@@ -288,9 +217,21 @@ public abstract class AbstractMainGrid<T> extends Main {
     }
 
     /**
-     * Convenience methods that use VaadinIcon instead of Icon with smart global filter (instance method)
+     * Creates a shared header for this view's grid.
+     *
+     * @param title page title
+     * @param titleId title identifier
+     * @param titleIcon page icon
+     * @param createButtonId create action identifier
+     * @param createButtonClickHandler create action
+     * @param rowCounterId counter identifier
+     * @param globalFilterId search identifier
+     * @param aiFilterService natural-language filter service
+     * @param mapper JSON mapper
+     * @param entityType searchable entity type
+     * @return configured shared header
      */
-    public HorizontalLayout createSmartHeader(
+    public SmartHeader createSmartHeader(
             String title,
             String titleId,
             VaadinIcon titleIcon,
@@ -304,7 +245,22 @@ public abstract class AbstractMainGrid<T> extends Main {
         return createSmartHeader(title, titleId, new Icon(titleIcon), createButtonId, createButtonClickHandler, grid, rowCounterId, globalFilterId, aiFilterService, mapper, entityType);
     }
 
-    public HorizontalLayout createSmartHeader(
+    /**
+     * Creates a shared header with an entity avatar for this view's grid.
+     *
+     * @param title page title
+     * @param titleId title identifier
+     * @param image entity avatar, or null
+     * @param createButtonId create action identifier
+     * @param createButtonClickHandler create action
+     * @param rowCounterId counter identifier
+     * @param globalFilterId search identifier
+     * @param aiFilterService natural-language filter service
+     * @param mapper JSON mapper
+     * @param entityType searchable entity type
+     * @return configured shared header
+     */
+    public SmartHeader createSmartHeader(
             String title,
             String titleId,
             Image image,
@@ -333,7 +289,6 @@ public abstract class AbstractMainGrid<T> extends Main {
                 attachEvent.getUI(), ThemeChangedEvent.class,
                 e -> {
                     getDataProvider().refreshAll();
-                    applySmartHeaderBackground(attachEvent.getUI().getElement().getThemeList().contains("dark"));
                 });
     }
 
@@ -364,9 +319,6 @@ public abstract class AbstractMainGrid<T> extends Main {
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(lightUrl, darkUrl));
-        applySmartHeaderBackground(getUI()
-                .map(ui -> ui.getElement().getThemeList().contains("dark"))
-                .orElse(false));
     }
 
     /**

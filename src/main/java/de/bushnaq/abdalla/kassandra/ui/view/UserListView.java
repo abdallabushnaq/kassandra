@@ -126,10 +126,10 @@ public class UserListView extends AbstractMainGrid<User> implements AfterNavigat
         aiToggleButton.setId(USER_AI_PANEL_BUTTON);
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
-        addHeaderButton(aiToggleButton);
+        getSmartHeader().addActions(aiToggleButton);
 
         HelpDrawer helpDrawer = new HelpDrawer("Users", "help/user-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);

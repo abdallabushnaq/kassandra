@@ -19,8 +19,8 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.dto.OidcProvider;
 import de.bushnaq.abdalla.kassandra.dto.OidcProviderCreateRequest;
 import de.bushnaq.abdalla.kassandra.rest.api.OidcProviderApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.web.server.ResponseStatusException;
@@ -106,11 +107,9 @@ public class OidcProviderManagementView extends VerticalLayout {
         this.oidcProviderApi = oidcProviderApi;
 
         setSizeFull();
-        H1 title = new H1("Identity Providers");
-        title.setId(PAGE_TITLE_ID);
         HelpDrawer helpDrawer = new HelpDrawer("Identity Providers", "help/oidc-provider-management.md", true);
-        HorizontalLayout header = new HorizontalLayout(title, helpDrawer.createToggleButton(HELP_BUTTON_ID));
-        header.setAlignItems(Alignment.CENTER);
+        SmartHeader header = new SmartHeader("Identity Providers", PAGE_TITLE_ID, VaadinIcon.LOCK.create());
+        header.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(header, helpDrawer,
                 new Paragraph("Client secrets are encrypted and are never displayed after they have been saved."),
                 createProviderForm());

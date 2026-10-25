@@ -22,8 +22,8 @@ import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
@@ -35,6 +35,7 @@ import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.service.AboutBoxService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
 import jakarta.annotation.security.PermitAll;
@@ -89,9 +90,9 @@ public class AboutView extends Main implements AfterNavigationObserver {
         setSizeFull();
         getStyle()
                 .set("display", "flex")
-                .set("align-items", "safe center")
+                .set("flex-direction", "column")
                 .set("overflow", "auto")
-                .set("justify-content", "center");
+                .set("min-height", "0");
 
         VerticalLayout center = new VerticalLayout();
         center.setPadding(true);
@@ -99,6 +100,7 @@ public class AboutView extends Main implements AfterNavigationObserver {
         center.setAlignItems(FlexComponent.Alignment.CENTER);
         center.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         center.setWidth("100%");
+        center.getStyle().set("flex-grow", "1");
 
         // Loading placeholder
         loadingText.getStyle()
@@ -113,10 +115,6 @@ public class AboutView extends Main implements AfterNavigationObserver {
                 .set("border-radius", "var(--lumo-border-radius-m)")
                 .set("object-fit", "contain");
         bannerImage.setVisible(false);
-
-        H2 appName = new H2("Kassandra");
-        appName.setId(ABOUT_PAGE_TITLE);
-        appName.getStyle().set("margin", "var(--lumo-space-s) 0 0 0");
 
         Span versionSpan = new Span("Version " + aboutBoxService.getVersion());
         versionSpan.getStyle().set("color", "var(--lumo-secondary-text-color)");
@@ -138,10 +136,10 @@ public class AboutView extends Main implements AfterNavigationObserver {
         githubLink.setTarget("_blank");
 
         HelpDrawer helpDrawer = new HelpDrawer("About", "help/about.md", true);
-        HorizontalLayout title = new HorizontalLayout(appName, helpDrawer.createToggleButton(HELP_BUTTON_ID));
-        title.setAlignItems(FlexComponent.Alignment.CENTER);
-        center.add(loadingText, bannerImage, title, versionSpan, copyright, licenseLink, githubLink);
-        add(center, helpDrawer);
+        SmartHeader header = new SmartHeader("Kassandra", ABOUT_PAGE_TITLE, VaadinIcon.INFO_CIRCLE.create());
+        header.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        center.add(loadingText, bannerImage, versionSpan, copyright, licenseLink, githubLink);
+        add(header, center, helpDrawer);
     }
 
     private void loadImage(UI ui, ETheme theme) {

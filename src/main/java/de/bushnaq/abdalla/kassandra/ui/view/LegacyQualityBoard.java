@@ -46,6 +46,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -164,17 +165,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
         this.clock      = clock;
         this.now        = ParameterOptions.getLocalNow();
 
-        pageTitle = new H2("Sprint Quality Board");
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
 
         setSizeFull();
@@ -197,12 +188,11 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
             }
         });
 
-        // Persistent header: avatar + page title on the left, sprint selector next to it
-        header = new HorizontalLayout(headerAvatar, pageTitle, sprintSelector);
-        header.setAlignItems(FlexComponent.Alignment.END);
-        header.setWidthFull();
-        header.getStyle().set("padding", "var(--lumo-space-xs)");
-        header.setSpacing(true);
+        SmartHeader smartHeader = new SmartHeader("Sprint Quality Board", null, headerAvatar);
+        smartHeader.setFallbackIcon(VaadinIcon.CHART);
+        header = smartHeader;
+        pageTitle = smartHeader.getPageTitle();
+        smartHeader.addFilters(sprintSelector);
         header.setId("page-header");
         add(header);
     }

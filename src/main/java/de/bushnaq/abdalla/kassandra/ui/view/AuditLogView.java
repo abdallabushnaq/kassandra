@@ -19,8 +19,8 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -34,6 +34,7 @@ import de.bushnaq.abdalla.kassandra.dto.AuditEvent;
 import de.bushnaq.abdalla.kassandra.dto.AuditPage;
 import de.bushnaq.abdalla.kassandra.rest.api.AuditLogApi;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import jakarta.annotation.security.RolesAllowed;
 
@@ -159,10 +160,6 @@ public class AuditLogView extends VerticalLayout {
             refresh();
         });
         apply.setId(APPLY_BUTTON_ID);
-        HorizontalLayout filters = new HorizontalLayout(search, user, action, from, to, apply);
-        filters.setAlignItems(Alignment.END);
-        filters.setWidthFull();
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
         grid.addColumn(event -> formatter.format(event.timestamp())).setHeader("When (UTC)").setAutoWidth(true);
         grid.addColumn(AuditEvent::actor).setHeader("Who").setAutoWidth(true);
@@ -227,12 +224,13 @@ public class AuditLogView extends VerticalLayout {
         go.setId(GO_BUTTON_ID);
         HorizontalLayout paging = new HorizontalLayout(previous, pageLabel, next, pageNumber, go);
         paging.setAlignItems(Alignment.CENTER);
-        H1 title = new H1("Audit");
-        title.setId(PAGE_TITLE_ID);
         HelpDrawer helpDrawer = new HelpDrawer("Audit", "help/audit-log.md", true);
-        HorizontalLayout header = new HorizontalLayout(title, helpDrawer.createToggleButton(HELP_BUTTON_ID));
-        header.setAlignItems(Alignment.CENTER);
-        add(header, filters, grid, paging, helpDrawer);
+        SmartHeader header = new SmartHeader("Audit", PAGE_TITLE_ID, VaadinIcon.CLIPBOARD_TEXT.create());
+        header.setSearch(search);
+        header.addFilters(user, action, from, to);
+        header.addActions(apply);
+        header.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(header, grid, paging, helpDrawer);
         refresh();
     }
 

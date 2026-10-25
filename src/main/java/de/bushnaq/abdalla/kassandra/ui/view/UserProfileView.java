@@ -50,6 +50,7 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ImagePromptDialog;
@@ -226,23 +227,11 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
     private void initializeView() {
         removeAll();
 
-        // Create header
-        HorizontalLayout headerLayout = new HorizontalLayout();
-        headerLayout.setWidthFull();
-        headerLayout.setPadding(false);
-        headerLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-
         // Create title icon (avatar or default icon)
         com.vaadin.flow.component.Component titleIcon;
 //        if (currentUser.getAvatarImage() != null && currentUser.getAvatarImage().length > 0)
         {
             headerAvatarImage = new com.vaadin.flow.component.html.Image();
-            headerAvatarImage.setWidth("32px");
-            headerAvatarImage.setHeight("32px");
-            headerAvatarImage.getStyle()
-                    .set("border-radius", "4px")
-                    .set("object-fit", "cover")
-                    .set("margin-right", "var(--lumo-space-s)");
             headerAvatarImage.setSrc(currentUser.getAvatarUrl(UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK)));
             titleIcon = headerAvatarImage;
         }
@@ -251,15 +240,8 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
 //            titleIcon         = new Icon(VaadinIcon.USER);
 //        }
 
-        H2 pageTitle = new H2("User Profile");
-        pageTitle.setId(PROFILE_PAGE_TITLE);
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
-        HorizontalLayout titleLayout = new HorizontalLayout(titleIcon, pageTitle);
-        titleLayout.setSpacing(false);
-        titleLayout.setAlignItems(com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment.CENTER);
-
-        headerLayout.add(titleLayout, helpButton);
+        SmartHeader headerLayout = new SmartHeader("User Profile", PROFILE_PAGE_TITLE, titleIcon);
+        headerLayout.setHelpButton(helpButton);
         add(helpDrawer);
 
         // User info
@@ -349,7 +331,8 @@ public class UserProfileView extends Main implements BeforeEnterObserver {
         formLayout.setMaxWidth("600px");
         formLayout.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
         formLayout.getStyle().set("border-radius", "4px");
-        formLayout.add(nameRow, emailField, colorPicker, saveButton);
+        formLayout.add(nameRow, emailField, colorPicker);
+        headerLayout.addActions(saveButton);
 
         add(headerLayout, formLayout);
     }

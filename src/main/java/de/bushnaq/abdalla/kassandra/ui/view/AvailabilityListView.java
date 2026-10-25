@@ -115,7 +115,7 @@ public class AvailabilityListView extends AbstractMainGrid<Availability> impleme
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
         HelpDrawer helpDrawer = new HelpDrawer("Availability", "help/availability-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
     }
 

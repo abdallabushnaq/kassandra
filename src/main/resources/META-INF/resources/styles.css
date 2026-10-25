@@ -3,6 +3,7 @@
 @import url('css/vaadin-calendar.css');
 @import url('css/vaadin-grid.css');
 @import url('css/vaadin-tree-grid.css');
+@import url('css/smart-header.css');
 /* Add your styles here for elements not in the shadow dom*/
 
 h2 {

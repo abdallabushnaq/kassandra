@@ -18,9 +18,9 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
@@ -32,6 +32,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
@@ -74,14 +75,9 @@ public class Kassandra extends VerticalLayout implements AfterNavigationObserver
         setSpacing(false);
         addClassNames(LumoUtility.Background.BASE);
 
-        H2 title = new H2("Kassandra");
-        title.setId(AI_VIEW_TITLE);
-        title.addClassNames(LumoUtility.Margin.NONE);
         HelpDrawer helpDrawer = new HelpDrawer("Kassandra", "help/kassandra.md", true);
-        HorizontalLayout header = new HorizontalLayout(title, helpDrawer.createToggleButton(HELP_BUTTON_ID));
-        header.setAlignItems(Alignment.CENTER);
-        header.getStyle().set("padding", "var(--lumo-space-xs)");
-        header.setFlexShrink(0);
+        SmartHeader header = new SmartHeader("Kassandra", AI_VIEW_TITLE, VaadinIcon.LIGHTBULB.create());
+        header.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(header, helpDrawer);
 
         // Main horizontal layout: left (future audit log) | right (chat)

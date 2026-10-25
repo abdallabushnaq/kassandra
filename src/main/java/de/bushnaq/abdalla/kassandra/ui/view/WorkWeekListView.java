@@ -93,7 +93,7 @@ public class WorkWeekListView extends AbstractMainGrid<WorkWeek> implements Afte
                 getGridPanelWrapper()
         );
         HelpDrawer helpDrawer = new HelpDrawer("Work Weeks", "help/work-week-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
     }
 

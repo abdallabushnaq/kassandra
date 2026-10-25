@@ -44,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
@@ -440,28 +441,13 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
     /**
      * Creates the header layout with search, filters, create buttons, Edit, Save, and Cancel buttons
      */
-    private HorizontalLayout createHeaderWithButtons() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.END);
-        header.getStyle().set("padding", "var(--lumo-space-xs)");
-        header.setSpacing(true);
-        header.setId("page-header");
-
-        // Title and avatar at the left — updated dynamically by updateHeaderForSelection()
-        pageTitle = new H2("Backlog");
-        pageTitle.setId(BACKLOG_PAGE_TITLE_ID);
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
+    private SmartHeader createHeaderWithButtons() {
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
+        SmartHeader header = new SmartHeader("Backlog", BACKLOG_PAGE_TITLE_ID, headerAvatar);
+        header.setFallbackIcon(VaadinIcon.GRID_V);
+        header.setId("page-header");
+        pageTitle = header.getPageTitle();
 
         // 1. Search input box with magnifying glass icon
         searchField = new TextField();
@@ -550,9 +536,6 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
 
         expandToggleLayout.add(expandLabel, expandToggleCheckbox);
 
-        // Spacer to push create buttons to the right
-        Div spacer = new Div();
-
         // Create Milestone button
         Button createMilestoneButton = new Button("Milestone", VaadinIcon.PLUS.create());
         createMilestoneButton.setId(CREATE_MILESTONE_BUTTON_ID);
@@ -597,10 +580,9 @@ public class LegacyBacklog extends Main implements AfterNavigationObserver, Befo
         cancelButton.setVisible(false);
         cancelButton.addClickListener(e -> cancelEditMode());
 
-        // Add all components to header
-        header.add(headerAvatar, pageTitle, searchField, userSelector, sprintSelector, clearButton, expandToggleLayout, spacer,
-                createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
-        header.setFlexGrow(1, spacer);
+        header.setSearch(searchField);
+        header.addFilters(userSelector, sprintSelector, expandToggleLayout);
+        header.addActions(clearButton, createMilestoneButton, createStoryButton, createTaskButton, editButton, saveButton, cancelButton);
 
         return header;
     }

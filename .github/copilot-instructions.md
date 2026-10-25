@@ -213,18 +213,18 @@ Steps (in order):
 Tests are categorized using JUnit 5 `@Tag` annotations. Understanding these tags is critical for knowing what can run
 where.
 
-| Tag                 |  Can run in CI   | External dependency                       | Description                                                                                                                                                                                                                                                                                       |
-|---------------------|:----------------:|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `UnitTest`          |      ✅ Yes       | None (in-memory H2, `@WithMockUser`)      | Self-contained tests. All `rest/api/*ApiTest` classes, SVG chart tests (`GanttTest`, `BurndownTest`, `CalendarTest`), date-util tests, profiler tests.                                                                                                                                            |
-| `IntegrationUiTest` |       ❌ No       | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. They use the `*IT` naming convention and are not run by Surefire's standard `mvn test` invocation. |
-| `AiUnitTest`        |       ❌ No       | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package, including `AiAssistantServiceBasicIT`, `AiAssistantServiceProductIT`, `AiAssistantServiceVersionIT`, `AiAssistantServiceFeatureIT`, `AiAssistantServiceUserIT`, `AiAssistantServiceMixedIT`. |
-| `IntroductionVideo` |       ❌ No       | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*IT` classes. |
+| Tag                 | Can run in CI | External dependency                       | Description                                                                                                                                                                                                                                                                           |
+|---------------------|:-------------:|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `UnitTest`          |    ✅ Yes     | None (in-memory H2, `@WithMockUser`)      | Self-contained tests. All `rest/api/*ApiTest` classes, SVG chart tests (`GanttTest`, `BurndownTest`, `CalendarTest`), date-util tests, profiler tests.                                                                                                                                |
+| `IntegrationUiTest` |     ❌ No     | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. They use the `*IT` naming convention and are not run by Surefire's standard `mvn test` invocation.                                                                                                                  |
+| `AiUnitTest`        |     ❌ No     | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package, including `AiAssistantServiceBasicIT`, `AiAssistantServiceProductIT`, `AiAssistantServiceVersionIT`, `AiAssistantServiceFeatureIT`, `AiAssistantServiceUserIT`, `AiAssistantServiceMixedIT`. |
+| `IntroductionVideo` |     ❌ No     | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*IT` classes.                                                                                                                                                                  |
 
 ### External Services Required by `AiUnitTest`
 
-| Service                      | Default URL             | Docker compose location    | Purpose                                                        |
-|------------------------------|-------------------------|----------------------------|----------------------------------------------------------------|
-| LM Studio (LLM on local GPU) | `http://localhost:1234` | N/A – run manually         | Chat/completion AI for `AiAssistantService*` tests             |
+| Service                      | Default URL             | Docker compose location    | Purpose                                                      |
+|------------------------------|-------------------------|----------------------------|--------------------------------------------------------------|
+| LM Studio (LLM on local GPU) | `http://localhost:1234` | N/A – run manually         | Chat/completion AI for `AiAssistantService*` tests           |
 | Chatterbox TTS container     | `http://localhost:4123` | `docker/chatterbox/`       | Text-to-speech for `ChatterboxTTSIT` and introduction videos |
 | Index TTS container          | (configured separately) | `docker/index-tts/`        | Alternative TTS engine for `IndexTTSIT`                      |
 | Stable Diffusion container   | `http://localhost:7860` | `docker/stable-diffusion/` | Image generation for `StableDiffusionServiceIT`              |
@@ -248,19 +248,21 @@ No manual Keycloak setup is needed for `IntegrationUiTest`.
 
 The following are explicitly excluded from Surefire in `pom.xml` and **must not** be run in CI:
 
-| Exclusion pattern                                                                               | Reason                                                     |
-|-------------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| `**/LegacyGanttTest.java`                                                                       | Missing reference files not available in CI                |
+| Exclusion pattern                                                                                                    | Reason                                                     |
+|----------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| `**/LegacyGanttTest.java`                                                                                            | Missing reference files not available in CI                |
 | `**/ai/**/Test*.java`, `**/ai/**/*Test.java`, `**/ai/**/*Tests.java`, `**/ai/**/*TestCase.java`, `**/ai/**/*IT.java` | Tagged `AiUnitTest` – requires LLM / GPU / AI containers   |
-| `**/introduction/*Video.java`, `**/introduction/*IT.java`                                      | Tagged `IntroductionVideo` – requires real desktop browser |
-| `**/ui/view/TaskListViewIT.java`                                                                | Waits for user to close browser                            |
-| `**/ui/view/QualityBoardIT.java`                                                                | Waits for user to close browser                            |
-| `**/GenerateScreenshotsIT.java`                                                                 | Records screenshots and waits for user interaction         |
-| `**/ui/Demo.java`                                                                               | Interactive demo                                           |
+| `**/introduction/*Video.java`, `**/introduction/*IT.java`                                                            | Tagged `IntroductionVideo` – requires real desktop browser |
+| `**/ui/view/TaskListViewIT.java`                                                                                     | Waits for user to close browser                            |
+| `**/ui/view/QualityBoardIT.java`                                                                                     | Waits for user to close browser                            |
+| `**/GenerateScreenshotsIT.java`                                                                                      | Records screenshots and waits for user interaction         |
+| `**/ui/Demo.java`                                                                                                    | Interactive demo                                           |
 
 ---
 
 ## Architecture Notes
+
+All design documents can be found in `../kassandra.wiki`.
 
 - **Data model hierarchy:** `Product → Version → Feature → Sprint → Task/Story → Worklog`
 - **REST API base path:** `/api` — each resource has its own controller and client stub.

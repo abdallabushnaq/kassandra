@@ -152,16 +152,16 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
                 applyFeatureFilter();
             }
         });
-        addHeaderLeftComponent(versionSelector);
+        getSmartHeader().addFilters(versionSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(FEATURE_AI_PANEL_BUTTON);
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
-        addHeaderButton(aiToggleButton);
+        getSmartHeader().addActions(aiToggleButton);
 
         HelpDrawer helpDrawer = new HelpDrawer("Features", "help/feature-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(FEATURE_HELP_BUTTON));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(FEATURE_HELP_BUTTON));
         add(helpDrawer);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
@@ -502,7 +502,7 @@ public class FeatureListView extends AbstractMainGrid<Feature> implements AfterN
      *   <li>Exactly one version selected → show that version's name.</li>
      *   <li>Zero or multiple versions selected → show "Features".</li>
      * </ul>
-     * Versions have no custom avatars, so no icon is shown in either case.
+     * Versions have no custom avatars, so the page icon remains visible.
      */
     private void updateHeaderForSelection() {
         if (getHeaderPageTitle() == null) {

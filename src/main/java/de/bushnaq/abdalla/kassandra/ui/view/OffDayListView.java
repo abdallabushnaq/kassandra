@@ -112,7 +112,7 @@ public class OffDayListView extends AbstractMainGrid<OffDay> implements BeforeEn
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
         HelpDrawer helpDrawer = new HelpDrawer("Off Days", "help/off-day-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
     }
 

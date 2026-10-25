@@ -24,12 +24,9 @@ import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
@@ -47,6 +44,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.VersionApi;
 import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
@@ -184,10 +182,8 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         mainLayout.setActiveProductId(productId);
                         if (productId == null) {
                             if (headerComponent == null) {
-                                H2 title = new H2("Versions");
-                                title.setId(VERSION_LIST_PAGE_TITLE);
-                                HorizontalLayout header = new HorizontalLayout(title, helpButton);
-                                header.setAlignItems(FlexComponent.Alignment.CENTER);
+                                SmartHeader header = new SmartHeader("Versions", VERSION_LIST_PAGE_TITLE, VaadinIcon.ARCHIVE.create());
+                                header.setHelpButton(helpButton);
                                 headerComponent = header;
                                 add(headerComponent, bodySplit);
                             }
@@ -207,13 +203,6 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                         Image avatar = new Image();
                         headerAvatar        = avatar;
                         headerAvatarProduct = product;
-                        avatar.setWidth("32px");
-                        avatar.setHeight("32px");
-                        avatar.getStyle()
-                                .set("border-radius", "var(--lumo-border-radius)")
-                                .set("object-fit", "cover")
-                                .set("display", "inline-block")
-                                .set("margin-right", "12px");
                         if (product.getLightAvatarHash() != null && !product.getLightAvatarHash().isEmpty()) {
                             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
                             avatar.setSrc(product.getAvatarUrl(isDark));
@@ -242,10 +231,10 @@ public class VersionListView extends AbstractMainGrid<Version> implements AfterN
                                 applyVersionFilter();
                             }
                         });
-                        addHeaderLeftComponent(productSelector);
+                        getSmartHeader().addFilters(productSelector);
 
-                        addHeaderButton(aiToggleButton);
-                        addHeaderButton(helpButton);
+                        getSmartHeader().addActions(aiToggleButton);
+                        getSmartHeader().setHelpButton(helpButton);
                         add(bodySplit);
 
                         // Pass navigation context to the AI panel so the LLM knows which product

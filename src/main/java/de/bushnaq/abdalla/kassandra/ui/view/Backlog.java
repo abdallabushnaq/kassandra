@@ -50,6 +50,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
 import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
@@ -127,9 +128,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
      * Avatar image shown in the header — updated to reflect the selected sprint.
      */
     private             Image                        headerAvatar;
-    private             HorizontalLayout             headerControlsLayout;
     private final       HorizontalLayout             headerLayout;
-    private             HorizontalLayout             headerTitleLayout;
     private             boolean                      isRestoringFromUrl         = false;
     private final       JsonMapper                   jsonMapper;
     private static      UUID                         lastShownSprintId          = null;  // Static to persist across navigation
@@ -486,28 +485,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     /**
      * Creates the header layout with search, filters, create buttons, Edit, Save, and Cancel buttons
      */
-    private HorizontalLayout createHeaderWithButtons() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.END);
-        header.getStyle().set("padding", "var(--lumo-space-xs)");
-        header.setSpacing(true);
-        header.setId("page-header");
-
-        // Title and avatar at the left — updated dynamically by updateHeaderForSelection()
-        pageTitle = new H2("Backlog");
-        pageTitle.setId(BACKLOG_PAGE_TITLE_ID);
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
+    private SmartHeader createHeaderWithButtons() {
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
+        SmartHeader header = new SmartHeader("Backlog", BACKLOG_PAGE_TITLE_ID, headerAvatar);
+        header.setFallbackIcon(VaadinIcon.GRID_V);
+        header.setId("page-header");
+        pageTitle = header.getPageTitle();
 
         // 1. Search input box with magnifying glass icon
         searchField = new TextField();
@@ -640,27 +624,13 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         cancelButton.setVisible(false);
         cancelButton.addClickListener(e -> cancelEditMode());
 
-        headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
-        headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        HorizontalLayout filterLayout = new HorizontalLayout(searchField, userSelector, sprintSelector, clearButton, expandToggleLayout);
-        filterLayout.setAlignItems(FlexComponent.Alignment.END);
-        filterLayout.setSpacing(true);
-
-        HorizontalLayout leftHeaderLayout = new HorizontalLayout(headerTitleLayout, filterLayout);
-        leftHeaderLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        leftHeaderLayout.setSpacing(true);
-
-        HorizontalLayout actionLayout = new HorizontalLayout(createMilestoneButton, createStoryButton, createTaskButton,
+        header.setSearch(searchField);
+        header.addFilters(userSelector, sprintSelector, expandToggleLayout);
+        header.addActions(clearButton, createMilestoneButton, createStoryButton, createTaskButton,
                 editButton, saveButton, cancelButton);
-        actionLayout.setAlignItems(FlexComponent.Alignment.END);
-        actionLayout.setSpacing(true);
-
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.add(leftHeaderLayout, actionLayout);
 
         HelpDrawer helpDrawer = new HelpDrawer("Backlog", "help/backlog.md", true);
-        actionLayout.add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        header.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
         return header;
     }
@@ -1616,7 +1586,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
                     .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(sprint.getHeaderUrl(false), sprint.getHeaderUrl(true)));
-//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
@@ -1630,7 +1599,6 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
                     .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(null, null));
-//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 

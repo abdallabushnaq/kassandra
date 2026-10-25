@@ -67,6 +67,23 @@ hierarchy, for example from Features to its version or product. The final entry
 identifies the current page and is not a link. On pages with context selectors,
 the breadcrumbs describe your navigation context, not every selected item.
 
+### Use the page header
+
+Below the toolbar and breadcrumbs, each page uses the same header layout.
+
+![Shared page header](images/help/light/ProductListView/page-layout.png)
+
+The **avatar or page icon and title** appear first. Search comes next, followed
+by any other filters and the matching row count.
+
+**Page actions are on the right**, with the page's **Help (?)** button last.
+The question mark beside a smart search field opens search examples instead.
+On a narrow screen, filters wrap below the title and actions remain
+right-aligned. Buttons that belong to a particular form, setting, or chart stay
+with that content.
+
+![Page header on a narrow screen](images/help/light/ProductListView/narrow/page-layout.png)
+
 ### Review history or change the theme
 
 ![Undo history toggle](images/help/light/MainLayout/main-layout-action-history-button.png)

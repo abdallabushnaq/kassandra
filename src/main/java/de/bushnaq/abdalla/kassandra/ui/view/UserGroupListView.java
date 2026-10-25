@@ -80,7 +80,7 @@ public class UserGroupListView extends AbstractMainGrid<UserGroup> implements Af
                 getGridPanelWrapper()
         );
         HelpDrawer helpDrawer = new HelpDrawer("User Groups", "help/user-group-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
     }
 

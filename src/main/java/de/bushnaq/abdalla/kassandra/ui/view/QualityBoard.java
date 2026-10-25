@@ -52,6 +52,7 @@ import de.bushnaq.abdalla.kassandra.service.SprintExportService;
 import de.bushnaq.abdalla.kassandra.ui.HtmlColor;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -142,8 +143,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      * Avatar image shown next to the page title — updated to reflect the selected sprint.
      */
     private final       Image                           headerAvatar;
-    private final       HorizontalLayout                headerControlsLayout;
-    private final       HorizontalLayout                headerTitleLayout;
     private final       HtmlUtil                        htmlUtil                            = new HtmlUtil();
     /**
      * Guard flag: prevents {@link #updateUrlParameters()} from firing during programmatic selector restores.
@@ -189,17 +188,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         this.jsonMapper = jsonMapper;
         this.now        = ParameterOptions.getLocalNow();
 
-        pageTitle = new H2("Sprint Quality Board");
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
 
         setSizeFull();
@@ -222,21 +211,15 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             }
         });
 
-        // Persistent header: avatar + page title on the left, sprint selector next to it
-        headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
-        headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerControlsLayout = new HorizontalLayout(sprintSelector);
-        headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
-        header = new HorizontalLayout(headerTitleLayout, headerControlsLayout);
-        header.setAlignItems(FlexComponent.Alignment.END);
-        header.setWidthFull();
-        header.getStyle().set("padding", "var(--lumo-space-xs)");
-        header.setSpacing(true);
+        SmartHeader smartHeader = new SmartHeader("Sprint Quality Board", null, headerAvatar);
+        smartHeader.setFallbackIcon(VaadinIcon.CHART);
+        header = smartHeader;
+        pageTitle = smartHeader.getPageTitle();
+        smartHeader.addFilters(sprintSelector);
         header.setId("page-header");
         HelpDrawer helpDrawer = new HelpDrawer("Quality Board", "help/quality-board.md", true);
-        headerControlsLayout.add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
-        header.add(helpDrawer);
-        add(header);
+        smartHeader.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        add(header, helpDrawer);
     }
 
     @Override
@@ -845,7 +828,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
                     .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(sprint.getHeaderUrl(false), sprint.getHeaderUrl(true)));
-//            VaadinUtil.applyHeaderBackground(header, pageTitle, sprint.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
@@ -859,7 +841,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
                     .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(null, null));
-//            VaadinUtil.applyHeaderBackground(header, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 

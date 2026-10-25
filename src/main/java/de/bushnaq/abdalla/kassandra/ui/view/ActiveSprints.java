@@ -50,6 +50,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
@@ -108,9 +109,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
      * Avatar image shown in the header when exactly one sprint is selected.
      */
     private             Image                       headerAvatar;
-    private             HorizontalLayout            headerControlsLayout;
     private final       HorizontalLayout            headerLayout;
-    private             HorizontalLayout            headerTitleLayout;
     private             boolean                     isRestoringFromUrl        = false;
     private final       JsonMapper                  jsonMapper;
     /**
@@ -397,27 +396,13 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     /**
      * Creates the header layout with search, sprint filter, and clear button
      */
-    private HorizontalLayout createHeader() {
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.END);
-        header.getStyle().set("padding", "var(--lumo-space-xs)");
-        header.setSpacing(true);
-        header.setId("page-header");
-
-        // Title and avatar at the left — updated dynamically by updateHeaderForSelection()
-        pageTitle = new H2("Active Sprints");
-        pageTitle.addClassNames(LumoUtility.Margin.NONE);
-
+    private SmartHeader createHeader() {
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
+        SmartHeader header = new SmartHeader("Active Sprints", null, headerAvatar);
+        header.setFallbackIcon(VaadinIcon.CALENDAR);
+        header.setId("page-header");
+        pageTitle = header.getPageTitle();
 
         // 1. Search input box with magnifying glass icon and label for alignment
         TextField searchField = new TextField();
@@ -519,14 +504,12 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             applyFilters();
         });
 
-        headerTitleLayout = new HorizontalLayout(headerAvatar, pageTitle);
-        headerTitleLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerControlsLayout = new HorizontalLayout(searchField, userSelector, sprintSelector, groupingModeSelector, clearButton);
-        headerControlsLayout.setAlignItems(FlexComponent.Alignment.END);
-        header.add(headerTitleLayout, headerControlsLayout);
+        header.setSearch(searchField);
+        header.addFilters(userSelector, sprintSelector, groupingModeSelector);
+        header.addActions(clearButton);
 
         HelpDrawer helpDrawer = new HelpDrawer("Active Sprints", "help/active-sprints.md", true);
-        headerControlsLayout.add(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        header.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
         return header;
     }
@@ -789,7 +772,6 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
                     .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(single.getHeaderUrl(false), single.getHeaderUrl(true)));
-//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, single.getHeaderUrl(isDark), headerTitleLayout, headerControlsLayout);
             if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(single.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);
@@ -803,7 +785,6 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
                     .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(null, null));
-//            VaadinUtil.applyHeaderBackground(headerLayout, pageTitle, null, headerTitleLayout, headerControlsLayout);
         }
     }
 

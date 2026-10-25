@@ -176,13 +176,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         this.jsonMapper             = mapper;
 
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
 
         add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, headerAvatar,
@@ -213,16 +206,16 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 applyFeatureFilter();
             }
         });
-        addHeaderLeftComponent(featureSelector);
+        getSmartHeader().addFilters(featureSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(SPRINT_AI_PANEL_BUTTON);
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
-        addHeaderButton(aiToggleButton);
+        getSmartHeader().addActions(aiToggleButton);
 
         HelpDrawer helpDrawer = new HelpDrawer("Sprints", "help/sprint-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);

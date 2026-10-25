@@ -131,7 +131,7 @@ public class UserWorkWeekListView extends AbstractMainGrid<UserWorkWeek>
                 new HorizontalLayout(getGridPanelWrapper(), createCalendar())
         );
         HelpDrawer helpDrawer = new HelpDrawer("User Work Week", "help/user-work-week-list.md", true);
-        addHeaderButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
+        getSmartHeader().setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
         add(helpDrawer);
     }
 

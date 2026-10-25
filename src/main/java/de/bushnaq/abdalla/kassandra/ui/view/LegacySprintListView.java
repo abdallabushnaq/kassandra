@@ -162,13 +162,6 @@ public class LegacySprintListView extends AbstractMainGrid<Sprint> implements Af
         this.sessionState           = chatPanelSessionState;
 
         headerAvatar = new Image();
-        headerAvatar.setWidth("32px");
-        headerAvatar.setHeight("32px");
-        headerAvatar.getStyle()
-                .set("border-radius", "var(--lumo-border-radius)")
-                .set("object-fit", "cover")
-                .set("display", "inline-block")
-                .set("margin-right", "12px");
         headerAvatar.setVisible(false);
 
         add(createSmartHeader("Sprints", SPRINT_LIST_PAGE_TITLE, headerAvatar,
@@ -199,13 +192,13 @@ public class LegacySprintListView extends AbstractMainGrid<Sprint> implements Af
                 applyFeatureFilter();
             }
         });
-        addHeaderLeftComponent(featureSelector);
+        getSmartHeader().addFilters(featureSelector);
 
         aiToggleButton = new Button("AI");
         aiToggleButton.setId(SPRINT_AI_PANEL_BUTTON);
         aiToggleButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
         aiToggleButton.getElement().setAttribute("title", "AI Assistant");
-        addHeaderButton(aiToggleButton);
+        getSmartHeader().addActions(aiToggleButton);
 
         chatAgentPanel = new ChatAgentPanel(aiAssistantService, userApi, chatPanelSessionState, serverSettingsService, lmStudioService);
         chatAgentPanel.setSizeFull();

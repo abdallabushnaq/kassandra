@@ -37,7 +37,7 @@ the application's light/dark theme preference.
 
 ![Save changes](images/help/light/UserProfileView/save-profile-button.png)
 
-Use **Save Changes** to persist your edits. Opening help does not save or
+Use **Save Changes** on the right of the page header to persist your edits. Opening help does not save or
 discard them. Navigating away can lose unsaved input; this page has no separate
 Cancel button. Profile changes are not covered by planning undo/redo.
 
@@ -60,5 +60,5 @@ Use the account menu's **Manage Availability**, **Manage Location**,
 
 ![Profile help](images/help/light/UserProfileView/profile-help-button.png)
 
-The question mark beside the profile heading opens this help. Close it to
+The question mark at the right of the page header opens this help. Close it to
 return to your form without leaving the page.

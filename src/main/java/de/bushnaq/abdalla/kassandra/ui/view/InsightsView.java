@@ -22,7 +22,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
@@ -39,6 +38,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import jakarta.annotation.security.PermitAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +73,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
     final         Logger                  logger = LoggerFactory.getLogger(this.getClass());
     private       VerticalLayout          mainLayout;
     private final LocalDateTime           now;
-    private final H2                      pageTitle;
+    private final SmartHeader             header;
     private       TextField               questionField;
     private final SprintApi               sprintApi;
     // AI Insights Components
@@ -95,11 +95,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
         this.userApi = userApi;
         this.now     = ParameterOptions.getLocalNow();
 
-        pageTitle = new H2("Sprint Insights");
-        pageTitle.addClassNames(
-                LumoUtility.Margin.Top.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
+        header = new SmartHeader("Sprint Insights", null, VaadinIcon.LIGHTBULB.create());
 
         setSizeFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
@@ -141,10 +137,6 @@ public class InsightsView extends Main implements AfterNavigationObserver {
         questionField.setWidthFull();
         questionField.setHelperText("Leave empty for comprehensive analysis of all aspects");
 
-        // Buttons layout
-        HorizontalLayout buttonsLayout = new HorizontalLayout();
-        buttonsLayout.setSpacing(true);
-
         generateInsightsButton = new Button("Generate Comprehensive Insights", VaadinIcon.LIGHTBULB.create());
         generateInsightsButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         generateInsightsButton.addClickListener(e -> generateInsights());
@@ -153,7 +145,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
         generateQuickSummaryButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         generateQuickSummaryButton.addClickListener(e -> generateQuickSummary());
 
-        buttonsLayout.add(generateInsightsButton, generateQuickSummaryButton);
+        header.addActions(generateInsightsButton, generateQuickSummaryButton);
 
         // Loading indicator
         loadingIndicator = new ProgressBar();
@@ -161,7 +153,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
         loadingIndicator.setVisible(false);
         loadingIndicator.setWidthFull();
 
-        controlsSection.add(description, questionField, buttonsLayout, loadingIndicator);
+        controlsSection.add(description, questionField, loadingIndicator);
         mainLayout.add(controlsSection);
     }
 
@@ -350,7 +342,7 @@ public class InsightsView extends Main implements AfterNavigationObserver {
         mainLayout.setPadding(false);
         mainLayout.setSpacing(true);
 
-        add(pageTitle);
+        add(header);
         add(mainLayout);
 
         createControlsSection();

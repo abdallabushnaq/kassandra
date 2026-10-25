@@ -42,6 +42,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -295,6 +296,91 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
+    void testSmartHeadersAcrossRoutes() throws Exception {
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        Sprint sprint = prepareDialogPlanningContext();
+        Feature feature = peg.featureApi.getById(sprint.getFeatureId());
+        Version version = peg.versionApi.getById(feature.getVersionId());
+        String context = "?product=" + version.getProductId() + "&version=" + version.getId()
+                + "&feature=" + feature.getId() + "&sprint=" + sprint.getId();
+        seleniumHandler.getDriver().manage().window().setSize(new Dimension(1600, 1000));
+        for (String route : List.of("", "product-list", "version-list", "feature-list", "sprint-list",
+                "legacy-sprint-list", "backlog", "legacy-backlog", "active-sprints", "quality-board",
+                "legacy-quality-board", "user-list", "user-group-list", "availability", "location",
+                "offday", "work-week-list", "user-work-week", "profile", "server-settings",
+                "identity-providers", "audit", "kassandra", "insights")) {
+            navigateTo(route + context);
+            seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".smart-header")));
+            assertEquals(1, seleniumHandler.getDriver().findElements(By.cssSelector(".smart-header")).size(), route);
+            assertSmartHeaderGeometry(route);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    void testSmartHeaderResponsiveLayout() throws Exception {
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        Sprint sprint = prepareDialogPlanningContext();
+        Dimension originalSize = seleniumHandler.getDriver().manage().window().getSize();
+        try {
+            for (String route : List.of("product-list", "backlog?sprint=" + sprint.getId(),
+                    "active-sprints?sprints=" + sprint.getId(), "quality-board?sprint=" + sprint.getId(),
+                    "", "audit", "server-settings", "profile")) {
+                navigateTo(route);
+                seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".smart-header")));
+                for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+                    seleniumHandler.getDriver().manage().window().setSize(new Dimension(1600, 1000));
+                    seleniumHandler.setHelpScreenshotTheme(theme);
+                    for (int width : List.of(1600, 1000, 480)) {
+                        seleniumHandler.getDriver().manage().window().setSize(new Dimension(width, 1000));
+                        assertSmartHeaderGeometry(route + " " + theme + " " + width);
+                    }
+                }
+            }
+        } finally {
+            seleniumHandler.getDriver().manage().window().setSize(originalSize);
+        }
+    }
+
+    private void assertSmartHeaderGeometry(String context) {
+        seleniumHandler.waitUntil(driver -> Boolean.TRUE.equals(seleniumHandler.executeJavaScript(
+                "return getComputedStyle(document.querySelector('.smart-header')).display === 'grid';")));
+        Object errors = seleniumHandler.executeJavaScript("""
+                const header = document.querySelector('.smart-header');
+                const rect = header.getBoundingClientRect();
+                const identity = header.querySelector('.smart-header-identity').getBoundingClientRect();
+                const title = header.querySelector('.smart-header-title').getBoundingClientRect();
+                const icon = header.querySelector('.smart-header-icon').getBoundingClientRect();
+                const controls = header.querySelector('.smart-header-controls');
+                const right = header.querySelector('.smart-header-right');
+                const errors = [];
+                const visible = element => element.getClientRects().length > 0;
+                if (icon.right > title.left + 1) errors.push('Icon must precede title');
+                if (rect.right > innerWidth + 1 || header.scrollWidth > header.clientWidth + 1)
+                    errors.push('Header overflows: ' + rect.right + '/' + innerWidth + ', '
+                        + header.scrollWidth + '/' + header.clientWidth);
+                for (const element of header.querySelectorAll('vaadin-button, vaadin-text-field, vaadin-combo-box, vaadin-multi-select-combo-box')) {
+                    if (visible(element) && element.getBoundingClientRect().right > rect.right + 1)
+                        errors.push('Control overflows: ' + element.id);
+                }
+                if (innerWidth <= 1200 && visible(controls)
+                        && controls.getBoundingClientRect().top < identity.bottom - 1)
+                    errors.push('Filters must wrap below title');
+                if (visible(right)) {
+                    const expectedRight = rect.right - parseFloat(getComputedStyle(header).paddingRight);
+                    if (Math.abs(right.getBoundingClientRect().right - expectedRight) > 2)
+                        errors.push('Actions must align right: actual=' + right.getBoundingClientRect().right
+                            + ', expected=' + expectedRight);
+                    if (right.lastElementChild !== header.querySelector('.smart-header-help'))
+                        errors.push('Help must be last');
+                }
+                return errors;
+                """);
+        assertEquals(List.of(), errors, context);
+    }
+
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
     void testHelpInEmptyAndRebuiltViews() throws Exception {
         aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
         assertTrue(peg.productApi.getAll().stream()
@@ -306,9 +392,9 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
 
         navigateTo(ServerSettingsView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(ServerSettingsView.PAGE_TITLE_ID);
-        WebElement title = seleniumHandler.findElement(By.id(ServerSettingsView.PAGE_TITLE_ID));
+        WebElement save = seleniumHandler.findElement(By.id(ServerSettingsView.SAVE_BUTTON_PREFIX + "kassandra.undo-redo.history-limit"));
         seleniumHandler.click(ServerSettingsView.SAVE_BUTTON_PREFIX + "kassandra.undo-redo.history-limit");
-        seleniumHandler.waitUntil(ExpectedConditions.stalenessOf(title));
+        seleniumHandler.waitUntil(ExpectedConditions.stalenessOf(save));
         seleniumHandler.waitForElementToBeClickable(ServerSettingsView.PAGE_TITLE_ID);
         verifyPageHelp(ServerSettingsView.HELP_BUTTON_ID, true);
     }
