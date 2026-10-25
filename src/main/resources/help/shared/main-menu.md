@@ -66,6 +66,9 @@ The **breadcrumb links below the main menu** take you back through the planning
 hierarchy, for example from Features to its version or product. The final entry
 identifies the current page and is not a link. On pages with context selectors,
 the breadcrumbs describe your navigation context, not every selected item.
+Top-level pages, including pages opened from the user menu, show only their
+current page name. They have no parent page; use the main navigation or user
+menu to switch to another top-level page.
 
 ### Use the page header
 

@@ -41,6 +41,7 @@ import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
 import com.vaadin.flow.spring.security.AuthenticationContext;
@@ -268,9 +269,19 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("--lumo-primary-contrast-color", "var(--header-text-color, " + textColor + ")");
     }
 
+    /**
+     * Initializes the current-page breadcrumb before views supply any contextual planning hierarchy.
+     *
+     * @param event the navigation event
+     */
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
+        setHeaderBackgroundUrls(null, null);
         setBreadcrumbsVisible(true);
+        Class<? extends Component> view = event.getNavigationTarget().asSubclass(Component.class);
+        PageTitle pageTitle = view.getAnnotation(PageTitle.class);
+        breadcrumbs.clear();
+        breadcrumbs.addItem(pageTitle == null ? view.getSimpleName() : pageTitle.value(), view);
         final String pathToMatch = event.getLocation().getPath();
         updatingTabFromNavigation = true;
         try {
@@ -742,7 +753,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
 
     /**
      * Shows or hides the breadcrumb bar below the main navigation.
-     * Called by views that do not need breadcrumb context (e.g. {@link de.bushnaq.abdalla.kassandra.ui.view.AboutView}).
+     * Navigation restores the bar so every application view shows its current location.
      *
      * @param visible {@code true} to show the bar, {@code false} to hide it
      */

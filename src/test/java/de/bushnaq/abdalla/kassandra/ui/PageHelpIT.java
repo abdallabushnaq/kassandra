@@ -17,6 +17,9 @@
 
 package de.bushnaq.abdalla.kassandra.ui;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -61,7 +64,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -313,7 +318,98 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
             seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".smart-header")));
             assertEquals(1, seleniumHandler.getDriver().findElements(By.cssSelector(".smart-header")).size(), route);
             assertSmartHeaderGeometry(route);
+            WebElement breadcrumbs = seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS));
+            assertTrue(breadcrumbs.isDisplayed(), route);
+            assertFalse(breadcrumbs.getText().isBlank(), route);
+            assertNotEquals("a", breadcrumbs.findElements(By.xpath("./*")).getLast().getTagName(), route);
         }
+    }
+
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    void testBreadcrumbsForEveryUserMenuEntry() throws Exception {
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        prepareDialogPlanningContext();
+        Map<String, String> titles = Map.ofEntries(
+                Map.entry(MainLayout.ID_USER_MENU_AVAILABILITY, "User Availability"),
+                Map.entry(MainLayout.ID_USER_MENU_LOCATION, "User Location"),
+                Map.entry(MainLayout.ID_USER_MENU_OFF_DAYS, "User Off Days"),
+                Map.entry(MainLayout.ID_USER_MENU_WORK_WEEK, "User Work Week"),
+                Map.entry(MainLayout.ID_USER_MENU_VIEW_PROFILE, "User Profile"),
+                Map.entry(MainLayout.ID_USER_MENU_IDENTITY_PROVIDERS, "Identity Providers"),
+                Map.entry(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS, "User Groups"),
+                Map.entry(MainLayout.ID_USER_MENU_MANAGE_USERS, "Users"),
+                Map.entry(MainLayout.ID_USER_MENU_MANAGE_WORK_WEEKS, "Work Week List"),
+                Map.entry(MainLayout.ID_USER_MENU_MANAGE_SETTINGS, "Server Settings"),
+                Map.entry(MainLayout.ID_USER_MENU_AUDIT, "Audit"),
+                Map.entry(MainLayout.ID_USER_MENU_ABOUT, "About Kassandra"));
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.waitForElementToBeClickable(MainLayout.ID_USER_MENU_AVAILABILITY);
+        List<String> menuIds = seleniumHandler.getDriver()
+                .findElements(By.cssSelector("[id^='main-layout-user-menu-']"))
+                .stream().map(element -> element.getDomAttribute("id"))
+                .filter(id -> !MainLayout.ID_USER_MENU_LOGOUT.equals(id)).toList();
+        assertEquals(titles.keySet(), new HashSet<>(menuIds));
+        seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU_AVAILABILITY)).sendKeys(Keys.ESCAPE);
+        seleniumHandler.waitUntil(ExpectedConditions.invisibilityOfElementLocated(By.id(MainLayout.ID_USER_MENU_AVAILABILITY)));
+        for (String menuId : menuIds) {
+            seleniumHandler.click(MainLayout.ID_USER_MENU);
+            seleniumHandler.click(menuId);
+            seleniumHandler.waitUntil(driver -> titles.get(menuId).equals(
+                    driver.findElement(By.id(MainLayout.ID_BREADCRUMBS)).getText()));
+            WebElement breadcrumbs = seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS));
+            assertTrue(breadcrumbs.isDisplayed(), menuId);
+            List<WebElement> items = breadcrumbs.findElements(By.xpath("./*"));
+            assertEquals(1, items.size(), menuId);
+            assertNotEquals("a", items.getFirst().getTagName(), menuId);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    void testBreadcrumbsForTopLevelViews() throws Exception {
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
+        Sprint sprint = prepareDialogPlanningContext();
+        Feature feature = peg.featureApi.getById(sprint.getFeatureId());
+        Version version = peg.versionApi.getById(feature.getVersionId());
+        List<Class<? extends Component>> views = List.of(UserProfileView.class, ServerSettingsView.class,
+                OidcProviderManagementView.class, AboutView.class, AvailabilityListView.class,
+                LocationListView.class, OffDayListView.class, WorkWeekListView.class,
+                UserWorkWeekListView.class, AuditLogView.class);
+        for (Class<? extends Component> view : views) {
+            String route = view.getAnnotation(Route.class).value().split("/:")[0];
+            navigateTo(route);
+            String title = view.getAnnotation(PageTitle.class).value();
+            seleniumHandler.waitUntil(driver -> {
+                WebElement breadcrumbs = driver.findElement(By.id(MainLayout.ID_BREADCRUMBS));
+                return breadcrumbs.isDisplayed() && title.equals(breadcrumbs.getText());
+            });
+            WebElement breadcrumbs = seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS));
+            List<WebElement> items = breadcrumbs.findElements(By.xpath("./*"));
+            assertEquals(1, items.size(), route);
+            assertNotEquals("a", items.getFirst().getTagName(), route);
+        }
+
+        navigateTo("feature-list?product=" + version.getProductId() + "&version=" + version.getId());
+        seleniumHandler.waitForElementToBeClickable(FeatureListView.FEATURE_LIST_PAGE_TITLE);
+        WebElement breadcrumbs = seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS));
+        assertTrue(breadcrumbs.isDisplayed());
+        assertEquals(2, breadcrumbs.findElements(By.tagName("a")).size());
+        WebElement versions = breadcrumbs.findElements(By.tagName("a")).getLast();
+        assertTrue(versions.getDomAttribute("href").contains("?product="));
+        versions.click();
+        seleniumHandler.waitUntil(driver -> driver.getCurrentUrl().contains("/version-list?product="));
+        seleniumHandler.waitUntil(driver -> driver.findElement(By.id(MainLayout.ID_BREADCRUMBS))
+                .getText().endsWith("Versions"));
+
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_VIEW_PROFILE);
+        seleniumHandler.waitForElementToBeClickable(UserProfileView.PROFILE_PAGE_TITLE);
+        assertEquals("User Profile", seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS)).getText());
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_ABOUT);
+        seleniumHandler.waitForElementToBeClickable(AboutView.ABOUT_PAGE_TITLE);
+        assertEquals("About Kassandra", seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS)).getText());
     }
 
     @Test
@@ -387,6 +483,8 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
                 .allMatch(product -> DefaultEntitiesInitializer.DEFAULT_NAME.equals(product.getName())));
         navigateTo(VersionListView.ROUTE);
         seleniumHandler.waitForElementToBeClickable(VersionListView.VERSION_LIST_PAGE_TITLE);
+        assertEquals(VersionListView.class.getAnnotation(PageTitle.class).value(),
+                seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS)).getText());
         assertTrue(seleniumHandler.getDriver().findElements(By.id(VersionListView.CREATE_VERSION_BUTTON)).isEmpty());
         verifyPageHelp(VersionListView.HELP_BUTTON_ID, true);
 

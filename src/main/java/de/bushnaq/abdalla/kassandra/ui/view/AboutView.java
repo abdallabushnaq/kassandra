@@ -184,7 +184,7 @@ public class AboutView extends Main implements AfterNavigationObserver {
     }
 
     /**
-     * Clears the breadcrumb trail when navigating to this view.
+     * Clears the main navigation tab selection when navigating to this view.
      *
      * @param event the navigation event
      */
@@ -193,8 +193,6 @@ public class AboutView extends Main implements AfterNavigationObserver {
         MainLayout.findParent(this)
                 .ifPresent(component -> {
                     if (component instanceof MainLayout layout) {
-                        layout.getBreadcrumbs().clear();
-                        layout.setBreadcrumbsVisible(false);
                         layout.clearTabSelection();
                     }
                 });

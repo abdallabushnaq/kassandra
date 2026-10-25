@@ -52,11 +52,12 @@ To add GDPR support we need several intermediate steps:
 
 # Update Audit Log
 
-1. I now noticed that if the detailed vie wopens, the list gets a horiuontal scol bar, although no text needs scrolling.
+1. I now noticed that if the detailed view opens, the list gets a horizontal scroll bar, although no text needs
+   scrolling.
    can we try to prevent that?
 2. secret values should be encrypted in the database, so instead of trying to guess if a value is a secret or not, we
    could just show the encrypted values.
-3. updated server settings shoud show oldvalue-newvalue.
+3. updated server settings should show oldvalue-newvalue.
 
 # Better Pagination Menu
 
@@ -79,26 +80,6 @@ We need to add expected results similar as we do for other UI tests like ActiveS
 any tests in the de.bushnaq.abdalla.kassandra.ui.view package.
 e.g. we press the button to add a user, and then we need to use the UserApi to check if that user has been created.
 Every action we execute in the UI that has an expected outcome must be checked in the test code.
-
-# Harmonize Smart Headers
-
-Most pages have some kind of smart header. With smart header we mean a header on the top below the toolbar and
-breadcrumbs that shows information and allows placing buttons.<br>
-Some, like ProductListView, are based on AbstractMainGrid that handles the smart header.
-Some, like Backlog, just create it from scratch.<br>
-Some, are missing such a header totally.
-
-We want to harmonize the smart headers across all pages, so that they look similar and behave similar and use the same
-case.
-
-Let's extract the smart header from AbstractMainGrid and pages like Backlog into a new class AbstractSmartHeader that
-can be used by all pages.
-It might be good if AbstractMainGrid extends AbstractSmartHeader, but please check your options are select the one that
-best harmonizes all pages, reduces similar code and is easiest to maintain.
-
-The look and feel of the headers should be similar. the user should find elements always at similar locations.
-The location of the Avatar/Icon, the Title, the smart filter, all other filters, the buttons and the help icon
-e.g. the buttons should be on the right side.
 
 # Optimizing Screenshots
 
@@ -125,13 +106,5 @@ Worst case we add an optional parameter boolean stopRecording.
 
 # Updating wiki pages
 
-1. All the screenshots we take and store in kassandra.wiki are suppose to show up on one of the markdown pages in the
+1. All the screenshots we take and store in kassandra.wiki are supposed to show up on one of the markdown pages in the
    wiki. We need to make sure it is referenced on one of the pages.
-
-# Resetting header background image when moving to a different page
-
-some pages like VersionListView, FeatureListView, SprintListView, ActiveSprints, Backlog, QualityBoard, SprintListView
-all use a method updateHeaderForSelection to update the header background image, calling setSmartHeaderBackgroundUrls.
-The problem with this is that, this header image represents the currently selected product, feature or sprint, so if we
-move to a different page, that smart header backgroundimage should be removed.
-What would be your proposal to solve this?
