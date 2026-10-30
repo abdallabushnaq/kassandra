@@ -32,6 +32,8 @@ none of these fixes changes task estimates.
 | `OffDayGenerator` | `src\test\java\de\bushnaq\abdalla\kassandra\util\OffDayGenerator.java:115-130` | Adds generated absences to the live user calendar as well as the in-memory off-day collection. |
 | `BurnDownUtil` | `src\test\java\de\bushnaq\abdalla\kassandra\util\BurnDownUtil.java:104-167` | Advances synthetic worklogs by date and task. |
 | `TaskUtil` | `src\main\java\de\bushnaq\abdalla\util\TaskUtil.java:95-169` | Computes each task's possible work on a simulated day. |
+| `GanttUtil` / `User` | `src\main\java\de\bushnaq\abdalla\kassandra\report\gantt\GanttUtil.java:393-432`; `src\main\java\de\bushnaq\abdalla\kassandra\dto\User.java:318-342` | Levels the schedule using either actual calendars or isolated calendars without sickness. |
+| `QualityBoard` / `ActiveSprints` | `src\main\java\de\bushnaq\abdalla\kassandra\ui\view\QualityBoard.java:631`; `src\main\java\de\bushnaq\abdalla\kassandra\ui\view\ActiveSprints.java:380-381` | Re-level the loaded sprint before building its combined Gantt/burn-down chart. |
 | `GanttBurndownChartService` | `src\main\java\de\bushnaq\abdalla\kassandra\service\GanttBurndownChartService.java:335-351,578-726,814-826` | Converts scheduled task times into daily work for the two guides (`withoutBuffer` and `withBuffer`). |
 | `GanttBurndownChart` / `BurndownRenderer` | `src\main\frontend\js\burndown\GanttBurndownChart.ts:25-51,83-89`; `src\main\frontend\js\burndown\BurndownRenderer.ts:99-110` | Compose and draw the server-provided chart data; they do not generate the guide or worklogs. No renderer change was needed. |
 
@@ -62,6 +64,33 @@ holidays. Actual work still checks the effective calendar in
 `BurnDownUtil:123`, so a sick day contributes **zero actual work**. This
 distinction is intentional: the optimum shows the original plan; actuals
 reflect what happened.
+
+That guide correction alone did **not** solve the issue on the combined
+charts: both chart views re-level the loaded tasks against the *current*
+calendar first. In the saved Oslo sprint, the optimum changed from about
+249.987h before that re-leveling to 302.484h afterward (250h estimated);
+in Madrid, it changed from about 171.993h to 178.742h (172h estimated).
+Sickness postponed the scheduled task finish, and the guide then counted
+the sick days *inside the extended schedule* as originally planned work.
+That double treatment explains why the actual curve can start below the
+minimum guide and later appear to catch up.
+
+`GanttUtil.levelResources(..., boolean includeSickDays)` now lets callers
+choose whether sickness changes task dates. Its existing four-argument
+entry point retains sick-aware behavior. `QualityBoard` and `ActiveSprints`
+explicitly request `false` for their combined charts; other callers still
+use actual calendars. `User.createCalendarWithoutSickDays` builds a separate,
+temporary derived calendar with the same parent, work weeks, vacations,
+and location holidays, excluding only `SICK` off-days. The planner removes
+these temporary calendars afterward; it never alters the user's real
+calendar, so sickness still prevents actual work.
+
+For sprints whose calendar is their owner's personal calendar,
+`GanttBurndownChartService.isPlannedWorkingDay` now checks that calendar's
+parent for sprint-wide working days. Otherwise the owner's sick days would
+also be rejected as *sprint holidays*, even for an original-plan guide.
+Choosing a new sick-aware plan in the future will also require choosing
+matching guide semantics; this change adds no project-manager UI control.
 
 `User.initializeLocationsAndOffdays` at
 `src\main\java\de\bushnaq\abdalla\kassandra\dto\User.java:318-325` names
@@ -132,13 +161,20 @@ fixture.
 ## Regression coverage and remaining fixture step
 
 `BurnDownUtilTest.plannedGuideIgnoresSickDaysAndCountsAfternoonStarts`
-(`src\test\java\de\bushnaq\abdalla\kassandra\report\burndown\BurnDownUtilTest.java:200-236`)
+(`src\test\java\de\bushnaq\abdalla\kassandra\report\burndown\BurnDownUtilTest.java:205-239`)
 checks that a post-scheduling sick day retains planned work, an ordinary
 vacation day does not, and an afternoon start retains its work. The same
-class tests lunch and scheduled finish-day work at `:243-269`, and shared
-user capacity with a skipped sick day at `:276-336`. These focused cases
+class tests lunch and scheduled finish-day work at `:325-356`, and shared
+user capacity with a skipped sick day at `:358-423`. These focused cases
 passed; they do **not** substitute for checking every date of all five
 rendered Demo charts.
+
+`BurnDownUtilTest.sicknessFreeLevelingKeepsTheGuideAtTheMinimumEstimate`
+uses a small sprint with sickness, vacation, a holiday, and a three-day
+work week. It checks that sickness-free task dates yield a guide beginning
+at the minimum estimate, sick-aware leveling postpones the task, actual
+calendars still reject sick days, and temporary planning calendars are
+removed after leveling. The saved Oslo/Madrid snapshot was not regenerated.
 
 `AbstractGanttTestUtil:250-267` restores `Demo-3_.zip` whenever the snapshot
 is present. Its persisted worklogs were generated before these fixes and

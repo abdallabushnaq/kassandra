@@ -628,7 +628,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             log.error("Error loading sprint data", e);
             // Handle exception appropriately
         }
-        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
+        ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow(), false);
         {
 //            try {
 //                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);

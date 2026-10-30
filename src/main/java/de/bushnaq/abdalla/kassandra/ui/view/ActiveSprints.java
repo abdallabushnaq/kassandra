@@ -377,7 +377,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         getUI().ifPresent(ui -> {
             boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
             try {
-                new GanttUtil().levelResources(ganttErrorHandler, selectedSprint, "", ParameterOptions.getLocalNow());
+                new GanttUtil().levelResources(ganttErrorHandler, selectedSprint, "", ParameterOptions.getLocalNow(), false);
                 GanttBurndownChartDto dto  = ganttBurndownChartService.build(selectedSprint, ParameterOptions.getLocalNow(), isDark);
                 String                json = jsonMapper.writeValueAsString(dto);
                 ui.getPage().executeJs(

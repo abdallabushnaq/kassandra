@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGuide;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.dao.Milestones;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
 import de.bushnaq.abdalla.kassandra.util.BurnDownUtil;
@@ -29,6 +30,8 @@ import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import de.bushnaq.abdalla.util.TaskUtil;
+import de.bushnaq.abdalla.util.GanttErrorHandler;
+import net.sf.mpxj.ProjectCalendar;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -39,9 +42,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.awt.Color;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -49,6 +54,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("UnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -199,7 +205,7 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void plannedGuideIgnoresSickDaysAndCountsAfternoonStarts() throws Exception {
         LocalDateTime start         = LocalDateTime.parse("2026-03-02T13:00:00");
-        LocalDateTime finish = LocalDateTime.parse("2026-03-05T10:00:00");
+        LocalDateTime finish        = LocalDateTime.parse("2026-03-05T10:00:00");
         Sprint        plannedSprint = new Sprint();
         plannedSprint.setName("Planned");
         plannedSprint.initialize();
@@ -233,6 +239,87 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
         assertEquals(Duration.ofMinutes(60), guide.getWork(3));
         assertEquals(Duration.ofMinutes(390), guide.get(0));
         assertEquals(Duration.ZERO, guide.get(4));
+    }
+
+    /**
+     * The chart's plan ignores sickness, but both leveling options retain vacations, holidays and work weeks.
+     *
+     * @throws Exception if guide calculation fails
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void sicknessFreeLevelingKeepsTheGuideAtTheMinimumEstimate() throws Exception {
+        LocalDateTime start         = LocalDateTime.parse("2026-03-02T08:00:00");
+        GanttUtil     gantt         = new GanttUtil();
+        for (boolean sprintHasOwner : List.of(true, false)) {
+            Sprint planned = createSicknessSprint(start, sprintHasOwner);
+            int calendarCount = planned.getProjectFile().getCalendars().size();
+            gantt.levelResources(new GanttErrorHandler(), planned, "", start, false);
+            assertEquals(calendarCount, planned.getProjectFile().getCalendars().size());
+            Task plannedTask = planned.getTasks().getFirst();
+            assertEquals(LocalDateTime.parse("2026-03-06T16:30:00"), plannedTask.getFinish());
+
+            Milestones milestones = new Milestones(planned.getName());
+            milestones.add(start.toLocalDate(), "S", "Start", Color.BLUE);
+            milestones.add(plannedTask.getFinish().toLocalDate(), "E", "End", Color.BLUE);
+            milestones.calculate();
+            service.milestones = milestones;
+            BurnDownGuide guide = new BurnDownGuide(start, 5);
+            service.initGanttGuide(planned, plannedTask.getFinish(), guide, false);
+            assertTrue(Math.abs(guide.get(0).minus(plannedTask.getMinEstimate()).toSeconds()) <= 60,
+                    "The optimum guide must start at the minimum estimate: guide=" + guide.get(0) + ", estimate=" + plannedTask.getMinEstimate());
+
+            User plannedUser = planned.getUser(plannedTask.getResourceId());
+            assertEquals(LocalDateTime.parse("2026-03-06T08:00:00"),
+                    plannedTask.getEffectiveCalendar().getNextWorkStart(LocalDateTime.parse("2026-03-03T08:00:00")));
+            ProjectCalendar calendar = plannedUser.createCalendarWithoutSickDays(planned);
+            try {
+                assertEquals(LocalDateTime.parse("2026-03-10T08:00:00"),
+                        calendar.getNextWorkStart(LocalDateTime.parse("2026-03-09T08:00:00")));
+            } finally {
+                planned.getProjectFile().getCalendars().remove(calendar);
+            }
+
+            Sprint replanned = createSicknessSprint(start, sprintHasOwner);
+            gantt.levelResources(new GanttErrorHandler(), replanned, "", start, true);
+            assertEquals(LocalDateTime.parse("2026-03-10T16:30:00"), replanned.getTasks().getFirst().getFinish());
+            Sprint legacy = createSicknessSprint(start, sprintHasOwner);
+            gantt.levelResources(new GanttErrorHandler(), legacy, "", start);
+            assertEquals(replanned.getTasks().getFirst().getFinish(), legacy.getTasks().getFirst().getFinish());
+        }
+    }
+
+    private Sprint createSicknessSprint(LocalDateTime start, boolean sprintHasOwner) {
+        Sprint sprint = new Sprint();
+        sprint.setName("Sickness scheduling");
+        sprint.setStart(start);
+        sprint.initialize();
+        sprint.getCalendar().addCalendarException(LocalDate.parse("2026-03-09")).setName("Holiday");
+        User user = new User();
+        user.setName("Planner");
+        user.addAvailability(new Availability(1f, start.toLocalDate()));
+        WorkWeek week = new WorkWeek();
+        for (DayOfWeek day : List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.FRIDAY)) {
+            WorkDaySchedule schedule = week.getScheduleForDay(day);
+            schedule.setWorkingDay(true);
+            schedule.setWorkStart(LocalTime.of(8, 0));
+            schedule.setWorkEnd(LocalTime.of(16, 30));
+            schedule.setLunchStart(LocalTime.NOON);
+            schedule.setLunchEnd(LocalTime.of(13, 0));
+        }
+        user.addUserWorkWeek(new UserWorkWeek(week, start.toLocalDate()));
+        user.getOffDays().add(new OffDay(LocalDate.parse("2026-03-03"), LocalDate.parse("2026-03-03"), OffDayType.SICK));
+        user.getOffDays().add(new OffDay(LocalDate.parse("2026-03-05"), LocalDate.parse("2026-03-05"), OffDayType.VACATION));
+        if (sprintHasOwner)
+            sprint.setUserId(user.getId());
+        sprint.initUserMap(List.of(user));
+        Task task = new Task();
+        task.setName("Scheduled task");
+        task.setSprint(sprint);
+        task.setResourceId(user.getId());
+        task.setMinEstimate(Duration.ofMinutes(3 * 450));
+        sprint.addTask(task);
+        return sprint;
     }
 
     /**

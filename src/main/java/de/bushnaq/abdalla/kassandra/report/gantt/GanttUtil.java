@@ -31,9 +31,12 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 
@@ -53,6 +56,7 @@ public class GanttUtil {
     //    private              ProjectProperties projectProperties                                                       = null;
     private final Set<Task> startSet = new HashSet<>();
     int testCriticalCounter;
+    private Map<UUID, ProjectCalendar> levelingCalendars;
 
     public GanttUtil(/*Context context*/) {
 //        this.context = context;
@@ -208,6 +212,16 @@ public class GanttUtil {
 
     public static ProjectCalendar getCalendar(Task task) {
         return task.getEffectiveCalendar();
+    }
+
+    private ProjectCalendar getLevelingCalendar(Task task) {
+        if (levelingCalendars != null) {
+            UUID resourceId = task.getResourceId() == null ? task.getSprint().getUserId() : task.getResourceId();
+            ProjectCalendar calendar = resourceId == null ? null : levelingCalendars.get(resourceId);
+            if (calendar != null)
+                return calendar;
+        }
+        return getCalendar(task);
     }
 
     public static LocalDateTime getEarliestStartDate(Sprint projectFile) {
@@ -390,6 +404,35 @@ public class GanttUtil {
         return true;
     }
 
+    /**
+     * Levels a sprint, optionally scheduling around sick days.
+     *
+     * @param eh                error handler for scheduling diagnostics
+     * @param sprint            sprint to schedule
+     * @param projectRequestKey scheduling context key
+     * @param currentStartTime  scheduling start time
+     * @param includeSickDays   whether sick days should postpone scheduled work
+     */
+    public void levelResources(GanttErrorHandler eh, Sprint sprint, String projectRequestKey, LocalDateTime currentStartTime, boolean includeSickDays) {
+        if (includeSickDays) {
+            levelResources(eh, sprint, projectRequestKey, currentStartTime);
+            return;
+        }
+        Map<UUID, ProjectCalendar> calendars = new HashMap<>();
+        try {
+            for (User user : sprint.getUserMap().values()) {
+                calendars.put(user.getId(), user.createCalendarWithoutSickDays(sprint));
+            }
+            levelingCalendars = calendars;
+            levelResources(eh, sprint, projectRequestKey, currentStartTime);
+        } finally {
+            levelingCalendars = null;
+            for (ProjectCalendar calendar : calendars.values()) {
+                sprint.getProjectFile().getCalendars().remove(calendar);
+            }
+        }
+    }
+
     public void levelResources(GanttErrorHandler eh, Sprint sprint, String projectRequestKey, LocalDateTime currentStartTime) {
         logger.info("-------------------------------------------------------------------------------------------");
         logger.info(String.format("Leveling resources for sprint %s.", sprint.getName()));
@@ -426,7 +469,7 @@ public class GanttUtil {
                             Duration duration = getMinDurationFromWork(eh, task);
                             task.setDuration(duration);
                             if (task.getStart() != null && duration != null) {
-                                ProjectCalendar calendar = getCalendar(task);
+                                ProjectCalendar calendar = getLevelingCalendar(task);
                                 LocalDateTime   finish   = calendar.getDate(task.getStart(), MpxjUtil.toMpjxDuration(duration));
 //                            LocalDateTime finish = task.getStart().plus(duration);
                                 task.setFinish(finish);
@@ -443,7 +486,7 @@ public class GanttUtil {
                         //-children
                         //-dependencies
                         //-parent with start
-                        ProjectCalendar calendar = getCalendar(task);
+                        ProjectCalendar calendar = getLevelingCalendar(task);
                         if (!isManual(task) && !hasChildTasks(task) && !hasHierarchicalDependencies(task) && !hasStart(task.getParentTask())
                                 && !equals(calendar, currentStartTime, task.getStart())) {
                             setStart(eh, task, currentStartTime);
@@ -462,9 +505,9 @@ public class GanttUtil {
                             //+dependency with finish
                             if (!isManual(task) && !hasChildTasks(task)) {
                                 if (start != null) {
-                                    ProjectCalendar calendar = getCalendar(task);
+                                    ProjectCalendar calendar = getLevelingCalendar(task);
                                     start = calendar.getNextWorkStart(start);//ensure we are not starting on a none-working-day
-                                    if (!equals(getCalendar(task), start, task.getStart())) {
+                                    if (!equals(calendar, start, task.getStart())) {
                                         setStart(eh, task, start);
                                         anythingChanged = true;
                                         printCase("3", "setStart", task);
@@ -484,7 +527,7 @@ public class GanttUtil {
                             //+children
                             //-dependency
                             LocalDateTime   start    = getFirstChildStart(task);
-                            ProjectCalendar calendar = getCalendar(task);
+                            ProjectCalendar calendar = getLevelingCalendar(task);
                             if (!isManual(task) && hasChildTasks(task) && !depends) {
                                 if (start != null && !equals(calendar, start, task.getStart())) {
                                     setStart(eh, task, start);
@@ -529,7 +572,7 @@ public class GanttUtil {
                                     start = lastStartConstraint;
                                 }
                                 LocalDateTime   finish   = getLastChildFinish(task);
-                                ProjectCalendar calendar = getCalendar(task);
+                                ProjectCalendar calendar = getLevelingCalendar(task);
                                 if (start != null) {
                                     start = calendar.getNextWorkStart(start);
                                     if (!equals(calendar, start, task.getStart())) {
@@ -557,7 +600,7 @@ public class GanttUtil {
                         if (!isManual(task) && !hasChildTasks(task) && !hasDirectDependencies(task) && hasHierarchicalDependencies(task.getParentTask())) {
                             if (start != null) {
                                 //TODO reintroduce calendar fixed
-                                ProjectCalendar calendar = getCalendar(task);
+                                ProjectCalendar calendar = getLevelingCalendar(task);
                                 start = calendar.getNextWorkStart(start);
                                 if (!equals(calendar, start, task.getStart())) {
 
@@ -709,7 +752,7 @@ public class GanttUtil {
         if (!task.getChildTasks().isEmpty()) {
             LocalDateTime start = task.getStart();
             if (finish != null && start != null) {
-                ProjectCalendar calendar = getCalendar(task);
+                ProjectCalendar calendar = getLevelingCalendar(task);
                 Duration        duration = MpxjUtil.toJavaDuration(calendar.getWork(start, finish, TimeUnit.DAYS));
                 task.setDuration(duration);
             }
@@ -717,7 +760,7 @@ public class GanttUtil {
     }
 
     private void setStart(GanttErrorHandler eh, Task task, LocalDateTime endOfLastTask) {
-        ProjectCalendar calendar = getCalendar(task);
+        ProjectCalendar calendar = getLevelingCalendar(task);
         LocalDateTime   start    = calendar.getNextWorkStart(endOfLastTask);
         task.setStart(start);
         if (task.isMilestone()) {
@@ -765,7 +808,7 @@ public class GanttUtil {
         testCriticalCounter++;
         if (!startSet.contains(task)) {
             //are we starting at the beginning of the project?
-            ProjectCalendar calendar = getCalendar(task);
+            ProjectCalendar calendar = getLevelingCalendar(task);
             if (equals(calendar, task.getStart(), startDate)) {
                 startSet.add(task);
                 anythingChanged = true;
@@ -776,7 +819,7 @@ public class GanttUtil {
             for (Relation r : task.getPredecessors()) {
                 Task predecessor = task.getSprint().getTaskById(r.getPredecessorId());
                 if (startSet.contains(predecessor)) {
-                    ProjectCalendar calendar = getCalendar(task);
+                    ProjectCalendar calendar = getLevelingCalendar(task);
                     if (equals(calendar, task.getStart(), predecessor.getFinish())) {
                         startSet.add(task);
                         anythingChanged = true;
@@ -786,7 +829,7 @@ public class GanttUtil {
         }
         if (!startSet.contains(task)) {
             //are we starting with a parent that is in the startSet?
-            ProjectCalendar calendar = getCalendar(task);
+            ProjectCalendar calendar = getLevelingCalendar(task);
             Task            parent   = task.getParentTask();
             if (startSet.contains(parent)) {
                 if (parent != null && equals(calendar, task.getStart(), parent.getStart())) {
@@ -800,7 +843,7 @@ public class GanttUtil {
             //are we starting with a child that is in the startSet
             for (Task child : task.getChildTasks()) {
                 if (startSet.contains(child)) {
-                    ProjectCalendar calendar = getCalendar(child);
+                    ProjectCalendar calendar = getLevelingCalendar(child);
                     if (equals(calendar, task.getStart(), child.getStart())) {
                         startSet.add(task);
                         anythingChanged = true;
@@ -815,7 +858,7 @@ public class GanttUtil {
                 Task predecessor = task.getSprint().getTaskById(r.getPredecessorId());
                 if (manualSet.contains(predecessor)) {
                     //are we starting after a task that is in the manualSet?
-                    ProjectCalendar calendar = getCalendar(task);
+                    ProjectCalendar calendar = getLevelingCalendar(task);
                     if (equals(calendar, task.getStart(), predecessor.getFinish())) {
                         manualSet.add(task);
                         anythingChanged = true;
@@ -825,7 +868,7 @@ public class GanttUtil {
         }
         if (!manualSet.contains(task)) {
             //are we starting with a parent that is in the manualSet?
-            ProjectCalendar calendar = getCalendar(task);
+            ProjectCalendar calendar = getLevelingCalendar(task);
             Task            parent   = task.getParentTask();
             if (manualSet.contains(parent)) {
                 if (parent != null && equals(calendar, task.getStart(), parent.getStart())) {
@@ -839,7 +882,7 @@ public class GanttUtil {
             //are we starting with a child that is in the manualSet
             for (Task child : task.getChildTasks()) {
                 if (manualSet.contains(child)) {
-                    ProjectCalendar calendar = getCalendar(child);
+                    ProjectCalendar calendar = getLevelingCalendar(child);
                     if (equals(calendar, task.getStart(), child.getStart())) {
                         manualSet.add(task);
                         anythingChanged = true;
@@ -850,7 +893,7 @@ public class GanttUtil {
         }
 
         if (!finishSet.contains(task)) {
-            ProjectCalendar calendar = getCalendar(task);
+            ProjectCalendar calendar = getLevelingCalendar(task);
             //are we ending at the end of the project?
             if (equals(calendar, task.getFinish(), finishDate)) {
                 finishSet.add(task);
@@ -859,7 +902,7 @@ public class GanttUtil {
         }
         if (!finishSet.contains(task)) {
             //are we ending with a parent that is in the finishSet?
-            ProjectCalendar calendar = getCalendar(task);
+            ProjectCalendar calendar = getLevelingCalendar(task);
             Task            parent   = task.getParentTask();
             if (finishSet.contains(parent)) {
                 if (parent != null && equals(calendar, task.getFinish(), parent.getFinish())) {
@@ -874,7 +917,7 @@ public class GanttUtil {
                 Task predecessor = task.getSprint().getTaskById(r.getPredecessorId());
                 if (!finishSet.contains(predecessor)) {
                     //predecessor finishes at same time a task starts that is in the finishSet?
-                    ProjectCalendar calendar = getCalendar(task);
+                    ProjectCalendar calendar = getLevelingCalendar(task);
                     if (equals(calendar, predecessor.getFinish(), task.getStart())) {
                         finishSet.add(predecessor);
                         anythingChanged = true;
@@ -886,7 +929,7 @@ public class GanttUtil {
         if (!finishSet.contains(task)) {
             for (Task child : task.getChildTasks()) {
                 if (finishSet.contains(child)) {
-                    ProjectCalendar calendar = getCalendar(child);
+                    ProjectCalendar calendar = getLevelingCalendar(child);
                     if (equals(calendar, task.getFinish(), child.getFinish())) {
                         finishSet.add(task);
                         anythingChanged = true;

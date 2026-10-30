@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -707,9 +708,14 @@ public class GanttBurndownChartService {
     private boolean isPlannedWorkingDay(Sprint sprint, Task task, LocalDate day) {
         if (task.getEffectiveCalendar().isWorkingDate(day))
             return true;
-        User user = task.getAssignedUser();
-        if (user == null || !user.isWorkingDay(day) || !sprint.getCalendar().isWorkingDate(day))
+        User            user           = task.getAssignedUser();
+        ProjectCalendar sprintCalendar = sprint.getCalendar();
+        // An owned sprint uses its owner's calendar; check its parent so the owner's sickness is not treated as a sprint-wide holiday.
+        if (sprint.getUserId() != null && sprintCalendar.getParent() != null)
+            sprintCalendar = sprintCalendar.getParent();
+        if (user == null || !user.isWorkingDay(day) || !sprintCalendar.isWorkingDate(day))
             return false;
+        // The optimum follows the sickness-free schedule: count a sick-only exception, but never a vacation or holiday.
         boolean sick = false;
         for (ProjectCalendarException exception : user.getCalendar().getCalendarExceptions()) {
             LocalDate end = exception.getToDate() == null ? exception.getFromDate() : exception.getToDate();

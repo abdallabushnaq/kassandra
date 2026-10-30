@@ -279,7 +279,7 @@ public class User extends AbstractTimeAware implements Comparable<User>, AvatarP
         }
 
         applyWorkWeekSchedules(resourceCalendar);
-        initializeLocationsAndOffdays();
+        initializeLocationsAndOffdays(resourceCalendar, true);
     }
 
     public void initialize(Sprint sprint) {
@@ -292,7 +292,7 @@ public class User extends AbstractTimeAware implements Comparable<User>, AvatarP
         }
 
         applyWorkWeekSchedules(resourceCalendar);
-        initializeLocationsAndOffdays();
+        initializeLocationsAndOffdays(resourceCalendar, true);
     }
 
     public void initialize() {
@@ -311,15 +311,32 @@ public class User extends AbstractTimeAware implements Comparable<User>, AvatarP
 
         applyWorkWeekSchedules(resourceCalendar);
         time = System.currentTimeMillis();
-        initializeLocationsAndOffdays();
+        initializeLocationsAndOffdays(resourceCalendar, true);
 //        System.out.println("User.initializeLocationsAndOffdays() took " + (System.currentTimeMillis() - time) + " ms for user: " + getName());
     }
 
-    private void initializeLocationsAndOffdays() {
+    /**
+     * Builds a separate scheduling calendar without sick days, leaving the user's actual calendar unchanged.
+     *
+     * @param sprint the sprint whose base calendar and project file are used
+     * @return a calendar with the same work weeks and other absences, but no sick days; the caller must remove it from the sprint's project file
+     */
+    @JsonIgnore
+    public ProjectCalendar createCalendarWithoutSickDays(Sprint sprint) {
+        ProjectCalendar planningCalendar = sprint.getProjectFile().addDefaultDerivedCalendar();
+        planningCalendar.setParent(getCalendar().getParent());
+        planningCalendar.setName(getName());
+        applyWorkWeekSchedules(planningCalendar);
+        initializeLocationsAndOffdays(planningCalendar, false);
+        return planningCalendar;
+    }
+
+    private void initializeLocationsAndOffdays(ProjectCalendar pc, boolean includeSickDays) {
         //TODO rethink employee leaving company and coming back
-        ProjectCalendar pc = getCalendar();
         LocalDate       endDateInclusive;
         for (OffDay offDay : getOffDays()) {
+            if (!includeSickDays && offDay.getType() == OffDayType.SICK)
+                continue;
             ProjectCalendarException pce = pc.addCalendarException(offDay.getFirstDay(), offDay.getLastDay());
             pce.setName(offDay.getType().name());
         }
