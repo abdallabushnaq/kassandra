@@ -125,9 +125,9 @@ public class OffDayGenerator {
         offDayBuffer.add(offDay);
         ProjectCalendarException vacation = user.getCalendar().addCalendarException(offDayStart, offDayFinish);
         switch (type) {
-            case VACATION -> vacation.setName("vacation");
-            case SICK -> vacation.setName("sick");
-            case TRIP -> vacation.setName("trip");
+            case VACATION -> vacation.setName(OffDayType.VACATION.name());
+            case SICK -> vacation.setName(OffDayType.SICK.name());
+            case TRIP -> vacation.setName(OffDayType.TRIP.name());
         }
     }
 

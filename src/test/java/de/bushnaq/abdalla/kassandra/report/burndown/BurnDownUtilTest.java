@@ -19,12 +19,16 @@ package de.bushnaq.abdalla.kassandra.report.burndown;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.report.dao.BurnDownGuide;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.report.dao.Milestones;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
 import de.bushnaq.abdalla.kassandra.util.BurnDownUtil;
 import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import de.bushnaq.abdalla.util.TaskUtil;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -34,7 +38,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.awt.Color;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -55,6 +61,8 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
     public static final float                     WORK_PER_DAY = 7.5f;
     @Autowired
     protected           PersistingEntityGenerator peg;
+    @Autowired
+    private             GanttBurndownChartService service;
     Sprint        sprint;
     Task          startMilestone;
     LocalDateTime startTime;
@@ -180,6 +188,151 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
             assertEquals(expectedWorklogs.size(), sprint.getWorklogs().size(), "expectedWorklogs size mismatch");
             assertWorklogsEquals(expectedWorklogs);
         }
+    }
+
+    /**
+     * Keeps the scheduled guide unchanged by sick days discovered after leveling.
+     *
+     * @throws Exception if guide calculation fails
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void plannedGuideIgnoresSickDaysAndCountsAfternoonStarts() throws Exception {
+        LocalDateTime start         = LocalDateTime.parse("2026-03-02T13:00:00");
+        LocalDateTime finish = LocalDateTime.parse("2026-03-05T10:00:00");
+        Sprint        plannedSprint = new Sprint();
+        plannedSprint.setName("Planned");
+        plannedSprint.initialize();
+        User user = new User();
+        user.setName("Planner");
+        user.addAvailability(new Availability(0.5f, start.toLocalDate()));
+        plannedSprint.initUserMap(List.of(user));
+        Task task = new Task();
+        task.setName("Scheduled task");
+        task.setSprint(plannedSprint);
+        task.setResourceId(user.getId());
+        task.setStart(start);
+        task.setFinish(finish);
+        task.setMinEstimate(Duration.ofMinutes(390));
+        plannedSprint.addTask(task);
+
+        user.getCalendar().addCalendarException(LocalDate.parse("2026-03-03")).setName(OffDayType.SICK.name());
+        user.getCalendar().addCalendarException(LocalDate.parse("2026-03-04")).setName(OffDayType.VACATION.name());
+        Milestones milestones = new Milestones(plannedSprint.getName());
+        milestones.add(start.toLocalDate(), "S", "Start", Color.BLUE);
+        milestones.add(finish.toLocalDate(), "E", "End", Color.BLUE);
+        milestones.calculate();
+        service.milestones = milestones;
+
+        BurnDownGuide guide = new BurnDownGuide(start, 3);
+        service.initGanttGuide(plannedSprint, finish, guide, false);
+
+        assertEquals(Duration.ofMinutes(105), guide.getWork(0));
+        assertEquals(Duration.ofMinutes(225), guide.getWork(1));
+        assertEquals(Duration.ZERO, guide.getWork(2));
+        assertEquals(Duration.ofMinutes(60), guide.getWork(3));
+        assertEquals(Duration.ofMinutes(390), guide.get(0));
+        assertEquals(Duration.ZERO, guide.get(4));
+    }
+
+    /**
+     * Accounts for lunch before applying availability and preserves partial finish days.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void partialDayWorkRespectsLunchAndScheduledFinish() {
+        LocalDate day           = LocalDate.parse("2026-08-19");
+        Sprint    plannedSprint = new Sprint();
+        plannedSprint.setStart(day.atTime(8, 0));
+        plannedSprint.initialize();
+        User user = new User();
+        user.setName("Planner");
+        user.addAvailability(new Availability(0.9f, day));
+        plannedSprint.initUserMap(List.of(user));
+        Task task = new Task();
+        task.setName("Partial task");
+        task.setSprint(plannedSprint);
+        task.setResourceId(user.getId());
+        task.setMinEstimate(Duration.ofHours(4));
+        task.setRemainingEstimate(Duration.ofHours(4));
+        task.setStart(day.atTime(9, 6, 42));
+        task.setFinish(day.atTime(14, 33, 24));
+
+        assertEquals(Duration.ofSeconds(14401), TaskUtil.getTaskWorkPerDay(plannedSprint, day, task, false));
+
+        task.setStart(day.atTime(8, 0));
+        task.setFinish(day.plusDays(1).atTime(10, 0));
+        task.setRemainingEstimate(Duration.ofSeconds(6480));
+        assertEquals(Duration.ofSeconds(6480), TaskUtil.getTaskWorkPerDay(plannedSprint, day.plusDays(1), task, false));
+        task.setRemainingEstimate(Duration.ofHours(3));
+        assertEquals(Duration.ofSeconds(24300), TaskUtil.getTaskWorkPerDay(plannedSprint, day.plusDays(1), task, false));
+    }
+
+    /**
+     * Limits all tasks assigned to one user to one working day and skips sick days.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void worklogsRespectSharedAvailabilityAndSickDays() {
+        LocalDate day           = LocalDate.parse("2026-03-02");
+        Sprint    plannedSprint = new Sprint();
+        plannedSprint.setName("Capacity");
+        plannedSprint.setStart(day.atTime(8, 0));
+        plannedSprint.initialize();
+        User user = new User();
+        user.setName("Planner");
+        user.addAvailability(new Availability(1f, day));
+        plannedSprint.initUserMap(List.of(user));
+        user.getCalendar().addCalendarException(day.plusDays(1)).setName(OffDayType.SICK.name());
+        for (int i = 0; i < 2; i++) {
+            Task task = new Task();
+            task.setName("Task " + i);
+            task.setSprint(plannedSprint);
+            task.setResourceId(user.getId());
+            task.setStart(day.atTime(8, 0));
+            task.setFinish(day.plusDays(3).atTime(16, 30));
+            task.setMinEstimate(Duration.ofHours(8));
+            task.setRemainingEstimate(Duration.ofHours(8));
+            plannedSprint.addTask(task);
+        }
+
+        List<Worklog> generated = new ArrayList<>();
+        PersistingEntityGenerator generator = new PersistingEntityGenerator() {
+            @Override
+            protected Worklog addWorklogToBuffer(Task task, User author, LocalDateTime start, Duration spent, String comment) {
+                Worklog worklog = new Worklog();
+                worklog.setStart(start);
+                worklog.setTimeSpent(spent);
+                worklog.setTimeRemainingEstimate(task.getRemainingEstimate().minus(spent));
+                task.addWorklog(worklog);
+                generated.add(worklog);
+                return worklog;
+            }
+
+            @Override
+            protected void flushWorklogBuffer(Sprint sprint) {
+            }
+
+            @Override
+            public void persistTasksAndSprint(Sprint sprint) {
+            }
+        };
+        BurnDownUtil.generateWorklogs(generator, plannedSprint, 0f, day.plusDays(5).atTime(8, 0));
+
+        assertEquals(Duration.ofHours(7).plusMinutes(30), generated.stream()
+                .filter(worklog -> worklog.getStart().toLocalDate().equals(day))
+                .map(Worklog::getTimeSpent).reduce(Duration.ZERO, Duration::plus));
+        assertEquals(Duration.ofHours(7).plusMinutes(30), generated.stream()
+                .filter(worklog -> worklog.getStart().toLocalDate().equals(day.plusDays(2)))
+                .map(Worklog::getTimeSpent).reduce(Duration.ZERO, Duration::plus));
+        assertEquals(Duration.ZERO, generated.stream()
+                .filter(worklog -> worklog.getStart().toLocalDate().equals(day.plusDays(1)))
+                .map(Worklog::getTimeSpent).reduce(Duration.ZERO, Duration::plus));
+        assertEquals(Duration.ofHours(16), generated.stream().map(Worklog::getTimeSpent).reduce(Duration.ZERO, Duration::plus));
+        assertEquals(Duration.ofMinutes(30), generated.stream()
+                .filter(worklog -> worklog.getStart().toLocalDate().equals(day.plusDays(2)))
+                .filter(worklog -> worklog.getTimeSpent().compareTo(Duration.ofHours(1)) < 0)
+                .map(Worklog::getTimeSpent).reduce(Duration.ZERO, Duration::plus));
     }
 
     private Duration calculateWorkFraction(String workAsString, float availability) {

@@ -28,6 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 public class BurnDownUtil {
@@ -103,6 +106,7 @@ public class BurnDownUtil {
             for (LocalDate day = sprint.getStart().toLocalDate(); !rest.equals(Duration.ZERO) && now.toLocalDate().isAfter(day); day = day.plusDays(1)) {
                 LocalDateTime startOfDay = day.atStartOfDay().plusHours(8);
                 rest = Duration.ZERO;
+                Map<UUID, Duration> userWorkToday = new HashMap<>();
                 // iterate over all tasks
                 for (Task task : sprint.getTasks()) {
                     if (task.isTask() && task.isImpactOnCost()) {
@@ -132,18 +136,21 @@ public class BurnDownUtil {
 //                                            }
                                         Duration maxTaskWork = TaskUtil.getTaskWorkPerDay(sprint, day, task, true);
                                         Duration maxWork     = Duration.ofSeconds((long) ((performance * maxTaskWork.getSeconds())));//TODO use user calendar for working day length
-                                        Duration w           = maxWork;
-                                        Duration delta       = task.getRemainingEstimate().minus(w);
-                                        if (delta.isNegative()) {
+                                        UUID     userId      = task.getResourceId();
+                                        Duration dailyLimit  = Duration.ofSeconds((long) (SECONDS_PER_WORKING_DAY * task.getAvailability()));
+                                        Duration available   = dailyLimit.minus(userWorkToday.getOrDefault(userId, Duration.ZERO));
+                                        Duration w           = maxWork.compareTo(available) < 0 ? maxWork : available;
+                                        if (w.compareTo(task.getRemainingEstimate()) > 0)
                                             w = task.getRemainingEstimate();
+                                        if (w.isPositive()) {
+                                            if (day.isEqual(task.getStart().toLocalDate())) {
+                                                peg.addWorklogToBuffer(task, task.getAssignedUser(), task.getStart(), w, task.getName());
+                                            } else {
+                                                peg.addWorklogToBuffer(task, task.getAssignedUser(), startOfDay, w, task.getName());//TODO use user calendar
+                                            }
+                                            userWorkToday.merge(userId, w, Duration::plus);
+                                            task.calculateStatus(true);
                                         }
-                                        if (day.atStartOfDay().toLocalDate().isEqual(task.getStart().toLocalDate())) {
-                                            //first day
-                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), task.getStart(), w, task.getName());
-                                        } else {
-                                            peg.addWorklogToBuffer(task, task.getAssignedUser(), day.atStartOfDay().plusHours(8), w, task.getName());//TODO use user calendar
-                                        }
-                                        task.calculateStatus(true);
                                     } else {
                                         log.debug("Task '{}' blocked on {} – predecessor not yet done", task.getName(), day);
                                     }

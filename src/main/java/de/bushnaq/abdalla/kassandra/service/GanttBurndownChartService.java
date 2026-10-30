@@ -6,6 +6,7 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
@@ -25,6 +26,7 @@ import de.bushnaq.abdalla.util.ErrorException;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.mpxj.ProjectCalendarException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -647,7 +649,7 @@ public class GanttBurndownChartService {
                                             System.out.printf("[4] %s start <= 12:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
                                         guide.add(startDayIndex, work);
                                     } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
-                                        double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).minusHours(1).getSeconds()) / oneDay;
+                                        double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).getSeconds()) / oneDay;
                                         Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
                                         if (print)
                                             System.out.printf("[5] %s start  >= 13:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
@@ -686,9 +688,7 @@ public class GanttBurndownChartService {
                             if (startDayIndex + 1 < stopDayIndex) {
                                 for (int index = startDayIndex + 1; index < stopDayIndex; index++) {
                                     LocalDate today = calculateDayFromIndex(index);
-                                    if (task.getEffectiveCalendar().isWorkingDate(today))
-//                                    if (isResourceWorkingDay(context, task.getAssignedUser(), today))
-                                    {
+                                    if (isPlannedWorkingDay(sprint, task, today)) {
                                         Duration work = Duration.ofSeconds((long) (availability.doubleValue() * SECONDS_PER_WORKING_DAY));
                                         if (print)
                                             System.out.printf("[8] %s start < today & stop > today fraction=1.0 work=%s%n", task.getName(), work);
@@ -702,6 +702,24 @@ public class GanttBurndownChartService {
                 }
             }
         }
+    }
+
+    private boolean isPlannedWorkingDay(Sprint sprint, Task task, LocalDate day) {
+        if (task.getEffectiveCalendar().isWorkingDate(day))
+            return true;
+        User user = task.getAssignedUser();
+        if (user == null || !user.isWorkingDay(day) || !sprint.getCalendar().isWorkingDate(day))
+            return false;
+        boolean sick = false;
+        for (ProjectCalendarException exception : user.getCalendar().getCalendarExceptions()) {
+            LocalDate end = exception.getToDate() == null ? exception.getFromDate() : exception.getToDate();
+            if (!day.isBefore(exception.getFromDate()) && !day.isAfter(end)) {
+                if (!OffDayType.SICK.name().equals(exception.getName()))
+                    return false;
+                sick = true;
+            }
+        }
+        return sick;
     }
 
     private LocalDate calendarFromDayIndex(int dayIndex) {

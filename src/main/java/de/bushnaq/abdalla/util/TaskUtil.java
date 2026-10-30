@@ -124,16 +124,13 @@ public class TaskUtil {
                                         // start time might not be in the morning at exactly 8:00
                                         // stop time might not be in the afternoon 16:30
                                         work = Duration.between(start, stop);
-                                        work = Duration.ofSeconds((long) (work.toSeconds() * availability.doubleValue()));
                                         //is lunch between start and stop?
                                         if (start.isBefore(lunchStartTime) && stop.isAfter(lunchStopTime)) {
                                             work = work.minus(Duration.ofHours(1));
-                                            if (print)
-                                                log.info("[1] {} {} start <= 12:00 && stop >= 13:00 work= {}", day, task.getName(), work);
-                                        } else {
-                                            if (print)
-                                                log.info("[1] {} {} start & stop <= 12:00 work= {}", day, task.getName(), work);
                                         }
+                                        work = Duration.ofSeconds((long) (work.toSeconds() * availability.doubleValue()));
+                                        if (print)
+                                            log.info("[1] {} {} partial-day work= {}", day, task.getName(), work);
 
                                     } else if (dayIndex == startDayIndex) {
                                         //start on this day
@@ -154,15 +151,13 @@ public class TaskUtil {
                                         //stop on this day
                                         // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
                                         // last day, stop time might not be in the afternoon 16:30
-                                        work = Duration.between(dayStartTime, dayEndTime).minus(Duration.ofHours(1));
-//                                        work = work.minus(Duration.ofHours(1));
-                                        work = Duration.ofSeconds((long) (work.toSeconds() * availability.doubleValue()));
-                                        //we need to ensure that if there is time, the user keeps on working on this task until it is done.
-                                        //how much would that user be able to work today additionally?
-//                                        Duration additionalUserWork = Duration.ofSeconds((long) (Duration.between(stop, dayEndTime).toSeconds() * availability.doubleValue()));
-//                                        if (task.getRemainingEstimate().minus(work).minus(additionalUserWork).isNegative()) {
-//                                            work = task.getRemainingEstimate();
-//                                        }
+                                        Duration planned = Duration.between(dayStartTime, stop);
+                                        if (stop.isAfter(lunchStopTime))
+                                            planned = planned.minusHours(1);
+                                        planned = Duration.ofSeconds((long) (planned.toSeconds() * availability.doubleValue()));
+                                        Duration fullDay = Duration.ofSeconds(Math.round(Duration.between(dayStartTime, dayEndTime).minusHours(1).toSeconds() * availability.doubleValue()));
+                                        work = task.getRemainingEstimate().compareTo(planned.plusSeconds(1)) > 0
+                                                ? fullDay : task.getRemainingEstimate();
                                         if (print)
                                             log.info("[3] {} {} start < today & stop >= 13:00 work= {}", day, task.getName(), work);
                                     } else {

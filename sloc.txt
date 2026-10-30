@@ -246,7 +246,7 @@
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.burndown                | BurnDownChart.java                                           | src      |        7 |        0 |       16 |       18 |       41 |
 | kassandra.report.burndown                | BurnDownRenderer.java                                        | src      |       56 |       35 |      118 |      578 |      787 |
-| kassandra.report.burndown                | BurnDownUtilTest.java                                        | src      |       23 |       18 |       23 |      163 |      227 |
+| kassandra.report.burndown                | BurnDownUtilTest.java                                        | src      |       35 |       29 |       23 |      293 |      380 |
 | kassandra.report.burndown                | BurndownTest.java                                            | src      |        9 |        0 |       16 |       57 |       82 |
 | kassandra.report.burndown                | DayWork.java                                                 | src      |       11 |        0 |       17 |       42 |       70 |
 | kassandra.report.burndown                | RenderDao.java                                               | src      |        5 |        0 |       17 |       40 |       62 |
@@ -471,7 +471,7 @@
 | kassandra.service                        | AuditLogService.java                                         | src      |       16 |       15 |       16 |      243 |      290 |
 | kassandra.service                        | DatabaseDebugService.java                                    | src      |       26 |       41 |       50 |      127 |      244 |
 | kassandra.service                        | EnversPlanningStateService.java                              | src      |       13 |       53 |       17 |       95 |      178 |
-| kassandra.service                        | GanttBurndownChartService.java                               | src      |       68 |       65 |      192 |      499 |      824 |
+| kassandra.service                        | GanttBurndownChartService.java                               | src      |       69 |       65 |      191 |      517 |      842 |
 | kassandra.service                        | GanttBurndownExcelExportService.java                         | src      |       17 |       10 |       16 |      140 |      183 |
 | kassandra.service                        | GanttBurndownExcelExportServiceTest.java                     | src      |        9 |        0 |       16 |       47 |       72 |
 | kassandra.service                        | GanttChartService.java                                       | src      |       34 |       47 |       45 |      213 |      339 |
@@ -654,7 +654,7 @@
 | kassandra.util                           | AbstractLegacyGanttTestUtil.java                             | src      |       10 |        0 |       19 |       85 |      114 |
 | kassandra.util                           | AbstractTestUtil.java                                        | src      |       14 |       16 |       20 |       68 |      118 |
 | kassandra.util                           | BackendPlanningDataGenerator.java                            | src      |        8 |       23 |       16 |       67 |      114 |
-| kassandra.util                           | BurnDownUtil.java                                            | src      |       10 |       26 |       54 |       72 |      162 |
+| kassandra.util                           | BurnDownUtil.java                                            | src      |       10 |       26 |       53 |       80 |      169 |
 | kassandra.util                           | DTOAsserts.java                                              | src      |       34 |       15 |       39 |      136 |      224 |
 | kassandra.util                           | EntityGenerator.java                                         | src      |       48 |       20 |       19 |      312 |      399 |
 | kassandra.util                           | EntityTimestampTest.java                                     | src      |       16 |        3 |       16 |      169 |      204 |
@@ -740,8 +740,8 @@
 | util                                     | MavenProperiesProvider.java                                  | src      |        7 |        0 |       16 |       14 |       37 |
 | util                                     | MpxjUtil.java                                                | src      |        7 |        0 |        0 |       43 |       50 |
 | util                                     | StringUtils.java                                             | src      |        8 |       62 |       88 |       28 |      186 |
-| util                                     | TaskUtil.java                                                | src      |       17 |       13 |      146 |      106 |      282 |
+| util                                     | TaskUtil.java                                                | src      |       17 |       13 |      139 |      108 |      277 |
 | util                                     | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 75 package(s)                            | 667 file(s)                                                  | java     |    13961 |    15143 |    18377 |    81101 |   128582 |
+| 75 package(s)                            | 667 file(s)                                                  | java     |    13974 |    15154 |    18368 |    81259 |   128755 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

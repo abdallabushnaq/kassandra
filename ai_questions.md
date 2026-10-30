@@ -96,9 +96,42 @@ Worst case we add an optional parameter boolean stopRecording.
 1. All the screenshots we take and store in kassandra.wiki are supposed to show up on one of the markdown pages in the
    wiki. We need to make sure it is referenced on one of the pages to describe the product or we need to remove it.
 
-# Describe the Design of the Help System
+# Analyze Burn-Down-Chart
 
-1. create a markdown file called docs/design/help-system-design.md that describes the design of the help system.
-2. explain how we generate the screenshots we use in the help system using GenerateScreenshotsIT.
-3. explain how it supports both light/dark mode.
-4. use mermaid where needed to visualize flows/relations/... if appropriate for this design.
+In the Demo test class as in other classes, we generate synthetic data to simulate a team of people working on projects.
+We generate sprints with tasks and dependencies and calculate a Gantt chart.
+This Gantt chart already ensures that all user availability is taken into account.
+So, ideally, if nobody gets sick or tasks take longer or shorter than estimated, the sprint should finish exactly at the
+end of the Gantt chart.
+We go through the days of the sprint and burn down tasks as fast as the users availability allows.
+We do generate random user sick days. They might delay the borning down of the chart.
+All this is done only at the start of the test when no database backup is found, and it takes about 30min, so not a good
+thing to run many times or debug.
+Remark: But we do not use delay in our synthetic data because we noticed that even without delay the graph is not
+correct.
+We will add delay later after we have fixed this bug.
+
+## Problem
+
+In the burn-down-chart we show min/max optimum guide-lines. The minimum line should show the optimum burn down when
+everything works as expected.
+Barcelona sprint is burning down in the first 3 days slower than optimum, about 3h missing. None of the users is sick at
+that time. Why is it burning down slower than optimum?
+Berlin sprint starts at max estimation but then catches up. Why is it starting at max estimation?
+Prague sprint burns down much faster than optimum. How is that possible?
+London sprint burns down faster than optimum. How is that possible?
+Athens sprint burns down faster than optimum. How is that possible?
+
+## Analyzing
+
+I suggest to export the synthetic data to a file and then analyze it in a separate test class. We can then analyze it
+separately.
+But I leave it to you to decide how to do that.
+
+## Classes involved
+
+1. Demo: the test class that generates synthetic data and later runs the application as a demo.
+2. AbstractGanttTestUtil: Generates synthetic data.
+3. GanttBurndownChart.ts: The chart that shows the burn down chart.
+4. GanttBurndownChart.ts: The internal renderer that draws the chart.
+5. GanttBurndownChartService: The service that calculates the data for the chart including the guides.
