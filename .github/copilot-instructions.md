@@ -262,7 +262,7 @@ The following are explicitly excluded from Surefire in `pom.xml` and **must not*
 
 ## Architecture Notes
 
-All design documents can be found in `../kassandra.wiki`.
+All design documents can be found in `../kassandra.wiki/`.
 
 - **Data model hierarchy:** `Product → Version → Feature → Sprint → Task/Story → Worklog`
 - **REST API base path:** `/api` — each resource has its own controller and client stub.

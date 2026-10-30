@@ -81,19 +81,6 @@ any tests in the de.bushnaq.abdalla.kassandra.ui.view package.
 e.g. we press the button to add a user, and then we need to use the UserApi to check if that user has been created.
 Every action we execute in the UI that has an expected outcome must be checked in the test code.
 
-# Optimizing Screenshots
-
-Running GenerateScreenshotsIT still produces 21 screenshots that are different anough to be saved on disk.
-We want to try to stabilize the generation of screenshots, so that no new versions are generated everytime we run the
-test, but still want to make sure the screenshots we have represent the current state of the software.
-
-I can see in the report screenshot-discrepancies.csv that 24 screenshots where saved becuase of a discrepancy between
-the old version.
-if i take a look at the image and compare it with the last verson in git, they seem to be identical.
-
-can you try to figure out why these images still differ everytime they are generated?
-can we stabilize this?
-
 # Prevent Video Overwrite
 
 In GenerateScreenshotsIT, it seems that we start and stop the screen capturing during the test. Everytime we do that, we
@@ -107,4 +94,11 @@ Worst case we add an optional parameter boolean stopRecording.
 # Updating wiki pages
 
 1. All the screenshots we take and store in kassandra.wiki are supposed to show up on one of the markdown pages in the
-   wiki. We need to make sure it is referenced on one of the pages.
+   wiki. We need to make sure it is referenced on one of the pages to describe the product or we need to remove it.
+
+# Describe the Design of the Help System
+
+1. create a markdown file called docs/design/help-system-design.md that describes the design of the help system.
+2. explain how we generate the screenshots we use in the help system using GenerateScreenshotsIT.
+3. explain how it supports both light/dark mode.
+4. use mermaid where needed to visualize flows/relations/... if appropriate for this design.

@@ -84,6 +84,7 @@ kassandra-help-markdown img {
     display: block;
     max-width: 100%;
     height: auto;
+    border: 1px dashed var(--lumo-contrast-20pct);
 }
 
 kassandra-help-markdown table {
