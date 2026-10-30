@@ -846,11 +846,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         oidcIdentityService.linkIdentity(helpUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(userEmail));
         Product product = peg.productApi.getAll().stream().filter(candidate -> captureProduct.equals(candidate.getName())).findFirst().orElseThrow();
         productAclApi.grantUserAccess(product.getId(), helpUser.getId());
+        aboutViewTester.logout();
         for (String audience : List.of("admin", "user")) {
             boolean admin      = "admin".equals(audience);
             String  loginEmail = admin ? "christopher.paul@kassandra.org" : userEmail;
-            // A local logout can leave Keycloak SSO cookies; isolate both origins between accounts.
-            seleniumHandler.destroy();
             aboutViewTester.login(loginEmail, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
             try {
                 assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail), "The browser must be signed in as " + loginEmail);
@@ -1216,6 +1215,22 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
         takeMainLayoutHelpScreenshots(testInfo, productName);
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        try {
+            for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+                seleniumHandler.setWindowSize(1600, 1000);
+                navigateTo(ProductListView.ROUTE);
+                seleniumHandler.setHelpScreenshotTheme(theme);
+                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
+                seleniumHandler.setWindowSize(480, 1000);
+                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
+                seleniumHandler.setWindowSize(1600, 1000);
+            }
+        } finally {
+            aboutViewTester.logout();
+        }
 
         seleniumHandler.waitUntilBrowserClosed(1000);
     }
@@ -1251,42 +1266,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             if (setting.isSecret() && setting.isConfigured()) {
                 seleniumHandler.takeHelpElementScreenshot(ServerSettingsView.class, ServerSettingsView.CLEAR_BUTTON_PREFIX + setting.getKey());
             }
-        }
-    }
-
-    /**
-     * Captures the shared page header and changed heading controls without running the showcase.
-     *
-     * @throws Exception when navigation or screenshot capture fails
-     */
-    @Test
-    @WithMockUser(username = "admin-user", roles = "ADMIN")
-    public void takeSmartHeaderScreenshots() throws Exception {
-        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
-        try {
-            for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
-                seleniumHandler.setWindowSize(1600, 1000);
-                navigateTo(ProductListView.ROUTE);
-                seleniumHandler.setHelpScreenshotTheme(theme);
-                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
-                seleniumHandler.setWindowSize(480, 1000);
-                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
-                seleniumHandler.setWindowSize(1600, 1000);
-
-                navigateTo(AboutView.ROUTE);
-                seleniumHandler.prepareHelpScreenshots(AboutView.ABOUT_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(AboutView.class, AboutView.ABOUT_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
-
-                navigateTo("profile");
-                seleniumHandler.prepareHelpScreenshots(UserProfileView.PROFILE_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(UserProfileView.class, UserProfileView.SAVE_PROFILE_BUTTON);
-                seleniumHandler.takeHelpElementScreenshot(UserProfileView.class, UserProfileView.HELP_BUTTON_ID);
-            }
-        } finally {
-            aboutViewTester.logout();
         }
     }
 
