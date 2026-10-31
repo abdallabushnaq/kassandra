@@ -176,15 +176,19 @@ Let's allow setting that to false in SeleniumHandler.
 # Remove Deprecated Constructors
 
 We introduced the Builder pattern in RandomCase and use it in GenerateScreenshotsIT and Demo.
-Let's remove the deprecated constuctors and replace all calls using the builder pattern.
-There are many classes using the deprecated constuctor.
+Let's remove the deprecated constructors and replace all calls using the builder pattern.
+There are many classes using the deprecated constructor.
 
 # Harmonize Scroll Behavior
 
 Kassandra views have different scroll behaviors. Some views scroll the whole page, some views scroll only the content
 area.
 We want to harmonize the scroll behavior across all views to scroll the whole page.
+ActiveSprints and Backlog already scroll the whole page, so we can use them as examples for QualityBoard, which is
+missing a page scroller.
+ProductListView, VersionListView, FeatureListView and SprintListView are based on AbstractMainGrid.
+Let's add a page scroller to AbstractMainGrid.
 
-# Speed up Login
+# Stable Diffusion Cache for our Tests
 
-Clicking the login button of the oidc provider takes 10s.
+Lets introduce a 

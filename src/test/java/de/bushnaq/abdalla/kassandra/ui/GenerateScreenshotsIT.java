@@ -98,8 +98,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Slf4j
 public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
-    private static final String                          ACTIVE_SPRINT_NAME                = "Rome";//manually picked after data generation
-    private static final String                          ACTIVE_SPRINT_USER_NAME           = "randy.asmus@kassandra.org";
+    private static final String                          ACTIVE_SPRINT_NAME                = "London";//manually picked after data generation
+    private static final String                          ACTIVE_SPRINT_USER_NAME           = "grace.martin@kassandra.org";
     private static final String                          ADMINISTRATOR_USER_NAME           = "christopher.paul@kassandra.org";
     private static final String                          BACKLOG_SPRINT_NAME               = "Vienna";//manually picked after data generation
     private static final String                          MAIN_LAYOUT_USER_NAME             = "jennifer.holleman@kassandra.org";
@@ -314,8 +314,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(
                 By.cssSelector("#" + ActiveSprints.ID_GROUPING_MODE_SELECTOR + " input"),
                 "value", mode.getDisplayName()));
-        seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(
-                By.id(ActiveSprints.BOARD_ID), "data-grouping-mode", mode.name()));
+        seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(By.id(ActiveSprints.BOARD_ID), "data-grouping-mode", mode.name()));
         scrollIntoView(ActiveSprints.BOARD_ID);
         seleniumHandler.takeScreenShot(folder + "/active-sprints-board-" + mode.name().toLowerCase(Locale.ROOT) + ".png");
     }
@@ -866,14 +865,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             boolean admin      = "admin".equals(audience);
             String  loginEmail = admin ? ADMINISTRATOR_USER_NAME : userEmail;
             aboutViewTester.login(loginEmail, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-            try {
-                assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail), "The browser must be signed in as " + loginEmail);
-                productListViewTester.switchToProductListView();
-                for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
-                    takeMainLayoutElementScreenshots(theme, audience);
-                }
-            } finally {
-                aboutViewTester.logout();
+            assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail), "The browser must be signed in as " + loginEmail);
+            productListViewTester.switchToProductListView();
+            for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+                takeMainLayoutElementScreenshots(theme, audience);
             }
         }
     }
@@ -1158,15 +1153,16 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{ACTIVE_SPRINT_NAME});
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         takeActiveSprintsElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
-        aboutViewTester.logout();
+//        aboutViewTester.logout();
         aboutViewTester.login(ACTIVE_SPRINT_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        navigateTo(ActiveSprints.ROUTE);
+        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
         takeActiveSprintsDialogScreenshots(folder);
 
         //-----------------
         //UserListView
         //-----------------
-        aboutViewTester.logout();
+//        aboutViewTester.logout();
         aboutViewTester.login(ADMINISTRATOR_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeUserElementScreenshots(eTheme);
@@ -1214,7 +1210,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
         takeAdministrationScreenshots(folder, eTheme);
         takeKassandraElementScreenshots(eTheme);
-        aboutViewTester.logout();
+        //aboutViewTester.logout();
         takeAuthenticationScreenshots(folder, eTheme);
     }
 
@@ -1225,7 +1221,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      * AI interactions are excluded because they need separate GPU-backed services.
      * Runs for about 5 min 0 sec generating a new set of data without Stable Diffusion.
      * Runs for about x min y sec generating a new set of data with Stable Diffusion.
-     * Runs for about 12 min 13 sec to take the screenshots.
+     * Runs for about 12 min 30 sec to take the screenshots.
      * <p>
      * How to generate
      * run Demo with new database and pick
@@ -1247,20 +1243,16 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
         takeMainLayoutHelpScreenshots(testInfo, productName);
         aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        try {
-            for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
-                seleniumHandler.setWindowSize(1600, 1000);
-                navigateTo(ProductListView.ROUTE);
-                seleniumHandler.setHelpScreenshotTheme(theme);
-                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
-                seleniumHandler.setWindowSize(480, 1000);
-                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
-                seleniumHandler.setWindowSize(1600, 1000);
-            }
-        } finally {
-            aboutViewTester.logout();
+        for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+            seleniumHandler.setWindowSize(1600, 1000);
+            navigateTo(ProductListView.ROUTE);
+            seleniumHandler.setHelpScreenshotTheme(theme);
+            seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
+            seleniumHandler.setWindowSize(480, 1000);
+            seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
+            seleniumHandler.setWindowSize(1600, 1000);
         }
 
         seleniumHandler.waitUntilBrowserClosed(1000);
