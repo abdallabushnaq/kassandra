@@ -46,7 +46,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -152,16 +151,31 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 //                        1, 1,
 //                        5, 8, 8, 4, 6, 7),//minimalistic demo data
                 //
-                new RandomCase(3,
-                        OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
-                        LocalDate.parse("2026-02-01"),
-                        Duration.ofDays(10),
-                        6, 6,
-                        1, 3,
-                        1, 3,
-                        1, 3,
-                        5, 8, 8, 4, 6, 7)//official demo data
+//                new RandomCase(3,
+//                        OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
+//                        LocalDate.parse("2026-02-01"),
+//                        Duration.ofDays(10),
+//                        6, 6,
+//                        1, 3,
+//                        1, 3,
+//                        1, 3,
+//                        5, 8, 8, 4, 6, 7)//official demo data
                 //
+                RandomCase.builder()
+                        .testCaseIndex(4)
+                        .now(OffsetDateTime.parse("2026-03-23T08:00:00+01:00"))
+                        .startDate(LocalDate.parse("2026-02-01"))
+                        .minNumberOfProducts(8).maxNumberOfProducts(8)
+                        .minNumberOfVersions(1).maxNumberOfVersions(3)
+                        .minNumberOfFeatures(1).maxNumberOfFeatures(3)
+                        .minNumberOfSprints(1).maxNumberOfSprints(3)
+                        .maxTaskDurationDays(5)
+                        .minNumberOfStories(1).maxNumberOfStories(4)
+                        .maxNumberOfUsers(8)
+                        .maxNumberOfUsersPerSprint(4)
+                        .maxNumberOfTasks(4)
+                        .seed(7)
+                        .build()//official screenshot data
         };
         return Arrays.stream(randomCases).toList();
     }

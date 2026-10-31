@@ -107,6 +107,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private static final String                          QUALITY_BOARD_SPRINT_NAME_IN_TIME = "Berlin";//manually picked after data generation
     private static final String                          SPRINT_OVERVIEW_NAME              = "Berlin";//manually picked after data generation
     @Autowired
+    private              StableDiffusionService          StableDiffusionService;
+    @Autowired
     private              AboutViewTester                 aboutViewTester;
     @Autowired
     private              ActiveSprintsTester             activeSprintsTester;
@@ -259,7 +261,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
     private void prepareScreenshotFixture(RandomCase randomCase, TestInfo testInfo) throws Exception {
         seleniumHandler.setWindowSize(InstructionVideo.VIDEO_WIDTH, InstructionVideo.VIDEO_EXTENDED_HEIGHT);
-        StableDiffusionService.setEnabled(true);
+        de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService.setEnabled(true);
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -1146,20 +1148,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             takeBacklogElementScreenshots(eTheme);
             seleniumHandler.takeScreenShot(folder + "/backlog.png");
             takeDependencyDialogScreenshots(folder);
+            //-----------------
+            //ActiveSprints
+            //-----------------
+            activeSprintsTester.switchToActiveSprints();
+            seleniumHandler.clearMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR);
+            seleniumHandler.waitForPageLoaded(200);
+            seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{ACTIVE_SPRINT_NAME});
+            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+            takeActiveSprintsElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
+            aboutViewTester.logout();
+            aboutViewTester.login(ACTIVE_SPRINT_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+            takeActiveSprintsDialogScreenshots(folder);
         }
-        //-----------------
-        //ActiveSprints
-        //-----------------
-        activeSprintsTester.switchToActiveSprints();
-        seleniumHandler.clearMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR);
-        seleniumHandler.waitForPageLoaded(200);
-        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{ACTIVE_SPRINT_NAME});
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-//        takeActiveSprintsElementScreenshots(eTheme);
-//        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
-        aboutViewTester.logout();
-        aboutViewTester.login(ACTIVE_SPRINT_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        takeActiveSprintsDialogScreenshots(folder);
 
         //-----------------
         //UserListView
@@ -1218,8 +1220,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Restores or generates the showcase fixture once, then captures screens, dialogs
      * and help controls in light and dark themes, including shared administrator/user navigation.
-     * Setup is excluded because it requires an unconfigured installation; AI interactions
-     * are excluded because they need separate GPU-backed services.
+     * Needs Stable Diffusion service to run.
+     * AI interactions are excluded because they need separate GPU-backed services.
      * Runs for about 5 min 0 sec generating a new set of data without Stable Diffusion.
      * Runs for about 13 min 14 sec .
      * <p>
@@ -1235,6 +1237,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
         prepareScreenshotFixture(randomCase, testInfo);
+        de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService.setEnabled(true);
+        if (!StableDiffusionService.isAvailable())
+            throw new Exception("Stable Diffusion service is not available. Please ensure the service is running and accessible.");
         seleniumHandler.startRecording(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
@@ -1337,15 +1342,17 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      */
     private void takeUserDialogScreenshots(String folder) throws IOException {
         // Create user dialog
-        seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
-        seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
-        takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID,
-                UserDialog.USER_EMAIL_FIELD, UserDialog.ROLES_FIELD_ID,
-                UserDialog.USER_FIRST_WORKING_DAY_PICKER, UserDialog.USER_LAST_WORKING_DAY_PICKER,
-                UserDialog.USER_LOCATION_COUNTRY_COMBO, UserDialog.USER_LOCATION_STATE_COMBO, UserDialog.USER_WORK_WEEK_COMBO,
-                UserDialog.CONFIRM_BUTTON, UserDialog.CANCEL_BUTTON);
-        seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, folder + "/user-create-dialog.png");
-        userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);
+        if (false) {
+            seleniumHandler.click(UserListView.CREATE_USER_BUTTON);
+            seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
+            takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID,
+                    UserDialog.USER_EMAIL_FIELD, UserDialog.ROLES_FIELD_ID,
+                    UserDialog.USER_FIRST_WORKING_DAY_PICKER, UserDialog.USER_LAST_WORKING_DAY_PICKER,
+                    UserDialog.USER_LOCATION_COUNTRY_COMBO, UserDialog.USER_LOCATION_STATE_COMBO, UserDialog.USER_WORK_WEEK_COMBO,
+                    UserDialog.CONFIRM_BUTTON, UserDialog.CANCEL_BUTTON);
+            seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, folder + "/user-create-dialog.png");
+            userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);
+        }
 
 
         // Edit user dialog - open action menu first, then edit
