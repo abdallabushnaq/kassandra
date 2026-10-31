@@ -95,43 +95,96 @@ Worst case we add an optional parameter boolean stopRecording.
 
 1. All the screenshots we take and store in kassandra.wiki are supposed to show up on one of the markdown pages in the
    wiki. We need to make sure it is referenced on one of the pages to describe the product or we need to remove it.
+2. I have noticed that some screenshots are also missing. e.g. ImagePromptDialog. This dialog screenshot should actually
+   be taken 2 times: once for a project and once for a user.
 
-# Analyze Burn-Down-Chart
+# How To Handle Planned Sick-Days
 
-In the Demo test class as in other classes, we generate synthetic data to simulate a team of people working on projects.
-We generate sprints with tasks and dependencies and calculate a Gantt chart.
-This Gantt chart already ensures that all user availability is taken into account.
-So, ideally, if nobody gets sick or tasks take longer or shorter than estimated, the sprint should finish exactly at the
-end of the Gantt chart.
-We go through the days of the sprint and burn down tasks as fast as the users availability allows.
-We do generate random user sick days. They might delay the borning down of the chart.
-All this is done only at the start of the test when no database backup is found, and it takes about 30min, so not a good
-thing to run many times or debug.
-Remark: But we do not use delay in our synthetic data because we noticed that even without delay the graph is not
-correct.
-We will add delay later after we have fixed this bug.
+At the moment we handle sick days as unplanned in our sprints and charts.
+But, sometimes sick days can be planned.
+e.g. if a suer has a planned surgery, we can plan this time into our project.
+At this moment, GanttBurndownChartService.isPlannedWorkingDay assumes that all sick days are unplanned.
+We need to add a new OffDayType planned sick day.
 
-## Problem
+# Add Zoom Adaptation to Gantt Chart
 
-In the burn-down-chart we show min/max optimum guide-lines. The minimum line should show the optimum burn down when
-everything works as expected.
-Barcelona sprint is burning down in the first 3 days slower than optimum, about 3h missing. None of the users is sick at
-that time. Why is it burning down slower than optimum?
-Berlin sprint starts at max estimation but then catches up. Why is it starting at max estimation?
-Prague sprint burns down much faster than optimum. How is that possible?
-London sprint burns down faster than optimum. How is that possible?
-Athens sprint burns down faster than optimum. How is that possible?
+All our charts support day width zoom (zooms horizontally) and full chart zoom (both directions).
+We want the chart to adapt what it renders depending on the zoom level.
 
-## Analyzing
+1. current task body has many details that can be distracting at low zoom levels:
+    1. task name
+    2. task assignee
+    3. progress bar (lets render this only at high zoom levels)
+    4. progress text (lets render this only at high zoom levels)
+    5. distinguishes off-days from working days (lets render this only at high zoom levels, lets also reduce the task
+       body height at low zoom levels)
+    6. border (lets not render this at low zoom levels)
+2. current milestone body has many details that can be distracting at low zoom levels:
+    1. milestone name
+    2. milestone start date (lets render this only at high zoom levels)
+    3. milestone start time (lets render this only at high zoom levels)
+    4. milestone border (lets not render this at low zoom levels)
+3. dependency lines between tasks/stories/milestones (lets not render this at low zoom levels)
 
-I suggest to export the synthetic data to a file and then analyze it in a separate test class. We can then analyze it
-separately.
-But I leave it to you to decide how to do that.
+We want to keep all these zoom levels independently configurable as properties.
+Let us measure zoom level by dayWidth.
+So, renderTaskProgressBarAtDayWidth could be set to 20 and renderTaskProgressTextAtDayWidth could be set at 22
 
-## Classes involved
+# Chart legend user colors
 
-1. Demo: the test class that generates synthetic data and later runs the application as a demo.
-2. AbstractGanttTestUtil: Generates synthetic data.
-3. GanttBurndownChart.ts: The chart that shows the burn down chart.
-4. GanttBurndownChart.ts: The internal renderer that draws the chart.
-5. GanttBurndownChartService: The service that calculates the data for the chart including the guides.
+Chart legend user colors do not match user colors in the chart (too dark).
+The graph colors are actually too light compared to the Gantt chart because the Gantt chart draws the task body 2 times
+on top of each other to visualize the progress in percent.
+
+# Add Zoom Adaptation to Sprint Overview Chart
+
+All our charts support day width zoom (zooms horizontally) and full chart zoom (both directions).
+We want the chart to adapt what it renders depending on the zoom level.
+There currently is too much unused vertical space between the lanes.
+Current Sprint Overview Chart should show:
+
+1. sprint name
+2. sprint start date in lower left corner (lets add a property to hide this at low zoom levels)
+3. sprint end date in lower right corner (lets add a property to hide this at low zoom levels)
+4. sprint progress gray background color covering the left percentage of the bar (lets add a property to hide this at
+   low zoom levels)
+5. sprint status in upper right corner (lets add a property to hide this at low zoom levels)
+
+We want to keep all these zoom levels independently configurable as properties.
+Let us measure zoom level by dayWidth.
+So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAtDayWidth could be set at 22
+
+# Burn Down Chart Rendering
+
+it looks as if the js renders the graph without any antialiasing.
+It was turned off for the Gantt chart, but it should be turned on for the Burn Down chart.
+Burn down chart grid is one line too high.
+Let us draw the vertical grid lines for the Burn-down-chart above the graph.
+Gantt chart should keep the grid below the chart.
+Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
+
+# screen Shots
+
+ImagePromptDialog screenshots are missing.
+
+# Disabling Video Recording for Tests
+
+We want to be able to disable video recording for tests.
+Let's add a boolean value in VideoRecorder.
+Let's allow setting that to false in SeleniumHandler.
+
+# Remove Deprecated Constructors
+
+We introduced the Builder pattern in RandomCase and use it in GenerateScreenshotsIT and Demo.
+Let's remove the deprecated constuctors and replace all calls using the builder pattern.
+There are many classes using the deprecated constuctor.
+
+# Harmonize Scroll Behavior
+
+Kassandra views have different scroll behaviors. Some views scroll the whole page, some views scroll only the content
+area.
+We want to harmonize the scroll behavior across all views to scroll the whole page.
+
+# Speed up Login
+
+Clicking the login button of the oidc provider takes 10s.

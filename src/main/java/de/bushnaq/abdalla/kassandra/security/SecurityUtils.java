@@ -116,6 +116,10 @@ public class SecurityUtils {
                 .anyMatch(grantedAuthority -> "ROLE_ADMIN".equals(grantedAuthority.getAuthority()));
     }
 
+    public static boolean isOidcLogin() {
+        return false;
+    }
+
     /**
      * Checks if the current user has the USER role.
      *

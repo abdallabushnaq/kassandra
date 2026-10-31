@@ -17,8 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -26,6 +25,8 @@ import java.time.OffsetDateTime;
 
 @Getter
 @ToString(callSuper = false)
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class RandomCase {
     private final int            maxNumberOfFeatures;
     private final int            maxNumberOfProducts;
@@ -40,12 +41,15 @@ public class RandomCase {
     private final int            minNumberOfFeatures;
     private final int            minNumberOfProducts;
     private final int            minNumberOfSprints;
+    @Builder.Default
+    private final int            minNumberOfStories = 1;
     private final int            minNumberOfVersions;
     private final OffsetDateTime now;
     private final long           seed;
     private final LocalDate      startDate;
     private final int            testCaseIndex;
 
+    @Deprecated
     public RandomCase(int testCaseIndex, int maxTaskDurationDays, int maxNumberOfStories, int maxNumberOfUsers, int maxNumberOfUsersPerSprint, int maxNumberOfTasks, int seed) {
         this.testCaseIndex = testCaseIndex;
         this.startDate     = LocalDate.parse("2024-12-15");
@@ -58,6 +62,7 @@ public class RandomCase {
         this.maxNumberOfFeatures       = 1;
         this.minNumberOfSprints        = 1;
         this.maxNumberOfSprints        = 1;
+        this.minNumberOfStories        = 1;
         this.maxTaskDurationDays       = maxTaskDurationDays;
         this.maxNumberOfStories        = maxNumberOfStories;
         this.maxNumberOfUsers          = maxNumberOfUsers;
@@ -67,6 +72,7 @@ public class RandomCase {
         this.now                       = OffsetDateTime.parse("2025-05-05T08:00:00+01:00");
     }
 
+    @Deprecated
     public RandomCase(int testCaseIndex, OffsetDateTime now,
                       LocalDate startDate,
                       Duration maxStartDateShift,
@@ -87,6 +93,7 @@ public class RandomCase {
         this.maxNumberOfFeatures       = maxNumberOfFeatures;
         this.minNumberOfSprints        = minNumberOfSprints;
         this.maxNumberOfSprints        = maxNumberOfSprints;
+        this.minNumberOfStories        = 1;
         this.maxTaskDurationDays       = maxTaskDurationDays;
         this.maxNumberOfStories        = maxNumberOfStories;
         this.maxNumberOfUsers          = maxNumberOfUsers;
@@ -95,5 +102,4 @@ public class RandomCase {
         this.seed                      = seed;
         this.now                       = now;
     }
-
 }

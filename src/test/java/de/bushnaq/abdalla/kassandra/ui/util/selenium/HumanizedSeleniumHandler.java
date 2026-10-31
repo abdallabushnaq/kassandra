@@ -116,6 +116,15 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         }
     }
 
+    /**
+     * Clears the selected values from a multi-select combo box using its clear button.
+     *
+     * @param id the ID of the multi-select combo box
+     */
+    public void clearMultiSelectComboBoxValue(String id) {
+        clickClearButton(id);
+    }
+
     public void closeMultiSelectComboBoxValue(String id) {
         if (!isEnabled())
             return;
@@ -1090,23 +1099,18 @@ public class HumanizedSeleniumHandler extends SeleniumHandler {
         // When opened, the 'opened' attribute is set to "true" (not an empty string)
         waitUntil(ExpectedConditions.attributeToBe(comboBoxElement, "opened", "true"));
 
-        // Find dropdown items
-        // Items are in the light DOM as children of vaadin-combo-box-scroller
-        // We can query them directly without accessing shadow DOM
-        List<WebElement> dropdownItems = findElements(By.cssSelector("vaadin-multi-select-combo-box-item"));
-
-        log.trace("Found {} dropdown items", dropdownItems.size());
-
-        // Find the item that matches the text
+        By dropdownItemSelector = By.cssSelector("vaadin-multi-select-combo-box-item");
         for (String s : text) {
-            WebElement matchingItem = null;
-            for (WebElement item : dropdownItems) {
-                String itemText = item.getText();
-                if (itemText.startsWith(s.trim())) {
-                    matchingItem = item;
-                    break;
-                }
-            }
+            String searchText = s.trim();
+            inputElement.clear();
+            typeText(inputElement, searchText);
+            waitUntil(driver -> findElements(dropdownItemSelector).stream()
+                    .anyMatch(item -> item.getText().startsWith(searchText)));
+
+            WebElement matchingItem = findElements(dropdownItemSelector).stream()
+                    .filter(item -> item.getText().startsWith(searchText))
+                    .findFirst()
+                    .orElseThrow(() -> new NoSuchElementException("No multi-select option found for: " + searchText));
 
             // Move mouse to the item and click it
             moveMouseToElement(matchingItem);

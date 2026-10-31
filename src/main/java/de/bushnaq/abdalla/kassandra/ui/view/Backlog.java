@@ -49,11 +49,7 @@ import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttChartDto;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
-import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
-import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
-import de.bushnaq.abdalla.kassandra.ui.component.CrossGridDragDropCoordinator;
-import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
-import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.component.*;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -78,13 +74,7 @@ import java.util.concurrent.ExecutionException;
 @RolesAllowed({"USER", "ADMIN"}) // Allow access to users with specific roles
 @Slf4j
 public class Backlog extends Main implements AfterNavigationObserver, BeforeEnterObserver {
-    /** Identifier of the page help button. */
-    public static final String HELP_BUTTON_ID = "backlog-help-button";
     public static final String                       BACKLOG_PAGE_TITLE_ID      = "backlog-page-title";
-    /**
-     * Identifier of the selected sprint's task grid.
-     */
-    public static final String                       TASK_GRID_ID               = "backlog-task-grid";
     public static final String                       CANCEL_BUTTON_ID           = "cancel-tasks-button";
     public static final String                       CLEAR_FILTER_BUTTON_ID     = "clear-filter-button";
     public static final String                       CREATE_MILESTONE_BUTTON_ID = "create-milestone-button";
@@ -94,15 +84,23 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
     public static final String                       EXPAND_TOGGLE_BUTTON_ID    = "expand-toggle-button";
     public static final String                       GANTT_CHART_CONTAINER_ID   = "backlog-gantt-chart-container";
     /**
+     * Identifier of the page help button.
+     */
+    public static final String                       HELP_BUTTON_ID             = "backlog-help-button";
+    public static final String                       MENU_ITEM_ID               = "/backlog";
+    /**
      * Identifier of the control that opens the Gantt chart in a separate browser tab.
      */
     public static final String                       OPEN_GANTT_CHART_BUTTON_ID = "open-gantt-chart-button";
-    public static final String                       MENU_ITEM_ID               = "/backlog";
     public static final String                       ROUTE                      = "backlog";
     public static final String                       SAVE_BUTTON_ID             = "save-tasks-button";
     public static final String                       SEARCH_FIELD_ID            = "search-field";
     public static final String                       SPRINT_SELECTOR_ID         = "sprint-selector";
     public static final String                       SPRINT_STATUS_SELECTOR_ID  = "sprint-status-selector";
+    /**
+     * Identifier of the selected sprint's task grid.
+     */
+    public static final String                       TASK_GRID_ID               = "backlog-task-grid";
     public static final String                       USER_SELECTOR_ID           = "user-selector";
     private             List<Sprint>                 allSprints                 = new ArrayList<>();
     private final       TaskGrid                     backlogGrid;                        // Grid for Backlog sprint (always at bottom)
@@ -512,6 +510,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         // 2. User multi-select dropdown
         userSelector = new MultiSelectComboBox<>();
         userSelector.setId(USER_SELECTOR_ID);
+        userSelector.setClearButtonVisible(true);
 //        userSelector.setLabel("User");
         userSelector.setItemLabelGenerator(User::getName);
         userSelector.setPlaceholder("Select users");

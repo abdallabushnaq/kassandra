@@ -45,14 +45,14 @@ import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
-import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
 import de.bushnaq.abdalla.kassandra.ui.component.MergedScrumBoard;
+import de.bushnaq.abdalla.kassandra.ui.component.SmartHeader;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
 import jakarta.annotation.security.PermitAll;
@@ -71,78 +71,80 @@ import java.util.stream.Collectors;
 @RolesAllowed({"USER", "ADMIN"})
 @Slf4j
 public class ActiveSprints extends Main implements AfterNavigationObserver {
-    /** Identifier of the page help button. */
-    public static final String HELP_BUTTON_ID = "active-sprints-help-button";
     /**
      * Identifier of the merged task board below the chart.
      */
-    public static final String BOARD_ID = "active-sprints-board";
+    public static final String                      BOARD_ID                            = "active-sprints-board";
     /**
      * Identifier of the Active Sprints Gantt/burndown chart container.
      */
-    public static final String                      GANTT_BURNDOWN_CONTAINER_ID = "active-sprints-gantt-burndown-container";
+    public static final String                      GANTT_BURNDOWN_CONTAINER_ID         = "active-sprints-gantt-burndown-container";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final String                      HELP_BUTTON_ID                      = "active-sprints-help-button";
+    public static final String                      ID_CLEAR_FILTERS_BUTTON             = "clear-filters-button";
+    public static final String                      ID_GROUPING_MODE_SELECTOR           = "grouping-mode-selector";
+    public static final String                      ID_SEARCH_FIELD                     = "search-field";
+    public static final String                      ID_SPRINT_SELECTOR                  = "sprint-selector";
+    public static final String                      ID_USER_SELECTOR                    = "user-selector";
+    public static final String                      MENU_ITEM_ID                        = "/active-sprints";
     /**
      * Identifier of the control that opens the Active Sprints chart in a separate browser window.
      */
     public static final String                      OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID = "open-active-sprints-gantt-burndown-chart-button";
-    public static final String                      ID_CLEAR_FILTERS_BUTTON   = "clear-filters-button";
-    public static final String                      ID_GROUPING_MODE_SELECTOR = "grouping-mode-selector";
-    public static final String                      ID_SEARCH_FIELD           = "search-field";
-    public static final String                      ID_SPRINT_SELECTOR        = "sprint-selector";
-    public static final String                      ID_USER_SELECTOR          = "user-selector";
-    public static final String                      MENU_ITEM_ID              = "/active-sprints";
     //    public static final String                      ACTIVE_SPRINTS_PAGE_TITLE_ID = "active-sprints-title";
-    public static final String                      ROUTE                     = "active-sprints";
-    private             List<Sprint>                allSprints                = new ArrayList<>();
+    public static final String                      ROUTE                               = "active-sprints";
+    private             List<Sprint>                allSprints                          = new ArrayList<>();
     private final       VerticalLayout              contentLayout;
-    private final       Scroller                   contentScroller;
+    private final       Scroller                    contentScroller;
     //    private final       DateTimeFormatter           dateFormatter      = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private final       FeatureApi                  featureApi;
-    private final       Map<UUID, Feature>          featureMap                = new HashMap<>();
-    private final       GanttErrorHandler           ganttErrorHandler         = new GanttErrorHandler();
+    private final       Map<UUID, Feature>          featureMap                          = new HashMap<>();
+    private             Div                         ganttBurndownChartContainer;
     @Autowired
     private             GanttBurndownChartService   ganttBurndownChartService;
-    private             Div                         ganttBurndownChartContainer;
+    private final       GanttErrorHandler           ganttErrorHandler                   = new GanttErrorHandler();
     private             ComboBox<GroupingMode>      groupingModeSelector;
-    private             boolean                     hasUrlParameters          = false;
+    private             boolean                     hasUrlParameters                    = false;
     /**
      * Avatar image shown in the header when exactly one sprint is selected.
      */
     private             Image                       headerAvatar;
     private final       HorizontalLayout            headerLayout;
-    private             boolean                     isRestoringFromUrl        = false;
+    private             boolean                     isRestoringFromUrl                  = false;
     private final       JsonMapper                  jsonMapper;
     /**
      * Page title component updated to reflect the current sprint selection.
      */
     private             H2                          pageTitle;
-    private             String                      savedGroupByValue         = null;
-    private             String                      savedSprintIds            = null;
-    private             String                      savedUserIds              = null;
-    private             String                      searchText                = "";
-    private             Set<Sprint>                 selectedSprints           = new HashSet<>();
-    private             Set<User>                   selectedUsers             = new HashSet<>();
+    private             String                      savedGroupByValue                   = null;
+    private             String                      savedSprintIds                      = null;
+    private             String                      savedUserIds                        = null;
+    private             String                      searchText                          = "";
+    private             Set<Sprint>                 selectedSprints                     = new HashSet<>();
+    private             Set<User>                   selectedUsers                       = new HashSet<>();
     private final       SprintApi                   sprintApi;
     private             MultiSelectComboBox<Sprint> sprintSelector;
     private final       TaskApi                     taskApi;
     private             Registration                themeChangedRegistration;
     private final       UserApi                     userApi;
-    private final       Map<UUID, User>             userMap                   = new HashMap<>();
+    private final       Map<UUID, User>             userMap                             = new HashMap<>();
     private             MultiSelectComboBox<User>   userSelector;
-    private             List<User>                  users                     = new ArrayList<>();
+    private             List<User>                  users                               = new ArrayList<>();
     private final       VersionApi                  versionApi;
     private final       WorklogApi                  worklogApi;
 
     /**
      * Creates the Active Sprints board.
      *
-     * @param featureApi  API for loading sprint features
-     * @param sprintApi   API for loading active sprints
-     * @param taskApi     API for loading and updating tasks
-     * @param userApi     API for loading users
-     * @param worklogApi  API for loading and recording worklogs
-     * @param versionApi  API for loading versions
-     * @param jsonMapper  mapper used to serialize the chart DTO for the browser
+     * @param featureApi API for loading sprint features
+     * @param sprintApi  API for loading active sprints
+     * @param taskApi    API for loading and updating tasks
+     * @param userApi    API for loading users
+     * @param worklogApi API for loading and recording worklogs
+     * @param versionApi API for loading versions
+     * @param jsonMapper mapper used to serialize the chart DTO for the browser
      */
     public ActiveSprints(FeatureApi featureApi, SprintApi sprintApi, TaskApi taskApi, UserApi userApi, WorklogApi worklogApi,
                          VersionApi versionApi, JsonMapper jsonMapper) {
@@ -370,29 +372,6 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         refreshGanttBurndownChart(selectedSprint);
     }
 
-    private void refreshGanttBurndownChart(Sprint selectedSprint) {
-        if (ganttBurndownChartContainer == null) {
-            return;
-        }
-        getUI().ifPresent(ui -> {
-            boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
-            try {
-                new GanttUtil().levelResources(ganttErrorHandler, selectedSprint, "", ParameterOptions.getLocalNow(), false);
-                GanttBurndownChartDto dto  = ganttBurndownChartService.build(selectedSprint, ParameterOptions.getLocalNow(), isDark);
-                String                json = jsonMapper.writeValueAsString(dto);
-                ui.getPage().executeJs(
-                        "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
-                                ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1), $2));",
-                        GANTT_BURNDOWN_CONTAINER_ID, json, selectedSprint.getName() + " - Gantt and burndown chart");
-            } catch (Exception e) {
-                log.error("Failed to build Gantt burndown chart for sprint '{}'", selectedSprint.getName(), e);
-                ganttBurndownChartContainer.removeAll();
-                ganttBurndownChartContainer.add(new Div("Error generating Gantt and burndown chart: " + e.getMessage()));
-                clearDetachedChart();
-            }
-        });
-    }
-
     /**
      * Creates the header layout with search, sprint filter, and clear button
      */
@@ -457,6 +436,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         sprintSelector.setId(ID_SPRINT_SELECTOR);
 //        sprintSelector.setLabel("Sprint");
         sprintSelector.setItemLabelGenerator(Sprint::getName);
+        sprintSelector.setClearButtonVisible(true);
         sprintSelector.setPlaceholder("Select sprints");
         sprintSelector.setWidth("300px");
         sprintSelector.addValueChangeListener(e -> {
@@ -741,16 +721,39 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         super.onDetach(detachEvent);
     }
 
+    private void refreshAfterPlanningChange() {
+        loadData();
+        refreshUndoRedoToolbar();
+    }
+
+    private void refreshGanttBurndownChart(Sprint selectedSprint) {
+        if (ganttBurndownChartContainer == null) {
+            return;
+        }
+        getUI().ifPresent(ui -> {
+            boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
+            try {
+                new GanttUtil().levelResources(ganttErrorHandler, selectedSprint, "", ParameterOptions.getLocalNow(), false);
+                GanttBurndownChartDto dto  = ganttBurndownChartService.build(selectedSprint, ParameterOptions.getLocalNow(), isDark);
+                String                json = jsonMapper.writeValueAsString(dto);
+                ui.getPage().executeJs(
+                        "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
+                                ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1), $2));",
+                        GANTT_BURNDOWN_CONTAINER_ID, json, selectedSprint.getName() + " - Gantt and burndown chart");
+            } catch (Exception e) {
+                log.error("Failed to build Gantt burndown chart for sprint '{}'", selectedSprint.getName(), e);
+                ganttBurndownChartContainer.removeAll();
+                ganttBurndownChartContainer.add(new Div("Error generating Gantt and burndown chart: " + e.getMessage()));
+                clearDetachedChart();
+            }
+        });
+    }
+
     private void refreshUndoRedoToolbar() {
         MainLayout.findParent(this)
                 .filter(MainLayout.class::isInstance)
                 .map(MainLayout.class::cast)
                 .ifPresent(MainLayout::refreshUndoRedoToolbar);
-    }
-
-    private void refreshAfterPlanningChange() {
-        loadData();
-        refreshUndoRedoToolbar();
     }
 
     /**

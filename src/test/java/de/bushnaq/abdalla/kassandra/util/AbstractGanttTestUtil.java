@@ -275,6 +275,8 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     }
 
     private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
+        log.trace("----------------------------------------------------------------------------------------------------");
+        long startTime = System.currentTimeMillis();
         peg.random.setSeed(randomCase.getSeed());
         PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates the persistent work week
         WorkWeek ww = peg.persistWorkWeek("western 5x7.5", "Monday-Friday 8:00 - 12:00, 13:00 - 16:30", LocalTime.of(8, 0), LocalTime.of(12, 0), LocalTime.of(13, 0), LocalTime.of(16, 30), false, false, true, true, true, true, true);
@@ -323,6 +325,8 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         peg.generateRandomSickDays(peg.getUsers().stream().toList());
         //TODO sprint user calendars are not initialized with user off days.
         BurnDownUtil.generateWorkLogs(peg);
+        log.trace("Generated synthetic data in " + DateUtil.createDurationString(Duration.ofMillis(System.currentTimeMillis() - startTime), true, true, false));
+        log.trace("----------------------------------------------------------------------------------------------------");
     }
 
     private int generateRandomValue(int minNumber, int maxNumberExclusive) {
@@ -349,7 +353,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             Sprint sprint          = generatedSprint;//sprintApi.getById(generatedSprint.getId());
             sprint.initialize();
             if (randomCase.getMaxNumberOfStories() > 0) {
-                int           numberOfStories = peg.random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
+                int           numberOfStories = generateRandomValue(randomCase.getMinNumberOfStories(), randomCase.getMaxNumberOfStories());
                 LocalDateTime startDateTime   = randomCase.getStartDate().atStartOfDay().plusHours(8);
                 startDateTime = sprint.getCalendar().getNextWorkStart(startDateTime);
                 PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the milestone of every sprint

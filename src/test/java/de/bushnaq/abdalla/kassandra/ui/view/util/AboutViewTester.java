@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
+import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
@@ -71,24 +72,34 @@ public class AboutViewTester extends AbstractViewTester {
             // Navigate to the application login page.
             // If a previous Keycloak session is still active, log out first so a different user can
             // actually complete a fresh OIDC login instead of silently re-authenticating.
-            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
-            if (seleniumHandler.isElementPresent(By.id(MainLayout.ID_USER_MENU))) {
-                logout();
-                seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+            final String userEmail = SecurityUtils.getUserEmail();
+            if (userEmail.equals(username)) {
+                //already logged in as the requested user, no need to log in again
+                log.trace("OIDC Login: Already logged in as the requested user: " + username);
+                return;
             }
-            seleniumHandler.startRecording(recordingFolderName, testName);
-//            System.out.println("OIDC Login: Current URL after navigation: " + seleniumHandler.getCurrentUrl());
+            if (!SecurityUtils.isOidcLogin()) {
+                log.trace("OIDC Login: No user is currently logged in, proceeding with login for: " + username);
+            } else {
+                log.trace("OIDC Login: Currently logged in as: " + userEmail + ", logging out to switch to: " + username);
+                logout();
+            }
+            seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
+            if (!seleniumHandler.isRecording()) {
+                seleniumHandler.startRecording(recordingFolderName, testName);
+            }
+            log.trace("OIDC Login: Current URL after navigation: " + seleniumHandler.getCurrentUrl());
             // Check if the OIDC login button is present
 //            System.out.println("OIDC Login: Checking for OIDC login button with ID: " + LoginView.OIDC_LOGIN_BUTTON);
             if (seleniumHandler.isElementPresent(By.id(LoginView.OIDC_LOGIN_BUTTON))) {
-//                System.out.println("OIDC Login: OIDC login button found, clicking it now");
+                log.trace("OIDC Login: OIDC login button found, clicking it now");
                 if (screenshotFileName != null) {
                     seleniumHandler.takeElementScreenShot(seleniumHandler.findElement(By.id(LoginView.LOGIN_VIEW)), LoginView.LOGIN_VIEW, screenshotFileName);
                 }
 
                 // Click with SeleniumHandler for mouse movement and humanization
                 seleniumHandler.click(LoginView.OIDC_LOGIN_BUTTON);
-//                System.out.println("OIDC Login: Clicked login button with mouse movement");
+                log.trace("OIDC Login: Clicked login button with mouse movement");
 
                 // Wait longer for Keycloak redirect (up to 10 seconds)
 //                System.out.println("OIDC Login: Waiting for Keycloak login page");

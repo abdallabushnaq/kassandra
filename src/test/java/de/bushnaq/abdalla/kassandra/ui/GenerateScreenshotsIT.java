@@ -98,71 +98,79 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Slf4j
 public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
+    private static final String                          ACTIVE_SPRINT_NAME                = "Rome";//manually picked after data generation
+    private static final String                          ACTIVE_SPRINT_USER_NAME           = "randy.asmus@kassandra.org";
+    private static final String                          ADMINISTRATOR_USER_NAME           = "christopher.paul@kassandra.org";
+    private static final String                          BACKLOG_SPRINT_NAME               = "Vienna";//manually picked after data generation
+    private static final String                          MAIN_LAYOUT_USER_NAME             = "jennifer.holleman@kassandra.org";
+    private static final String                          QUALITY_BOARD_SPRINT_NAME_DELAYED = "Frankfurt";//manually picked after data generation
+    private static final String                          QUALITY_BOARD_SPRINT_NAME_IN_TIME = "Berlin";//manually picked after data generation
+    private static final String                          SPRINT_OVERVIEW_NAME              = "Berlin";//manually picked after data generation
     @Autowired
-    private        AboutViewTester                 aboutViewTester;
+    private              AboutViewTester                 aboutViewTester;
     @Autowired
-    private        ActiveSprintsTester             activeSprintsTester;
+    private              ActiveSprintsTester             activeSprintsTester;
     @Autowired
-    private        AuditLogApi                     auditLogApi;
+    private              AuditLogApi                     auditLogApi;
     @Autowired
-    private        AvailabilityListViewTester      availabilityListViewTester;
+    private              AvailabilityListViewTester      availabilityListViewTester;
     @Autowired
-    private        BacklogTester                   backlogTester;
+    private              BacklogTester                   backlogTester;
     @Autowired
-    private        FeatureListViewTester           featureListViewTester;
-    private        String                          featureName;
-    private final  LocalDate                       firstDay         = LocalDate.of(2025, 6, 1);
-    private final  LocalDate                       firstDayRecord1  = LocalDate.of(2026, 8, 4);
-    private        Availability                    lastAvailability = null;
-    private final  LocalDate                       lastDay          = LocalDate.of(2025, 6, 1);
-    private final  LocalDate                       lastDayRecord1   = LocalDate.of(2026, 8, 7);
-    private        Location                        lastLocation     = null;
-    private        UserWorkWeek                    lastUserWorkWeek = null;
+    private              FeatureListViewTester           featureListViewTester;
+    private              String                          featureName;
+    private final        LocalDate                       firstDay                          = LocalDate.of(2025, 6, 1);
+    private final        LocalDate                       firstDayRecord1                   = LocalDate.of(2026, 8, 4);
+    private              Availability                    lastAvailability                  = null;
+    private final        LocalDate                       lastDay                           = LocalDate.of(2025, 6, 1);
+    private final        LocalDate                       lastDayRecord1                    = LocalDate.of(2026, 8, 7);
+    private              Location                        lastLocation                      = null;
+    private              UserWorkWeek                    lastUserWorkWeek                  = null;
     @Autowired
-    private        LocationListViewTester          locationListViewTester;
+    private              LocationListViewTester          locationListViewTester;
     @Autowired
-    private        OffDayListViewTester            offDayListViewTester;
+    private              OffDayListViewTester            offDayListViewTester;
     @Autowired
-    private        PasswordEncoder                 passwordEncoder;
-    private        boolean                         previousForceScreenshotRefresh;
-    private        Integer                         previousScreenshotTolerance;
+    private              PasswordEncoder                 passwordEncoder;
+    private              boolean                         previousForceScreenshotRefresh;
+    private              Integer                         previousScreenshotTolerance;
     @Autowired
-    private        ProductAclApi                   productAclApi;
+    private              ProductAclApi                   productAclApi;
     @Autowired
-    private        ProductListViewTester           productListViewTester;
-    private        String                          productName;
-    private static ScreenshotComparisonReport      screenshotComparisonReport;
+    private              ProductListViewTester           productListViewTester;
+    private              String                          productName;
+    private static       ScreenshotComparisonReport      screenshotComparisonReport;
     @Autowired
-    private        SecurityConfigurationRepository securityConfigurationRepository;
+    private              SecurityConfigurationRepository securityConfigurationRepository;
     @Autowired
-    private        SecurityConfigurationService    securityConfigurationService;
+    private              SecurityConfigurationService    securityConfigurationService;
     @Autowired
-    private        HumanizedSeleniumHandler        seleniumHandler;
+    private              HumanizedSeleniumHandler        seleniumHandler;
     @Autowired
-    private        ServerSettingsApi               serverSettingsApi;
+    private              ServerSettingsApi               serverSettingsApi;
     @Autowired
-    private        SprintListViewTester            sprintListViewTester;
-    private        String                          sprintName;
+    private              SprintListViewTester            sprintListViewTester;
+    //    private              String                          sprintName;
     @Autowired
-    private        TaskListViewTester              taskListViewTester;
-    private        String                          taskName;
-    private final  OffDayType                      typeRecord1      = OffDayType.VACATION;
+    private              TaskListViewTester              taskListViewTester;
+    private              String                          taskName;
+    private final        OffDayType                      typeRecord1                       = OffDayType.VACATION;
     @Autowired
-    private        UndoRedoApi                     undoRedoApi;
+    private              UndoRedoApi                     undoRedoApi;
     @Autowired
-    private        UserGroupListViewTester         userGroupListViewTester;
+    private              UserGroupListViewTester         userGroupListViewTester;
     @Autowired
-    private        UserListViewTester              userListViewTester;
-    private        String                          userName;
+    private              UserListViewTester              userListViewTester;
+    private              String                          userName;
     @Autowired
-    private        UserProfileViewTester           userProfileViewTester;
+    private              UserProfileViewTester           userProfileViewTester;
     @Autowired
-    private        UserWorkWeekListViewTester      userWorkWeekListViewTester;
+    private              UserWorkWeekListViewTester      userWorkWeekListViewTester;
     @Autowired
-    private        VersionListViewTester           versionListViewTester;
-    private        String                          versionName;
+    private              VersionListViewTester           versionListViewTester;
+    private              String                          versionName;
     @Autowired
-    private        WorkWeekListViewTester          workWeekListViewTester;
+    private              WorkWeekListViewTester          workWeekListViewTester;
 
     private void applyLoginTheme(ETheme theme) {
         // Login and recovery have no theme toggle; use the same persisted preference as MainLayout.
@@ -226,15 +234,21 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 //                        1, 3,
 //                        1, 3,
 //                        5, 8, 8, 4, 6, 7)//official screenshot data
-                new RandomCase(4,
-                        OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
-                        LocalDate.parse("2026-02-01"),
-                        Duration.ofDays(10),
-                        6, 6,
-                        1, 3,
-                        1, 3,
-                        1, 3,
-                        5, 5, 8, 4, 5, 7)//official screenshot data
+                RandomCase.builder()
+                        .testCaseIndex(4)
+                        .now(OffsetDateTime.parse("2026-03-23T08:00:00+01:00"))
+                        .startDate(LocalDate.parse("2026-02-01"))
+                        .minNumberOfProducts(8).maxNumberOfProducts(8)
+                        .minNumberOfVersions(1).maxNumberOfVersions(3)
+                        .minNumberOfFeatures(1).maxNumberOfFeatures(3)
+                        .minNumberOfSprints(1).maxNumberOfSprints(3)
+                        .maxTaskDurationDays(5)
+                        .minNumberOfStories(1).maxNumberOfStories(4)
+                        .maxNumberOfUsers(8)
+                        .maxNumberOfUsersPerSprint(4)
+                        .maxNumberOfTasks(4)
+                        .seed(7)
+                        .build()//official screenshot data
         };
         return Arrays.stream(randomCases).toList();
     }
@@ -250,13 +264,12 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-//        StableDiffusionService.setEnabled(false);
         read();
         userName    = "Christopher Paul";
         productName = peg.nameGenerator.generateProductName(0);
         versionName = peg.nameGenerator.generateVersionName(0);
         featureName = peg.nameGenerator.generateFeatureName(0);
-        sprintName  = peg.nameGenerator.generateSprintName(1);
+//        sprintName  = peg.nameGenerator.generateSprintName(1);
     }
 
     private void printAuthentication() {
@@ -271,7 +284,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     }
 
     private void read() {
-        User paul = peg.userApi.getByEmail("christopher.paul@kassandra.org").get();
+        User paul = peg.userApi.getByEmail(ADMINISTRATOR_USER_NAME).get();
         lastAvailability = paul.getAvailabilities().getLast();
         lastLocation     = paul.getLocations().getLast();
         lastUserWorkWeek = paul.getUserWorkWeeks().getLast();
@@ -308,7 +321,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     /**
      * Takes screenshots of {@link WorklogDialog} and {@link TaskDialog} from the Active Sprints view.
      * <p>
-     * Selects the active Barcelona sprint and an in-progress task assigned to the signed-in user.
+     * Selects the configured active sprint and an in-progress task assigned to the signed-in user.
      * Existing worklogs are edited and deleted only as previews; both dialogs are cancelled.
      *
      * @param folder destination folder for the screenshot files
@@ -316,12 +329,12 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     private void takeActiveSprintsDialogScreenshots(String folder) throws IOException {
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
-                .filter(s -> "Barcelona".equals(s.getName()) && s.getStatus() == Status.STARTED)
+                .filter(s -> ACTIVE_SPRINT_NAME.equals(s.getName()) && s.getStatus() == Status.STARTED)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No started Barcelona sprint found"));
+                .orElseThrow(() -> new IllegalStateException("No started " + ACTIVE_SPRINT_NAME + " sprint found"));
         List<Task>    tasks       = peg.taskApi.getAll(sprint.getId());
         List<Worklog> worklogs    = peg.worklogApi.getAll(sprint.getId());
-        User          currentUser = peg.userApi.getByEmail("randy.asmus@kassandra.org").orElseThrow();
+        User          currentUser = peg.userApi.getByEmail(ACTIVE_SPRINT_USER_NAME).orElseThrow();
         Task leafTask = tasks.stream()
                 .filter(t -> !t.isMilestone() && t.getParentTaskId() != null && t.getTaskStatus().equals(TaskStatus.IN_PROGRESS))
                 .filter(t -> currentUser.getId().equals(t.getResourceId()))
@@ -591,14 +604,14 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         // Resolve a leaf task in the currently-selected sprint
         List<Sprint> allSprints = peg.sprintApi.getAll();
         Sprint sprint = allSprints.stream()
-                .filter(s -> s.getName().equals(sprintName))
+                .filter(s -> s.getName().equals(BACKLOG_SPRINT_NAME))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Sprint '" + sprintName + "' not found"));
+                .orElseThrow(() -> new IllegalStateException("Sprint '" + BACKLOG_SPRINT_NAME + "' not found"));
         List<Task> tasks = peg.taskApi.getAll(sprint.getId());
         Task leafTask = tasks.stream()
                 .filter(t -> !t.isMilestone() && t.getParentTaskId() != null)
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No leaf task found in sprint '" + sprintName + "'"));
+                .orElseThrow(() -> new IllegalStateException("No leaf task found in sprint '" + BACKLOG_SPRINT_NAME + "'"));
 
         // Switch to edit mode
         seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
@@ -835,7 +848,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     }
 
     private void takeMainLayoutHelpScreenshots(TestInfo testInfo, String captureProduct) throws Exception {
-        String userEmail = "jennifer.holleman@kassandra.org";
+        String userEmail = MAIN_LAYOUT_USER_NAME;
         User   helpUser  = peg.userApi.getAll().stream().filter(user -> userEmail.equals(user.getEmail())).findFirst().orElse(null);
         if (helpUser == null) {
             helpUser = peg.addUser("Jennifer Holleman", userEmail, "USER", "de", "nw",
@@ -849,7 +862,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         aboutViewTester.logout();
         for (String audience : List.of("admin", "user")) {
             boolean admin      = "admin".equals(audience);
-            String  loginEmail = admin ? "christopher.paul@kassandra.org" : userEmail;
+            String  loginEmail = admin ? ADMINISTRATOR_USER_NAME : userEmail;
             aboutViewTester.login(loginEmail, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
             try {
                 assertTrue(seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU)).getDomProperty("textContent").contains(loginEmail), "The browser must be signed in as " + loginEmail);
@@ -1040,112 +1053,119 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //AboutView
         //-----------------
-        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-        seleniumHandler.setHelpScreenshotTheme(eTheme);
+        aboutViewTester.login(ADMINISTRATOR_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        if (false) {
+            seleniumHandler.setHelpScreenshotTheme(eTheme);
 
-        // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
-        new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
-                .withMessage("About View banner did not finish loading before screenshot capture")
-                .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
-                        .stream()
-                        .anyMatch(image -> image.isDisplayed()
-                                && "true".equals(image.getDomProperty("complete"))
-                                && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
-        takeHelpElements(AboutView.class, AboutView.ABOUT_PAGE_TITLE, eTheme, AboutView.ABOUT_PAGE_TITLE, AboutView.LICENSE_LINK_ID, AboutView.GITHUB_LINK_ID, MainLayout.ID_THEME_TOGGLE, MainLayout.ID_USER_MENU);
-        takePageHelpScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
-        seleniumHandler.takeScreenShot(folder + "/about-view.png");
-        //-----------------
-        //ProductListView
-        //-----------------
-        productListViewTester.switchToProductListView();
-        takeProductElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
-        takeProductDialogScreenshots(folder);
-        takeProductHistoryScreenshots(folder);
-        productListViewTester.selectProduct(productName);
+            // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
+            new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
+                    .withMessage("About View banner did not finish loading before screenshot capture")
+                    .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
+                            .stream()
+                            .anyMatch(image -> image.isDisplayed()
+                                    && "true".equals(image.getDomProperty("complete"))
+                                    && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
+            takeHelpElements(AboutView.class, AboutView.ABOUT_PAGE_TITLE, eTheme, AboutView.ABOUT_PAGE_TITLE, AboutView.LICENSE_LINK_ID, AboutView.GITHUB_LINK_ID, MainLayout.ID_THEME_TOGGLE, MainLayout.ID_USER_MENU);
+            takePageHelpScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
+            seleniumHandler.takeScreenShot(folder + "/about-view.png");
+            //-----------------
+            //ProductListView
+            //-----------------
+            productListViewTester.switchToProductListView();
+            takeProductElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
+            takeProductDialogScreenshots(folder);
+            takeProductHistoryScreenshots(folder);
+            productListViewTester.selectProduct(productName);
 
-        //-----------------
-        //VersionListView
-        //-----------------
-        takeVersionElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
-        takeVersionDialogScreenshots(folder);
-        versionListViewTester.selectVersion(versionName);
+            //-----------------
+            //VersionListView
+            //-----------------
+            takeVersionElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
+            takeVersionDialogScreenshots(folder);
+            versionListViewTester.selectVersion(versionName);
 
-        //-----------------
-        //FeatureListView
-        //-----------------
-        takeFeatureElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
-        takeFeatureDialogScreenshots(folder);
-        featureListViewTester.selectFeature(featureName);
+            //-----------------
+            //FeatureListView
+            //-----------------
+            takeFeatureElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
+            takeFeatureDialogScreenshots(folder);
+            featureListViewTester.selectFeature(featureName);
 
-        //-----------------
-        //SprintListView
-        //-----------------
-        seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
-        takeSprintElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
-        takeSprintDialogScreenshots(folder);
-        sprintListViewTester.selectSprint(sprintName);
-
-
-        //-----------------
-        //QualityBoard
-        //-----------------
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-        takeHelpElements(QualityBoard.class, "page-header", eTheme,
-                QualityBoard.SPRINT_SELECTOR_ID, QualityBoard.EXPORT_JSON_BUTTON_ID, QualityBoard.EXPORT_XML_BUTTON_ID,
-                QualityBoard.EXPORT_XLSX_BUTTON_ID, QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
-                QualityBoard.GANTT_BURNDOWN_CONTAINER_ID);
-        takePageHelpScreenshot(QualityBoard.class, QualityBoard.HELP_BUTTON_ID);
-        seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
-        seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "Lisbon");
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-        seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
-
-        //-----------------
-        //UserProfileView
-        //-----------------
-        takeUserProfileScreenshots(folder, eTheme);
-
-        //-----------------
-        //UserGroupListView
-        //-----------------
-        seleniumHandler.click(MainLayout.ID_USER_MENU);
-        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS);
-        seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
-        takeUserGroupElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
-        takeUserGroupDialogScreenshots(folder);
+            //-----------------
+            //SprintListView
+            //-----------------
+            seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
+            takeSprintElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
+            takeSprintDialogScreenshots(folder);
+            // Clear the feature selector in SprintOverview before capturing the backlog sprint.
+            seleniumHandler.clearMultiSelectComboBoxValue(SprintListView.FEATURE_SELECTOR);
+            seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
+            sprintListViewTester.selectSprint(QUALITY_BOARD_SPRINT_NAME_DELAYED);
 
 
-        //-----------------
-        //Backlog
-        //-----------------
-        backlogTester.switchToBacklog();
-        seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, sprintName);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
-        takeBacklogElementScreenshots(eTheme);
-        seleniumHandler.takeScreenShot(folder + "/backlog.png");
-        takeDependencyDialogScreenshots(folder);
+            //-----------------
+            //QualityBoard
+            //-----------------
+            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+            takeHelpElements(QualityBoard.class, "page-header", eTheme,
+                    QualityBoard.SPRINT_SELECTOR_ID, QualityBoard.EXPORT_JSON_BUTTON_ID, QualityBoard.EXPORT_XML_BUTTON_ID,
+                    QualityBoard.EXPORT_XLSX_BUTTON_ID, QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
+                    QualityBoard.GANTT_BURNDOWN_CONTAINER_ID);
+            takePageHelpScreenshot(QualityBoard.class, QualityBoard.HELP_BUTTON_ID);
+            seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
+            seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, QUALITY_BOARD_SPRINT_NAME_IN_TIME);
+            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+            seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
 
+            //-----------------
+            //UserProfileView
+            //-----------------
+            takeUserProfileScreenshots(folder, eTheme);
+
+            //-----------------
+            //UserGroupListView
+            //-----------------
+            seleniumHandler.click(MainLayout.ID_USER_MENU);
+            seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS);
+            seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
+            takeUserGroupElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
+            takeUserGroupDialogScreenshots(folder);
+
+
+            //-----------------
+            //Backlog
+            //-----------------
+            backlogTester.switchToBacklog();
+            seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, BACKLOG_SPRINT_NAME);
+            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+            takeBacklogElementScreenshots(eTheme);
+            seleniumHandler.takeScreenShot(folder + "/backlog.png");
+            takeDependencyDialogScreenshots(folder);
+        }
         //-----------------
         //ActiveSprints
         //-----------------
         activeSprintsTester.switchToActiveSprints();
+        seleniumHandler.clearMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR);
+        seleniumHandler.waitForPageLoaded(200);
+        seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{ACTIVE_SPRINT_NAME});
         seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
 //        takeActiveSprintsElementScreenshots(eTheme);
 //        seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
         aboutViewTester.logout();
-        aboutViewTester.login("randy.asmus@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login(ACTIVE_SPRINT_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeActiveSprintsDialogScreenshots(folder);
 
         //-----------------
         //UserListView
         //-----------------
         aboutViewTester.logout();
-        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        aboutViewTester.login(ADMINISTRATOR_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         takeUserElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
@@ -1200,7 +1220,11 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      * and help controls in light and dark themes, including shared administrator/user navigation.
      * Setup is excluded because it requires an unconfigured installation; AI interactions
      * are excluded because they need separate GPU-backed services.
-     * Runs for about 13 min 14 sec.
+     * Runs for about 5 min 0 sec generating a new set of data without Stable Diffusion.
+     * Runs for about 13 min 14 sec .
+     * <p>
+     * How to generate
+     * run Demo with new database and pick
      *
      * @param randomCase deterministic screenshot fixture
      * @param testInfo   current test metadata
@@ -1282,7 +1306,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         sprintListViewTester.closeDialog(SprintDialog.CANCEL_BUTTON);
 
         // Edit sprint dialog - open action menu first, then edit
-        seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + sprintName);
+        seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + SPRINT_OVERVIEW_NAME);
         seleniumHandler.waitForElementToBeClickable(SprintDialog.CANCEL_BUTTON); // Wait for dialog
         takeDialogHelpElements(SprintDialog.class, SprintDialog.HELP_BUTTON_ID,
                 SprintDialog.SPRINT_NAME_FIELD, SprintDialog.GENERATE_IMAGE_BUTTON);
@@ -1290,7 +1314,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         sprintListViewTester.closeDialog(SprintDialog.CANCEL_BUTTON);
 
         // Delete sprint dialog - open action menu first, then delete
-        seleniumHandler.click(SprintListView.SPRINT_GRID_DELETE_BUTTON_PREFIX + sprintName);
+        seleniumHandler.click(SprintListView.SPRINT_GRID_DELETE_BUTTON_PREFIX + SPRINT_OVERVIEW_NAME);
         seleniumHandler.waitForElementToBeClickable(ConfirmDialog.CANCEL_BUTTON); // Wait for dialog
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ConfirmDialog.CONFIRM_DIALOG), ConfirmDialog.CONFIRM_DIALOG, folder + "/sprint-delete-dialog.png");
         sprintListViewTester.closeConfirmDialog(ConfirmDialog.CANCEL_BUTTON);
@@ -1328,8 +1352,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         // Get first user in the list
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
-        takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID,
-                UserDialog.USER_NAME_FIELD, UserDialog.GENERATE_IMAGE_BUTTON);
+        takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID, UserDialog.USER_NAME_FIELD, UserDialog.GENERATE_IMAGE_BUTTON);
         takeImagePromptHelpScreenshots(UserDialog.GENERATE_IMAGE_BUTTON, false);
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, folder + "/user-edit-dialog.png");
         userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);

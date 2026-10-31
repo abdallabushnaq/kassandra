@@ -37,12 +37,12 @@ public class BurnDownUtil {
     /**
      * Probability that a sprint runs with zero delay (on schedule).
      */
-    private static final float DELAY_PROBABILITY = 0.4f;
+    private static final float DELAY_PROBABILITY = 0.5f;
 
     /**
      * Maximum over-run factor applied to {@code maxEstimate} when a sprint is delayed.
      */
-    private static final float MAX_DELAY_FACTOR = 0.3f;
+    private static final float MAX_DELAY_FACTOR = 0.5f;
 
     public static void generateWorkLogs(PersistingEntityGenerator peg) throws Exception {
         log.info("--------------------------");
@@ -88,19 +88,19 @@ public class BurnDownUtil {
             final long SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
 
             // Step 1: pre-inflate remaining estimates when this sprint is delayed.
-//            if (delay > 0f) {
-//                for (Task task : sprint.getTasks()) {
-//                    if (task.isTask() && task.isImpactOnCost()) {
-//                        Duration maxEstimate = task.getMaxEstimate();
-//                        if (maxEstimate != null && !maxEstimate.isZero()) {
-//                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * peg.random.nextFloat());
-//                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
-//                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
-//                            task.setRemainingEstimate(inflated);
-//                        }
-//                    }
-//                }
-//            }
+            if (delay > 0f) {
+                for (Task task : sprint.getTasks()) {
+                    if (task.isTask() && task.isImpactOnCost()) {
+                        Duration maxEstimate = task.getMaxEstimate();
+                        if (maxEstimate != null && !maxEstimate.isZero()) {
+                            long     extraSeconds = (long) (delay * maxEstimate.getSeconds() * peg.random.nextFloat());
+                            Duration inflated     = maxEstimate.plusSeconds(extraSeconds);
+                            log.debug("Inflating task '{}': minEstimate={}, inflated remainingEstimate={} (delay={})", task.getName(), task.getMinEstimate(), inflated, delay);
+                            task.setRemainingEstimate(inflated);
+                        }
+                    }
+                }
+            }
             Duration rest = Duration.ofSeconds(1);
             // Step 2: iterate over the days of the sprint
             for (LocalDate day = sprint.getStart().toLocalDate(); !rest.equals(Duration.ZERO) && now.toLocalDate().isAfter(day); day = day.plusDays(1)) {
