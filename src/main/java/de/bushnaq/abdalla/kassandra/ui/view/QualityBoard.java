@@ -30,6 +30,8 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
 import com.vaadin.flow.router.Location;
@@ -85,21 +87,23 @@ import java.util.stream.Collectors;
 @PermitAll // When security is enabled, allow all authenticated users
 @Slf4j
 public class QualityBoard extends Main implements AfterNavigationObserver {
-    /** Identifier of the page help button. */
-    public static final String HELP_BUTTON_ID = "quality-board-help-button";
     /**
      * Identifier of the JSON export button.
      */
     public static final String                          EXPORT_JSON_BUTTON_ID               = "quality-board-export-json";
     /**
-     * Identifier of the XML export button.
-     */
-    public static final String                          EXPORT_XML_BUTTON_ID                = "quality-board-export-xml";
-    /**
      * Identifier of the Excel export button.
      */
     public static final String                          EXPORT_XLSX_BUTTON_ID               = "quality-board-export-xlsx";
+    /**
+     * Identifier of the XML export button.
+     */
+    public static final String                          EXPORT_XML_BUTTON_ID                = "quality-board-export-xml";
     public static final String                          GANTT_BURNDOWN_CONTAINER_ID         = "quality-board-gantt-burndown-container";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final String                          HELP_BUTTON_ID                      = "quality-board-help-button";
     public static final String                          MENU_ITEM_ID                        = "/quality-board";
     /**
      * Identifier of the control that opens the Gantt and burndown chart in a separate browser tab.
@@ -150,6 +154,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
     private             boolean                         isRestoringFromUrl                  = false;
     private final       JsonMapper                      jsonMapper;
     private final       LocalDateTime                   now;
+    private final       VerticalLayout                  pageContent;
     private final       H2                              pageTitle;
     private final       ProductApi                      productApi;
     private             UUID                            productId;
@@ -213,13 +218,27 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
 
         SmartHeader smartHeader = new SmartHeader("Sprint Quality Board", null, headerAvatar);
         smartHeader.setFallbackIcon(VaadinIcon.CHART);
-        header = smartHeader;
+        header    = smartHeader;
         pageTitle = smartHeader.getPageTitle();
         smartHeader.addFilters(sprintSelector);
         header.setId("page-header");
         HelpDrawer helpDrawer = new HelpDrawer("Quality Board", "help/quality-board.md", true);
         smartHeader.setHelpButton(helpDrawer.createToggleButton(HELP_BUTTON_ID));
-        add(header, helpDrawer);
+
+        pageContent = new VerticalLayout();
+        pageContent.setId("page-content");
+        pageContent.setPadding(false);
+        pageContent.setSpacing(false);
+        pageContent.setWidthFull();
+        pageContent.getStyle().set("min-height", "0");
+        pageContent.add(header);
+
+        Scroller pageScroller = new Scroller(pageContent);
+        pageScroller.setId("page-scroller");
+        pageScroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
+        pageScroller.setSizeFull();
+        pageScroller.getStyle().set("min-height", "0");
+        add(pageScroller, helpDrawer);
     }
 
     @Override
@@ -417,7 +436,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         chartActionLayout.setSpacing(false);
         chartActionLayout.setWidthFull();
         chartActionLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
-        add(chartActionLayout);
+        pageContent.add(chartActionLayout);
 
         ganttBurndownChartContainer = new Div();
         ganttBurndownChartContainer.setId(GANTT_BURNDOWN_CONTAINER_ID);
@@ -427,9 +446,9 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
 //                .set("min-height", "120px")
                 .set("height", "100%")
                 .set("margin-top", "var(--lumo-space-xs)");
-        add(ganttBurndownChartContainer);
+        pageContent.add(ganttBurndownChartContainer);
 
-        add(createDownloadToolbar());
+        pageContent.add(createDownloadToolbar());
     }
 
     private void createSprintDetailsLayout() {
@@ -487,7 +506,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         gridContainer.add(createFieldDisplay("&Sigma; Remaining Effort Estimate", DateUtil.createDurationString(sprint.getRemaining(), false, true, false)));//column 7
 
 
-        add(gridContainer);
+        pageContent.add(gridContainer);
     }
 
     private ComponentRenderer<Div, Sprint> createTwoPartRenderer(
@@ -726,6 +745,13 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         generateGanttBurndownChartAsync();
     }
 
+    private void removeOldContent() {
+        pageContent.getChildren()
+                .filter(component -> component != header)
+                .collect(Collectors.toList())
+                .forEach(pageContent::remove);
+    }
+
     /**
      * (Re-)builds the content area for the currently selected sprint.
      * Removes any children added by a previous cycle (keeping the persistent
@@ -734,11 +760,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
      * selector listener when the user picks a different sprint.
      */
     private void reloadContent() {
-        // Remove children from a previous render cycle, keeping the persistent header.
-        getChildren()
-                .filter(c -> c != header)
-                .collect(Collectors.toList())
-                .forEach(this::remove);
+        removeOldContent();
 
         ganttUtil = new GanttUtil();
         loadData();
@@ -805,7 +827,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
                     .set("color", "var(--lumo-secondary-text-color)");
 
             messageContainer.add(message);
-            add(messageContainer);
+            pageContent.add(messageContainer);
         } else {
             createSprintDetailsLayout();
             createGanttBurndownChart();

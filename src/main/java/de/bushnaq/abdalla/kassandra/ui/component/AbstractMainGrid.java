@@ -31,6 +31,7 @@ import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
@@ -39,6 +40,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ai.filter.AiFilterService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
+import lombok.AccessLevel;
 import lombok.Getter;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -51,14 +53,16 @@ public abstract class AbstractMainGrid<T> extends Main {
     private final ListDataProvider<T> dataProvider;
     private final Grid<T>             grid;
     private final VerticalLayout      gridPanelWrapper;
+    @Getter(AccessLevel.NONE)
+    private final VerticalLayout      pageContent;
     /**
      * Reference to the {@code H2} title element of the most recently built smart header.
      * Subclasses may call {@code getHeaderPageTitle()} to update the title text dynamically.
      */
     private       H2                  headerPageTitle;
     private       String              lightHeaderBackgroundUrl;
-    private       SmartHeader         smartHeader;
     private       Registration        rowCounterRegistration;
+    private       SmartHeader         smartHeader;
     /**
      * Registration for the {@link ThemeChangedEvent} listener; removed in {@link #onDetach}.
      */
@@ -70,6 +74,18 @@ public abstract class AbstractMainGrid<T> extends Main {
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN);
         this.getStyle().set("padding-left", "var(--lumo-space-m)");
         this.getStyle().set("padding-right", "var(--lumo-space-m)");
+
+        pageContent = new VerticalLayout();
+        pageContent.setPadding(false);
+        pageContent.setSpacing(false);
+        pageContent.setWidthFull();
+        pageContent.getStyle().set("min-height", "0");
+        Scroller pageScroller = new Scroller(pageContent);
+        pageScroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
+        pageScroller.setSizeFull();
+        pageScroller.getStyle().set("min-height", "0");
+        super.add(pageScroller);
+
         grid         = new Grid<>();
         dataProvider = new ListDataProvider<T>(new ArrayList<>());
         grid.setDataProvider(dataProvider);
@@ -97,6 +113,26 @@ public abstract class AbstractMainGrid<T> extends Main {
         innerWrapper.add(gridPanel);
 
         initGrid(clock);
+    }
+
+    /**
+     * Adds view content inside the shared page scroller.
+     *
+     * @param components the components to add
+     */
+    @Override
+    public void add(Component... components) {
+        pageContent.add(components);
+    }
+
+    /**
+     * Removes view content from inside the shared page scroller.
+     *
+     * @param components the components to remove
+     */
+    @Override
+    public void remove(Component... components) {
+        pageContent.remove(components);
     }
 
     /**
@@ -138,7 +174,7 @@ public abstract class AbstractMainGrid<T> extends Main {
             default -> VaadinIcon.GRID;
         });
         headerLayout.setId("page-layout");
-        smartHeader = headerLayout;
+        smartHeader     = headerLayout;
         headerPageTitle = headerLayout.getPageTitle();
 
         // Add smart global filter to the left side so filters stay with the title.
@@ -187,18 +223,18 @@ public abstract class AbstractMainGrid<T> extends Main {
     /**
      * Creates a shared header for the supplied grid.
      *
-     * @param <T> grid item type
-     * @param title page title
-     * @param titleId title identifier
-     * @param titleIcon page icon
-     * @param createButtonId create action identifier
+     * @param <T>                      grid item type
+     * @param title                    page title
+     * @param titleId                  title identifier
+     * @param titleIcon                page icon
+     * @param createButtonId           create action identifier
      * @param createButtonClickHandler create action
-     * @param grid grid to filter and count
-     * @param rowCounterId counter identifier
-     * @param globalFilterId search identifier
-     * @param aiFilterService natural-language filter service
-     * @param mapper JSON mapper
-     * @param entityType searchable entity type
+     * @param grid                     grid to filter and count
+     * @param rowCounterId             counter identifier
+     * @param globalFilterId           search identifier
+     * @param aiFilterService          natural-language filter service
+     * @param mapper                   JSON mapper
+     * @param entityType               searchable entity type
      * @return configured shared header
      */
     public <T> SmartHeader createSmartHeader(
@@ -219,16 +255,16 @@ public abstract class AbstractMainGrid<T> extends Main {
     /**
      * Creates a shared header for this view's grid.
      *
-     * @param title page title
-     * @param titleId title identifier
-     * @param titleIcon page icon
-     * @param createButtonId create action identifier
+     * @param title                    page title
+     * @param titleId                  title identifier
+     * @param titleIcon                page icon
+     * @param createButtonId           create action identifier
      * @param createButtonClickHandler create action
-     * @param rowCounterId counter identifier
-     * @param globalFilterId search identifier
-     * @param aiFilterService natural-language filter service
-     * @param mapper JSON mapper
-     * @param entityType searchable entity type
+     * @param rowCounterId             counter identifier
+     * @param globalFilterId           search identifier
+     * @param aiFilterService          natural-language filter service
+     * @param mapper                   JSON mapper
+     * @param entityType               searchable entity type
      * @return configured shared header
      */
     public SmartHeader createSmartHeader(
@@ -248,16 +284,16 @@ public abstract class AbstractMainGrid<T> extends Main {
     /**
      * Creates a shared header with an entity avatar for this view's grid.
      *
-     * @param title page title
-     * @param titleId title identifier
-     * @param image entity avatar, or null
-     * @param createButtonId create action identifier
+     * @param title                    page title
+     * @param titleId                  title identifier
+     * @param image                    entity avatar, or null
+     * @param createButtonId           create action identifier
      * @param createButtonClickHandler create action
-     * @param rowCounterId counter identifier
-     * @param globalFilterId search identifier
-     * @param aiFilterService natural-language filter service
-     * @param mapper JSON mapper
-     * @param entityType searchable entity type
+     * @param rowCounterId             counter identifier
+     * @param globalFilterId           search identifier
+     * @param aiFilterService          natural-language filter service
+     * @param mapper                   JSON mapper
+     * @param entityType               searchable entity type
      * @return configured shared header
      */
     public SmartHeader createSmartHeader(
