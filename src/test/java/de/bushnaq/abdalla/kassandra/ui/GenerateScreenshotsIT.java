@@ -218,24 +218,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-//                new RandomCase(3,
-//                        OffsetDateTime.parse("2026-02-02T08:00:00+01:00"),
-//                        LocalDate.parse("2025-08-04"),
-//                        Duration.ofDays(10),
-//                        2, 2,
-//                        2, 2,
-//                        2, 2,
-//                        1, 5,
-//                        5, 8, 8, 8, 6, 7)//official demo data
-//                new RandomCase(3,
-//                        OffsetDateTime.parse("2026-08-22T08:00:00+01:00"),
-//                        LocalDate.parse("2026-02-01"),
-//                        Duration.ofDays(10),
-//                        6, 6,
-//                        1, 3,
-//                        1, 3,
-//                        1, 3,
-//                        5, 8, 8, 4, 6, 7)//official screenshot data
                 RandomCase.builder()
                         .testCaseIndex(4)
                         .now(OffsetDateTime.parse("2026-03-23T08:00:00+01:00"))

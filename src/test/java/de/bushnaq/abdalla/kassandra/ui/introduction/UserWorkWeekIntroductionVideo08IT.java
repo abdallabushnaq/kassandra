@@ -284,13 +284,5 @@ public class UserWorkWeekIntroductionVideo08IT extends AbstractIntroductionVideo
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
-//    private static List<RandomCase> listRandomCases() {
-//        // "now" is set to May 5 2025 so that June 1st is a near-future date in the narrative.
-//        RandomCase[] randomCases = new RandomCase[]{
-//                new RandomCase(1, OffsetDateTime.parse("2025-05-05T08:00:00+01:00"), LocalDate.parse("2025-04-28"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 12, 6, 13)
-//        };
-//        return Arrays.stream(randomCases).toList();
-//    }
 }
-
 

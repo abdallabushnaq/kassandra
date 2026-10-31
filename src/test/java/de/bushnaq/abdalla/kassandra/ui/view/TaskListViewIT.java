@@ -88,7 +88,18 @@ public class TaskListViewIT extends AbstractKeycloakUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 1, 1, 1, 1, 1, 1, 1, 1, 6, 0, 10, 10, 0, 1)//
+                RandomCase.builder()
+                        .testCaseIndex(1)
+                        .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
+                        .startDate(LocalDate.parse("2025-08-04"))
+                        .minNumberOfProducts(1).maxNumberOfProducts(1)
+                        .minNumberOfVersions(1).maxNumberOfVersions(1)
+                        .minNumberOfFeatures(1).maxNumberOfFeatures(1)
+                        .minNumberOfSprints(1).maxNumberOfSprints(1)
+                        .maxTaskDurationDays(6).maxNumberOfStories(0)
+                        .maxNumberOfUsers(10).maxNumberOfUsersPerSprint(10)
+                        .maxNumberOfTasks(0).seed(1)
+                        .build()//
         };
         return Arrays.stream(randomCases).toList();
     }

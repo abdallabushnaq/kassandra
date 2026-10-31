@@ -230,10 +230,4 @@ public class ManagingUsersIntroductionVideo02IT extends AbstractIntroductionVide
         seleniumHandler.waitUntilBrowserClosed(5000);
     }
 
-//    private static List<RandomCase> listRandomCases() {
-//        RandomCase[] randomCases = new RandomCase[]{//
-//                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 12, 21, 6, 13)//
-//        };
-//        return Arrays.stream(randomCases).toList();
-//    }
 }

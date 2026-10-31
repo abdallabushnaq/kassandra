@@ -66,7 +66,18 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 8, 6, 7)//
+                RandomCase.builder()
+                        .testCaseIndex(3)
+                        .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
+                        .startDate(LocalDate.parse("2025-08-04"))
+                        .minNumberOfProducts(2).maxNumberOfProducts(2)
+                        .minNumberOfVersions(2).maxNumberOfVersions(2)
+                        .minNumberOfFeatures(2).maxNumberOfFeatures(2)
+                        .minNumberOfSprints(1).maxNumberOfSprints(5)
+                        .maxTaskDurationDays(5).maxNumberOfStories(8)
+                        .maxNumberOfUsers(8).maxNumberOfUsersPerSprint(8)
+                        .maxNumberOfTasks(6).seed(7)
+                        .build()//
         };
         return Arrays.stream(randomCases).toList();
     }

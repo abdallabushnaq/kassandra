@@ -41,7 +41,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -105,8 +107,18 @@ public class QualityBoardIT extends AbstractKeycloakUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, 10, 2, 1, 1, 2, 1),//
-//                new RandomCase(2, 10, 3, 2, 3, 1)//
+                RandomCase.builder()
+                        .testCaseIndex(1)
+                        .now(OffsetDateTime.parse("2025-05-05T08:00:00+01:00"))
+                        .startDate(LocalDate.parse("2024-12-15"))
+                        .minNumberOfProducts(1).maxNumberOfProducts(1)
+                        .minNumberOfVersions(1).maxNumberOfVersions(1)
+                        .minNumberOfFeatures(1).maxNumberOfFeatures(1)
+                        .minNumberOfSprints(1).maxNumberOfSprints(1)
+                        .maxTaskDurationDays(10).maxNumberOfStories(2)
+                        .maxNumberOfUsers(1).maxNumberOfUsersPerSprint(2)
+                        .maxNumberOfTasks(1).seed(1)
+                        .build(),//
         };
         return Arrays.stream(randomCases).toList();
     }

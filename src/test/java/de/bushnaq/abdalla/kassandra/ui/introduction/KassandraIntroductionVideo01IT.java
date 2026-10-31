@@ -328,11 +328,4 @@ public class KassandraIntroductionVideo01IT extends AbstractIntroductionVideo {
 //     *
 //     * @return list containing exactly one {@link RandomCase}
 //     */
-//    private static List<RandomCase> listRandomCases() {
-//        RandomCase[] randomCases = new RandomCase[]{
-//                new RandomCase(3, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"),
-//                        Duration.ofDays(10), 2, 2, 2, 2, 2, 2, 1, 5, 5, 8, 8, 8, 6, 7)
-//        };
-//        return Arrays.stream(randomCases).toList();
-//    }
 }

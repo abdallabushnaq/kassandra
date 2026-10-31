@@ -268,7 +268,18 @@ public class ProductAclApiTest extends AbstractUiTestUtil {
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
-                new RandomCase(1, OffsetDateTime.parse("2025-08-11T08:00:00+01:00"), LocalDate.parse("2025-08-04"), Duration.ofDays(10), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 13)//
+                RandomCase.builder()
+                        .testCaseIndex(1)
+                        .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
+                        .startDate(LocalDate.parse("2025-08-04"))
+                        .minNumberOfProducts(0).maxNumberOfProducts(0)
+                        .minNumberOfVersions(0).maxNumberOfVersions(0)
+                        .minNumberOfFeatures(0).maxNumberOfFeatures(0)
+                        .minNumberOfSprints(0).maxNumberOfSprints(0)
+                        .maxTaskDurationDays(0).maxNumberOfStories(0)
+                        .maxNumberOfUsers(4).maxNumberOfUsersPerSprint(4)
+                        .maxNumberOfTasks(0).seed(13)
+                        .build()//
         };
         return Arrays.stream(randomCases).toList();
     }
