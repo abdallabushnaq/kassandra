@@ -204,7 +204,7 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 
 ![Active Spints](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/active-sprints.png)
 
-![Generate AI Image](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/image-prompt-dialog.png)
+![Generate AI Image](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/user-image-prompt-dialog.png)
 
 ![Dependency Dialog](https://raw.githubusercontent.com/wiki/kunterbunt2/project-hub/light-screenshots/dependency-dialog.png)
 

@@ -1164,6 +1164,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 //        aboutViewTester.logout();
         aboutViewTester.login(ACTIVE_SPRINT_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         navigateTo(ActiveSprints.ROUTE);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
         takeActiveSprintsDialogScreenshots(folder);
 
