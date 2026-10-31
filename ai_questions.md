@@ -91,13 +91,6 @@ SSO cookies; isolate both origins between accounts.) and restart it by logging i
 Can we remove the cookies without having to call destroy?
 Worst case we add an optional parameter boolean stopRecording.
 
-# Updating wiki pages
-
-1. All the screenshots we take and store in kassandra.wiki are supposed to show up on one of the markdown pages in the
-   wiki. We need to make sure it is referenced on one of the pages to describe the product or we need to remove it.
-2. I have noticed that some screenshots are also missing. e.g. ImagePromptDialog. This dialog screenshot should actually
-   be taken 2 times: once for a project and once for a user.
-
 # How To Handle Planned Sick-Days
 
 At the moment we handle sick days as unplanned in our sprints and charts.
@@ -163,9 +156,19 @@ Let us draw the vertical grid lines for the Burn-down-chart above the graph.
 Gantt chart should keep the grid below the chart.
 Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
 
-# screen Shots
+# Updating wiki pages in kassandra.wiki
 
-ImagePromptDialog screenshots are missing.
+1. All the screenshots we take and store in kassandra.wiki are supposed to show up on one of the markdown pages in the
+   wiki. We need to make sure it is referenced on one of the pages to describe the product or we need to remove it.
+2. I have noticed that some screenshots are also missing. e.g. ImagePromptDialog. This dialog screenshot should actually
+   be taken 2 times: once for a project and once for a user.
+
+# Your job
+
+1. Can you go through all dialogs and views and compare them with the screenshots and list up missing screenshots?
+2. Add missing screenshot code to GenerateScreenshotsIT. make it part of the existing test. do nto add another test.
+3. Can you go through all screenshots in kassandra.wiki and find any that are missing a reference in any markdown pages.
+   add a reference to an appropriate page.
 
 # Disabling Video Recording for Tests
 
@@ -178,16 +181,6 @@ Let's allow setting that to false in SeleniumHandler.
 We introduced the Builder pattern in RandomCase and use it in GenerateScreenshotsIT and Demo.
 Let's remove the deprecated constructors and replace all calls using the builder pattern.
 There are many classes using the deprecated constructor.
-
-# Harmonize Scroll Behavior
-
-Kassandra views have different scroll behaviors. Some views scroll the whole page, some views scroll only the content
-area.
-We want to harmonize the scroll behavior across all views to scroll the whole page.
-ActiveSprints and Backlog already scroll the whole page, so we can use them as examples for QualityBoard, which is
-missing a page scroller.
-ProductListView, VersionListView, FeatureListView and SprintListView are based on AbstractMainGrid.
-Let's add a page scroller to AbstractMainGrid.
 
 # Stable Diffusion Cache for our Tests
 

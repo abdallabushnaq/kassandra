@@ -719,6 +719,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
     }
 
     private void takeImagePromptHelpScreenshots(String buttonId, boolean headers) throws IOException {
+        takeImagePromptHelpScreenshots(buttonId, headers, null);
+    }
+
+    private void takeImagePromptHelpScreenshots(String buttonId, boolean headers, String screenshotFile) throws IOException {
         seleniumHandler.click(buttonId);
         try {
             seleniumHandler.waitForElementToBeClickable(ImagePromptDialog.ID_CANCEL_BUTTON);
@@ -733,6 +737,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 // Avatar-only forms use the same controls but have no header editors.
                 assertTrue(seleniumHandler.getDriver().findElements(By.id(ImagePromptDialog.ID_HEADER_PROMPT_FIELD)).isEmpty());
                 assertTrue(seleniumHandler.findElement(By.id(ImagePromptDialog.HELP_BUTTON_ID)).isDisplayed());
+            }
+            if (screenshotFile != null) {
+                takeDialogScreenshot(ImagePromptDialog.IMAGE_PROMPT_DIALOG, screenshotFile);
             }
         } finally {
             seleniumHandler.click(ImagePromptDialog.ID_CANCEL_BUTTON);
@@ -963,7 +970,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.waitForElementToBeClickable(ProductDialog.CANCEL_BUTTON); // Wait for dialog
         takeDialogHelpElements(ProductDialog.class, ProductDialog.PRODUCT_HELP_BUTTON,
                 ProductDialog.PRODUCT_NAME_FIELD, ProductDialog.GENERATE_IMAGE_BUTTON);
-        takeImagePromptHelpScreenshots(ProductDialog.GENERATE_IMAGE_BUTTON, true);
+        takeImagePromptHelpScreenshots(ProductDialog.GENERATE_IMAGE_BUTTON, true,
+                folder + "/product-image-prompt-dialog.png");
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(ProductDialog.PRODUCT_DIALOG), ProductDialog.PRODUCT_DIALOG, folder + "/product-edit-dialog.png");
         productListViewTester.closeDialog(ProductDialog.CANCEL_BUTTON);
 
@@ -1354,7 +1362,8 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(UserListView.USER_GRID_EDIT_BUTTON_PREFIX + userName);
         seleniumHandler.waitForElementToBeClickable(UserDialog.CANCEL_BUTTON); // Wait for dialog
         takeDialogHelpElements(UserDialog.class, UserDialog.HELP_BUTTON_ID, UserDialog.USER_NAME_FIELD, UserDialog.GENERATE_IMAGE_BUTTON);
-        takeImagePromptHelpScreenshots(UserDialog.GENERATE_IMAGE_BUTTON, false);
+        takeImagePromptHelpScreenshots(UserDialog.GENERATE_IMAGE_BUTTON, false,
+                folder + "/user-image-prompt-dialog.png");
         seleniumHandler.takeElementScreenShot(seleniumHandler.findDialogOverlayElement(UserDialog.USER_DIALOG), UserDialog.USER_DIALOG, folder + "/user-edit-dialog.png");
         userListViewTester.closeDialog(UserDialog.CANCEL_BUTTON);
 
