@@ -69,6 +69,7 @@ public class MPXJReader extends GanttGenerator {
             LocalDateTime          date        = projectFile.getProjectProperties().getStartDate();//ensure start date matches
             ParameterOptions.setNow(DateUtil.localDateTimeToOffsetDateTime(date));
             //populate mpxjTaskMap and resourceMap
+            int anonymousUserIndex = 1;
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask, ignoreId1)) {
                     mpxjTaskMap.put(mpxjTask.getName(), mpxjTask);//store tasks
@@ -86,21 +87,27 @@ public class MPXJReader extends GanttGenerator {
 //                                TimeUnit units1       = work.getUnits();
 //                                double   duration1    = work.getDuration();
                                 double availability = units.doubleValue() / 100;
-                                String emailAddress = resource.getEmailAddress();
-                                if (emailAddress == null) {
-                                    emailAddress = resourceName.replaceAll(" ", "_") + "@example.com";
+//                                String emailAddress = resource.getEmailAddress();
+                                if (resourceName == null) {
+                                    resourceName = ANONYMOUS + "-" + anonymousUserIndex++;
                                 }
+//                                    if (emailAddress == null) {
+//                                        emailAddress = resourceName.replaceAll(" ", "_") + "@example.com";
+//                                    }
                                 User user = addUser(resourceName, (float) availability);
                                 System.out.printf("Resource ID: %s, resource Name: %s%n", user.getId(), user.getName());
 
                                 userMap.put(resourceName, user);//store users
+//                                } else {
+//                                    System.out.printf("Resource ID: %s, resource Name is null%n", resource.getID());
+//                                }
                             }
                         }
                     }
                 }
             }
             //populate taskMap
-            int anonymousUserIndex = 1;
+//            int anonymousUserIndex = 1;
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask, ignoreId1)) {
                     String             name     = mpxjTask.getName();

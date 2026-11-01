@@ -117,8 +117,8 @@ public class Sprint extends AbstractTimeAware implements Comparable<Sprint>, Hea
                 worklogRemaining.add(w);
             } else {
                 //TODO we probably should prevent this.
-                WorklogRemaining w = new WorklogRemaining(getId(), task.getId(), task.getKey(), null, timeSpentMinutes, remainingEstimateMinutes);
-                worklogRemaining.add(w);
+//                WorklogRemaining w = new WorklogRemaining(getId(), task.getId(), task.getKey(), null, timeSpentMinutes, remainingEstimateMinutes);
+//                worklogRemaining.add(w);
             }
         }
     }
