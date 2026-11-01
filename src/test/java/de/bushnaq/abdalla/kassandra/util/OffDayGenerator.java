@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -220,8 +221,13 @@ public class OffDayGenerator {
         }
         try (Profiler pc = new Profiler(SampleType.JPA)) {
             long time = System.currentTimeMillis();
-            PersistingEntityGenerator.setUser(user.getEmail(), "ROLE_USER");//Christopher creates the features
-            List<OffDay> saved = offDayApi.persistBatch(pending, user.getId());
+            Authentication previous = PersistingEntityGenerator.setUser(user.getEmail(), "ROLE_USER");
+            List<OffDay> saved;
+            try {
+                saved = offDayApi.persistBatch(pending, user.getId());
+            } finally {
+                PersistingEntityGenerator.setUser(previous);
+            }
             log.debug("Batch-persisted {} off days for user '{}' in {} ms", saved.size(), user.getName(), System.currentTimeMillis() - time);
             // Replace in-memory temp objects with the saved ones (which carry server-assigned IDs).
             user.getOffDays().removeAll(pending);
