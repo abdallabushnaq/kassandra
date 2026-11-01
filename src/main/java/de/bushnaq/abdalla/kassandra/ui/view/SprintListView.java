@@ -53,11 +53,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
-import de.bushnaq.abdalla.kassandra.ui.component.AbstractMainGrid;
-import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
-import de.bushnaq.abdalla.kassandra.ui.component.ChatAgentPanel;
-import de.bushnaq.abdalla.kassandra.ui.component.ChatPanelSessionState;
-import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
+import de.bushnaq.abdalla.kassandra.ui.component.*;
 import de.bushnaq.abdalla.kassandra.ui.dialog.ConfirmDialog;
 import de.bushnaq.abdalla.kassandra.ui.dialog.SprintDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.VaadinUtil;
@@ -94,10 +90,12 @@ import java.util.stream.Collectors;
 @PermitAll
 @Slf4j
 public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNavigationObserver {
-    /** Identifier of the page help button. */
-    public static final String HELP_BUTTON_ID = "sprint-help-button";
     public static final  String                       CREATE_SPRINT_BUTTON             = "create-sprint-button";
     public static final  String                       FEATURE_SELECTOR                 = "feature-selector";
+    /**
+     * Identifier of the page help button.
+     */
+    public static final  String                       HELP_BUTTON_ID                   = "sprint-help-button";
     /**
      * Identifier of the container hosting the sprint overview chart.
      */
@@ -612,13 +610,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
         dialog.open();
     }
 
-    private void refreshUndoRedoToolbar() {
-        MainLayout.findParent(this)
-                .filter(MainLayout.class::isInstance)
-                .map(MainLayout.class::cast)
-                .ifPresent(MainLayout::refreshUndoRedoToolbar);
-    }
-
     /**
      * Triggers a client-side chart refresh by calling {@code mountSprintsOverviewChart}.
      * <p>
@@ -628,7 +619,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      * and avoids an extra round-trip.
      * <p>
      * The minified script is loaded once via {@code /js/sprints-overview.min.js}, which combines
-     * CalendarXAxes.js and SprintsOverviewChart.js and is generated during the Maven build.
+     * CalendarXAxes.js and LegacySprintsOverviewChart.js and is generated during the Maven build.
      * The browser will serve it from cache on subsequent references.
      */
     private void refreshClientChart() {
@@ -760,6 +751,13 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
 
         // Trigger client-side chart refresh after the grid is updated
         refreshClientChart();
+    }
+
+    private void refreshUndoRedoToolbar() {
+        MainLayout.findParent(this)
+                .filter(MainLayout.class::isInstance)
+                .map(MainLayout.class::cast)
+                .ifPresent(MainLayout::refreshUndoRedoToolbar);
     }
 
     /**

@@ -6,12 +6,9 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
-import de.bushnaq.abdalla.kassandra.dto.OffDayType;
-import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.Task;
-import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.dto.Worklog;
+import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.burndown.DayWork;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -37,8 +34,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED;
-import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED;
+import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.Y_AXIS_WIDTH;
 
 /**
  * Builds a {@link GanttBurndownChartDto} from a fully-loaded {@link Sprint} so that
@@ -46,7 +43,7 @@ import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AX
  * zoomable combined Gantt+Burndown chart without any further server calls.
  *
  * <p>The burndown section mirrors the computation done in Java's
- * {@link de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer}.
+ * {@link LegacyBurnDownRenderer}.
  * The Gantt task rows reuse {@link GanttChartService}.
  */
 @Service
@@ -288,7 +285,7 @@ public class GanttBurndownChartService {
         // ── Build AuthorSeriesDto list ─────────────────────────────────────────
         // Sort authors by descending total estimated work (worked + remaining), matching
         // Java's AuthorsContribution.getSortedKeyList() / MapValueCopmparator behaviour,
-        // so that the stacking order in BurnDownRenderer.drawBurnDown() is faithful.
+        // so that the stacking order in LegacyBurnDownRenderer.drawBurnDown() is faithful.
         List<UUID> sortedAuthorIds = new ArrayList<>(authorMap.keySet());
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
@@ -376,7 +373,7 @@ public class GanttBurndownChartService {
 
     /**
      * Computes gantt-derived planned burn-down guides and stores them in the DTO.
-     * Mirrors Java: {@code BurnDownRenderer.initGanttGuide()} +
+     * Mirrors Java: {@code LegacyBurnDownRenderer.initGanttGuide()} +
      * {@code BurnDownGuide.convertToAccumulatedValues()}.
      */
     private void buildGanttGuides(Sprint sprint, LocalDateTime chartStart,
@@ -705,29 +702,6 @@ public class GanttBurndownChartService {
         }
     }
 
-    private boolean isPlannedWorkingDay(Sprint sprint, Task task, LocalDate day) {
-        if (task.getEffectiveCalendar().isWorkingDate(day))
-            return true;
-        User            user           = task.getAssignedUser();
-        ProjectCalendar sprintCalendar = sprint.getCalendar();
-        // An owned sprint uses its owner's calendar; check its parent so the owner's sickness is not treated as a sprint-wide holiday.
-        if (sprint.getUserId() != null && sprintCalendar.getParent() != null)
-            sprintCalendar = sprintCalendar.getParent();
-        if (user == null || !user.isWorkingDay(day) || !sprintCalendar.isWorkingDate(day))
-            return false;
-        // The optimum follows the sickness-free schedule: count a sick-only exception, but never a vacation or holiday.
-        boolean sick = false;
-        for (ProjectCalendarException exception : user.getCalendar().getCalendarExceptions()) {
-            LocalDate end = exception.getToDate() == null ? exception.getFromDate() : exception.getToDate();
-            if (!day.isBefore(exception.getFromDate()) && !day.isAfter(end)) {
-                if (!OffDayType.SICK.name().equals(exception.getName()))
-                    return false;
-                sick = true;
-            }
-        }
-        return sick;
-    }
-
     private LocalDate calendarFromDayIndex(int dayIndex) {
         return milestones.firstMilestone.plusDays(dayIndex);
     }
@@ -809,7 +783,6 @@ public class GanttBurndownChartService {
         return minutes + "m";
     }
 
-
     /**
      * Initialize BurnDownGuide object from gantt chart of this project to visualize
      * planned burn down rate
@@ -838,6 +811,29 @@ public class GanttBurndownChartService {
             return end != null && now.isAfter(DateUtil.addDay(end, ONE_WEEK));
         }
         return false;
+    }
+
+    private boolean isPlannedWorkingDay(Sprint sprint, Task task, LocalDate day) {
+        if (task.getEffectiveCalendar().isWorkingDate(day))
+            return true;
+        User            user           = task.getAssignedUser();
+        ProjectCalendar sprintCalendar = sprint.getCalendar();
+        // An owned sprint uses its owner's calendar; check its parent so the owner's sickness is not treated as a sprint-wide holiday.
+        if (sprint.getUserId() != null && sprintCalendar.getParent() != null)
+            sprintCalendar = sprintCalendar.getParent();
+        if (user == null || !user.isWorkingDay(day) || !sprintCalendar.isWorkingDate(day))
+            return false;
+        // The optimum follows the sickness-free schedule: count a sick-only exception, but never a vacation or holiday.
+        boolean sick = false;
+        for (ProjectCalendarException exception : user.getCalendar().getCalendarExceptions()) {
+            LocalDate end = exception.getToDate() == null ? exception.getFromDate() : exception.getToDate();
+            if (!day.isBefore(exception.getFromDate()) && !day.isAfter(end)) {
+                if (!OffDayType.SICK.name().equals(exception.getName()))
+                    return false;
+                sick = true;
+            }
+        }
+        return sick;
     }
 
     private static boolean isWorkingDay(LocalDate day) {

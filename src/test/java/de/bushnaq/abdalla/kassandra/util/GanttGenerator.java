@@ -17,58 +17,80 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
-import de.bushnaq.abdalla.kassandra.Context;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
-import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
-import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
-import de.bushnaq.abdalla.kassandra.report.overview.SprintsOverviewChart;
+import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
+import de.bushnaq.abdalla.kassandra.rest.JacksonConfig;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
+import de.bushnaq.abdalla.kassandra.service.GanttChartService;
+import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
-import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectFile;
 import org.junit.jupiter.api.TestInfo;
+import org.openqa.selenium.By;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @Service
 public class GanttGenerator extends EntityGenerator {
-    protected final Random                    random    = new Random();
-    private final   GanttBurndownChartService service;
+    private static final String CHART_PAGE = """
+            <!doctype html>
+            <html><head><meta charset="utf-8"><style>
+            html, body { margin: 0; }
+            #chart { width: 2400px; height: 900px; }
+            </style></head><body><div id="chart"></div></body></html>
+            """;
+    protected final      Random random     = new Random();
     /**
      * Theme used for Gantt chart generation in tests.
      * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
      * Tests that need to switch theme (e.g. {@code CriticalTest}) set this field directly.
      */
-    public          ETheme                    testTheme = ETheme.dark;
+    public               ETheme testTheme  = ETheme.light;
 
     public GanttGenerator(GanttBurndownChartService service) {
         super();
-        this.service = service;
     }
 
     /**
@@ -98,93 +120,144 @@ public class GanttGenerator extends EntityGenerator {
         return true;
     }
 
+    private void captureGanttBurndownChart(UUID sprintId, String testFolder, String name) throws Exception {
+        Sprint                    sprint       = prepareChartSprint(sprintId);
+        StableDiffusionConfig     config       = new StableDiffusionConfig();
+        LightTheme                lightTheme   = new LightTheme(config);
+        DarkTheme                 darkTheme    = new DarkTheme(config);
+        GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme);
+        GanttBurndownChartService chartService = new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
+        String json = new JacksonConfig().jsonMapper().writeValueAsString(
+                chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
+        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart",
+                json, name, "gantt-burndown-chart");
+    }
+
+    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected) throws IOException {
+        Files.createDirectories(outputDirectory);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", GanttGenerator::serveChartResource);
+        server.start();
+        try {
+            WebDriverManager.chromedriver().setup();
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("--headless=new", "--disable-gpu", "--window-size=2500,1200");
+            ChromeDriver driver = new ChromeDriver(options);
+            try {
+                driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
+                driver.get("http://127.0.0.1:" + server.getAddress().getPort() + "/");
+                Object result = driver.executeAsyncScript("""
+                        const [url, mount, json, expected, done] = arguments;
+                        import(url).then(async () => {
+                            localStorage.clear();
+                            window[mount]('chart', JSON.parse(json), 'Test chart');
+                            await document.fonts.ready;
+                            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                            const container = document.getElementById('chart');
+                            const svg = container.querySelector('svg');
+                            if (!svg || !container.getAttribute('data-chart-rendered')?.split(' ').includes(expected))
+                                throw new Error('Expected chart did not render an SVG: ' + expected);
+                            done({svg: new XMLSerializer().serializeToString(svg)});
+                        }).catch(error => done({error: String(error.stack || error)}));
+                        """, module, mount, json, expected);
+                if (!(result instanceof Map<?, ?> response) || !(response.get("svg") instanceof String svg)) {
+                    throw new IllegalStateException("Failed to render " + name + " chart: " + result);
+                }
+                Files.writeString(outputDirectory.resolve(name + ".svg"), svg, StandardCharsets.UTF_8);
+                WebElement    chart = driver.findElement(By.cssSelector("#chart svg"));
+                byte[]        png   = chart.getScreenshotAs(OutputType.BYTES);
+                BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
+                if (image == null || image.getWidth() < chart.getSize().getWidth() || image.getHeight() < chart.getSize().getHeight()) {
+                    throw new IllegalStateException("PNG capture is clipped or invalid for " + name + " chart");
+                }
+                Files.write(outputDirectory.resolve(name + ".png"), png);
+                log.info("Saved {} chart to {}", name, outputDirectory.toAbsolutePath());
+            } finally {
+                driver.quit();
+            }
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    private String chartName(TestInfo testInfo) {
+        String displayName = testInfo.getDisplayName();
+        if (displayName.indexOf('=') != -1) {
+            displayName = displayName.substring(displayName.indexOf('"') + 1, displayName.lastIndexOf('"'));
+        }
+        return displayName + "-" + testTheme.name();
+    }
+
+    /**
+     * Generates the production combined Gantt and burndown chart as SVG and PNG.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo   test metadata used to name the chart
+     * @param sprintId   identifier of the sprint to render
+     * @param testFolder output directory for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
-        sprint.initialize();
-        sprint.initUserMap(getUsers().stream().toList());
-        sprint.initTaskMap(getTasks(), getWorklogs());
-        sprint.recalculate(ParameterOptions.getLocalNow());
-//        Context       context     = new Context(new KassandraParameterOptions(new LightTheme(null), new DarkTheme(null)));
-        Context context = new Context(null);
-        context.parameters.setTheme(testTheme);
-        String sprintName;
-        if (testInfo.getDisplayName().indexOf('=') != -1) {
-            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name();
-        } else {
-            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name();
-        }
-        RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, sprintName, ParameterOptions.getLocalNow(), 0, 36 * 10,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        BurnDownChart chart       = new BurnDownChart(service, "/", dao);
-        String        description = testInfo.getDisplayName().replace("_", "-");
-        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+        captureGanttBurndownChart(sprintId, testFolder, chartName(testInfo));
     }
 
+    /**
+     * Generates the production combined Gantt and burndown chart as SVG and PNG.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo   test metadata
+     * @param sprintId   identifier of the sprint to render
+     * @param testFolder output directory for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
     public void generateGanttBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
-        sprint.initialize();
-        sprint.initUserMap(getUsers().stream().toList());
-        sprint.initTaskMap(getTasks(), getWorklogs());
-        sprint.recalculate(ParameterOptions.getLocalNow());
-        Context context = new Context(null);
-        context.parameters.setTheme(testTheme);
-        String sprintName;
-        if (testInfo.getDisplayName().indexOf('=') != -1) {
-            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-burndown-chart";
-        } else {
-            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
-        }
-        RenderDao          burndownDao = RenderUtil.createBurndownRenderDao(context, sprint, "gannt-burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        RenderDao          ganttDao    = RenderUtil.createGanttRenderDao(context, sprint, "gannt-burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH, CalendarSize.DAYS);
-        GanttBurndownChart chart       = new GanttBurndownChart(service, "/", burndownDao, ganttDao);
-//        GanttBurndownChart chart = new GanttBurndownChart(context, "", "/", "Gantt Burndown Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
-//        String     description = testCaseInfo.getDisplayName().replace("_", "-");
-        String description = TestInfoUtil.getTestMethodName(testInfo);
-        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+        captureGanttBurndownChart(sprintId, testFolder, "gannt-burn-down");
     }
 
+    /**
+     * Generates the production Gantt chart as SVG and PNG.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo   test metadata used to name the chart
+     * @param sprintId   identifier of the sprint to render
+     * @param testFolder output directory for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
     public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
-        sprint.initialize();
-        sprint.initUserMap(getUsers().stream().toList());
-        sprint.initTaskMap(getTasks(), getWorklogs());
-        sprint.recalculate(ParameterOptions.getLocalNow());
-        Context context = new Context(null);
-        context.parameters.setTheme(testTheme);
-        String sprintName;
-        if (testInfo.getDisplayName().indexOf('=') != -1) {
-            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
-        } else {
-            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-gant-chart";
-        }
-        RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprintName, ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-        GanttChart chart = new GanttChart("/", dao);
-//        GanttChart chart = new GanttChart(context, "", "/", "Gantt Chart", sprintName, exceptions, ParameterOptions.getLocalNow(), false, sprint/*, 1887, 1000*/, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
-//        String     description = testCaseInfo.getDisplayName().replace("_", "-");
-        String description = TestInfoUtil.getTestMethodName(testInfo);
-        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+        Sprint                sprint       = prepareChartSprint(sprintId);
+        StableDiffusionConfig config       = new StableDiffusionConfig();
+        GanttChartService     chartService = new GanttChartService(new LightTheme(config), new DarkTheme(config));
+        String json = new JacksonConfig().jsonMapper().writeValueAsString(
+                chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
+        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart",
+                json, chartName(testInfo) + "-gant-chart", "gantt-chart");
     }
 
+    /**
+     * Generates the production sprint overview chart as SVG and PNG.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo   test metadata used to name the chart
+     * @param sprintId   identifier of the sprint to render
+     * @param testFolder output directory for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
     public void generateOverviewChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        Sprint sprint = getSprints().stream().filter(s -> s.getId() == sprintId).findFirst().orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
-        sprint.initialize();
-        sprint.initUserMap(getUsers().stream().toList());
-        sprint.initTaskMap(getTasks(), getWorklogs());
-        sprint.recalculate(ParameterOptions.getLocalNow());
-
-        List<Sprint> sprintList = new ArrayList<>();
-        sprintList.add(sprint);
-
-        Context context = new Context(null);
-        context.parameters.setTheme(testTheme);
-        String sprintName;
-        if (testInfo.getDisplayName().indexOf('=') != -1) {
-            sprintName = testInfo.getDisplayName().substring(testInfo.getDisplayName().indexOf('"') + 1, testInfo.getDisplayName().lastIndexOf('"')) + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-overview-chart";
-        } else {
-            sprintName = testInfo.getDisplayName() + "-" + context.parameters.getActiveGraphicsTheme().themeVariance.name() + "-overview-chart";
-        }
-        SprintsOverviewChart chart       = new SprintsOverviewChart(context, "", "/", sprintName, null, ParameterOptions.getLocalNow(), sprintList, 1887, 1000, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
-        String               description = TestInfoUtil.getTestMethodName(testInfo);
-        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testFolder);
+        Sprint    sprint    = prepareChartSprint(sprintId);
+        SprintDAO sprintDao = new SprintDAO();
+        sprintDao.setId(sprint.getId());
+        sprintDao.setName(sprint.getName());
+        sprintDao.setStart(sprint.getStart());
+        sprintDao.setEnd(sprint.getEnd());
+        sprintDao.setStatus(sprint.getStatus());
+        SprintRepository repository = mock(SprintRepository.class);
+        when(repository.findAll()).thenReturn(List.of(sprintDao));
+        StableDiffusionConfig  config          = new StableDiffusionConfig();
+        SprintsOverviewService overviewService = new SprintsOverviewService(repository, new LightTheme(config), new DarkTheme(config));
+        String json = new JacksonConfig().jsonMapper().writeValueAsString(
+                overviewService.getOverview(ParameterOptions.getLocalNow(), null, testTheme == ETheme.dark));
+        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart",
+                json, chartName(testInfo) + "-overview-chart-projectOverviewChart", "sprints-overview-chart");
     }
 
     /**
@@ -356,6 +429,14 @@ public class GanttGenerator extends EntityGenerator {
         ganttUtil.levelResources(eh, sprint, "", ParameterOptions.getLocalNow());
     }
 
+    private Sprint prepareChartSprint(UUID sprintId) {
+        Sprint sprint = getSprints().stream().filter(s -> s.getId().equals(sprintId)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Sprint with id " + sprintId + " not found"));
+        initializeSprint(sprint);
+        sprint.recalculate(ParameterOptions.getLocalNow());
+        return sprint;
+    }
+
     private void printTasks(Sprint sprint) {
         log.info("---------------------------");
         for (Task task : sprint.getTasks()) {
@@ -363,6 +444,31 @@ public class GanttGenerator extends EntityGenerator {
                 log.info("Task '{}': minEstimate={}, maxEstimate={}, spent={}, remainingEstimate={}", task.getName(), task.getMinEstimate(), task.getMaxEstimate(), task.getTimeSpent(), task.getRemainingEstimate());
         }
         log.info("---------------------------");
+    }
+
+    private static void sendChartResource(HttpExchange exchange, String contentType, byte[] content) throws IOException {
+        exchange.getResponseHeaders().set("Content-Type", contentType);
+        exchange.sendResponseHeaders(200, content.length);
+        exchange.getResponseBody().write(content);
+    }
+
+    private static void serveChartResource(HttpExchange exchange) throws IOException {
+        try (exchange) {
+            String path = exchange.getRequestURI().getPath();
+            if ("/".equals(path)) {
+                sendChartResource(exchange, "text/html; charset=utf-8", CHART_PAGE.getBytes(StandardCharsets.UTF_8));
+            } else if (path.startsWith("/js/generated/") && !path.contains("..")) {
+                try (InputStream resource = GanttGenerator.class.getClassLoader().getResourceAsStream("META-INF/resources" + path)) {
+                    if (resource == null) {
+                        exchange.sendResponseHeaders(404, -1);
+                    } else {
+                        sendChartResource(exchange, "text/javascript; charset=utf-8", resource.readAllBytes());
+                    }
+                }
+            } else {
+                exchange.sendResponseHeaders(404, -1);
+            }
+        }
     }
 
 

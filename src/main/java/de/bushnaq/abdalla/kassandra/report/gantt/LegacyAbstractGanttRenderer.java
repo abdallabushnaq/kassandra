@@ -52,7 +52,7 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public abstract class AbstractGanttRenderer extends AbstractRenderer {
+public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
     private static final   float                FINE_LINE_STROKE_WIDTH     = 1.0f;
     private static final   int                  LINE_HEIGHT                = 18;
     private static final   int                  RELATION_CORNER_LENGTH     = 14;
@@ -80,7 +80,7 @@ public abstract class AbstractGanttRenderer extends AbstractRenderer {
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
     protected              Map<String, Integer> taskHeight                 = new HashMap<>();
 
-    public AbstractGanttRenderer(RenderDao dao) throws IOException {
+    public LegacyAbstractGanttRenderer(RenderDao dao) throws IOException {
         super(dao);
         this.context              = dao.context;
         this.numberOfLinesPerTask = 1;//TODO do we need to keep this flexible in the dao?

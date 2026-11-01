@@ -117,7 +117,6 @@ public class DynamicGanttTest extends AbstractGanttTester {
 
     @Test
     public void testDeliveryBuffer1(TestInfo testInfo) throws Exception {
-        testTheme = ETheme.light;
         GanttGenerator g         = new GanttGenerator(service);
         User           resource1 = g.addUser("resource1", 0.3f);
         User           resource2 = g.addUser("resource2", 0.7f);
@@ -131,7 +130,6 @@ public class DynamicGanttTest extends AbstractGanttTester {
 
         g.createDeliveryBufferTask(sprint, Duration.ZERO);
         g.initializeSprint(sprint);
-        g.testTheme = testTheme;
 
         g.levelResources(testInfo, sprint, null);
         g.generateWorklogs(sprint, 0.5f, ParameterOptions.getLocalNow());

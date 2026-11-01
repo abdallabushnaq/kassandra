@@ -1,5 +1,5 @@
 // sprints-overview/sprints-overview-chart.ts
-// Mirrors Java: SprintsOverviewChart extends AbstractChart
+// Mirrors Java: LegacySprintsOverviewChart extends AbstractChart
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 

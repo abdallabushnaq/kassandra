@@ -26,7 +26,7 @@ import java.util.List;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class SprintsOverviewRenderer extends AbstractRenderer {
+public class LegacySprintsOverviewRenderer extends AbstractRenderer {
     private static final Color CLOSING_COLOR            = new Color(0x0, 0x0, 0x0, 0x20);
     private static final Color CREATING_QUOTATION_COLOR = new Color(0xff, 0x0, 0x0, 0x50);
     private static final Color DEFAULT_COLOR            = new Color(0x0, 0x0, 0x0, 0xa0);
@@ -54,11 +54,11 @@ public class SprintsOverviewRenderer extends AbstractRenderer {
     //    private BufferedImage qcdRed = null;
     private       List<Sprint>               sprintList;
 
-    public SprintsOverviewRenderer() {
+    public LegacySprintsOverviewRenderer() {
 
     }
 
-    public SprintsOverviewRenderer(RenderDao dao) throws Exception {
+    public LegacySprintsOverviewRenderer(RenderDao dao) throws Exception {
         super(dao);
         //        this.context = context;
         this.numberOfLines = dao.numberOfLines;

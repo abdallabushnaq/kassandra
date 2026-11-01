@@ -1,5 +1,5 @@
 // gantt/gantt-renderer.ts
-// Mirrors Java: GanttRenderer extends AbstractGanttRenderer
+// Mirrors Java: LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 

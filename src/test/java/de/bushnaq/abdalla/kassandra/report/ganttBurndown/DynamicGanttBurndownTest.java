@@ -34,11 +34,14 @@ import org.junit.jupiter.api.TestInfo;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * loading mpp files once with all start/finish/duration information into a reference sprint, then
@@ -118,6 +121,11 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
 //        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
 //        g.generateBurndownChart(testInfo, sprint.getId(), testFolder);
         g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder);
+        String svg = Files.readString(Path.of(testFolder, "gannt-burn-down.svg"));
+        for (String label : new String[]{"[1] Parent Task", "[2] Child Task", "[3] Child Task", "Delivery buffer", "Remaining work"}) {
+            assertTrue(svg.contains(label), "Combined chart is missing " + label);
+        }
+        assertTrue(Files.size(Path.of(testFolder, "gannt-burn-down.png")) > 0, "Combined chart PNG is empty");
 
         assertEquals(task1.getStart(), LocalDateTime.parse("2025-05-05T08:00:00"));
     }

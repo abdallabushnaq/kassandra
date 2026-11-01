@@ -131,7 +131,7 @@ export abstract class AbstractRenderer implements IRenderer {
      * Mirrors Java: protected void initPosition(int x, int y).
      * Positions the calendar header and the diagram (plot area) either with the calendar
      * above the diagram (default) or below it (calendarAtBottom), matching the Java layout
-     * exactly so combined charts (e.g. GanttBurndownChart) can stack a burndown plot with its
+     * exactly so combined charts (e.g. LegacyGanttBurndownChart) can stack a burndown plot with its
      * calendar drawn at the bottom directly above the Gantt chart's own calendar.
      */
     initPosition(x: number, y: number): void {

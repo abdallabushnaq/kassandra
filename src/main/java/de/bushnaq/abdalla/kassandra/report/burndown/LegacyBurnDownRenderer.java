@@ -50,7 +50,7 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class BurnDownRenderer extends AbstractRenderer {
+public class LegacyBurnDownRenderer extends AbstractRenderer {
 
     private static final int                       ONE_WEEK                                      = 7;
     private static final long                      ONE_WORK_MONTH                                = 20L * 75L * 60L * 6L;
@@ -81,7 +81,7 @@ public class BurnDownRenderer extends AbstractRenderer {
     private              List<WorklogRemaining>    worklogsRemaining;
     private              GraphSquare               yAxis;
 
-    public BurnDownRenderer(GanttBurndownChartService service, RenderDao dao) throws Exception {
+    public LegacyBurnDownRenderer(GanttBurndownChartService service, RenderDao dao) throws Exception {
         super(dao);
         this.service = service;
         this.sprint  = dao.sprint;

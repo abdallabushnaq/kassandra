@@ -1,5 +1,5 @@
 // gantt/abstract-gantt-renderer.ts
-// Base class for Gantt renderers. Mirrors Java: AbstractGanttRenderer extends AbstractRenderer
+// Base class for Gantt renderers. Mirrors Java: LegacyAbstractGanttRenderer extends AbstractRenderer
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -15,7 +15,7 @@ import {FontSpec} from "../FontSpec.js";
 import {AbstractChart} from '../AbstractChart.js';
 import {GraphColorUtil} from "../GraphColorUtil.js";
 
-// ── Constants (mirrors Java AbstractGanttRenderer field declarations) ────────
+// ── Constants (mirrors Java LegacyAbstractGanttRenderer field declarations) ────────
 const FINE_LINE_STROKE_WIDTH = 1.0;
 export const LINE_HEIGHT = 18;
 const RELATION_CORNER_LENGTH = 14;

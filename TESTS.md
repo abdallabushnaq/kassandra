@@ -13,10 +13,10 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.evaluate (AbstractGanttTester.java:111)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.executeTest (AbstractGanttTester.java:138)
@@ -36,10 +36,10 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart.<init>(GanttBurndownChart.java:36)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChart.<init>(GanttBurndownChart.java:36)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateGanttBurndownChart (GanttGenerator.java:138)
    at de.bushnaq.abdalla.kassandra.report.ganttBurndown.DynamicGanttBurndownTest.testDeliveryBuffer1
    (DynamicGanttBurndownTest.java:120)
@@ -57,19 +57,56 @@
    at de.bushnaq.abdalla.kassandra.report.gantt.OldGanttTest.gantt_03 (OldGanttTest.java:158)
 
 6. all CriticalTest
-7. all GanttTest
-8. GenerateScreenshotsIT
-9. TaskListViewIT
-10. DynamicGanttTest
-    java.lang.NullPointerException: Cannot invoke
-    "de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService.calculateAuthorContribution
-    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
-    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
+   java.lang.NullPointerException: Cannot invoke
+   "de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService.calculateAuthorContribution
+   (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
+   de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-    at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.init (BurnDownRenderer.java:647)
-    at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-    at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.<init>(BurnDownRenderer.java:88)
-    at de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart.<init>(BurnDownChart.java:29)
-    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
-    at de.bushnaq.abdalla.kassandra.report.gantt.DynamicGanttTest.testDeliveryBuffer1 (DynamicGanttTest.java:147)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
+   at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.evaluate (AbstractGanttTester.java:111)
+   at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.executeTest (AbstractGanttTester.java:138)
+   at de.bushnaq.abdalla.kassandra.report.gantt.CriticalTest.test (CriticalTest.java:70)
+
+
+7. all GanttTest
+   java.lang.NullPointerException: Cannot invoke
+   "de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService.calculateAuthorContribution
+   (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
+   de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
+
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
+   at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.evaluate (AbstractGanttTester.java:111)
+   at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.executeTest (AbstractGanttTester.java:138)
+   at de.bushnaq.abdalla.kassandra.report.gantt.GanttTest.test (GanttTest.java:76)
+
+8. TaskListViewIT
+9. DynamicGanttTest
+   java.lang.NullPointerException: Cannot invoke
+   "de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService.calculateAuthorContribution
+   (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
+   de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
+
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
+   at de.bushnaq.abdalla.kassandra.report.gantt.DynamicGanttTest.testDeliveryBuffer1 (DynamicGanttTest.java:147)
+
+10. many WorkWeekApiTest
+    org.springframework.security.authentication.AuthenticationCredentialsNotFoundException: Authentication credentials
+    not found when accessing API
+
+    at de.bushnaq.abdalla.kassandra.rest.api.AbstractApi.handleExceptions (AbstractApi.java:376)
+    at de.bushnaq.abdalla.kassandra.rest.api.AbstractApi.executeWithErrorHandling (AbstractApi.java:307)
+    at de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApi.persist (WorkWeekApi.java:113)
+    at de.bushnaq.abdalla.kassandra.rest.api.WorkWeekApiTest.create (WorkWeekApiTest.java:138)
 

@@ -1,6 +1,14 @@
 # AI Questions
 
-## Server Settings Design
+# Rewrite Calendar Chart in TS
+
+We rewrote the GanttChart and BurnDownChart from java to TS.
+Use them as reference.
+you will notice that we tried to keep the structure, method name, variable names and the total design very much as in
+the java code.
+This allowed us to ensure almost 100% pixel accurate reproduction of the legacy code.
+
+# Server Settings Design
 
 1. create a markdown file docs/design/server-settings-design.md explaining how server settings work
 2. use mermaid to visualize flows or relations if appropriate for this design.
@@ -154,4 +162,29 @@ Let's allow setting that to false in SeleniumHandler.
 
 # Stable Diffusion Cache for our Tests
 
-Lets introduce a 
+Lets introduce a
+
+# Failing Tests
+
+Running the Action scripts (maven-build.yml) in github a lot more tests fail than running them locally.
+Let's pick one of them and try to figure out why it could be failing running in github, but it works fine locally:
+AvailabilityApiTest.
+
+All tests run green locally.
+All test fail running in grithub.
+
+I downloaded the results:
+
+.github\test-results\test-artifacts\target\surefire-reports\de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApiTest.txt
+.github\test-results\test-artifacts\target\surefire-reports\TEST-de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApiTest.xml
+
+Can you figure out why this test is failing in github, but works fine locally?
+
+# Fix DynamicGanttTest
+
+DynamicGanttTest.testDeliveryBuffer1 fails.
+But it uses anyhow legacy code to generate Gantt chart and burndown chart.
+The production code as moved to js.
+See code in Backlog.refreshGanttChart.
+How can we use the js code to generate a gantt chart in our test and save it to disk for debugging purposes?
+ 

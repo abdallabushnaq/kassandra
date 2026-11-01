@@ -1,5 +1,5 @@
 // gantt/gantt-chart-class.ts
-// Mirrors Java: GanttChart extends AbstractChart
+// Mirrors Java: LegacyGanttChart extends AbstractChart
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 

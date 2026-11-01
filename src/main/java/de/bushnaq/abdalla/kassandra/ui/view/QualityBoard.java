@@ -651,7 +651,7 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         {
 //            try {
 //                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-//                GanttChart chart = new GanttChart("/", dao);
+//                LegacyGanttChart chart = new LegacyGanttChart("/", dao);
 //                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
 //            } catch (Exception e) {
 //                logger.error("Error generating gantt chart", e);
@@ -745,13 +745,6 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
         generateGanttBurndownChartAsync();
     }
 
-    private void removeOldContent() {
-        pageContent.getChildren()
-                .filter(component -> component != header)
-                .collect(Collectors.toList())
-                .forEach(pageContent::remove);
-    }
-
     /**
      * (Re-)builds the content area for the currently selected sprint.
      * Removes any children added by a previous cycle (keeping the persistent
@@ -833,6 +826,13 @@ public class QualityBoard extends Main implements AfterNavigationObserver {
             createGanttBurndownChart();
             refreshCharts();
         }
+    }
+
+    private void removeOldContent() {
+        pageContent.getChildren()
+                .filter(component -> component != header)
+                .collect(Collectors.toList())
+                .forEach(pageContent::remove);
     }
 
     /**

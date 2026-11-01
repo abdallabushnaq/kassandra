@@ -44,7 +44,7 @@ import java.time.format.DateTimeFormatter;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class GanttRenderer extends AbstractGanttRenderer {
+public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
 
     private static final int               GANTT_TASK_POST_SPACE = 0;
     private static final int               GANTT_TASK_PRI_SPACE  = 0;
@@ -54,7 +54,7 @@ public class GanttRenderer extends AbstractGanttRenderer {
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
     private final        Sprint            sprint;
 
-    public GanttRenderer(RenderDao dao) throws Exception {
+    public LegacyGanttRendererLegacy(RenderDao dao) throws Exception {
         super(dao);
         this.sprint = dao.sprint;
         this.theme  = dao.kassandraTheme;

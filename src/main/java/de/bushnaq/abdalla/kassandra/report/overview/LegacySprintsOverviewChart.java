@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Deprecated
-public class SprintsOverviewChart extends AbstractChart {
+public class LegacySprintsOverviewChart extends AbstractChart {
 
-    public SprintsOverviewChart(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,
-                                List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
+    public LegacySprintsOverviewChart(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,
+                                      List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
         super("Project Overview Chart", "", relateCssPath, column, sprintName + "-projectOverviewChart", "project_overview_map", null, graphicsTheme);
         RenderDao dao = RenderUtil.createOverviewRenderDao(context, sprintList, "overview", ParameterOptions.getLocalNow(), 3, chartWidth, chartHeight, 0);
-        getRenderers().add(new SprintsOverviewRenderer(dao));
+        getRenderers().add(new LegacySprintsOverviewRenderer(dao));
         this.setChartWidth(getRenderers().get(0).chartWidth);
         this.setChartHeight(getRenderers().get(0).chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = chartWidth;

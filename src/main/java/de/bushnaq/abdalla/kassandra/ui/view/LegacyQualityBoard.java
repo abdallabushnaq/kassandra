@@ -25,7 +25,6 @@ import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.*;
@@ -39,7 +38,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.GanttBurndown.GanttBurndownChart;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
@@ -190,7 +189,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
 
         SmartHeader smartHeader = new SmartHeader("Sprint Quality Board", null, headerAvatar);
         smartHeader.setFallbackIcon(VaadinIcon.CHART);
-        header = smartHeader;
+        header    = smartHeader;
         pageTitle = smartHeader.getPageTitle();
         smartHeader.addFilters(sprintSelector);
         header.setId("page-header");
@@ -472,8 +471,8 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
             ctx.setAuthentication(authentication);
             SecurityContextHolder.setContext(ctx);
             try {
-                Svg                svg   = new Svg();
-                GanttBurndownChart chart = renderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
+                Svg                      svg   = new Svg();
+                LegacyGanttBurndownChart chart = renderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
                 return new Object[]{svg, chart};
             } catch (Exception e) {
                 throw new RuntimeException("Error generating Gantt chart", e);
@@ -481,8 +480,8 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
                 SecurityContextHolder.clearContext();
             }
         }).thenAccept(result -> {
-            Svg                svg   = (Svg) result[0];
-            GanttBurndownChart chart = (GanttBurndownChart) result[1];
+            Svg                      svg   = (Svg) result[0];
+            LegacyGanttBurndownChart chart = (LegacyGanttBurndownChart) result[1];
             ui.access(() -> {
                 ganttBurndownChartContainer.removeAll();
                 svg.getStyle().set("margin-top", "var(--lumo-space-m)");
@@ -589,7 +588,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
 //        {
 //            try {
 //                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-//                GanttChart chart = new GanttChart("/", dao);
+//                LegacyGanttChart chart = new LegacyGanttChart("/", dao);
 //                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
 //            } catch (Exception e) {
 //                logger.error("Error generating gantt chart", e);

@@ -18,23 +18,23 @@
 package de.bushnaq.abdalla.kassandra.report.GanttBurndown;
 
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttRenderer;
+import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttRendererLegacy;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 
 
 @Deprecated
-public class GanttBurndownChart extends AbstractChart {
-    private final BurnDownRenderer bdr;
-    private final GanttRenderer    gr;
+public class LegacyGanttBurndownChart extends AbstractChart {
+    private final LegacyBurnDownRenderer    bdr;
+    private final LegacyGanttRendererLegacy gr;
 
-    public GanttBurndownChart(GanttBurndownChartService service, String relativeCssPath, RenderDao burndownDao, RenderDao ganttDao) throws Exception {
+    public LegacyGanttBurndownChart(GanttBurndownChartService service, String relativeCssPath, RenderDao burndownDao, RenderDao ganttDao) throws Exception {
         super("Gantt Burndown Chart", ganttDao.sprint.getName(), relativeCssPath, ganttDao.name, ganttDao.name, null, ganttDao.cssClass, ganttDao.kassandraTheme);
         burndownDao.preRun  = Math.max(burndownDao.preRun, ganttDao.preRun);
         burndownDao.postRun = Math.max(burndownDao.postRun, ganttDao.postRun);
-        bdr                 = new BurnDownRenderer(service, burndownDao);
-        gr                  = new GanttRenderer(ganttDao);
+        bdr                 = new LegacyBurnDownRenderer(service, burndownDao);
+        gr                  = new LegacyGanttRendererLegacy(ganttDao);
         getRenderers().add(bdr);
         getRenderers().add(gr);
         bdr.setDayWidth(gr.getDayWidth());

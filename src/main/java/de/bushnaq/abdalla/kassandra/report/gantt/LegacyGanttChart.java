@@ -15,21 +15,21 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.report.burndown;
-
+package de.bushnaq.abdalla.kassandra.report.gantt;
 
 import de.bushnaq.abdalla.kassandra.report.AbstractChart;
-import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
+import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+
 
 @Deprecated
-public class BurnDownChart extends AbstractChart {
+public class LegacyGanttChart extends AbstractChart {
 
-    public BurnDownChart(GanttBurndownChartService service, String relativeCssPath, RenderDao dao) throws Exception {
-        super("Work Burn Down Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, dao.link, dao.cssClass, dao.kassandraTheme);
-        getRenderers().add(new BurnDownRenderer(service, dao));
+    public LegacyGanttChart(String relativeCssPath, RenderDao dao) throws Exception {
+        super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, null, dao.cssClass, dao.kassandraTheme);
+        getRenderers().add(new LegacyGanttRendererLegacy(dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
-        captionElement.width = dao.chartWidth;
+        captionElement.width = getChartWidth();
         footerElement.y      = getRenderers().getFirst().chartHeight + captionElement.height;
     }
 

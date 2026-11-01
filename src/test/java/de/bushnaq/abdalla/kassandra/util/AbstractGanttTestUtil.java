@@ -20,12 +20,12 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.burndown.BurnDownChart;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
-import de.bushnaq.abdalla.kassandra.report.gantt.GanttChart;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
+import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttChart;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.profiler.Profiler;
@@ -56,7 +56,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.BurnDownRenderer.Y_AXIS_WIDTH;
+import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.Y_AXIS_WIDTH;
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -220,9 +220,9 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprintId));
         sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        RenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-burndown", ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        BurnDownChart chart       = new BurnDownChart(service, "/", dao);
-        String        description = testInfo.getDisplayName().replace("_", "-");
+        RenderDao           dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-burndown", ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+        LegacyBurnDownChart chart       = new LegacyBurnDownChart(service, "/", dao);
+        String              description = testInfo.getDisplayName().replace("_", "-");
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
     }
 
@@ -232,9 +232,9 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprintId));
         sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        RenderDao  dao         = RenderUtil.createGanttRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-gantt", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-        GanttChart chart       = new GanttChart("/", dao);
-        String     description = TestInfoUtil.getTestMethodName(testInfo);
+        RenderDao        dao         = RenderUtil.createGanttRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-gantt", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
+        LegacyGanttChart chart       = new LegacyGanttChart("/", dao);
+        String           description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
         compareResults(projectFile, testInfo);
     }
