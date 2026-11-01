@@ -5,7 +5,7 @@ import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dao.WarnException;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
-import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
@@ -26,7 +26,7 @@ import java.util.List;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class LegacySprintsOverviewRenderer extends AbstractRenderer {
+public class LegacySprintsOverviewRendererLegacy extends LegacyAbstractRenderer {
     private static final Color CLOSING_COLOR            = new Color(0x0, 0x0, 0x0, 0x20);
     private static final Color CREATING_QUOTATION_COLOR = new Color(0xff, 0x0, 0x0, 0x50);
     private static final Color DEFAULT_COLOR            = new Color(0x0, 0x0, 0x0, 0xa0);
@@ -54,11 +54,11 @@ public class LegacySprintsOverviewRenderer extends AbstractRenderer {
     //    private BufferedImage qcdRed = null;
     private       List<Sprint>               sprintList;
 
-    public LegacySprintsOverviewRenderer() {
+    public LegacySprintsOverviewRendererLegacy() {
 
     }
 
-    public LegacySprintsOverviewRenderer(RenderDao dao) throws Exception {
+    public LegacySprintsOverviewRendererLegacy(RenderDao dao) throws Exception {
         super(dao);
         //        this.context = context;
         this.numberOfLines = dao.numberOfLines;
@@ -117,18 +117,18 @@ public class LegacySprintsOverviewRenderer extends AbstractRenderer {
 
     @Override
     public int calculateChartHeight() {
-        return calendarXAxes.getHeight() + projectScheduleList.size() * (getTaskHeight() + 2);
+        return legacyCalendarXAxes.getHeight() + projectScheduleList.size() * (getTaskHeight() + 2);
     }
 
     @Override
     protected int calculateChartWidth() {
-        return calendarXAxes.dayOfWeek.getWidth() * days;
+        return legacyCalendarXAxes.dayOfWeek.getWidth() * days;
     }
 
     @Override
     protected void calculateDayWidth() {
         super.calculateDayWidth();
-        calendarXAxes.dayOfWeek.setWidth(8);
+        legacyCalendarXAxes.dayOfWeek.setWidth(8);
     }
 
     private String createToolTip(int y1, Sprint sprint) {
@@ -175,9 +175,9 @@ public class LegacySprintsOverviewRenderer extends AbstractRenderer {
                     } else {
                         int   dayX1 = calculateDayX(start);
                         int   dayX2 = calculateDayX(end);
-                        int   width = dayX2 - dayX1 + calendarXAxes.dayOfWeek.getWidth() - 1;
+                        int   width = dayX2 - dayX1 + legacyCalendarXAxes.dayOfWeek.getWidth() - 1;
                         int   keyWidth;
-                        int   x1    = dayX1 - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
+                        int   x1    = dayX1 - (legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - 1);
                         Shape clip  = graphics2D.getClip();
                         // graphics2D.setClip(x1, y1, width, TASK_HEIGHT);
                         //                        if (numberOfLines > 1) {

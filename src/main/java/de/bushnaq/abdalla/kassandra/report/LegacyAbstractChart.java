@@ -30,13 +30,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Deprecated
-public abstract class AbstractChart extends AbstractCanvas {
-    public        CaptionElement         captionElement;
-    public        FooterElement          footerElement;
+public abstract class LegacyAbstractChart extends AbstractCanvas {
+    public        CaptionElement               captionElement;
+    public        FooterElement                footerElement;
     @Getter
-    private final List<AbstractRenderer> renderers = new ArrayList<>();
+    private final List<LegacyAbstractRenderer> renderers = new ArrayList<>();
 
-    public AbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName, String link, String cssClass, Theme theme) throws IOException {
+    public LegacyAbstractChart(String caption, String projectRequestKey, String relateCssPath, String column, String imageName, String link, String cssClass, Theme theme) throws IOException {
         super(column, imageName, link, cssClass, theme);
         captionElement = new CaptionElement(caption, relateCssPath, theme);
         footerElement  = new FooterElement(Util.generateCopyrightString(ParameterOptions.getLocalNow()), projectRequestKey, theme);

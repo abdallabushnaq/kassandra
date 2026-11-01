@@ -23,7 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
-import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
@@ -50,7 +50,7 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class LegacyBurnDownRenderer extends AbstractRenderer {
+public class LegacyBurnDownRendererLegacy extends LegacyAbstractRenderer {
 
     private static final int                       ONE_WEEK                                      = 7;
     private static final long                      ONE_WORK_MONTH                                = 20L * 75L * 60L * 6L;
@@ -81,7 +81,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
     private              List<WorklogRemaining>    worklogsRemaining;
     private              GraphSquare               yAxis;
 
-    public LegacyBurnDownRenderer(GanttBurndownChartService service, RenderDao dao) throws Exception {
+    public LegacyBurnDownRendererLegacy(GanttBurndownChartService service, RenderDao dao) throws Exception {
         super(dao);
         this.service = service;
         this.sprint  = dao.sprint;
@@ -108,7 +108,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
     @Override
     protected int calculateChartWidth() {
         //        logger.info(String.format("DEBUG chartType=%s, dayWidth=%d, days=%d, chartWidth=%d", getClass().getSimpleName(), calendarXAxses.dayOfWeek.getWidth(), days, calendarXAxses.dayOfWeek.getWidth() * days));
-        return Y_AXIS_WIDTH + calendarXAxes.dayOfWeek.getWidth() * days + calendarXAxes.getPriRun() + calendarXAxes.getPostRun();
+        return Y_AXIS_WIDTH + legacyCalendarXAxes.dayOfWeek.getWidth() * days + legacyCalendarXAxes.getPriRun() + legacyCalendarXAxes.getPostRun();
     }
 
     @Override
@@ -116,12 +116,12 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
         super.calculateDayWidth();
         if (chartWidth == 0) {
             //big chart with fixed day width
-            calendarXAxes.dayOfWeek.setWidth(MAX_DAY_WIDTH);
+            legacyCalendarXAxes.dayOfWeek.setWidth(MAX_DAY_WIDTH);
         } else {
-            calendarXAxes.dayOfWeek.setWidth((chartWidth - Y_AXIS_WIDTH) / days);
-            calendarXAxes.dayOfWeek.setWidth(Math.min(calendarXAxes.dayOfWeek.getWidth(), MAX_DAY_WIDTH));
-            calendarXAxes.dayOfWeek.setWidth(Math.max(calendarXAxes.dayOfWeek.getWidth(), 1));
-            days = (chartWidth - Y_AXIS_WIDTH) / calendarXAxes.dayOfWeek.getWidth();
+            legacyCalendarXAxes.dayOfWeek.setWidth((chartWidth - Y_AXIS_WIDTH) / days);
+            legacyCalendarXAxes.dayOfWeek.setWidth(Math.min(legacyCalendarXAxes.dayOfWeek.getWidth(), MAX_DAY_WIDTH));
+            legacyCalendarXAxes.dayOfWeek.setWidth(Math.max(legacyCalendarXAxes.dayOfWeek.getWidth(), 1));
+            days = (chartWidth - Y_AXIS_WIDTH) / legacyCalendarXAxes.dayOfWeek.getWidth();
         }
     }
 
@@ -268,8 +268,8 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH));
 
         LocalDate firstDay  = milestones.firstMilestone /*- (long) (60 * ONE_DAY_MILLIS / dayWidth)*/;
-        int       firstDayX = diagram.x + calendarXAxes.dayOfWeek.getWidth() / 2;
-        int       startX    = firstDayX + (calendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, milestones.get("S").time)) * calendarXAxes.dayOfWeek.getWidth();
+        int       firstDayX = diagram.x + legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+        int       startX    = firstDayX + (legacyCalendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, milestones.get("S").time)) * legacyCalendarXAxes.dayOfWeek.getWidth();
 
         drawAuthorLegend();
         drawLegend();
@@ -280,11 +280,11 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
                 drawBurnDown(firstDay, firstDayX, maxWorked);
             }
             if (sprintClosed) {
-                drawWatermark(startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 10,
-                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "CLOSED", kassandraTheme.burndownTheme.watermarkColor);
+                drawWatermark(startX - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 10,
+                        chartHeight - legacyCalendarXAxes.getHeight() - legacyCalendarXAxes.year.getHeight() - 10, "CLOSED", kassandraTheme.burndownTheme.watermarkColor);
             } else if (isAbandonedProject()) {
-                drawWatermark(startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 10,
-                        chartHeight - calendarXAxes.getHeight() - calendarXAxes.year.getHeight() - 10, "ABANDONED", kassandraTheme.burndownTheme.watermarkColor);
+                drawWatermark(startX - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 10,
+                        chartHeight - legacyCalendarXAxes.getHeight() - legacyCalendarXAxes.year.getHeight() - 10, "ABANDONED", kassandraTheme.burndownTheme.watermarkColor);
             }
             // Optimal burn down rate
 
@@ -303,10 +303,10 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
             // release extrapolation (Velocity)
             if (milestones.get("R") != null) {
                 graphics2D.setColor(extrapolationColor);
-                int x1 = startX - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
+                int x1 = startX - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1;
                 int y1 = diagram.y + diagram.height - calculateGraphHight(maxActualWorked);
                 {
-                    int x = firstDayX + (calendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, milestones.get("R").time)) * calendarXAxes.dayOfWeek.getWidth();
+                    int x = firstDayX + (legacyCalendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, milestones.get("R").time)) * legacyCalendarXAxes.dayOfWeek.getWidth();
                     graphics2D.drawLine(x1, y1, x, diagram.y + diagram.height);
                 }
             }
@@ -353,7 +353,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
     protected void drawAuthorLegend() {
         int authorLegendWidth = 20;
         for (User author : authors.getList()) {
-            FontMetrics metrics = graphics2D.getFontMetrics(calendarXAxes.milestone.font);
+            FontMetrics metrics = graphics2D.getFontMetrics(legacyCalendarXAxes.milestone.font);
             // get the advance of my text in this font
             // and render context
             int adv = metrics.stringWidth(author.getName());
@@ -364,7 +364,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
 
     private void drawBorder(int x, int y, int lastX, int lastY) {
         graphics2D.setColor(kassandraTheme.burndownTheme.borderColor);
-        graphics2D.drawLine(lastX - calendarXAxes.dayOfWeek.getWidth() / 2, lastY, x - calendarXAxes.dayOfWeek.getWidth() / 2, y);
+        graphics2D.drawLine(lastX - legacyCalendarXAxes.dayOfWeek.getWidth() / 2, lastY, x - legacyCalendarXAxes.dayOfWeek.getWidth() / 2, y);
     }
 
     private void drawBurnDown(LocalDate firstDay, int firstDayX, Duration estimatedWork) {
@@ -398,7 +398,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
                         int maxDayIndex = nowDayIndex;// Math.max(authorWorkPerDay.get(user).length, nowDayIndex);
                         // logger.info(DateUtil.createDateString(calculateDayFromIndex(maxDayIndex), sdfMMMdd));
                         for (int dayIndex = 0; dayIndex <= maxDayIndex + 2; dayIndex++) {
-                            x = firstDayX + (calendarXAxes.getPriRun() + dayIndex) * calendarXAxes.dayOfWeek.getWidth();
+                            x = firstDayX + (legacyCalendarXAxes.getPriRun() + dayIndex) * legacyCalendarXAxes.dayOfWeek.getWidth();
                             int currentDayAuthorGraphHeight = 0;
                             if (dayIndex <= maxDayIndex + 2) {
                                 currentDayAuthorGraphHeight = calculateAuthorGraphHeight(usersWorkPerDayAccumulated.get(user)[dayIndex].duration, authorEstimatedWork, maxWorked);
@@ -442,7 +442,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
             for (Worklog work : worklogs) {
                 if (work.getStart().toLocalDate().isBefore(milestones.get("N").time)) {
                     worked = worked.plus(work.getTimeSpent());
-                    int x = firstDayX + DateUtil.calculateDays(firstDay, DateUtil.toDayPrecision(work.getStart())) * calendarXAxes.dayOfWeek.getWidth();
+                    int x = firstDayX + DateUtil.calculateDays(firstDay, DateUtil.toDayPrecision(work.getStart())) * legacyCalendarXAxes.dayOfWeek.getWidth();
                     if (x < firstDayX) {
                         x = firstDayX;
                     }
@@ -463,7 +463,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
             drawBorder(lastX, lastY, yesterdayX, yesterdayY);
             // to now
             if (worklogs.size() != 0) {
-                int x = firstDayX + DateUtil.calculateDays(firstDay, milestones.get("N").time) * calendarXAxes.dayOfWeek.getWidth();
+                int x = firstDayX + DateUtil.calculateDays(firstDay, milestones.get("N").time) * legacyCalendarXAxes.dayOfWeek.getWidth();
                 if (x != lastX) {
                     drawBorder(lastX, lastY, x, lastY);
                 }
@@ -476,8 +476,8 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
         int maxDayIndex = nowDayIndex;// Math.max(authorWorkPerDay.get(user).length, nowDayIndex);
         for (int dayIndex = 0; dayIndex < maxDayIndex + 2; dayIndex++) {
             String toolTip = "";
-            int    x       = firstDayX + (calendarXAxes.getPriRun() + dayIndex) * calendarXAxes.dayOfWeek.getWidth();
-            int    y       = diagram.y + diagram.height + calendarXAxes.dayOfWeek.getHeight();
+            int    x       = firstDayX + (legacyCalendarXAxes.getPriRun() + dayIndex) * legacyCalendarXAxes.dayOfWeek.getWidth();
+            int    y       = diagram.y + diagram.height + legacyCalendarXAxes.dayOfWeek.getHeight();
             for (User user : usersTotalContribution.getSortedKeyList()) {
                 AuthorContribution ac                  = usersTotalContribution.get(user);
                 Duration           authorEstimatedWork = ac.worked.plus(ac.remaining);
@@ -485,7 +485,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
                     List<List<String>> transactions = usersWorkPerDayAccumulated.get(user)[dayIndex + 1].transactions;
                     toolTip += DayWork.transactionsToTooltips(transactions, user.getName(), calendarFromDayIndex(dayIndex));
                 }
-                ExtendedRectangle s = new ExtendedRectangle(x + 1, y, calendarXAxes.dayOfWeek.getWidth(), calendarXAxes.dayOfWeek.getHeight());
+                ExtendedRectangle s = new ExtendedRectangle(x + 1, y, legacyCalendarXAxes.dayOfWeek.getWidth(), legacyCalendarXAxes.dayOfWeek.getHeight());
                 s.setToolTip(toolTip);
                 graphics2D.setColor(new Color(0, 0, 0, 0));
                 graphics2D.fill(s);
@@ -507,10 +507,10 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
         graphics2D.setColor(kassandraTheme.burndownTheme.optimaleGuideColor);
         int workingdays = 0;
         int y;
-        int lastX       = firstDayX + calendarXAxes.dayOfWeek.getWidth() * DateUtil.calculateDays(firstDay, firstDay) - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
+        int lastX       = firstDayX + legacyCalendarXAxes.dayOfWeek.getWidth() * DateUtil.calculateDays(firstDay, firstDay) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1;
         int lastY       = diagram.y + diagram.height - calculateGraphHight(estimatedWork);
         for (LocalDate currentDay = firstDay; currentDay.isBefore(lastDay) || currentDay.isEqual(lastDay); currentDay = currentDay.plusDays(1)) {
-            int daysX = firstDayX + calendarXAxes.dayOfWeek.getWidth() * (calendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, currentDay)) + calendarXAxes.dayOfWeek.getWidth() / 2 - 1;
+            int daysX = firstDayX + legacyCalendarXAxes.dayOfWeek.getWidth() * (legacyCalendarXAxes.getPriRun() + DateUtil.calculateDays(firstDay, currentDay)) + legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - 1;
             if (currentDay.getDayOfWeek() == DayOfWeek.SATURDAY || currentDay.getDayOfWeek() == DayOfWeek.SUNDAY) {
 
             } else {
@@ -543,7 +543,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
         graphics2D.setColor(kassandraTheme.burndownTheme.plannedGuideColor);
         for (int i = 0; i < guide.getSize(); i++) {
             Duration r = guide.get(i);
-            int      x = firstDayX + (calendarXAxes.getPriRun() + i) * calendarXAxes.dayOfWeek.getWidth() - calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
+            int      x = firstDayX + (legacyCalendarXAxes.getPriRun() + i) * legacyCalendarXAxes.dayOfWeek.getWidth() - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1;
             int      y = diagram.y + diagram.height - calculateGraphHight(r);
             if (i != 0) {
                 graphics2D.drawLine(lastX, lastY, x, y);
@@ -572,15 +572,15 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
         {
             ExtendedPolygon p = new ExtendedPolygon();
             p.setToolTip(DayWork.transactionsToTooltips(transactions, authorName, today));
-            p.addPoint(x1 - calendarXAxes.dayOfWeek.getWidth() / 2, y1);
-            if (calendarXAxes.dayOfWeek.getWidth() > 3) {
-                p.addPoint(x2 - calendarXAxes.dayOfWeek.getWidth() / 2 + 1 - 1, y2);
-                p.addPoint(x2 - calendarXAxes.dayOfWeek.getWidth() / 2 + 1 - 1, y4);
+            p.addPoint(x1 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2, y1);
+            if (legacyCalendarXAxes.dayOfWeek.getWidth() > 3) {
+                p.addPoint(x2 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1 - 1, y2);
+                p.addPoint(x2 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1 - 1, y4);
             } else {
-                p.addPoint(x2 - calendarXAxes.dayOfWeek.getWidth() / 2 + 1, y2);
-                p.addPoint(x2 - calendarXAxes.dayOfWeek.getWidth() / 2 + 1, y4);
+                p.addPoint(x2 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1, y2);
+                p.addPoint(x2 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 + 1, y4);
             }
-            p.addPoint(x1 - calendarXAxes.dayOfWeek.getWidth() / 2, y3);
+            p.addPoint(x1 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2, y3);
             graphics2D.setColor(color);
             //            graphics2D.fillPolygon(p);
             graphics2D.fill(p);
@@ -619,7 +619,7 @@ public class LegacyBurnDownRenderer extends AbstractRenderer {
                 int markY = diagram.y + diagram.height - 1 - calculateGraphHight(timeMark);
                 if (lastMarkY - markY > 12) {
                     graphics2D.setColor(kassandraTheme.burndownTheme.ticksColor);
-                    graphics2D.fillRect(startX - 4 - calendarXAxes.dayOfWeek.getWidth() / 2, markY, 4, 1);
+                    graphics2D.fillRect(startX - 4 - legacyCalendarXAxes.dayOfWeek.getWidth() / 2, markY, 4, 1);
                     graphics2D.setColor(kassandraTheme.ganttTheme.gridColor);
                     graphics2D.fillRect(startX - 1, markY, diagram.width - startX, 1);//grid --
 

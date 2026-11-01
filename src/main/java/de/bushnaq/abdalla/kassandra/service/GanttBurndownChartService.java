@@ -8,7 +8,7 @@ package de.bushnaq.abdalla.kassandra.service;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.burndown.DayWork;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -34,8 +34,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED;
-import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.Y_AXIS_WIDTH;
+import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED;
+import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.Y_AXIS_WIDTH;
 
 /**
  * Builds a {@link GanttBurndownChartDto} from a fully-loaded {@link Sprint} so that
@@ -43,7 +43,7 @@ import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendere
  * zoomable combined Gantt+Burndown chart without any further server calls.
  *
  * <p>The burndown section mirrors the computation done in Java's
- * {@link LegacyBurnDownRenderer}.
+ * {@link LegacyBurnDownRendererLegacy}.
  * The Gantt task rows reuse {@link GanttChartService}.
  */
 @Service
@@ -285,7 +285,7 @@ public class GanttBurndownChartService {
         // ── Build AuthorSeriesDto list ─────────────────────────────────────────
         // Sort authors by descending total estimated work (worked + remaining), matching
         // Java's AuthorsContribution.getSortedKeyList() / MapValueCopmparator behaviour,
-        // so that the stacking order in LegacyBurnDownRenderer.drawBurnDown() is faithful.
+        // so that the stacking order in LegacyBurnDownRendererLegacy.drawBurnDown() is faithful.
         List<UUID> sortedAuthorIds = new ArrayList<>(authorMap.keySet());
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
@@ -373,7 +373,7 @@ public class GanttBurndownChartService {
 
     /**
      * Computes gantt-derived planned burn-down guides and stores them in the DTO.
-     * Mirrors Java: {@code LegacyBurnDownRenderer.initGanttGuide()} +
+     * Mirrors Java: {@code LegacyBurnDownRendererLegacy.initGanttGuide()} +
      * {@code BurnDownGuide.convertToAccumulatedValues()}.
      */
     private void buildGanttGuides(Sprint sprint, LocalDateTime chartStart,

@@ -21,12 +21,12 @@ import com.vaadin.flow.component.Svg;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChartLegacy;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChartLegacy;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
-import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttChart;
-import de.bushnaq.abdalla.kassandra.report.overview.LegacySprintsOverviewChart;
+import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttChartLegacy;
+import de.bushnaq.abdalla.kassandra.report.overview.LegacySprintsOverviewChartLegacy;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -42,7 +42,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.Y_AXIS_WIDTH;
+import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.Y_AXIS_WIDTH;
 
 @Slf4j
 @Service
@@ -144,19 +144,19 @@ public class RenderUtil {
      * @throws Exception if an error occurs during BurnDown chart generation
      */
     public void generateBurnDownChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
-        List<Throwable>     exceptions = new ArrayList<>();
-        RenderDao           dao        = createBurndownRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        LegacyBurnDownChart chart      = new LegacyBurnDownChart(service, "/", dao);
+        List<Throwable>           exceptions = new ArrayList<>();
+        RenderDao                 dao        = createBurndownRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+        LegacyBurnDownChartLegacy chart      = new LegacyBurnDownChartLegacy(service, "/", dao);
         RenderUtil.renderSvg(chart, svg);
         svg.setId(BURNDOWN_CHART);
     }
 
-    public LegacyGanttBurndownChart generateGanttBurnChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
-        List<Throwable>          exceptions  = new ArrayList<>();
-        RenderDao                burndownDao = createBurndownRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        RenderDao                ganttDao    = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH, CalendarSize.DAYS);
-        LegacyGanttBurndownChart chart       = new LegacyGanttBurndownChart(service, "/", burndownDao, ganttDao);
-//        LegacyGanttBurndownChart chart      = new LegacyGanttBurndownChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+    public LegacyGanttBurndownChartLegacy generateGanttBurnChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
+        List<Throwable>                exceptions  = new ArrayList<>();
+        RenderDao                      burndownDao = createBurndownRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+        RenderDao                      ganttDao    = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH, CalendarSize.DAYS);
+        LegacyGanttBurndownChartLegacy chart       = new LegacyGanttBurndownChartLegacy(service, "/", burndownDao, ganttDao);
+//        LegacyGanttBurndownChartLegacy chart      = new LegacyGanttBurndownChartLegacy(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);
         svg.setId(GANTT_BURNDOWN_CHART);
         return chart;
@@ -170,18 +170,18 @@ public class RenderUtil {
      * @param svg     the Svg component to update with the Gantt chart
      * @throws Exception if an error occurs during Gantt chart generation
      */
-    public static LegacyGanttChart generateGanttChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
-        List<Throwable>  exceptions = new ArrayList<>();
-        RenderDao        dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-        LegacyGanttChart chart      = new LegacyGanttChart("/", dao);
-//        LegacyGanttChart      chart      = new LegacyGanttChart(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+    public static LegacyGanttChartLegacy generateGanttChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
+        List<Throwable>        exceptions = new ArrayList<>();
+        RenderDao              dao        = createGanttRenderDao(context, sprint, "gant", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
+        LegacyGanttChartLegacy chart      = new LegacyGanttChartLegacy("/", dao);
+//        LegacyGanttChartLegacy      chart      = new LegacyGanttChartLegacy(context, "", "/", "Gantt Chart", sprint.getName() + "-gant-chart", exceptions, ParameterOptions.getLocalNow(), false, sprint, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
         RenderUtil.renderSvg(chart, svg);
         svg.setId(GANTT_CHART);
         return chart;
     }
 
     /**
-     * Generates a LegacySprintsOverviewChart SVG for the provided sprint list and updates the given Svg component.
+     * Generates a LegacySprintsOverviewChartLegacy SVG for the provided sprint list and updates the given Svg component.
      * Only sprints with non-null start and end dates are included; sprints without dates are silently skipped.
      *
      * @param context the application context (must have its theme synchronised before calling from a background thread)
@@ -190,7 +190,7 @@ public class RenderUtil {
      * @throws Exception if an error occurs during chart generation
      */
     public static void generateSprintsOverviewChartSvg(Context context, List<Sprint> sprints, Svg svg) throws Exception {
-        LegacySprintsOverviewChart chart = new LegacySprintsOverviewChart(
+        LegacySprintsOverviewChartLegacy chart = new LegacySprintsOverviewChartLegacy(
                 context, "", "/", "sprints-overview", null,
                 ParameterOptions.getLocalNow(), sprints,
                 1887, 1000, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
@@ -199,12 +199,12 @@ public class RenderUtil {
     }
 
     /**
-     * Renders a LegacyBurnDownChart to a ByteArrayOutputStream.
+     * Renders a LegacyBurnDownChartLegacy to a ByteArrayOutputStream.
      *
-     * @param chart the LegacyBurnDownChart to render
-     * @return ByteArrayOutputStream containing the rendered LegacyBurnDownChart
+     * @param chart the LegacyBurnDownChartLegacy to render
+     * @return ByteArrayOutputStream containing the rendered LegacyBurnDownChartLegacy
      */
-    private static ByteArrayOutputStream render(LegacyBurnDownChart chart) {
+    private static ByteArrayOutputStream render(LegacyBurnDownChartLegacy chart) {
         ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024); //begin size 64 KB
         try {
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
@@ -222,10 +222,10 @@ public class RenderUtil {
     /**
      * Renders a Gantt chart to a ByteArrayOutputStream.
      *
-     * @param chart the LegacyGanttChart to render
+     * @param chart the LegacyGanttChartLegacy to render
      * @return ByteArrayOutputStream containing the rendered Gantt chart
      */
-    private static ByteArrayOutputStream render(LegacyGanttChart chart) {
+    private static ByteArrayOutputStream render(LegacyGanttChartLegacy chart) {
         ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024); //begin size 64 KB
         try {
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
@@ -240,7 +240,7 @@ public class RenderUtil {
         }
     }
 
-    private static ByteArrayOutputStream render(LegacyGanttBurndownChart chart) {
+    private static ByteArrayOutputStream render(LegacyGanttBurndownChartLegacy chart) {
         ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024); //begin size 64 KB
         try {
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
@@ -256,12 +256,12 @@ public class RenderUtil {
     }
 
     /**
-     * Renders a LegacySprintsOverviewChart to a ByteArrayOutputStream.
+     * Renders a LegacySprintsOverviewChartLegacy to a ByteArrayOutputStream.
      *
-     * @param chart the LegacySprintsOverviewChart to render
+     * @param chart the LegacySprintsOverviewChartLegacy to render
      * @return ByteArrayOutputStream containing the rendered chart
      */
-    private static ByteArrayOutputStream render(LegacySprintsOverviewChart chart) {
+    private static ByteArrayOutputStream render(LegacySprintsOverviewChartLegacy chart) {
         ByteArrayOutputStream o = new ByteArrayOutputStream(64 * 1024);
         try {
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), o);
@@ -277,12 +277,12 @@ public class RenderUtil {
     }
 
     /**
-     * Renders a LegacyBurnDownChart to a Svg component.
+     * Renders a LegacyBurnDownChartLegacy to a Svg component.
      *
-     * @param chart the LegacyBurnDownChart to render
+     * @param chart the LegacyBurnDownChartLegacy to render
      * @param svg   the Svg component to update or create
      */
-    private static void renderSvg(LegacyBurnDownChart chart, Svg svg) {
+    private static void renderSvg(LegacyBurnDownChartLegacy chart, Svg svg) {
         try (ByteArrayOutputStream outputStream = render(chart)) {
             String svgString = outputStream.toString(StandardCharsets.UTF_8);
             // Update existing Svg with new content
@@ -295,10 +295,10 @@ public class RenderUtil {
     /**
      * Renders a Gantt chart to a Svg component.
      *
-     * @param chart the LegacyGanttChart to render
+     * @param chart the LegacyGanttChartLegacy to render
      * @param svg   the Svg component to update
      */
-    private static void renderSvg(LegacyGanttChart chart, Svg svg) {
+    private static void renderSvg(LegacyGanttChartLegacy chart, Svg svg) {
         try (ByteArrayOutputStream outputStream = render(chart)) {
             String svgString = outputStream.toString(StandardCharsets.UTF_8);
             // Update existing Svg with new content
@@ -308,7 +308,7 @@ public class RenderUtil {
         }
     }
 
-    private static void renderSvg(LegacyGanttBurndownChart chart, Svg svg) {
+    private static void renderSvg(LegacyGanttBurndownChartLegacy chart, Svg svg) {
         log.info("Rendering gantt chart {}.", chart.footerElement.getKey());
         try (ByteArrayOutputStream outputStream = render(chart)) {
             String svgString = outputStream.toString(StandardCharsets.UTF_8);
@@ -320,12 +320,12 @@ public class RenderUtil {
     }
 
     /**
-     * Renders a LegacySprintsOverviewChart to a Svg component.
+     * Renders a LegacySprintsOverviewChartLegacy to a Svg component.
      *
-     * @param chart the LegacySprintsOverviewChart to render
+     * @param chart the LegacySprintsOverviewChartLegacy to render
      * @param svg   the Svg component to update
      */
-    private static void renderSvg(LegacySprintsOverviewChart chart, Svg svg) {
+    private static void renderSvg(LegacySprintsOverviewChartLegacy chart, Svg svg) {
         try (ByteArrayOutputStream outputStream = render(chart)) {
             String svgString = outputStream.toString(StandardCharsets.UTF_8);
             svg.setSvg(svgString);

@@ -1,5 +1,5 @@
 // gantt/gantt-renderer.ts
-// Mirrors Java: LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer
+// Mirrors Java: LegacyGanttRendererLegacyLegacy extends LegacyLegacyAbstractGanttRenderer
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -160,17 +160,17 @@ export class GanttRenderer extends AbstractGanttRenderer {
 //     int             y    = lane + getTaskHeight() / 2;
 //     int             x    = calculateDayX(currentDay);
 //     int             y1   = y - getTaskHeight() / 2;
-//     int             x1   = x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
+//     int             x1   = x - (legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - 1);
 // {
 //     //grid
 //     graphics2D.setColor(theme.ganttTheme.gridColor);
-//     graphics2D.fillRect(x1 - 1, y1 - 1, calendarXAxes.dayOfWeek.getWidth(), 1);//top --
+//     graphics2D.fillRect(x1 - 1, y1 - 1, legacyCalendarXAxes.dayOfWeek.getWidth(), 1);//top --
 //     graphics2D.fillRect(x1 - 1, y1, 1, getTaskHeight());//left |
 // }
 // {
 //     //background
 //     graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(theme, pc, currentDay));
-//     Shape s = new Rectangle(x1, y1, calendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
+//     Shape s = new Rectangle(x1, y1, legacyCalendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
 //
 //     ProjectCalendarException exception = GraphColorUtil.getException(theme, pc, currentDay);
 //     if (exception != null) {
@@ -208,7 +208,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         // svg.appendChild(gDayBars);
 
         this.initPosition(this.firstDayX + x, y);
-        // this.calendarXAxes.initPosition(this.firstDayX + x, y);
+        // this.legacyCalendarXAxes.initPosition(this.firstDayX + x, y);
         this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
         this.calendarXAxes.drawCalendar(svg, true, this.containerWidth);
         this.calendarXAxes.drawMilestones(svg);

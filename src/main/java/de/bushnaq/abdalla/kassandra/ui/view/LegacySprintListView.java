@@ -118,7 +118,7 @@ public class LegacySprintListView extends AbstractMainGrid<Sprint> implements Af
     private final        Image                        headerAvatar;
     private              boolean                      isRestoringFromUrl               = false;
     /**
-     * Container for the LegacySprintsOverviewChart SVG placed above the sprint list.
+     * Container for the LegacySprintsOverviewChartLegacy SVG placed above the sprint list.
      */
     private final        Div                          overviewChartContainer;
     /**
@@ -378,7 +378,7 @@ public class LegacySprintListView extends AbstractMainGrid<Sprint> implements Af
     }
 
     /**
-     * Generates the LegacySprintsOverviewChart asynchronously and places the resulting SVG in
+     * Generates the LegacySprintsOverviewChartLegacy asynchronously and places the resulting SVG in
      * {@code overviewChartContainer}.  The chart always shows <em>all</em> sprints
      * (i.e. {@code allSprints}), not just the ones currently visible in the table.
      * <p>
@@ -644,7 +644,7 @@ public class LegacySprintListView extends AbstractMainGrid<Sprint> implements Af
     }
 
     /**
-     * Subscribes to {@link ThemeChangedEvent} so the LegacySprintsOverviewChart is re-generated
+     * Subscribes to {@link ThemeChangedEvent} so the LegacySprintsOverviewChartLegacy is re-generated
      * in the new theme.  Calls {@code super.onAttach()} to preserve the data-provider
      * refresh that {@link AbstractMainGrid} registers for the same event.
      *

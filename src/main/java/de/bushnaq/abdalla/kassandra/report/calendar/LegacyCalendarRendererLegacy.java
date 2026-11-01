@@ -20,7 +20,7 @@ package de.bushnaq.abdalla.kassandra.report.calendar;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import net.sf.mpxj.ProjectCalendar;
@@ -42,7 +42,7 @@ import java.util.Map;
  *
  * @author abdalla.bushnaq
  */
-public class CalendarRenderer extends AbstractRenderer {
+public class LegacyCalendarRendererLegacy extends LegacyAbstractRenderer {
     private final int           DAY_SIZE              = 24;
     private final int           HEADER_HEIGHT         = 25;
     private final int           LEGEND_HEIGHT         = 24 * 2;
@@ -64,7 +64,7 @@ public class CalendarRenderer extends AbstractRenderer {
     private final User          user;
     private       int           vacationDays          = 0;
 
-    public CalendarRenderer(Context context, User user, LocalDateTime now, String cssClass, Theme kassandraTheme) throws Exception {
+    public LegacyCalendarRendererLegacy(Context context, User user, LocalDateTime now, String cssClass, Theme kassandraTheme) throws Exception {
         this.user           = user;
         this.now            = now;
         this.kassandraTheme = kassandraTheme;

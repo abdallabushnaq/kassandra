@@ -47,7 +47,7 @@ import java.util.UUID;
  * the client-side {@code gantt-chart.js} can render an interactive, zoomable
  * Gantt chart without any further server calls.
  *
- * <p>Colour computation mirrors {@code LegacyAbstractGanttRenderer.drawTask()} and
+ * <p>Colour computation mirrors {@code LegacyLegacyAbstractGanttRenderer.drawTask()} and
  * related methods. Calendar exceptions are extracted once from each assigned
  * user's effective calendar so the browser can determine working vs.
  * non-working days per row without duplicating holiday data.
@@ -214,7 +214,7 @@ public class GanttChartService {
             }
         }
 
-        // ── Colour computation (mirrors LegacyAbstractGanttRenderer.drawTask) ──
+        // ── Colour computation (mirrors LegacyLegacyAbstractGanttRenderer.drawTask) ──
         dto.textColor   = colorToHex(theme.ganttTheme.taskTextColor);
         dto.borderColor = task.isCritical()
                 ? colorToHex(theme.ganttTheme.criticalTaskBorderColor)

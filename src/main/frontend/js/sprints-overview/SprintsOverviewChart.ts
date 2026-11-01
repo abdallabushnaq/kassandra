@@ -1,5 +1,5 @@
 // sprints-overview/sprints-overview-chart.ts
-// Mirrors Java: LegacySprintsOverviewChart extends AbstractChart
+// Mirrors Java: LegacySprintsOverviewChartLegacy extends LegacyAbstractChart
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -35,7 +35,7 @@ export class SprintsOverviewChart extends AbstractChart {
 
         const renderer = this.renderers[0] as SprintsOverviewRenderer;
         renderer.dayWidth = dayWidth;
-        renderer.calculateDayWidth();//TODO handle day width on AbstractRenderer level
+        renderer.calculateDayWidth();//TODO handle day width on LegacyAbstractRenderer level
         renderer.calendarXAxes.dayOfWeek.width = dayWidth;
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;

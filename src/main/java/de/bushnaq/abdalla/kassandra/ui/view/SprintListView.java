@@ -619,7 +619,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      * and avoids an extra round-trip.
      * <p>
      * The minified script is loaded once via {@code /js/sprints-overview.min.js}, which combines
-     * CalendarXAxes.js and LegacySprintsOverviewChart.js and is generated during the Maven build.
+     * LegacyCalendarXAxes.js and LegacySprintsOverviewChartLegacy.js and is generated during the Maven build.
      * The browser will serve it from cache on subsequent references.
      */
     private void refreshClientChart() {

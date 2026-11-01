@@ -38,7 +38,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChart;
+import de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChartLegacy;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.html.util.HtmlUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
@@ -471,8 +471,8 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
             ctx.setAuthentication(authentication);
             SecurityContextHolder.setContext(ctx);
             try {
-                Svg                      svg   = new Svg();
-                LegacyGanttBurndownChart chart = renderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
+                Svg                            svg   = new Svg();
+                LegacyGanttBurndownChartLegacy chart = renderUtil.generateGanttBurnChartSvg(context, sprintSnapshot, svg);
                 return new Object[]{svg, chart};
             } catch (Exception e) {
                 throw new RuntimeException("Error generating Gantt chart", e);
@@ -480,8 +480,8 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
                 SecurityContextHolder.clearContext();
             }
         }).thenAccept(result -> {
-            Svg                      svg   = (Svg) result[0];
-            LegacyGanttBurndownChart chart = (LegacyGanttBurndownChart) result[1];
+            Svg                            svg   = (Svg) result[0];
+            LegacyGanttBurndownChartLegacy chart = (LegacyGanttBurndownChartLegacy) result[1];
             ui.access(() -> {
                 ganttBurndownChartContainer.removeAll();
                 svg.getStyle().set("margin-top", "var(--lumo-space-m)");
@@ -588,7 +588,7 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
 //        {
 //            try {
 //                RenderDao  dao   = RenderUtil.createGanttRenderDao(context, sprint, sprint.getName(), ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-//                LegacyGanttChart chart = new LegacyGanttChart("/", dao);
+//                LegacyGanttChartLegacy chart = new LegacyGanttChartLegacy("/", dao);
 //                chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), sprint.getName(), "references/debug");
 //            } catch (Exception e) {
 //                logger.error("Error generating gantt chart", e);

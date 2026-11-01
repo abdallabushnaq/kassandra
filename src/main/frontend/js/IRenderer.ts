@@ -1,5 +1,5 @@
 // renderer-interface.ts
-// IRenderer interface used by CalendarXAxes to reference its parent renderer
+// IRenderer interface used by LegacyCalendarXAxes to reference its parent renderer
 // without creating a circular module dependency.
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0

@@ -44,7 +44,7 @@ import java.time.format.DateTimeFormatter;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
+public class LegacyGanttRendererLegacyLegacy extends LegacyLegacyAbstractGanttRenderer {
 
     private static final int               GANTT_TASK_POST_SPACE = 0;
     private static final int               GANTT_TASK_PRI_SPACE  = 0;
@@ -54,7 +54,7 @@ public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
     private final        Sprint            sprint;
 
-    public LegacyGanttRendererLegacy(RenderDao dao) throws Exception {
+    public LegacyGanttRendererLegacyLegacy(RenderDao dao) throws Exception {
         super(dao);
         this.sprint = dao.sprint;
         this.theme  = dao.kassandraTheme;
@@ -73,19 +73,19 @@ public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
 
     @Override
     protected int calculateChartHeight() {
-        return calendarXAxes.getHeight() + GANTT_TASK_PRI_SPACE + GanttUtil.calculateNumberOfTasks(sprint) * (getTaskHeight() + 1) + GANTT_TASK_POST_SPACE;
+        return legacyCalendarXAxes.getHeight() + GANTT_TASK_PRI_SPACE + GanttUtil.calculateNumberOfTasks(sprint) * (getTaskHeight() + 1) + GANTT_TASK_POST_SPACE;
     }
 
     @Override
     protected int calculateChartWidth() {
         //TODO why are we ignoring postRun days?
-        return calendarXAxes.dayOfWeek.getWidth() * (days + calendarXAxes.getPriRun() /*+ calendarXAxses.getPostRun()*/);
+        return legacyCalendarXAxes.dayOfWeek.getWidth() * (days + legacyCalendarXAxes.getPriRun() /*+ calendarXAxses.getPostRun()*/);
     }
 
     @Override
     protected void calculateDayWidth() {
         super.calculateDayWidth();
-        calendarXAxes.dayOfWeek.setWidth(20);
+        legacyCalendarXAxes.dayOfWeek.setWidth(20);
     }
 
     protected void calculateTaskHeightMap(int yOffset) {
@@ -112,7 +112,7 @@ public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
     public void draw(ExtendedGraphics2D graphics2D, int x, int y) throws Exception {
         this.graphics2D = graphics2D;
         initPosition(firstDayX + x, y);
-        calculateTaskHeightMap(y + calendarXAxes.getHeight());
+        calculateTaskHeightMap(y + legacyCalendarXAxes.getHeight());
         drawCalendar();
         drawMilestones();
         drawGanttChart();
@@ -127,17 +127,17 @@ public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
             int             y    = lane + getTaskHeight() / 2;
             int             x    = calculateDayX(currentDay);
             int             y1   = y - getTaskHeight() / 2;
-            int             x1   = x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1);
+            int             x1   = x - (legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - 1);
             {
                 //grid
                 graphics2D.setColor(theme.ganttTheme.gridColor);
-                graphics2D.fillRect(x1 - 1, y1 - 1, calendarXAxes.dayOfWeek.getWidth(), 1);//top --
+                graphics2D.fillRect(x1 - 1, y1 - 1, legacyCalendarXAxes.dayOfWeek.getWidth(), 1);//top --
                 graphics2D.fillRect(x1 - 1, y1, 1, getTaskHeight());//left |
             }
             {
                 //background
                 graphics2D.setColor(GraphColorUtil.getGanttDayStripeColor(theme, pc, currentDay));
-                Shape s = new Rectangle(x1, y1, calendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
+                Shape s = new Rectangle(x1, y1, legacyCalendarXAxes.dayOfWeek.getWidth() - 1, getTaskHeight());
 
                 ProjectCalendarException exception = GraphColorUtil.getException(theme, pc, currentDay);
                 if (exception != null) {
@@ -160,7 +160,7 @@ public class LegacyGanttRendererLegacy extends LegacyAbstractGanttRenderer {
     }
 
     protected void drawGanttChart() throws Exception {
-        drawGanttChart(calendarXAxes.getHeight());
+        drawGanttChart(legacyCalendarXAxes.getHeight());
         //        drawAuthorLegend();
         //        drawGraphFrame(firstDayX);
     }

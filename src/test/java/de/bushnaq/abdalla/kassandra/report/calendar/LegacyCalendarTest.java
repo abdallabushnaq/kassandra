@@ -37,7 +37,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -50,7 +49,8 @@ import java.util.List;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-public class CalendarTest extends AbstractGanttTestUtil {
+@Deprecated
+public class LegacyCalendarTest extends AbstractGanttTestUtil {
 
     /**
      * generates a calendar for every user
@@ -76,7 +76,7 @@ public class CalendarTest extends AbstractGanttTestUtil {
         gc.initialize();
 
         for (User user : gc.allUsers) {
-            CalendarChart chart = new CalendarChart(context, ParameterOptions.getLocalNow(), user, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+            LegacyCalendarChartLegacy chart = new LegacyCalendarChartLegacy(context, ParameterOptions.getLocalNow(), user, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), "", testResultFolder);
         }
     }

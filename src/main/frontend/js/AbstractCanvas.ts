@@ -25,7 +25,7 @@ export abstract class AbstractCanvas {
     /** Visible viewport height in pixels, externally driven by container size. */
     protected containerHeight: number;
     /**
-     * Wrapper group around the footer, set by AbstractChart.drawFooter.
+     * Wrapper group around the footer, set by LegacyAbstractChart.drawFooter.
      * Translated downward by (scaledHeight − chartHeight) so the footer
      * stays at the bottom of the chart when visual zoom is active.
      */
@@ -79,11 +79,11 @@ export abstract class AbstractCanvas {
         svg.appendChild(rect);
     }
 
-    /** Abstract – implemented by AbstractChart to draw the caption. */
+    /** Abstract – implemented by LegacyAbstractChart to draw the caption. */
     drawCaption(_svg: SVGElement): void { /* to be overridden */
     }
 
-    /** Abstract – implemented by AbstractChart to draw the footer. */
+    /** Abstract – implemented by LegacyAbstractChart to draw the footer. */
     drawFooter(_svg: SVGElement): void { /* to be overridden */
     }
 

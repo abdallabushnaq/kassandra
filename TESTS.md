@@ -13,10 +13,11 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.processingInit (BurnDownRenderer.java:
+   782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChartLegacy.<init>(BurnDownChart.java:29)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.evaluate (AbstractGanttTester.java:111)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.executeTest (AbstractGanttTester.java:138)
@@ -36,10 +37,12 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChart.<init>(GanttBurndownChart.java:36)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.processingInit (BurnDownRenderer.java:
+   782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.GanttBurndown.LegacyGanttBurndownChartLegacy.<init>(GanttBurndownChart.java:
+   36)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateGanttBurndownChart (GanttGenerator.java:138)
    at de.bushnaq.abdalla.kassandra.report.ganttBurndown.DynamicGanttBurndownTest.testDeliveryBuffer1
    (DynamicGanttBurndownTest.java:120)
@@ -62,10 +65,11 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.processingInit (BurnDownRenderer.java:
+   782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChartLegacy.<init>(BurnDownChart.java:29)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.evaluate (AbstractGanttTester.java:111)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.executeTest (AbstractGanttTester.java:138)
@@ -78,10 +82,11 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.processingInit (BurnDownRenderer.java:
+   782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChartLegacy.<init>(BurnDownChart.java:29)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.evaluate (AbstractGanttTester.java:111)
    at de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester.executeTest (AbstractGanttTester.java:138)
@@ -94,10 +99,11 @@
    (de.bushnaq.abdalla.kassandra.dto.Sprint, java.util.List, java.util.List,
    de.bushnaq.abdalla.kassandra.report.dao.AuthorsContribution)" because "this.service" is null
 
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.init (BurnDownRenderer.java:647)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.processingInit (BurnDownRenderer.java:782)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.<init>(BurnDownRenderer.java:88)
-   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart.<init>(BurnDownChart.java:29)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.init (BurnDownRenderer.java:647)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.processingInit (BurnDownRenderer.java:
+   782)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy.<init>(BurnDownRenderer.java:88)
+   at de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChartLegacy.<init>(BurnDownChart.java:29)
    at de.bushnaq.abdalla.kassandra.util.GanttGenerator.generateBurndownChart (GanttGenerator.java:117)
    at de.bushnaq.abdalla.kassandra.report.gantt.DynamicGanttTest.testDeliveryBuffer1 (DynamicGanttTest.java:147)
 

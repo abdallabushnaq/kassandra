@@ -25,7 +25,7 @@ import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 import {BurndownMetaDto} from './dto/BurndownMetaDto.js';
 import {AbstractChart} from '../AbstractChart.js';
 
-// ── Constants (mirrors Java LegacyBurnDownRenderer static fields) ─────────────────
+// ── Constants (mirrors Java LegacyBurnDownRendererLegacy static fields) ─────────────────
 const ONE_WEEK = 7;
 const ONE_WORK_MONTH = 20 * 75 * 60 * 6;
 const ONE_WORK_WEEK = 5 * 75 * 60 * 6;
@@ -47,12 +47,12 @@ let burndownClipSeq = 0;
  * Standard agile burn down chart, based on logged work in jira tickets of a
  * specific sprint.
  *
- * Mirrors Java: {@code LegacyBurnDownRenderer extends AbstractRenderer}.
+ * Mirrors Java: {@code LegacyBurnDownRendererLegacy extends LegacyAbstractRenderer}.
  */
 export class BurndownRenderer extends AbstractRenderer {
     readonly data: GanttBurndownChartDto;
 
-    // ── fields mirroring LegacyBurnDownRenderer.java ──────────────────────────────
+    // ── fields mirroring LegacyBurnDownRendererLegacy.java ──────────────────────────────
     /**
      * Anchor date for {@code this.data}'s pre-computed per-day arrays (server-computed as
      * sprintStart - preRun in GanttBurndownChartService). Java has no equivalent field and always
@@ -80,16 +80,16 @@ export class BurndownRenderer extends AbstractRenderer {
 
     constructor(chart: AbstractChart, data: GanttBurndownChartDto) {
         const meta = data.meta;
-        // Java: super(dao) — AbstractRenderer(RenderDao) sets theme/chartWidth/chartHeight/milestones/
-        // calendarXAxes. milestones starts empty here; createMilestones() (called below from
-        // processingInit) populates it, mirroring LegacyBurnDownRenderer(RenderDao) -> processingInit(dao)
+        // Java: super(dao) — LegacyAbstractRenderer(RenderDao) sets theme/chartWidth/chartHeight/milestones/
+        // legacyCalendarXAxes. milestones starts empty here; createMilestones() (called below from
+        // processingInit) populates it, mirroring LegacyBurnDownRendererLegacy(RenderDao) -> processingInit(dao)
         // -> createMilestones(...).
         super(chart/*, new Milestones([])*/, meta.preRun || 0, meta.postRun || 0);
 
         this.data = data;
-        // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — LegacyBurnDownRenderer
+        // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — LegacyBurnDownRendererLegacy
         // always draws its own calendar at the BOTTOM of its plot area, so that it sits directly
-        // above the Gantt chart's own (top) calendar when the two are stacked in LegacyGanttBurndownChart.
+        // above the Gantt chart's own (top) calendar when the two are stacked in LegacyGanttBurndownChartLegacy.
         this.calendarAtBottom = true;
 
         this.chartStart = DateUtils.getDayMidnight(new Date(meta.chartStart));
@@ -119,7 +119,7 @@ export class BurndownRenderer extends AbstractRenderer {
         this.processingInit(meta);
     }
 
-    // ── AbstractRenderer overrides ───────────────────────────────────────────
+    // ── LegacyAbstractRenderer overrides ───────────────────────────────────────────
 
     /**
      * Mirrors Java: calculateChartWidth().
@@ -142,7 +142,7 @@ export class BurndownRenderer extends AbstractRenderer {
     }
 
     // override calculateChartHeight(): number {
-    //     const calendarH = this.calendarXAxes.getHeight(this.dayWidth, this.milestones.list.length > 0);
+    //     const calendarH = this.legacyCalendarXAxes.getHeight(this.dayWidth, this.milestones.list.length > 0);
     //     return calendarH + PLOT_HEIGHT;
     // }
 
@@ -205,7 +205,7 @@ export class BurndownRenderer extends AbstractRenderer {
 
     /**
      * Converts a Java-semantics dayIndex (relative to milestones.firstMilestone, as used throughout
-     * LegacyBurnDownRenderer.java) into an index into this.data's server-computed per-day arrays, which are
+     * LegacyBurnDownRendererLegacy.java) into an index into this.data's server-computed per-day arrays, which are
      * pre-computed relative to chartStart (= firstMilestone - priRun, guaranteed by createMilestones()
      * above). This is the one explicit adaptation needed because the DTO arrays are built server-side
      * before the client's Milestones are known.
@@ -505,7 +505,7 @@ export class BurndownRenderer extends AbstractRenderer {
         const color = ColorUtils.intToHex(this.theme.burndownTheme.plannedGuideColor, '#3b82f6');
 
         // Java: guide.getSize() — the guide's own (firstMilestone-relative) length.
-        // const guideSize = guide.length - this.calendarXAxes.priRun;
+        // const guideSize = guide.length - this.legacyCalendarXAxes.priRun;
         for (let i = 0; i < guide.length; i++) {
             const r = guide[i];
             const x = firstDayX + (i - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;

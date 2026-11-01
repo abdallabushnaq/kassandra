@@ -17,16 +17,16 @@
 
 package de.bushnaq.abdalla.kassandra.report.gantt;
 
-import de.bushnaq.abdalla.kassandra.report.AbstractChart;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractChart;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 
 
 @Deprecated
-public class LegacyGanttChart extends AbstractChart {
+public class LegacyGanttChartLegacy extends LegacyAbstractChart {
 
-    public LegacyGanttChart(String relativeCssPath, RenderDao dao) throws Exception {
+    public LegacyGanttChartLegacy(String relativeCssPath, RenderDao dao) throws Exception {
         super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, null, dao.cssClass, dao.kassandraTheme);
-        getRenderers().add(new LegacyGanttRendererLegacy(dao));
+        getRenderers().add(new LegacyGanttRendererLegacyLegacy(dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = getChartWidth();

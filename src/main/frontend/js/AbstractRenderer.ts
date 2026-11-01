@@ -1,6 +1,6 @@
 // abstract-renderer.ts
 // Base class for chart content renderers.
-// Mirrors Java: AbstractRenderer
+// Mirrors Java: LegacyAbstractRenderer
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -89,7 +89,7 @@ export abstract class AbstractRenderer implements IRenderer {
         const firstMilestoneX = this.firstDayX + this.calendarXAxes.dayOfWeek.getWidth() / 2;
         // const dayIndex = DateUtils.calculateDayIndex(datetimeStr, this.chartStart!);
         const workedToday = (date.getTime() - startTime.getTime()) / 1000;
-        // const timeOfDayX = Math.floor(workedToday * this.calendarXAxes.dayOfWeek.getWidth() / secondsPerDay);
+        // const timeOfDayX = Math.floor(workedToday * this.legacyCalendarXAxes.dayOfWeek.getWidth() / secondsPerDay);
         // return this.dayIndexToPixelX(dayIndex) + timeOfDayX;
         const dayX = firstMilestoneX + (DateUtils.calculateDays(firstMilestoneDay, date) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
         const timeOfDayX = Math.floor(((workedToday * this.calendarXAxes.dayOfWeek.getWidth()) / secondsPerDay));
@@ -131,7 +131,7 @@ export abstract class AbstractRenderer implements IRenderer {
      * Mirrors Java: protected void initPosition(int x, int y).
      * Positions the calendar header and the diagram (plot area) either with the calendar
      * above the diagram (default) or below it (calendarAtBottom), matching the Java layout
-     * exactly so combined charts (e.g. LegacyGanttBurndownChart) can stack a burndown plot with its
+     * exactly so combined charts (e.g. LegacyGanttBurndownChartLegacy) can stack a burndown plot with its
      * calendar drawn at the bottom directly above the Gantt chart's own calendar.
      */
     initPosition(x: number, y: number): void {
@@ -158,20 +158,20 @@ export abstract class AbstractRenderer implements IRenderer {
         this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight(),);
         this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
         // } else {
-        //     this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
-        //     this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.calendarXAxes.getHeight(),);
-        //     this.calendarXAxes.initSize(this.chartWidth, this.calendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
+        //     this.legacyCalendarXAxes.initSize(this.chartWidth, this.legacyCalendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
+        //     this.diagram.initSize(this.chartWidth - x, this.chartHeight - this.legacyCalendarXAxes.getHeight(),);
+        //     this.legacyCalendarXAxes.initSize(this.chartWidth, this.legacyCalendarXAxes.dayOfWeek.getWidth() ?? 0, calendarAtBottom, calendarSize,);
         // }
 
 
         // if (calendarAtBottom) {
-        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-        //     diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
-        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        //     legacyCalendarXAxes.initSize(chartWidth, legacyCalendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        //     diagram.initSize(chartWidth - x, chartHeight - legacyCalendarXAxes.getHeight());
+        //     legacyCalendarXAxes.initSize(chartWidth, legacyCalendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
         // } else {
-        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-        //     diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
-        //     calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        //     legacyCalendarXAxes.initSize(chartWidth, legacyCalendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        //     diagram.initSize(chartWidth - x, chartHeight - legacyCalendarXAxes.getHeight());
+        //     legacyCalendarXAxes.initSize(chartWidth, legacyCalendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
         // }
 
     }
@@ -248,7 +248,7 @@ export abstract class AbstractRenderer implements IRenderer {
     //     return DateUtils.calculateDays(firstMilestoneDay, date);
     // }
 
-    // ── Java: protected void drawLegend() / AbstractRenderer.drawLegend(x, y, interpolationColor) ──
+    // ── Java: protected void drawLegend() / LegacyAbstractRenderer.drawLegend(x, y, interpolationColor) ──
     protected drawLegend(svg: SVGElement, x: number, y: number, interpolationColor: number | null): void {
         const lineHeight = 14;
         let legendY = y + lineHeight;
@@ -326,7 +326,7 @@ export abstract class AbstractRenderer implements IRenderer {
     }
 
     // protected calculateMaxDays(): number {
-    //     return DateUtils.calculateDays(this.milestones.firstMilestone, this.milestones.lastMilestone) + 1 + this.calendarXAxes.priRun + this.calendarXAxes.postRun;
+    //     return DateUtils.calculateDays(this.milestones.firstMilestone, this.milestones.lastMilestone) + 1 + this.legacyCalendarXAxes.priRun + this.legacyCalendarXAxes.postRun;
     // }
 
 

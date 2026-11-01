@@ -22,7 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
@@ -52,7 +52,7 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
+public abstract class LegacyLegacyAbstractGanttRenderer extends LegacyAbstractRenderer {
     private static final   float                FINE_LINE_STROKE_WIDTH     = 1.0f;
     private static final   int                  LINE_HEIGHT                = 18;
     private static final   int                  RELATION_CORNER_LENGTH     = 14;
@@ -80,7 +80,7 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
     protected              Map<String, Integer> taskHeight                 = new HashMap<>();
 
-    public LegacyAbstractGanttRenderer(RenderDao dao) throws IOException {
+    public LegacyLegacyAbstractGanttRenderer(RenderDao dao) throws IOException {
         super(dao);
         this.context              = dao.context;
         this.numberOfLinesPerTask = 1;//TODO do we need to keep this flexible in the dao?
@@ -92,8 +92,8 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
             graphics2D.setColor(Color.red);
             for (Conflict c : conflict) {
                 if (c.originalConflict) {
-                    int c1 = calculateX(c.range.start, c.range.start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-                    int c2 = calculateX(c.range.end, c.range.end.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                    int c1 = calculateX(c.range.start, c.range.start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+                    int c2 = calculateX(c.range.end, c.range.end.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                     graphics2D.fillRect(c1, y - getTaskHeight() / 2, c2 - c1 - 1, 2);
                     graphics2D.fillRect(c1, y + getTaskHeight() / 2 - 1, c2 - c1 - 1, 2);
                 }
@@ -126,26 +126,26 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
                     graphics2D.fillRect(x2, y - getTaskHeight() / 2 + TASK_BODY_BORDER + 1, 1, getTaskHeight() - TASK_BODY_BORDER * 2 - 2);//end |
                 } else if (day == 0) {
                     //this is the left end
-                    int xFinish = calculateX(currentDay.withHour(8).plusSeconds(SECONDS_PER_DAY), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                    int xFinish = calculateX(currentDay.withHour(8).plusSeconds(SECONDS_PER_DAY), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                     graphics2D.fillRect(x1, y - getTaskHeight() / 2 + TASK_BODY_BORDER, xFinish - x1, 1);//upper -
                     graphics2D.fillRect(x1, y + getTaskHeight() / 2 - TASK_BODY_BORDER - 1, xFinish - x1, 1);//lower -
                     graphics2D.fillRect(x1, y - getTaskHeight() / 2 + TASK_BODY_BORDER + 1, 1, getTaskHeight() - TASK_BODY_BORDER * 2 - 2);//start |
                 } else if (day == days) {
                     //this is the right end
-                    int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                    int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                     graphics2D.fillRect(xStart, y - getTaskHeight() / 2 + TASK_BODY_BORDER, x2 - xStart + 1, 1);//upper -
                     graphics2D.fillRect(xStart, y + getTaskHeight() / 2 - TASK_BODY_BORDER - 1, x2 - xStart + 1, 1);//lower -
                     graphics2D.fillRect(x2, y - getTaskHeight() / 2 + TASK_BODY_BORDER + 1, 1, getTaskHeight() - TASK_BODY_BORDER * 2 - 2);//end |
 
                 } else {
                     //this is the middle
-                    int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-                    graphics2D.fillRect(xStart, y - getTaskHeight() / 2 + TASK_BODY_BORDER, calendarXAxes.dayOfWeek.getWidth(), 1);
-                    graphics2D.fillRect(xStart, y + getTaskHeight() / 2 - TASK_BODY_BORDER - 1, calendarXAxes.dayOfWeek.getWidth(), 1);
+                    int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+                    graphics2D.fillRect(xStart, y - getTaskHeight() / 2 + TASK_BODY_BORDER, legacyCalendarXAxes.dayOfWeek.getWidth(), 1);
+                    graphics2D.fillRect(xStart, y + getTaskHeight() / 2 - TASK_BODY_BORDER - 1, legacyCalendarXAxes.dayOfWeek.getWidth(), 1);
                 }
             } else {
-                for (int i = 0; i < calendarXAxes.dayOfWeek.getWidth() - 1; i++) {
-                    int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                for (int i = 0; i < legacyCalendarXAxes.dayOfWeek.getWidth() - 1; i++) {
+                    int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                     int x      = i + xStart;
                     if (x % 4 == 0) {
                         graphics2D.fillRect(x, y - getTaskHeight() / 2 + TASK_BODY_BORDER, 2, 1);
@@ -158,7 +158,7 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
 
     private void drawId(Task task, int y) {
         int      x1        = firstDayX;
-        int      x2        = x1 + calendarXAxes.dayOfWeek.getWidth();
+        int      x2        = x1 + legacyCalendarXAxes.dayOfWeek.getWidth();
         Color    fillColor = theme.ganttTheme.idBgColor;
         Color    textColor = theme.ganttTheme.idTextColor;
         MetaData md        = TaskUtil.getTaskMetaData(task);
@@ -245,8 +245,8 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
             y2 += getTaskHeight() / 2 - TASK_BODY_BORDER;
             y3 = y2 + 5;
         }
-        int x1 = calculateX(targetTask.getFinish(), targetTask.getFinish().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-        int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), sourceTask.getStart().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
+        int x1 = calculateX(targetTask.getFinish(), targetTask.getFinish().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+        int x2 = RELATION_CORNER_LENGTH + calculateX(sourceTask.getStart(), sourceTask.getStart().truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
         graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         if (sourceTask.isCritical() && targetTask.isCritical()) {
             graphics2D.setColor(theme.ganttTheme.criticalRelationColor);
@@ -339,8 +339,8 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
             LocalDateTime start = task.getStart();
             LocalDateTime stop  = task.getFinish();
             if (start != null && stop != null) {
-                int     x1   = calculateX(start, start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-                int     x2   = calculateX(stop, stop.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                int     x1   = calculateX(start, start.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+                int     x2   = calculateX(stop, stop.truncatedTo(ChronoUnit.DAYS).withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                 Integer lane = taskHeight.get(gantUniqueId + "-" + task.getId());
                 int     y    = lane + getTaskHeight() / 2;
 //            if (drawOutOfOffice) {
@@ -537,21 +537,21 @@ public abstract class LegacyAbstractGanttRenderer extends AbstractRenderer {
                             s = new RectangleWithToolTip(x1, y1, x2 - x1, h, toolTip);
                         } else if (day == 0) {
                             //this is the left end
-                            int xFinish = calculateX(currentDay.withHour(8).plusSeconds(SECONDS_PER_DAY), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                            int xFinish = calculateX(currentDay.withHour(8).plusSeconds(SECONDS_PER_DAY), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                             s = new RectangleWithToolTip(x1, y1, xFinish - x1, h, toolTip);
                         } else if (day == days) {
                             //this is the right end
-                            int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
+                            int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
                             s = new RectangleWithToolTip(xStart, y1, x2 - xStart + 1, h, toolTip);
                         } else {
                             //this is the middle
-                            int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-                            s = new RectangleWithToolTip(xStart, y1, calendarXAxes.dayOfWeek.getWidth(), h, toolTip);
+                            int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+                            s = new RectangleWithToolTip(xStart, y1, legacyCalendarXAxes.dayOfWeek.getWidth(), h, toolTip);
                         }
                     } else {
                         graphics2D.setColor(new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(), theme.ganttTheme.taskWeekEndTransparency));//very transparent
-                        int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - calendarXAxes.dayOfWeek.getWidth() / 2;
-                        s = new RectangleWithToolTip(xStart, y1, calendarXAxes.dayOfWeek.getWidth(), h, toolTip);
+                        int xStart = calculateX(currentDay.withHour(8), currentDay.withHour(8), SECONDS_PER_DAY) - legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+                        s = new RectangleWithToolTip(xStart, y1, legacyCalendarXAxes.dayOfWeek.getWidth(), h, toolTip);
                     }
                     graphics2D.fill(s);
                 }

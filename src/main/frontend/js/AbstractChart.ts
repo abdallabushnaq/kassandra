@@ -1,6 +1,6 @@
 // abstract-chart.ts
 // Adds caption, footer, and a list of renderers to AbstractCanvas.
-// Mirrors Java: AbstractChart extends AbstractCanvas
+// Mirrors Java: LegacyAbstractChart extends AbstractCanvas
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 

@@ -1,6 +1,6 @@
 // sprints-overview/sprints-overview-renderer.ts
 // Renders sprint lanes on a virtual timeline canvas.
-// Mirrors Java: LegacySprintsOverviewRenderer extends AbstractRenderer
+// Mirrors Java: LegacySprintsOverviewRendererLegacy extends LegacyAbstractRenderer
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -17,7 +17,7 @@ import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 import {HitArea} from './dto/HitArea.js';
 import {AbstractChart} from '../AbstractChart.js';
 
-// ── Layout constants (mirrors Java LegacySprintsOverviewRenderer) ──────────────
+// ── Layout constants (mirrors Java LegacySprintsOverviewRendererLegacy) ──────────────
 const LINE_HEIGHT = 13;
 const NUMBER_OF_LINES = 3;
 const SPRINT_H = LINE_HEIGHT * NUMBER_OF_LINES;        // 39 px

@@ -57,7 +57,7 @@ export class GanttBurndownChart extends AbstractChart {
         const burndown = this.renderers[0] as BurndownRenderer;
 
         burndown.dayWidth = dayWidth;
-        burndown.calculateDayWidth();//TODO handle day width on AbstractRenderer level
+        burndown.calculateDayWidth();//TODO handle day width on LegacyAbstractRenderer level
         burndown.scrollOffset = scrollOffset;
         burndown.containerWidth = containerWidth;
         burndown.containerHeight = containerHeight;
@@ -65,7 +65,7 @@ export class GanttBurndownChart extends AbstractChart {
 
         const gantt = this.renderers[1] as GanttRenderer;
         gantt.dayWidth = dayWidth;
-        gantt.calculateDayWidth();//TODO handle day width on AbstractRenderer level
+        gantt.calculateDayWidth();//TODO handle day width on LegacyAbstractRenderer level
         gantt.scrollOffset = scrollOffset;
         gantt.containerWidth = containerWidth;
         gantt.containerHeight = containerHeight;

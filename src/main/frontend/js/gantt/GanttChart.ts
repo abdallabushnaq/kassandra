@@ -1,5 +1,5 @@
 // gantt/gantt-chart-class.ts
-// Mirrors Java: LegacyGanttChart extends AbstractChart
+// Mirrors Java: LegacyGanttChartLegacy extends LegacyAbstractChart
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -21,7 +21,7 @@ export class GanttChart extends AbstractChart {
 
         const renderer = this.renderers[0] as GanttRenderer;
         renderer.dayWidth = dayWidth;
-        renderer.calculateDayWidth();//TODO handle day width on AbstractRenderer level
+        renderer.calculateDayWidth();//TODO handle day width on LegacyAbstractRenderer level
         renderer.scrollOffset = scrollOffset;
         renderer.containerWidth = containerWidth;
         renderer.containerHeight = containerHeight;

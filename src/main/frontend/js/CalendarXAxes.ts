@@ -1,6 +1,6 @@
 // calendar-x-axes.ts
 // Virtual-canvas calendar header renderer.
-// Mirrors Java: CalendarXAxes
+// Mirrors Java: LegacyCalendarXAxes
 // Row order (top→bottom): year → month → [week] → [dayOfMonth → dayOfWeek] → [milestones]
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
@@ -62,7 +62,7 @@ export class CalendarXAxes {
 
     /**
      * Calculates total pixel height of the calendar header for a given day width.
-     * Mirrors Java: CalendarXAxes.getHeight()
+     * Mirrors Java: LegacyCalendarXAxes.getHeight()
      */
     // getHeight(): number {
     //     let height = this.year.getHeight();
@@ -103,7 +103,7 @@ export class CalendarXAxes {
     }
 
     /**
-     * Compatibility wrapper called by LegacyGanttRendererLegacy.draw().
+     * Compatibility wrapper called by LegacyGanttRendererLegacyLegacy.draw().
      * Mirrors the 7-argument signature used there.
      */
     // draw(

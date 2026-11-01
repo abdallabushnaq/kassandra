@@ -39,29 +39,29 @@ import java.time.LocalDateTime;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public abstract class AbstractRenderer {
-    public static final    int                MAX_DAY_WIDTH              = 20;
-    protected static final float              STANDARD_LINE_STROKE_WIDTH = 3.1f;
-    protected final        Font               authorFont                 = new Font(Font.SANS_SERIF, Font.BOLD, 12);
-    protected              Users              authors                    = new Users();
-    protected              Font               bankHolidayFont            = null;
-    private                boolean            calendarAtBottom;
-    public                 CalendarXAxes      calendarXAxes;
-    public                 int                chartHeight;
-    public                 int                chartWidth;
-    public                 int                days                       = 3;
-    public final           GraphSquare        diagram                    = new GraphSquare();
-    protected              int                firstDayX                  = 0;
-    public                 ExtendedGraphics2D graphics2D;
-    protected final        Logger             logger                     = LoggerFactory.getLogger(this.getClass());
-    public                 Milestones         milestones;
-    public                 Theme              theme;
+public abstract class LegacyAbstractRenderer {
+    public static final    int                 MAX_DAY_WIDTH              = 20;
+    protected static final float               STANDARD_LINE_STROKE_WIDTH = 3.1f;
+    protected final        Font                authorFont                 = new Font(Font.SANS_SERIF, Font.BOLD, 12);
+    protected              Users               authors                    = new Users();
+    protected              Font                bankHolidayFont            = null;
+    private                boolean             calendarAtBottom;
+    public                 int                 chartHeight;
+    public                 int                 chartWidth;
+    public                 int                 days                       = 3;
+    public final           GraphSquare         diagram                    = new GraphSquare();
+    protected              int                 firstDayX                  = 0;
+    public                 ExtendedGraphics2D  graphics2D;
+    public                 LegacyCalendarXAxes legacyCalendarXAxes;
+    protected final        Logger              logger                     = LoggerFactory.getLogger(this.getClass());
+    public                 Milestones          milestones;
+    public                 Theme               theme;
 
-    public AbstractRenderer() {
+    public LegacyAbstractRenderer() {
 
     }
 
-    public AbstractRenderer(RenderDao dao) throws IOException {
+    public LegacyAbstractRenderer(RenderDao dao) throws IOException {
         this.theme       = dao.kassandraTheme;
         this.chartWidth  = dao.chartWidth;
         this.chartHeight = dao.chartHeight;
@@ -70,7 +70,7 @@ public abstract class AbstractRenderer {
         } else {
             milestones = new Milestones(dao.name);
         }
-        calendarXAxes = new CalendarXAxes(this, dao.preRun, dao.postRun);
+        legacyCalendarXAxes = new LegacyCalendarXAxes(this, dao.preRun, dao.postRun);
     }
 
     protected int calculateChartHeight() {
@@ -97,27 +97,27 @@ public abstract class AbstractRenderer {
 
     protected void calculateDayWidth() {
         days = calculateMaxDays();
-        calendarXAxes.dayOfWeek.setWidth((chartWidth) / days);
+        legacyCalendarXAxes.dayOfWeek.setWidth((chartWidth) / days);
     }
 
     protected int calculateDayX(LocalDate date) {
         LocalDate firstMilestoneDay = milestones.firstMilestone;
-        int       firstMilestoneX   = firstDayX + calendarXAxes.dayOfWeek.getWidth() / 2;
-        return firstMilestoneX + (DateUtil.calculateDays(firstMilestoneDay, date) + calendarXAxes.getPriRun()) * calendarXAxes.dayOfWeek.getWidth();
+        int       firstMilestoneX   = firstDayX + legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
+        return firstMilestoneX + (DateUtil.calculateDays(firstMilestoneDay, date) + legacyCalendarXAxes.getPriRun()) * legacyCalendarXAxes.dayOfWeek.getWidth();
     }
 
     protected int calculateMaxDays() {
-        return DateUtil.calculateDays(milestones.firstMilestone, milestones.lastMilestone) + 1 + calendarXAxes.getPriRun() + calendarXAxes.getPostRun();
+        return DateUtil.calculateDays(milestones.firstMilestone, milestones.lastMilestone) + 1 + legacyCalendarXAxes.getPriRun() + legacyCalendarXAxes.getPostRun();
     }
 
     protected int calculateX(LocalDateTime date, LocalDateTime startTime, long secondsPerDay) {
         LocalDate firstMilestoneDay = milestones.firstMilestone;
-        int       firstMilestoneX   = firstDayX + calendarXAxes.dayOfWeek.getWidth() / 2;
+        int       firstMilestoneX   = firstDayX + legacyCalendarXAxes.dayOfWeek.getWidth() / 2;
         // String createDateTimeString = DateUtil.createDateTimeString(date);
         //        LocalDateTime timeOfDay = LocalDateTimeUtil.getTimeOfDayInMillis(date);
         Duration workedToday = Duration.between(startTime, date);
-        int      dayX        = firstMilestoneX + (DateUtil.calculateDays(firstMilestoneDay, DateUtil.toDayPrecision(date)) + calendarXAxes.getPriRun()) * calendarXAxes.dayOfWeek.getWidth();
-        int      timeOfDayX  = (int) (((workedToday.getSeconds()) * calendarXAxes.dayOfWeek.getWidth()) / secondsPerDay);
+        int      dayX        = firstMilestoneX + (DateUtil.calculateDays(firstMilestoneDay, DateUtil.toDayPrecision(date)) + legacyCalendarXAxes.getPriRun()) * legacyCalendarXAxes.dayOfWeek.getWidth();
+        int      timeOfDayX  = (int) (((workedToday.getSeconds()) * legacyCalendarXAxes.dayOfWeek.getWidth()) / secondsPerDay);
         return dayX + timeOfDayX;
     }
 
@@ -126,7 +126,7 @@ public abstract class AbstractRenderer {
     protected void drawAuthor(int x, int y, int with, Color fillColor, String text, Color textColor, Font font) {
         graphics2D.setFont(font);
         graphics2D.setColor(fillColor);
-        graphics2D.fillRect(x, y - calendarXAxes.milestone.height / 2, with + 4, calendarXAxes.milestone.height - 1);
+        graphics2D.fillRect(x, y - legacyCalendarXAxes.milestone.height / 2, with + 4, legacyCalendarXAxes.milestone.height - 1);
         graphics2D.setColor(textColor);
         FontMetrics fm        = graphics2D.getFontMetrics();
         int         maxAscent = fm.getMaxAscent();
@@ -140,7 +140,7 @@ public abstract class AbstractRenderer {
 //            if (primaryAuthorName == null) {
 //                primaryAuthorName = author.name;
 //            }
-            FontMetrics metrics = graphics2D.getFontMetrics(calendarXAxes.milestone.font);
+            FontMetrics metrics = graphics2D.getFontMetrics(legacyCalendarXAxes.milestone.font);
             int         adv     = metrics.stringWidth(author.getName());
             authorLegendWidth = Math.max(authorLegendWidth, adv);
         }
@@ -151,7 +151,7 @@ public abstract class AbstractRenderer {
 //            if (primaryAuthorName == null) {
 //                primaryAuthorName = author.name;
 //            }
-            drawAuthor(x, ay, authorLegendWidth, author.getColor(), author.getName(), theme.burndownTheme.tickTextColor, calendarXAxes.milestone.font);
+            drawAuthor(x, ay, authorLegendWidth, author.getColor(), author.getName(), theme.burndownTheme.tickTextColor, legacyCalendarXAxes.milestone.font);
             ay -= lineHeight;
         }
     }
@@ -161,7 +161,7 @@ public abstract class AbstractRenderer {
     }
 
     protected void drawCalendar(boolean drawDays) {
-        calendarXAxes.drawCalendar(drawDays);
+        legacyCalendarXAxes.drawCalendar(drawDays);
     }
 
     public void drawDayBars(LocalDate currentDay) {
@@ -171,13 +171,13 @@ public abstract class AbstractRenderer {
         int   x     = calculateDayX(currentDay);
         graphics2D.setColor(color);
         //day vertical bar
-        graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1), diagram.y, calendarXAxes.dayOfWeek.getWidth() - 1, diagram.height);//left |
+        graphics2D.fillRect(x - (legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - 1), diagram.y, legacyCalendarXAxes.dayOfWeek.getWidth() - 1, diagram.height);//left |
         //draw vertical lines
         graphics2D.setColor(theme.ganttTheme.gridColor);
         //        graphics2D.setStroke(new BasicStroke(RELATION_LINE_STROKE_WIDTH));
         //        graphics2D.drawLine(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height);
         //        graphics2D.draw(new Line2D.Double(x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y,x - (calendarXAxses.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxses.dayOfWeek.getWidth() - 1), diagram.y + diagram.height));
-        graphics2D.fillRect(x - (calendarXAxes.dayOfWeek.getWidth() / 2 - 1) + (calendarXAxes.dayOfWeek.getWidth() - 1), diagram.y, 1, diagram.height);//right |
+        graphics2D.fillRect(x - (legacyCalendarXAxes.dayOfWeek.getWidth() / 2 - 1) + (legacyCalendarXAxes.dayOfWeek.getWidth() - 1), diagram.y, 1, diagram.height);//right |
     }
 
     protected void drawGraphText(int x, int y, String text, Color textColor, Font font, TextAlignment aligned) {
@@ -209,19 +209,19 @@ public abstract class AbstractRenderer {
         int legendTextY = legendY + 1;
         int legendTextX = legendX2 + 4;
         int milestoneX  = legendX1 + 5;
-        int milestoneY  = legendY - calendarXAxes.milestone.height / 2;
+        int milestoneY  = legendY - legacyCalendarXAxes.milestone.height / 2;
 
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
         graphics2D.setColor(theme.chartTheme.surroundingSquareColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "Guideline", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        drawGraphText(legendTextX, legendTextY, "Guideline", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
         graphics2D.setColor(interpolationColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "extrapolated release date", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(),
+        drawGraphText(legendTextX, legendTextY, "extrapolated release date", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(),
                 TextAlignment.left);
 
         legendY += lineHeight;
@@ -230,51 +230,51 @@ public abstract class AbstractRenderer {
         graphics2D.setStroke(new BasicStroke(STANDARD_LINE_STROKE_WIDTH));
         graphics2D.setColor(theme.burndownTheme.borderColor);
         graphics2D.drawLine(legendX1, legendY, legendX2, legendY);
-        drawGraphText(legendTextX, legendTextY, "Remaining work", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        drawGraphText(legendTextX, legendTextY, "Remaining work", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.pastEventColor, "S", true, null, null, false, false);// start
-        drawGraphText(legendTextX, legendTextY, "Start date (sprint)", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        legacyCalendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.pastEventColor, "S", true, null, null, false, false);// start
+        drawGraphText(legendTextX, legendTextY, "Start date (sprint)", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.nowEventColor, "N", true, null, null, false, false);// now
-        drawGraphText(legendTextX, legendTextY, "Now date", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        legacyCalendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.nowEventColor, "N", true, null, null, false, false);// now
+        drawGraphText(legendTextX, legendTextY, "Now date", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.burndownTheme.delayEventColor, "R", true, null, null, false, false);// release
-        drawGraphText(legendTextX, legendTextY, "Release date", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        legacyCalendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.burndownTheme.delayEventColor, "R", true, null, null, false, false);// release
+        drawGraphText(legendTextX, legendTextY, "Release date", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.futureEventColor, "E", true, null, null, false, false);// end
-        drawGraphText(legendTextX, legendTextY, "End date (sprint)", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        legacyCalendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.futureEventColor, "E", true, null, null, false, false);// end
+        drawGraphText(legendTextX, legendTextY, "End date (sprint)", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.futureEventColor, "F", true, null, null, false, false);// first
-        drawGraphText(legendTextX, legendTextY, "First punch-in", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        legacyCalendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.futureEventColor, "F", true, null, null, false, false);// first
+        drawGraphText(legendTextX, legendTextY, "First punch-in", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
 
         legendY += lineHeight;
         legendTextY += lineHeight;
         milestoneY += lineHeight;
-        calendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.futureEventColor, "L", true, null, null, false, false);// Last
-        drawGraphText(legendTextX, legendTextY, "Last punch-out", theme.burndownTheme.tickTextColor, calendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
+        legacyCalendarXAxes.drawMilestone(null, null, milestoneX, milestoneY, theme.xAxesTheme.futureEventColor, "L", true, null, null, false, false);// Last
+        drawGraphText(legendTextX, legendTextY, "Last punch-out", theme.burndownTheme.tickTextColor, legacyCalendarXAxes.dayOfWeek.getFont(), TextAlignment.left);
     }
 
     protected void drawMilestones() {
-        calendarXAxes.drawMilestones();
+        legacyCalendarXAxes.drawMilestones();
     }
 
     public int getDayWidth() {
-        return calendarXAxes.dayOfWeek.getWidth();
+        return legacyCalendarXAxes.dayOfWeek.getWidth();
     }
 
     protected int getTaskHeight() {
@@ -284,34 +284,34 @@ public abstract class AbstractRenderer {
     protected void initPosition(int x, int y) throws IOException {
         firstDayX = x;
         if (calendarAtBottom) {
-            calendarXAxes.initPosition(x, y);
+            legacyCalendarXAxes.initPosition(x, y);
             diagram.initPosition(x, y);
-            calendarXAxes.initPosition(x, diagram.y + diagram.height + 1);
+            legacyCalendarXAxes.initPosition(x, diagram.y + diagram.height + 1);
         } else {
-            calendarXAxes.initPosition(x, y);
-            diagram.initPosition(x, calendarXAxes.year.getY() + calendarXAxes.getHeight());
-//            calendarXAxes.initPosition(x, diagram.y + diagram.height + 1);
+            legacyCalendarXAxes.initPosition(x, y);
+            diagram.initPosition(x, legacyCalendarXAxes.year.getY() + legacyCalendarXAxes.getHeight());
+//            legacyCalendarXAxes.initPosition(x, diagram.y + diagram.height + 1);
         }
     }
 
     protected void initSize(int x, boolean calendarAtBottom, CalendarSize calendarSize) throws IOException {
-        this.calendarAtBottom      = calendarAtBottom;
-        calendarXAxes.calendarSize = calendarSize;
+        this.calendarAtBottom            = calendarAtBottom;
+        legacyCalendarXAxes.calendarSize = calendarSize;
         // this.calendarAtBottom = calendarAtBottom;
         calculateDayWidth();
         chartWidth      = calculateChartWidth();
         chartHeight     = calculateChartHeight();
         firstDayX       = x;
-        bankHolidayFont = new Font(Font.SANS_SERIF, Font.PLAIN, Math.min(14, (int) (calendarXAxes.dayOfWeek.getWidth() * 1.1)));
+        bankHolidayFont = new Font(Font.SANS_SERIF, Font.PLAIN, Math.min(14, (int) (legacyCalendarXAxes.dayOfWeek.getWidth() * 1.1)));
 
-        calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
-        diagram.initSize(chartWidth - x, chartHeight - calendarXAxes.getHeight());
-        calendarXAxes.initSize(chartWidth, calendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        legacyCalendarXAxes.initSize(chartWidth, legacyCalendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
+        diagram.initSize(chartWidth - x, chartHeight - legacyCalendarXAxes.getHeight());
+        legacyCalendarXAxes.initSize(chartWidth, legacyCalendarXAxes.dayOfWeek.getWidth(), calendarAtBottom, calendarSize);
     }
 
     public void setDayWidth(int dayWidth) {
-        calendarXAxes.dayOfWeek.setWidth(dayWidth);
-        calendarXAxes.dayOfMonth.setWidth(dayWidth);
+        legacyCalendarXAxes.dayOfWeek.setWidth(dayWidth);
+        legacyCalendarXAxes.dayOfMonth.setWidth(dayWidth);
         chartWidth  = calculateChartWidth();
         chartHeight = calculateChartHeight();
     }

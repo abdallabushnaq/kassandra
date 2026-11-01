@@ -38,7 +38,7 @@ public class RenderDao {
     public LocalDateTime          end;
     public Duration               estimatedBestWork;
     public Duration               estimatedWorstWork;
-    public int                    firstDayX    = 0;//shifts the calendarXAxes
+    public int                    firstDayX    = 0;//shifts the legacyCalendarXAxes
     public LocalDateTime          firstWorklog;
     public Theme                  kassandraTheme;
     public LocalDateTime          lastWorklog;

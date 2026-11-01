@@ -7,6 +7,16 @@ Use them as reference.
 you will notice that we tried to keep the structure, method name, variable names and the total design very much as in
 the java code.
 This allowed us to ensure almost 100% pixel accurate reproduction of the legacy code.
+Let's rewrite the CalendarChart and CalendarRenderer in a similar way.
+
+## Target
+
+1. Write a Ts replacement for a client rendered Calendar that can replace the usage of the legacy code.
+2. The new test should be very much structured like the java code allowing line by line comparison to better do a code
+   review.
+3. Rewrite CalendarTest to use new calendar. See GanttGenerator how we generate client side charts and save svg and png
+   to disk.
+4. Compare old and new calendar chart svg or png to detect discrepancies and report them.
 
 # Server Settings Design
 

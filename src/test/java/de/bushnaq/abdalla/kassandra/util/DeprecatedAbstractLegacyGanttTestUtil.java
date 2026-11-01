@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @Deprecated
-public class AbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
+public class DeprecatedAbstractLegacyGanttTestUtil extends AbstractGanttTestUtil {
     protected Map<String, net.sf.mpxj.Task>     mpxjTaskMap = new HashMap<>();
     protected Map<String, net.sf.mpxj.Resource> resourceMap = new HashMap<>();
     protected Map<String, Task>                 taskMap     = new HashMap<>();

@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.report.dao;
 
-import de.bushnaq.abdalla.kassandra.report.AbstractRenderer;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.ColorConstants;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
@@ -35,7 +35,7 @@ import java.time.temporal.WeekFields;
 import java.util.Locale;
 
 @Deprecated
-public class CalendarXAxes {
+public class LegacyCalendarXAxes {
     public static final  int                      DAY_OF_MONTH_MIN_DAY_WIDTH = 16;
     private static final int                      DAY_OF_WEEK_MIN_DAY_WIDTH  = 10;
     private static final int                      MONTH_MIN_DAY_WIDTH        = 1;
@@ -50,7 +50,7 @@ public class CalendarXAxes {
     public               CalendarMilestoneElement milestone;
     private final        Milestones               milestones;
     public               CalendarElement          month;
-    private final        AbstractRenderer         parent;
+    private final        LegacyAbstractRenderer   parent;
     @Getter
     private final        int                      postRun;
     @Getter
@@ -71,7 +71,7 @@ public class CalendarXAxes {
      * @param postRun, how many days to draw post to the time range we are
      *                 interested in
      */
-    public CalendarXAxes(AbstractRenderer parent, int priRun, int postRun) {
+    public LegacyCalendarXAxes(LegacyAbstractRenderer parent, int priRun, int postRun) {
         this.parent     = parent;
         this.priRun     = priRun;
         this.postRun    = postRun;

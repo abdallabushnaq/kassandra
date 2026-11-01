@@ -18,15 +18,15 @@
 package de.bushnaq.abdalla.kassandra.report.burndown;
 
 
-import de.bushnaq.abdalla.kassandra.report.AbstractChart;
+import de.bushnaq.abdalla.kassandra.report.LegacyAbstractChart;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 
 @Deprecated
-public class LegacyBurnDownChart extends AbstractChart {
+public class LegacyBurnDownChartLegacy extends LegacyAbstractChart {
 
-    public LegacyBurnDownChart(GanttBurndownChartService service, String relativeCssPath, RenderDao dao) throws Exception {
+    public LegacyBurnDownChartLegacy(GanttBurndownChartService service, String relativeCssPath, RenderDao dao) throws Exception {
         super("Work Burn Down Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, dao.link, dao.cssClass, dao.kassandraTheme);
-        getRenderers().add(new LegacyBurnDownRenderer(service, dao));
+        getRenderers().add(new LegacyBurnDownRendererLegacy(service, dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = dao.chartWidth;
