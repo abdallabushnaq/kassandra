@@ -106,6 +106,8 @@ public class AbstractGanttTester extends DTOAsserts {
         project.testTheme = testTheme;
 
         ParameterOptions.setNow(DateUtil.localDateTimeToOffsetDateTime(DateUtil.addDay(sprint.getStart(), 10)));
+        // The MPP contains the schedule, not Kassandra's sprint status; simulate work on both schedules.
+        referenceProject.generateWorklogs(referenceSprint.getId(), ParameterOptions.getLocalNow());
         project.generateWorklogs(sprint.getId(), ParameterOptions.getLocalNow());
         project.generateGanttChart(testInfo, sprint.getId(), testFolder);
         project.generateBurndownChart(testInfo, sprint.getId(), testFolder);

@@ -120,11 +120,13 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
         //test
         {
             float availability = resource1.getAvailabilities().getFirst().getAvailability();
-            assertEquals(startTime.plusDays(1), startMilestone.getStart(), "Sprint should not start on a Sunday");
+            LocalDateTime expectedStart = startTime.plusDays(1);
+            assertEquals(expectedStart, startMilestone.getStart(), "Sprint should not start on a Sunday");
+            assertEquals(expectedStart, sprint.getStart(), "Sprint should not start on a Sunday");
             assertEquals(startTime.plusDays(12).withHour(16).withMinute(30), sprint.getEnd(), "Sprint must end after 10 working days, as the availability of the user is 50%.");
             List<Worklog> expectedWorklogs = new ArrayList<Worklog>();
-            addSequentialWorklogs(startMilestone.getStart(), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
-            addSequentialWorklogs(startMilestone.getStart().plusDays(7), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
+            addSequentialWorklogs(expectedStart, task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
+            addSequentialWorklogs(expectedStart.plusDays(7), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
             assertEquals(expectedWorklogs.size(), sprint.getWorklogs().size(), "expectedWorklogs size mismatch");
             assertWorklogsEquals(expectedWorklogs);
         }
@@ -155,8 +157,8 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
             assertEquals(startTime, startMilestone.getStart(), "Sprint should not start on a Sunday.");
             assertEquals(startTime.plusDays(11).withHour(16).withMinute(30), sprint.getEnd(), "Sprint must end after 10 working days, as the availability of the user is 50%.");
             List<Worklog> expectedWorklogs = new ArrayList<Worklog>();
-            addSequentialWorklogs(startMilestone.getStart(), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
-            addSequentialWorklogs(startMilestone.getStart().plusDays(7), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
+            addSequentialWorklogs(startTime, task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
+            addSequentialWorklogs(startTime.plusDays(7), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);
             assertEquals(expectedWorklogs.size(), sprint.getWorklogs().size(), "expectedWorklogs size mismatch");
             assertWorklogsEquals(expectedWorklogs);
         }
@@ -187,10 +189,10 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
             assertEquals(startTime, startMilestone.getStart(), "Sprint should not start on a Sunday.");
             assertEquals(startTime.plusDays(14).withHour(16).withMinute(30), sprint.getEnd(), "Sprint must end after 10 working days, as the availability of the user is 50%.");
             List<Worklog> expectedWorklogs = new ArrayList<Worklog>();
-            addSequentialWorklogs(startMilestone.getStart(), task2.getId(), calculateWorkFraction("7h 30m", availability), 2, expectedWorklogs);//2 days before eve
-            addSequentialWorklogs(startMilestone.getStart().plusDays(3), task2.getId(), calculateWorkFraction("7h 30m", availability), 2, expectedWorklogs);//2 days after eve
-            addSequentialWorklogs(startMilestone.getStart().plusDays(7), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);//one week
-            addSequentialWorklogs(startMilestone.getStart().plusDays(14), task2.getId(), calculateWorkFraction("7h 30m", availability), 1, expectedWorklogs);//one day
+            addSequentialWorklogs(startTime, task2.getId(), calculateWorkFraction("7h 30m", availability), 2, expectedWorklogs);//2 days before eve
+            addSequentialWorklogs(startTime.plusDays(3), task2.getId(), calculateWorkFraction("7h 30m", availability), 2, expectedWorklogs);//2 days after eve
+            addSequentialWorklogs(startTime.plusDays(7), task2.getId(), calculateWorkFraction("7h 30m", availability), 5, expectedWorklogs);//one week
+            addSequentialWorklogs(startTime.plusDays(14), task2.getId(), calculateWorkFraction("7h 30m", availability), 1, expectedWorklogs);//one day
             assertEquals(expectedWorklogs.size(), sprint.getWorklogs().size(), "expectedWorklogs size mismatch");
             assertWorklogsEquals(expectedWorklogs);
         }
@@ -460,6 +462,7 @@ public class BurnDownUtilTest extends AbstractGanttTestUtil {
         float delay = 0f;
         BurnDownUtil.generateWorklogs(peg, sprint, delay, ParameterOptions.getLocalNow());
         sprint.initTaskMap(peg.taskApi.getAll(sprint.getId()), peg.worklogApi.getAll(sprint.getId()));
+        startMilestone = sprint.getTaskById(startMilestone.getId());
         generateGanttChart(testInfo, sprint.getId(), null);
         generateBurndownChart(testInfo, sprint.getId());
 //        printTables();

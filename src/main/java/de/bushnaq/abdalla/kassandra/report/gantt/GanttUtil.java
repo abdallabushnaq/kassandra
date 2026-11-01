@@ -31,12 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static java.time.temporal.ChronoUnit.SECONDS;
 
@@ -48,6 +43,7 @@ public class GanttUtil {
     @Getter
     private              Task      deliveryBufferTask                                                      = null;
     private final        Set<Task> finishSet                                                               = new HashSet<>();
+    private Map<UUID, ProjectCalendar> levelingCalendars;
     //    private long count = 0;
     private final        DateUtil  localDateTimeUtil                                                       = new DateUtil();
     private final        Logger    logger                                                                  = LoggerFactory.getLogger(this.getClass());
@@ -56,7 +52,6 @@ public class GanttUtil {
     //    private              ProjectProperties projectProperties                                                       = null;
     private final Set<Task> startSet = new HashSet<>();
     int testCriticalCounter;
-    private Map<UUID, ProjectCalendar> levelingCalendars;
 
     public GanttUtil(/*Context context*/) {
 //        this.context = context;
@@ -214,16 +209,6 @@ public class GanttUtil {
         return task.getEffectiveCalendar();
     }
 
-    private ProjectCalendar getLevelingCalendar(Task task) {
-        if (levelingCalendars != null) {
-            UUID resourceId = task.getResourceId() == null ? task.getSprint().getUserId() : task.getResourceId();
-            ProjectCalendar calendar = resourceId == null ? null : levelingCalendars.get(resourceId);
-            if (calendar != null)
-                return calendar;
-        }
-        return getCalendar(task);
-    }
-
     public static LocalDateTime getEarliestStartDate(Sprint projectFile) {
         LocalDateTime earliestDate = null;
         for (Task task : projectFile.getTasks()) {
@@ -297,6 +282,16 @@ public class GanttUtil {
             }
         }
         return finish;
+    }
+
+    private ProjectCalendar getLevelingCalendar(Task task) {
+        if (levelingCalendars != null) {
+            UUID            resourceId = task.getResourceId() == null ? task.getSprint().getUserId() : task.getResourceId();
+            ProjectCalendar calendar   = resourceId == null ? null : levelingCalendars.get(resourceId);
+            if (calendar != null)
+                return calendar;
+        }
+        return getCalendar(task);
     }
 
     private Duration getMinDurationFromWork(GanttErrorHandler eh, Task task) {
@@ -466,6 +461,7 @@ public class GanttUtil {
                     for (Task task : sprint.getTasks()) {
                         checks++;
                         if (isManual(task) /*&& !task.isMilestone()*/ && (task.getDuration() == null || (task.getDuration().isZero() && !task.isMilestone())) && !hasChildTasks(task)) {
+                            setStart(eh, task, task.getStart());//make sure even manual tasks start on a working day
                             Duration duration = getMinDurationFromWork(eh, task);
                             task.setDuration(duration);
                             if (task.getStart() != null && duration != null) {
