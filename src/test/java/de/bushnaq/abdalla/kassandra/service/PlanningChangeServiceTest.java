@@ -21,14 +21,7 @@ import de.bushnaq.abdalla.kassandra.audit.AuditOperationContextHolder;
 import de.bushnaq.abdalla.kassandra.dao.*;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
-import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
-import de.bushnaq.abdalla.kassandra.repository.ProductRepository;
-import de.bushnaq.abdalla.kassandra.repository.ProductAclEntryRepository;
-import de.bushnaq.abdalla.kassandra.repository.SprintRepository;
-import de.bushnaq.abdalla.kassandra.repository.TaskRepository;
-import de.bushnaq.abdalla.kassandra.repository.UndoableOperationRepository;
-import de.bushnaq.abdalla.kassandra.repository.VersionRepository;
-import de.bushnaq.abdalla.kassandra.repository.WorklogRepository;
+import de.bushnaq.abdalla.kassandra.repository.*;
 import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import de.bushnaq.abdalla.kassandra.util.BackendPlanningDataGenerator;
 import org.junit.jupiter.api.Tag;
@@ -36,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -46,11 +40,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests product-scoped planning history and its soft-delete replay behavior.
@@ -59,17 +49,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
+@AutoConfigureMockMvc
 public class PlanningChangeServiceTest extends AbstractTestUtil {
     @Autowired
-    private PlanningChangeService       planningChangeService;
+    private ProductAclEntryRepository   aclRepository;
     @Autowired
     private AuditLogService             auditLogService;
     @Autowired
-    private ProductRepository           productRepository;
-    @Autowired
-    private VersionRepository           versionRepository;
+    private EnversPlanningStateService  enversPlanningStateService;
     @Autowired
     private FeatureRepository           featureRepository;
+    @Autowired
+    private JsonMapper                  jsonMapper;
+    @Autowired
+    private PlanningChangeService       planningChangeService;
+    @Autowired
+    private ProductAclService           productAclService;
+    @Autowired
+    private ProductRepository           productRepository;
     @Autowired
     private SprintRepository            sprintRepository;
     @Autowired
@@ -77,45 +74,174 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     @Autowired
     private UndoableOperationRepository undoableOperationRepository;
     @Autowired
+    private VersionRepository           versionRepository;
+    @Autowired
     private WorklogRepository           worklogRepository;
-    @Autowired
-    private JsonMapper                  jsonMapper;
-    @Autowired
-    private ProductAclEntryRepository   aclRepository;
-    @Autowired
-    private EnversPlanningStateService  enversPlanningStateService;
-    @Autowired
-    private ProductAclService           productAclService;
 
     /**
-     * Physically removes and recreates permissions while retaining the planning tree's tombstones.
+     * Uses the complete deletion revision when no earlier ACL audit row exists.
      */
     @Test
     @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void productTreeDeletionRestoresCompleteAcl() {
-        PlanningData       data            = createPlanningData();
-        ProductAclEntryDAO userPermission  = permission(data.product().getId(), UUID.randomUUID());
-        ProductAclEntryDAO groupPermission = new ProductAclEntryDAO();
-        groupPermission.setProductId(data.product().getId());
-        groupPermission.setGroupId(UUID.randomUUID());
-        planningChangeService.persistBatch(List.of(userPermission, groupPermission), "Granted permissions");
-        ProductAclEntryDAO original = aclRepository.findById(userPermission.getId()).orElseThrow();
-        planningChangeService.deleteTree(ProductDAO.class, data.product().getId(), "Deleted product hierarchy");
-        assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
-        assertEquals(2, planningChangeService.historicalProductAcl(data.product().getId()).size());
-        for (int replay = 0; replay < 2; replay++) {
-            planningChangeService.undo(data.product().getId());
-            ProductAclEntryDAO restored = aclRepository.findById(original.getId()).orElseThrow();
-            assertEquals(original.getProductId(), restored.getProductId());
-            assertEquals(original.getUserId(), restored.getUserId());
-            assertEquals(original.getCreated(), restored.getCreated());
-            assertEquals(original.getUpdated(), restored.getUpdated());
-            assertTrue(aclRepository.existsById(groupPermission.getId()));
-            assertTrue(taskRepository.existsById(data.childTask().getId()));
-            planningChangeService.redo(data.product().getId());
-            assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
-            assertTrue(productRepository.findById(data.product().getId()).isEmpty());
-        }
+    public void aclDeletionWithoutEarlierAuditStateIsUndoable() {
+        PlanningData       data       = createPlanningData();
+        ProductAclEntryDAO permission = permission(data.product().getId(), UUID.randomUUID());
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> aclRepository.save(permission));
+        ProductAclEntryDAO original = aclRepository.findById(permission.getId()).orElseThrow();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
+                .createNativeQuery("DELETE FROM product_acl_entries_aud WHERE id = :id")
+                .setParameter("id", permission.getId()).executeUpdate());
+        planningChangeService.delete(ProductAclEntryDAO.class, permission.getId(), "Revoked legacy permission");
+        var deletion = planningChangeService.history(data.product().getId()).getFirst();
+        var entry    = deletion.getEntries().getFirst();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status ->
+                assertTrue(enversPlanningStateService.findBeforeRevision(ProductAclEntryDAO.class, permission.getId(),
+                        entry.getRevisionNumber()).isEmpty()));
+        planningChangeService.undo(data.product().getId());
+        ProductAclEntryDAO restored = aclRepository.findById(permission.getId()).orElseThrow();
+        assertEquals(original.getUserId(), restored.getUserId());
+        assertEquals(original.getCreated(), restored.getCreated());
+        assertEquals(original.getUpdated(), restored.getUpdated());
+        planningChangeService.redo(data.product().getId());
+        assertFalse(aclRepository.existsById(permission.getId()));
+    }
+
+    /**
+     * Restores ACL scalar updates and rejects replay when its recorded source revision is missing.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void aclUpdatesReplayAndMissingSourceFailsExplicitly() {
+        PlanningData       data           = createPlanningData();
+        UUID               originalUserId = UUID.randomUUID();
+        ProductAclEntryDAO permission     = permission(data.product().getId(), originalUserId);
+        planningChangeService.persist(permission, "Granted permission");
+        UUID replacementUserId = UUID.randomUUID();
+        permission.setUserId(replacementUserId);
+        planningChangeService.update(permission, "Changed permission");
+        planningChangeService.undo(data.product().getId());
+        assertEquals(originalUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
+        planningChangeService.redo(data.product().getId());
+        assertEquals(replacementUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
+        var operation = planningChangeService.history(data.product().getId()).getFirst();
+        int revision  = operation.getEntries().getFirst().getRevisionNumber();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
+                .createNativeQuery("DELETE FROM product_acl_entries_aud WHERE id = :id AND rev = :rev")
+                .setParameter("id", permission.getId()).setParameter("rev", revision).executeUpdate());
+        assertThrows(IllegalStateException.class, () -> planningChangeService.undo(data.product().getId()));
+        assertEquals(replacementUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
+        assertFalse(undoableOperationRepository.findById(operation.getId()).orElseThrow().isUndone());
+    }
+
+    private void assertDaoState(Object expected, Object actual) throws Exception {
+        assertEquals(jsonMapper.writeValueAsString(expected), jsonMapper.writeValueAsString(actual));
+    }
+
+    /**
+     * Displays historical relation endpoints before and after task renaming.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void auditUsesHistoricalRelationNames() {
+        PlanningData data     = createPlanningData();
+        RelationDAO  relation = new RelationDAO();
+        relation.setPredecessorId(data.task().getId());
+        relation.setVisible(true);
+        data.childTask().getPredecessors().add(relation);
+        planningChangeService.update(data.childTask(), "Added relation");
+        TaskDAO child = taskRepository.findById(data.childTask().getId()).orElseThrow();
+        child.getPredecessors().getFirst().setVisible(false);
+        planningChangeService.update(child, "Changed relation visibility");
+        assertTrue(auditLogService.find(null, "UPDATE", "Relation", null, null, 0, 50).items().stream()
+                .filter(event -> relation.getId().toString().equals(event.entityId()))
+                .anyMatch(event -> event.fieldChanges().stream()
+                        .anyMatch(change -> change.contains("visible: true -> false"))));
+
+        data.task().setName("Renamed task");
+        planningChangeService.update(data.task(), "Renamed task");
+        child = taskRepository.findById(data.childTask().getId()).orElseThrow();
+        child.getPredecessors().clear();
+        planningChangeService.update(child, "Removed relation");
+
+        var history = auditLogService.find(null, null, "Relation", null, null, 0, 50).items().stream()
+                .filter(event -> relation.getId().toString().equals(event.entityId())).toList();
+        assertTrue(history.stream().anyMatch(event -> "Task -> Child task".equals(event.label())));
+        assertTrue(history.stream().anyMatch(event -> "Renamed task -> Child task".equals(event.label())));
+
+    }
+
+    private <T> T copy(T source, Class<T> entityType) throws Exception {
+        return jsonMapper.readValue(jsonMapper.writeValueAsString(source), entityType);
+    }
+
+    private PlanningData createPlanningData() {
+        ProductDAO product = new ProductDAO();
+        product.setName("Product");
+        planningChangeService.persist(product, "Created product");
+        VersionDAO version = new VersionDAO();
+        version.setProductId(product.getId());
+        version.setName("1.0");
+        planningChangeService.persist(version, "Created version");
+        FeatureDAO feature = new FeatureDAO();
+        feature.setVersionId(version.getId());
+        feature.setName("Feature");
+        planningChangeService.persist(feature, "Created feature");
+        SprintDAO sprint = new SprintDAO();
+        sprint.setFeatureId(feature.getId());
+        sprint.setName("Sprint");
+        sprint.setStatus(Status.CREATED);
+        sprint.setStart(LocalDateTime.of(2026, 1, 1, 9, 0));
+        sprint.setEnd(LocalDateTime.of(2026, 1, 14, 17, 0));
+        sprint.setOriginalEstimation(Duration.ofHours(120));
+        sprint.setRemaining(Duration.ofHours(120));
+        sprint.setWorked(Duration.ZERO);
+        planningChangeService.persist(sprint, "Created sprint");
+        TaskDAO task = task(sprint.getId(), null, "Task", LocalDateTime.of(2026, 1, 2, 9, 0));
+        planningChangeService.persist(task, "Created task");
+        TaskDAO child = task(sprint.getId(), task.getId(), "Child task", LocalDateTime.of(2026, 1, 3, 9, 0));
+        planningChangeService.persist(child, "Created child task");
+        return new PlanningData(product, version, feature, sprint, task, child);
+    }
+
+    /**
+     * Retains a deleted product as a tombstone and restores it through undo.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "ADMIN")
+    public void deleteUndoRedoRetainsTombstoneAndAuditHistory() {
+        ProductDAO product = new ProductDAO();
+        product.setName("History product");
+        UUID productId = product.getId();
+        planningChangeService.persist(product, "Created product");
+
+        product.setName("Renamed history product");
+        planningChangeService.update(product, "Renamed product");
+        planningChangeService.deleteTree(ProductDAO.class, productId, "Deleted product hierarchy");
+
+        assertTrue(productRepository.findById(productId).isEmpty());
+        assertEquals(1, ((Number) entityManager.createNativeQuery("SELECT COUNT(*) FROM products WHERE id = :id")
+                .setParameter("id", productId)
+                .getSingleResult()).intValue());
+        assertEquals(Boolean.TRUE, entityManager.createNativeQuery("SELECT deleted FROM products WHERE id = :id")
+                .setParameter("id", productId)
+                .getSingleResult());
+
+        planningChangeService.undo(productId);
+        assertEquals(Boolean.FALSE, entityManager.createNativeQuery("SELECT deleted FROM products WHERE id = :id")
+                .setParameter("id", productId)
+                .getSingleResult());
+        assertEquals("Renamed history product", productRepository.findById(productId).orElseThrow().getName());
+        assertTrue(planningChangeService.canRedo(productId));
+
+        planningChangeService.redo(productId);
+        assertTrue(productRepository.findById(productId).isEmpty());
+        assertFalse(planningChangeService.canRedo(productId));
+        assertEquals(3, planningChangeService.history(productId).size());
+        assertTrue(((Number) entityManager.createNativeQuery("SELECT COUNT(*) FROM audit_revisions").getSingleResult()).intValue() >= 5);
+        var auditEvents = auditLogService.find(null, null, "History product", null, null, 0, 50).items();
+        assertTrue(auditEvents.stream()
+                .anyMatch(event -> event.replay() && event.fieldChanges().stream()
+                        .anyMatch(change -> change.startsWith("deleted:"))), auditEvents.toString());
     }
 
     /**
@@ -147,31 +273,53 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     }
 
     /**
-     * Uses the complete deletion revision when no earlier ACL audit row exists.
+     * Groups multiple transactions by their Envers revision references without persisting JSON snapshots.
      */
     @Test
     @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void aclDeletionWithoutEarlierAuditStateIsUndoable() {
-        PlanningData       data       = createPlanningData();
-        ProductAclEntryDAO permission = permission(data.product().getId(), UUID.randomUUID());
-        new TransactionTemplate(transactionManager).executeWithoutResult(status -> aclRepository.save(permission));
-        ProductAclEntryDAO original = aclRepository.findById(permission.getId()).orElseThrow();
-        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
-                .createNativeQuery("DELETE FROM product_acl_entries_aud WHERE id = :id")
-                .setParameter("id", permission.getId()).executeUpdate());
-        planningChangeService.delete(ProductAclEntryDAO.class, permission.getId(), "Revoked legacy permission");
-        var deletion = planningChangeService.history(data.product().getId()).getFirst();
-        var entry    = deletion.getEntries().getFirst();
-        new TransactionTemplate(transactionManager).executeWithoutResult(status ->
-                assertTrue(enversPlanningStateService.findBeforeRevision(ProductAclEntryDAO.class, permission.getId(),
-                        entry.getRevisionNumber()).isEmpty()));
+    public void groupedOperationsReferenceDistinctEnversRevisions() {
+        PlanningData data        = createPlanningData();
+        UUID         operationId = UUID.randomUUID();
+
+        AuditOperationContextHolder.setOperationId(operationId);
+        data.task().setName("First grouped update");
+        planningChangeService.update(data.task(), "Grouped task updates");
+
+        TaskDAO updatedTask = taskRepository.findById(data.task().getId()).orElseThrow();
+        AuditOperationContextHolder.setOperationId(operationId);
+        updatedTask.setName("Second grouped update");
+        planningChangeService.update(updatedTask, "Grouped task updates");
+
+        UndoableOperationDAO operation = undoableOperationRepository.findById(operationId).orElseThrow();
+        assertEquals(2, operation.getEntries().size());
+        assertTrue(operation.getEntries().stream().allMatch(entry -> entry.getRevisionNumber() > 0));
+        assertNotEquals(operation.getEntries().getFirst().getRevisionNumber(), operation.getEntries().getLast().getRevisionNumber());
+        assertEquals(0, ((Number) entityManager.createNativeQuery("""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'UNDOABLE_OPERATION_ENTRIES'
+                  AND COLUMN_NAME IN ('BEFORE_SNAPSHOT', 'AFTER_SNAPSHOT')
+                """).getSingleResult()).intValue());
+
         planningChangeService.undo(data.product().getId());
-        ProductAclEntryDAO restored = aclRepository.findById(permission.getId()).orElseThrow();
-        assertEquals(original.getUserId(), restored.getUserId());
-        assertEquals(original.getCreated(), restored.getCreated());
-        assertEquals(original.getUpdated(), restored.getUpdated());
+        assertEquals("Task", taskRepository.findById(data.task().getId()).orElseThrow().getName());
         planningChangeService.redo(data.product().getId());
-        assertFalse(aclRepository.existsById(permission.getId()));
+        assertEquals("Second grouped update", taskRepository.findById(data.task().getId()).orElseThrow().getName());
+    }
+
+    /**
+     * Keeps an undone product creation in the history scope after the product is soft-deleted.
+     */
+    @Test
+    @WithMockUser(username = "history-user", roles = "USER")
+    public void historyProductIdsIncludeUndoneProductCreation() {
+        ProductDAO product = new ProductDAO();
+        product.setName("Product");
+        planningChangeService.persist(product, "Created product");
+        planningChangeService.undo(product.getId());
+
+        assertTrue(productRepository.findById(product.getId()).isEmpty());
+        assertTrue(planningChangeService.historyProductIds().contains(product.getId()));
     }
 
     /**
@@ -224,154 +372,34 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     }
 
     /**
-     * Restores ACL scalar updates and rejects replay when its recorded source revision is missing.
+     * Physically removes and recreates permissions while retaining the planning tree's tombstones.
      */
     @Test
     @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void aclUpdatesReplayAndMissingSourceFailsExplicitly() {
-        PlanningData       data           = createPlanningData();
-        UUID               originalUserId = UUID.randomUUID();
-        ProductAclEntryDAO permission     = permission(data.product().getId(), originalUserId);
-        planningChangeService.persist(permission, "Granted permission");
-        UUID replacementUserId = UUID.randomUUID();
-        permission.setUserId(replacementUserId);
-        planningChangeService.update(permission, "Changed permission");
-        planningChangeService.undo(data.product().getId());
-        assertEquals(originalUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
-        planningChangeService.redo(data.product().getId());
-        assertEquals(replacementUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
-        var operation = planningChangeService.history(data.product().getId()).getFirst();
-        int revision  = operation.getEntries().getFirst().getRevisionNumber();
-        new TransactionTemplate(transactionManager).executeWithoutResult(status -> entityManager
-                .createNativeQuery("DELETE FROM product_acl_entries_aud WHERE id = :id AND rev = :rev")
-                .setParameter("id", permission.getId()).setParameter("rev", revision).executeUpdate());
-        assertThrows(IllegalStateException.class, () -> planningChangeService.undo(data.product().getId()));
-        assertEquals(replacementUserId, aclRepository.findById(permission.getId()).orElseThrow().getUserId());
-        assertFalse(undoableOperationRepository.findById(operation.getId()).orElseThrow().isUndone());
-    }
-
-    /**
-     * Retains a deleted product as a tombstone and restores it through undo.
-     */
-    @Test
-    @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void deleteUndoRedoRetainsTombstoneAndAuditHistory() {
-        ProductDAO product = new ProductDAO();
-        product.setName("History product");
-        UUID productId = product.getId();
-        planningChangeService.persist(product, "Created product");
-
-        product.setName("Renamed history product");
-        planningChangeService.update(product, "Renamed product");
-        planningChangeService.deleteTree(ProductDAO.class, productId, "Deleted product hierarchy");
-
-        assertTrue(productRepository.findById(productId).isEmpty());
-        assertEquals(1, ((Number) entityManager.createNativeQuery("SELECT COUNT(*) FROM products WHERE id = :id")
-                .setParameter("id", productId)
-                .getSingleResult()).intValue());
-        assertEquals(Boolean.TRUE, entityManager.createNativeQuery("SELECT deleted FROM products WHERE id = :id")
-                .setParameter("id", productId)
-                .getSingleResult());
-
-        planningChangeService.undo(productId);
-        assertEquals(Boolean.FALSE, entityManager.createNativeQuery("SELECT deleted FROM products WHERE id = :id")
-                .setParameter("id", productId)
-                .getSingleResult());
-        assertEquals("Renamed history product", productRepository.findById(productId).orElseThrow().getName());
-        assertTrue(planningChangeService.canRedo(productId));
-
-        planningChangeService.redo(productId);
-        assertTrue(productRepository.findById(productId).isEmpty());
-        assertFalse(planningChangeService.canRedo(productId));
-        assertEquals(3, planningChangeService.history(productId).size());
-        assertTrue(((Number) entityManager.createNativeQuery("SELECT COUNT(*) FROM audit_revisions").getSingleResult()).intValue() >= 5);
-        var auditEvents = auditLogService.find(null, null, "History product", null, null, 0, 50).items();
-        assertTrue(auditEvents.stream()
-                .anyMatch(event -> event.replay() && event.fieldChanges().stream()
-                        .anyMatch(change -> change.startsWith("deleted:"))), auditEvents.toString());
-    }
-
-    /**
-     * Keeps an undone product creation in the history scope after the product is soft-deleted.
-     */
-    @Test
-    @WithMockUser(username = "history-user", roles = "USER")
-    public void historyProductIdsIncludeUndoneProductCreation() {
-        ProductDAO product = new ProductDAO();
-        product.setName("Product");
-        planningChangeService.persist(product, "Created product");
-        planningChangeService.undo(product.getId());
-
-        assertTrue(productRepository.findById(product.getId()).isEmpty());
-        assertTrue(planningChangeService.historyProductIds().contains(product.getId()));
-    }
-
-    /**
-     * Groups multiple transactions by their Envers revision references without persisting JSON snapshots.
-     */
-    @Test
-    @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void groupedOperationsReferenceDistinctEnversRevisions() {
-        PlanningData data        = createPlanningData();
-        UUID         operationId = UUID.randomUUID();
-
-        AuditOperationContextHolder.setOperationId(operationId);
-        data.task().setName("First grouped update");
-        planningChangeService.update(data.task(), "Grouped task updates");
-
-        TaskDAO updatedTask = taskRepository.findById(data.task().getId()).orElseThrow();
-        AuditOperationContextHolder.setOperationId(operationId);
-        updatedTask.setName("Second grouped update");
-        planningChangeService.update(updatedTask, "Grouped task updates");
-
-        UndoableOperationDAO operation = undoableOperationRepository.findById(operationId).orElseThrow();
-        assertEquals(2, operation.getEntries().size());
-        assertTrue(operation.getEntries().stream().allMatch(entry -> entry.getRevisionNumber() > 0));
-        assertNotEquals(operation.getEntries().getFirst().getRevisionNumber(), operation.getEntries().getLast().getRevisionNumber());
-        assertEquals(0, ((Number) entityManager.createNativeQuery("""
-                SELECT COUNT(*)
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_NAME = 'UNDOABLE_OPERATION_ENTRIES'
-                  AND COLUMN_NAME IN ('BEFORE_SNAPSHOT', 'AFTER_SNAPSHOT')
-                """).getSingleResult()).intValue());
-
-        planningChangeService.undo(data.product().getId());
-        assertEquals("Task", taskRepository.findById(data.task().getId()).orElseThrow().getName());
-        planningChangeService.redo(data.product().getId());
-        assertEquals("Second grouped update", taskRepository.findById(data.task().getId()).orElseThrow().getName());
-    }
-
-    /**
-     * Undoes and redoes worklog creation, update, and deletion.
-     */
-    @Test
-    @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void worklogAddUpdateAndDeleteUndo() {
-        PlanningData data = createPlanningData();
-        // Add Worklog
-        WorklogDAO worklog = new WorklogDAO();
-        worklog.setAuthorId(UUID.randomUUID());
-        worklog.setSprintId(data.sprint().getId());
-        worklog.setTaskId(data.task().getId());
-        worklog.setStart(LocalDateTime.of(2026, 1, 5, 9, 0));
-        worklog.setTimeSpent(Duration.ofHours(2));
-        worklog.setTimeRemainingEstimate(Duration.ofHours(6));
-        worklog.setComment("initial");
-        planningChangeService.persist(worklog, "Created worklog");
-        planningChangeService.undo(data.product().getId());
-        assertTrue(worklogRepository.findById(worklog.getId()).isEmpty());
-        planningChangeService.redo(data.product().getId());
-
-        // Update Worklog
-        worklog.setComment("updated");
-        planningChangeService.update(worklog, "Updated worklog");
-        planningChangeService.undo(data.product().getId());
-        assertEquals("initial", worklogRepository.findById(worklog.getId()).orElseThrow().getComment());
-
-        // Delete Worklog
-        planningChangeService.delete(WorklogDAO.class, worklog.getId(), "Deleted worklog");
-        planningChangeService.undo(data.product().getId());
-        assertTrue(worklogRepository.findById(worklog.getId()).isPresent());
+    public void productTreeDeletionRestoresCompleteAcl() {
+        PlanningData       data            = createPlanningData();
+        ProductAclEntryDAO userPermission  = permission(data.product().getId(), UUID.randomUUID());
+        ProductAclEntryDAO groupPermission = new ProductAclEntryDAO();
+        groupPermission.setProductId(data.product().getId());
+        groupPermission.setGroupId(UUID.randomUUID());
+        planningChangeService.persistBatch(List.of(userPermission, groupPermission), "Granted permissions");
+        ProductAclEntryDAO original = aclRepository.findById(userPermission.getId()).orElseThrow();
+        planningChangeService.deleteTree(ProductDAO.class, data.product().getId(), "Deleted product hierarchy");
+        assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
+        assertEquals(2, planningChangeService.historicalProductAcl(data.product().getId()).size());
+        for (int replay = 0; replay < 2; replay++) {
+            planningChangeService.undo(data.product().getId());
+            ProductAclEntryDAO restored = aclRepository.findById(original.getId()).orElseThrow();
+            assertEquals(original.getProductId(), restored.getProductId());
+            assertEquals(original.getUserId(), restored.getUserId());
+            assertEquals(original.getCreated(), restored.getCreated());
+            assertEquals(original.getUpdated(), restored.getUpdated());
+            assertTrue(aclRepository.existsById(groupPermission.getId()));
+            assertTrue(taskRepository.existsById(data.childTask().getId()));
+            planningChangeService.redo(data.product().getId());
+            assertTrue(aclRepository.findByProductId(data.product().getId()).isEmpty());
+            assertTrue(productRepository.findById(data.product().getId()).isEmpty());
+        }
     }
 
     /**
@@ -407,36 +435,59 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     }
 
     /**
-     * Displays historical relation endpoints before and after task renaming.
+     * Restores each parent aggregate after an update and complete subtree deletion.
      */
     @Test
     @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void auditUsesHistoricalRelationNames() {
-        PlanningData data     = createPlanningData();
-        RelationDAO  relation = new RelationDAO();
-        relation.setPredecessorId(data.task().getId());
-        relation.setVisible(true);
-        data.childTask().getPredecessors().add(relation);
-        planningChangeService.update(data.childTask(), "Added relation");
-        TaskDAO child = taskRepository.findById(data.childTask().getId()).orElseThrow();
-        child.getPredecessors().getFirst().setVisible(false);
-        planningChangeService.update(child, "Changed relation visibility");
-        assertTrue(auditLogService.find(null, "UPDATE", "Relation", null, null, 0, 50).items().stream()
-                .filter(event -> relation.getId().toString().equals(event.entityId()))
-                .anyMatch(event -> event.fieldChanges().stream()
-                        .anyMatch(change -> change.contains("visible: true -> false"))));
+    public void sprintFeatureVersionAndProductAddUpdateDeleteUndo() {
+        PlanningData data = createPlanningData();
+        // Update and Delete Sprint
+        data.sprint().setStart(data.sprint().getStart().plusDays(2));
+        planningChangeService.update(data.sprint(), "Moved sprint");
+        planningChangeService.undo(data.product().getId());
+        assertEquals(LocalDateTime.of(2026, 1, 1, 9, 0), sprintRepository.findById(data.sprint().getId()).orElseThrow().getStart());
+        planningChangeService.deleteTree(SprintDAO.class, data.sprint().getId(), "Deleted sprint hierarchy");
+        planningChangeService.undo(data.product().getId());
+        assertTrue(sprintRepository.findById(data.sprint().getId()).isPresent());
+        // Update and Delete Feature
+        data.feature().setName("Renamed feature");
+        planningChangeService.update(data.feature(), "Updated feature");
+        planningChangeService.undo(data.product().getId());
+        assertEquals("Feature", featureRepository.findById(data.feature().getId()).orElseThrow().getName());
+        planningChangeService.deleteTree(FeatureDAO.class, data.feature().getId(), "Deleted feature hierarchy");
+        planningChangeService.undo(data.product().getId());
+        assertTrue(featureRepository.findById(data.feature().getId()).isPresent());
+        // Update and Delete Version
+        data.version().setName("2.0");
+        planningChangeService.update(data.version(), "Updated version");
+        planningChangeService.undo(data.product().getId());
+        assertEquals("1.0", versionRepository.findById(data.version().getId()).orElseThrow().getName());
+        planningChangeService.deleteTree(VersionDAO.class, data.version().getId(), "Deleted version hierarchy");
+        planningChangeService.undo(data.product().getId());
+        assertTrue(versionRepository.findById(data.version().getId()).isPresent());
+        // Delete Product
+        planningChangeService.deleteTree(ProductDAO.class, data.product().getId(), "Deleted product hierarchy");
+        planningChangeService.undo(data.product().getId());
+        assertTrue(productRepository.findById(data.product().getId()).isPresent());
+    }
 
-        data.task().setName("Renamed task");
-        planningChangeService.update(data.task(), "Renamed task");
-        child = taskRepository.findById(data.childTask().getId()).orElseThrow();
-        child.getPredecessors().clear();
-        planningChangeService.update(child, "Removed relation");
-
-        var history = auditLogService.find(null, null, "Relation", null, null, 0, 50).items().stream()
-                .filter(event -> relation.getId().toString().equals(event.entityId())).toList();
-        assertTrue(history.stream().anyMatch(event -> "Task -> Child task".equals(event.label())));
-        assertTrue(history.stream().anyMatch(event -> "Renamed task -> Child task".equals(event.label())));
-
+    private TaskDAO task(UUID sprintId, UUID parentTaskId, String name, LocalDateTime start) {
+        TaskDAO task = new TaskDAO();
+        task.setSprintId(sprintId);
+        task.setParentTaskId(parentTaskId);
+        task.setName(name);
+        task.setStart(start);
+        task.setFinish(start.plusDays(5));
+        task.setDuration(Duration.ofDays(5));
+        task.setMinEstimate(Duration.ofHours(32));
+        task.setMaxEstimate(Duration.ofHours(48));
+        task.setRemainingEstimate(Duration.ofHours(40));
+        task.setTimeSpent(Duration.ofHours(8));
+        task.setImpactOnCost(true);
+        task.setCritical(true);
+        task.setProgress(0.0f);
+        task.setTaskMode(TaskMode.MANUALLY_SCHEDULED);
+        return task;
     }
 
     /**
@@ -493,96 +544,36 @@ public class PlanningChangeServiceTest extends AbstractTestUtil {
     }
 
     /**
-     * Restores each parent aggregate after an update and complete subtree deletion.
+     * Undoes and redoes worklog creation, update, and deletion.
      */
     @Test
     @WithMockUser(username = "history-user", roles = "ADMIN")
-    public void sprintFeatureVersionAndProductAddUpdateDeleteUndo() {
+    public void worklogAddUpdateAndDeleteUndo() {
         PlanningData data = createPlanningData();
-        // Update and Delete Sprint
-        data.sprint().setStart(data.sprint().getStart().plusDays(2));
-        planningChangeService.update(data.sprint(), "Moved sprint");
+        // Add Worklog
+        WorklogDAO worklog = new WorklogDAO();
+        worklog.setAuthorId(UUID.randomUUID());
+        worklog.setSprintId(data.sprint().getId());
+        worklog.setTaskId(data.task().getId());
+        worklog.setStart(LocalDateTime.of(2026, 1, 5, 9, 0));
+        worklog.setTimeSpent(Duration.ofHours(2));
+        worklog.setTimeRemainingEstimate(Duration.ofHours(6));
+        worklog.setComment("initial");
+        planningChangeService.persist(worklog, "Created worklog");
         planningChangeService.undo(data.product().getId());
-        assertEquals(LocalDateTime.of(2026, 1, 1, 9, 0), sprintRepository.findById(data.sprint().getId()).orElseThrow().getStart());
-        planningChangeService.deleteTree(SprintDAO.class, data.sprint().getId(), "Deleted sprint hierarchy");
-        planningChangeService.undo(data.product().getId());
-        assertTrue(sprintRepository.findById(data.sprint().getId()).isPresent());
-        // Update and Delete Feature
-        data.feature().setName("Renamed feature");
-        planningChangeService.update(data.feature(), "Updated feature");
-        planningChangeService.undo(data.product().getId());
-        assertEquals("Feature", featureRepository.findById(data.feature().getId()).orElseThrow().getName());
-        planningChangeService.deleteTree(FeatureDAO.class, data.feature().getId(), "Deleted feature hierarchy");
-        planningChangeService.undo(data.product().getId());
-        assertTrue(featureRepository.findById(data.feature().getId()).isPresent());
-        // Update and Delete Version
-        data.version().setName("2.0");
-        planningChangeService.update(data.version(), "Updated version");
-        planningChangeService.undo(data.product().getId());
-        assertEquals("1.0", versionRepository.findById(data.version().getId()).orElseThrow().getName());
-        planningChangeService.deleteTree(VersionDAO.class, data.version().getId(), "Deleted version hierarchy");
-        planningChangeService.undo(data.product().getId());
-        assertTrue(versionRepository.findById(data.version().getId()).isPresent());
-        // Delete Product
-        planningChangeService.deleteTree(ProductDAO.class, data.product().getId(), "Deleted product hierarchy");
-        planningChangeService.undo(data.product().getId());
-        assertTrue(productRepository.findById(data.product().getId()).isPresent());
-    }
+        assertTrue(worklogRepository.findById(worklog.getId()).isEmpty());
+        planningChangeService.redo(data.product().getId());
 
-    private PlanningData createPlanningData() {
-        ProductDAO product = new ProductDAO();
-        product.setName("Product");
-        planningChangeService.persist(product, "Created product");
-        VersionDAO version = new VersionDAO();
-        version.setProductId(product.getId());
-        version.setName("1.0");
-        planningChangeService.persist(version, "Created version");
-        FeatureDAO feature = new FeatureDAO();
-        feature.setVersionId(version.getId());
-        feature.setName("Feature");
-        planningChangeService.persist(feature, "Created feature");
-        SprintDAO sprint = new SprintDAO();
-        sprint.setFeatureId(feature.getId());
-        sprint.setName("Sprint");
-        sprint.setStatus(Status.CREATED);
-        sprint.setStart(LocalDateTime.of(2026, 1, 1, 9, 0));
-        sprint.setEnd(LocalDateTime.of(2026, 1, 14, 17, 0));
-        sprint.setOriginalEstimation(Duration.ofHours(120));
-        sprint.setRemaining(Duration.ofHours(120));
-        sprint.setWorked(Duration.ZERO);
-        planningChangeService.persist(sprint, "Created sprint");
-        TaskDAO task = task(sprint.getId(), null, "Task", LocalDateTime.of(2026, 1, 2, 9, 0));
-        planningChangeService.persist(task, "Created task");
-        TaskDAO child = task(sprint.getId(), task.getId(), "Child task", LocalDateTime.of(2026, 1, 3, 9, 0));
-        planningChangeService.persist(child, "Created child task");
-        return new PlanningData(product, version, feature, sprint, task, child);
-    }
+        // Update Worklog
+        worklog.setComment("updated");
+        planningChangeService.update(worklog, "Updated worklog");
+        planningChangeService.undo(data.product().getId());
+        assertEquals("initial", worklogRepository.findById(worklog.getId()).orElseThrow().getComment());
 
-    private TaskDAO task(UUID sprintId, UUID parentTaskId, String name, LocalDateTime start) {
-        TaskDAO task = new TaskDAO();
-        task.setSprintId(sprintId);
-        task.setParentTaskId(parentTaskId);
-        task.setName(name);
-        task.setStart(start);
-        task.setFinish(start.plusDays(5));
-        task.setDuration(Duration.ofDays(5));
-        task.setMinEstimate(Duration.ofHours(32));
-        task.setMaxEstimate(Duration.ofHours(48));
-        task.setRemainingEstimate(Duration.ofHours(40));
-        task.setTimeSpent(Duration.ofHours(8));
-        task.setImpactOnCost(true);
-        task.setCritical(true);
-        task.setProgress(0.0f);
-        task.setTaskMode(TaskMode.MANUALLY_SCHEDULED);
-        return task;
-    }
-
-    private <T> T copy(T source, Class<T> entityType) throws Exception {
-        return jsonMapper.readValue(jsonMapper.writeValueAsString(source), entityType);
-    }
-
-    private void assertDaoState(Object expected, Object actual) throws Exception {
-        assertEquals(jsonMapper.writeValueAsString(expected), jsonMapper.writeValueAsString(actual));
+        // Delete Worklog
+        planningChangeService.delete(WorklogDAO.class, worklog.getId(), "Deleted worklog");
+        planningChangeService.undo(data.product().getId());
+        assertTrue(worklogRepository.findById(worklog.getId()).isPresent());
     }
 
     private record PlanningData(ProductDAO product, VersionDAO version, FeatureDAO feature, SprintDAO sprint,

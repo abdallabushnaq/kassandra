@@ -1,26 +1,8 @@
 # AI Questions
 
-# Rewrite Calendar Chart in TS
-
-We rewrote the GanttChart and BurnDownChart from java to TS.
-Use them as reference.
-you will notice that we tried to keep the structure, method name, variable names and the total design very much as in
-the java code.
-This allowed us to ensure almost 100% pixel accurate reproduction of the legacy code.
-Let's rewrite the CalendarChart and CalendarRenderer in a similar way.
-
-## Target
-
-1. Write a Ts replacement for a client rendered Calendar that can replace the usage of the legacy code.
-2. The new test should be very much structured like the java code allowing line by line comparison to better do a code
-   review.
-3. Rewrite CalendarTest to use new calendar. See GanttGenerator how we generate client side charts and save svg and png
-   to disk.
-4. Compare old and new calendar chart svg or png to detect discrepancies and report them.
-
 # Server Settings Design
 
-1. create a markdown file docs/design/server-settings-design.md explaining how server settings work
+1. create a markdown file docs/design/server-settings-design.md explaining how server settings work.
 2. use mermaid to visualize flows or relations if appropriate for this design.
 
 # Page Breadcrumbs
@@ -172,11 +154,18 @@ Let's allow setting that to false in SeleniumHandler.
 
 # Stable Diffusion Cache for our Tests
 
-Lets introduce a
+Let's introduce a file based cache for our Stable Diffusion generateds images.
+If an image has same size, diffusion parameters including prompt and negative prompt, we should reuse the image from the
+cache instead of generating it again.
+This will be only used by our test code.
+Let's add a new class CacheAwareAvatarService extending AvatarService to check if an image has already been generated
+and stored in the cache.
+We will use this in our tests whenever we need to generate an image e.g. PersistingEntityGenerator.
 
 # Failing Tests
 
 Running the Action scripts (maven-build.yml) in github a lot more tests fail than running them locally.
+All of the API tests fail.
 Let's pick one of them and try to figure out why it could be failing running in github, but it works fine locally:
 AvailabilityApiTest.
 
@@ -189,12 +178,8 @@ I downloaded the results:
 .github\test-results\test-artifacts\target\surefire-reports\TEST-de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApiTest.xml
 
 Can you figure out why this test is failing in github, but works fine locally?
+remark: we already isolated the test and run it in github and it succeeded, so it is probably a problem of other tests
+interfering with this test.
 
-# Fix DynamicGanttTest
-
-DynamicGanttTest.testDeliveryBuffer1 fails.
-But it uses anyhow legacy code to generate Gantt chart and burndown chart.
-The production code as moved to js.
-See code in Backlog.refreshGanttChart.
-How can we use the js code to generate a gantt chart in our test and save it to disk for debugging purposes?
- 
+remark: since then we fixed several tests, but are no onger able to download the test artifacts, as windows defender is
+marking them as a virus.
