@@ -236,6 +236,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         LegacyGanttChartLegacy chart       = new LegacyGanttChartLegacy("/", dao);
         String                 description = TestInfoUtil.getTestMethodName(testInfo);
         chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
+        // Fixture generation also levels sprints, so capture the reference only at comparison time.
+        if (projectFile == null) {
+            storeResult(testInfo);
+        }
         compareResults(projectFile, testInfo);
     }
 
@@ -477,7 +481,6 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         if (projectFile == null) {
             try (Profiler pc = new Profiler(SampleType.FILE)) {
                 storeExpectedResult(testInfo, sprint);
-                storeResult(testInfo, sprint);
             }
         }
     }
@@ -674,8 +677,12 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         store(testResultFolder, testCaseInfo, sprint, true);
     }
 
-    private void storeResult(TestInfo testCaseInfo, Sprint sprint) throws IOException {
-        store(testReferenceResultFolder, testCaseInfo, sprint, false);
+    private void storeResult(TestInfo testCaseInfo) throws IOException {
+        String fileName      = TestInfoUtil.getTestMethodName(testCaseInfo) + ".json";
+        Path   referencePath = Paths.get(testReferenceResultFolder, fileName);
+        if (!Files.exists(referencePath)) {
+            Files.copy(Paths.get(testResultFolder, fileName), referencePath);
+        }
     }
 
 //    @Override
