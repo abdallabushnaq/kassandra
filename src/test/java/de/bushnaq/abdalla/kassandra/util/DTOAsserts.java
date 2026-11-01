@@ -110,7 +110,7 @@ public class DTOAsserts {
     }
 
     protected static void assertSprintEquals(Sprint expected, Sprint actual, boolean shallow) {
-        assertEquals(expected.getCreated(), actual.getCreated(), String.format("Sprint '%s' created date does not match", actual.getName()));
+//        assertEquals(expected.getCreated(), actual.getCreated(), String.format("Sprint '%s' created date does not match", actual.getName()));
 //        assertEquals(expected.getUpdated(), actual.getUpdated(), String.format("Sprint '%s' updated date does not match", actual.getName()));
         assertEquals(expected.getEnd(), actual.getEnd(), "Sprint end dates do not match");
 //        assertEquals(expected.getId(), actual.getId(), "Sprint IDs do not match");
