@@ -104,6 +104,8 @@ Status changes save immediately and are separate from grid Save/Cancel.
 
 The Gantt chart shows the calculated schedule. Investigate estimates, capacity,
 assignments and dependencies if dates are not what you expected.
+Zoom in to reveal additional task and milestone details and dependency lines;
+zooming out simplifies the task bars.
 
 ![Open chart separately](images/help/light/Backlog/open-gantt-chart-button.png)
 

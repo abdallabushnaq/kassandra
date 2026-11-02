@@ -16,6 +16,7 @@
  */
 
 import {CalendarSize} from "../../CalendarSize";
+import {GanttZoomSettings} from '../../gantt/dto/GanttZoomSettings.js';
 
 /**
  * DTO representing metadata for a burndown chart.
@@ -41,4 +42,5 @@ export interface BurndownMetaDto {
     totalDays: number;
     theme?: Record<string, unknown>;
     calendarSize: CalendarSize;
+    ganttZoom: GanttZoomSettings;
 }

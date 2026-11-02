@@ -10,6 +10,7 @@ import {AbstractRenderer} from '../AbstractRenderer.js';
 import {getCalendarException, isWorkingDay} from './date-helpers.js';
 import {TaskDto} from './dto/TaskDto.js';
 import {CalendarException} from './dto/CalendarException.js';
+import {GanttZoomSettings} from './dto/GanttZoomSettings.js';
 import {FontMetrics} from "../FontMetrics.js";
 import {FontSpec} from "../FontSpec.js";
 import {AbstractChart} from '../AbstractChart.js';
@@ -57,7 +58,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     return (dayIndex - this.scrollOffset) * this.dayWidth;
     // }
 
-    protected constructor(chart: AbstractChart/*, milestones: Milestones*/, preRun: number, postRun: number) {
+    protected constructor(chart: AbstractChart/*, milestones: Milestones*/, preRun: number, postRun: number,
+                          protected readonly ganttZoom: GanttZoomSettings) {
         super(chart/*, milestones*/, preRun, postRun);
         this.dayWidth = DEFAULT_DW;
         this.chartStart = null;
@@ -71,6 +73,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     getTaskHeight(): number {
         return LINE_HEIGHT;
+    }
+
+    private showDetail(threshold: number): boolean {
+        return this.dayWidth * this.visualScale >= threshold;
     }
 
     override calculateChartHeight(): number {
@@ -146,6 +152,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const top = y - th / 2/* + TASK_BODY_BORDER*/;
         const bottom = y + th / 2/* - TASK_BODY_BORDER*/;
         const solidLineAttributes = {
+            class: 'task-border',
             stroke: borderColor,
             'stroke-width': '1',
             'vector-effect': 'non-scaling-stroke',
@@ -154,6 +161,14 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             ...solidLineAttributes,
             'stroke-dasharray': '2 2',
         };
+
+        if (!this.showDetail(this.ganttZoom.renderTaskNonWorkingDaysAtDayWidth)) {
+            g.appendChild(SvgUtils.createLine(x1, top, x2, top, solidLineAttributes));
+            g.appendChild(SvgUtils.createLine(x1, bottom, x2, bottom, solidLineAttributes));
+            g.appendChild(SvgUtils.createLine(x1, top, x1, bottom, solidLineAttributes));
+            g.appendChild(SvgUtils.createLine(x2, top, x2, bottom, solidLineAttributes));
+            return;
+        }
 
         for (let day = 0; day <= days; day++) {
             const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
@@ -234,9 +249,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             `${x1},${y - mW}`,
         ].join(' ');
         const poly = SvgUtils.createPolygon({
+            class: 'milestone-body',
             points,
             fill: fillColor,
-            stroke: borderColor,
+            stroke: this.showDetail(this.ganttZoom.renderMilestoneBorderAtDayWidth) ? borderColor : 'none',
             'stroke-width': '1',
             'vector-effect': 'non-scaling-stroke'
         });
@@ -244,9 +260,18 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         g.appendChild(poly);
         const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
         const labelX = x1 + mW / 2 + 10;
-        const dateStr = task.start ? DateUtils.toLocalYMDHMString(task.start, this.dateTimeFormat) : '';
-        const label = `${taskName || ''} (${dateStr})`;
+        const showDate = this.showDetail(this.ganttZoom.renderMilestoneStartDateAtDayWidth);
+        const showTime = this.showDetail(this.ganttZoom.renderMilestoneStartTimeAtDayWidth);
+        let dateStr = '';
+        if (task.start && showDate && showTime)
+            dateStr = DateUtils.toLocalYMDHMString(task.start, this.dateTimeFormat);
+        else if (task.start && showDate)
+            dateStr = new Intl.DateTimeFormat('en-DE', {year: 'numeric', month: '2-digit', day: '2-digit'}).format(task.start);
+        else if (task.start && showTime)
+            dateStr = new Intl.DateTimeFormat('en-DE', {hour: '2-digit', minute: '2-digit', hour12: false}).format(task.start);
+        const label = dateStr ? `${taskName} (${dateStr})` : taskName;
         const lbl = SvgUtils.createText(labelX, y, label, {
+            class: 'milestone-label',
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
         });
         lbl.appendChild(SvgUtils.createTitle(this.generateTaskToolTip(task)));
@@ -345,13 +370,15 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
         this.drawTaskInner(g, task, x1, x2, y, labelInside, alien, marker, conflict);
         if (doDrawId) this.drawId(g, task, y);
-        if (drawRelations && task.predecessors?.length) {
+        if (drawRelations && this.showDetail(this.ganttZoom.renderDependenciesAtDayWidth) && task.predecessors?.length) {
             for (const rel of task.predecessors) {
                 if (!rel.visible) continue;
                 const targetTask = this._taskById[String(rel.predecessorId)];
                 if (!targetTask) continue;
                 const y1 = this._calendarH + targetTask.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
-                this.drawRelation(g, task, y, targetTask, y1);
+                const relation = SvgUtils.createGroup({class: 'task-dependency'});
+                this.drawRelation(relation, task, y, targetTask, y1);
+                g.appendChild(relation);
             }
         }
     }
@@ -386,9 +413,11 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             const progress = task.progress || 0;
             this.drawTaskBody(g, task, x1, x2, y, alien, progress);
             this.drawConflictMarker(g, y, conflict);
-            this.drawTaskBorder(g, task, x1, x2, y);
+            if (this.showDetail(this.ganttZoom.renderTaskBorderAtDayWidth))
+                this.drawTaskBorder(g, task, x1, x2, y);
             this.drawManualMarker(g, task, x1, y, false);
-            this.drawProgress(g, task, x1, x2, y, progress);
+            if (this.showDetail(this.ganttZoom.renderTaskProgressTextAtDayWidth))
+                this.drawProgress(g, task, x1, x2, y, progress);
 
             const labelRight = x2 + TASK_NAME_TO_TASK_GAP;
             if (labelRight < this.containerWidth + 40) {
@@ -428,6 +457,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                 const clipId2 = 'pt-' + String(task.id).replace(/-/g, '');
                 g.appendChild(SvgUtils.createClipPath(clipId2, x1 + 1, y - th / 2 + RESOURCE_NAME_TO_TASK_GAP, x2 - x1 - 3, th - 6));
                 g.appendChild(SvgUtils.createText(x1 + barWidth / 2, y, text, {
+                    class: 'task-progress-text',
                     fill: highestContrast,
                     'font-size': AbstractGanttRenderer.taskProgressFont.size,
                     'font-family': AbstractGanttRenderer.taskProgressFont.family,
@@ -450,62 +480,71 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (!alien) {
             const y1 = y - th / 2/* + TASK_BODY_BORDER*/;
             const h = th /*- TASK_BODY_BORDER * 2*/;
-            if (x2 - x1 - 1 - 1 > 0) {
-                // Calculate days between start and finish (both truncated to day precision)
-                const startTruncated = DateUtils.getDayMidnight(task.start!);
-                const finishTruncated = DateUtils.getDayMidnight(task.finish!);
-                const days = Math.floor((finishTruncated.getTime() - startTruncated.getTime()) / DateUtils.MS);
+            if (x2 > x1) {
+                if (!this.showDetail(this.ganttZoom.renderTaskNonWorkingDaysAtDayWidth)) {
+                    const rect = SvgUtils.createRect(x1, y1, x2 - x1, h, {
+                        class: 'task-body',
+                        fill: ColorUtils.convertSprintColorToRgba(fillColor),
+                    });
+                    rect.appendChild(SvgUtils.createTitle(tooltip));
+                    g.appendChild(rect);
+                } else {
+                    // Calculate days between start and finish (both truncated to day precision)
+                    const startTruncated = DateUtils.getDayMidnight(task.start!);
+                    const finishTruncated = DateUtils.getDayMidnight(task.finish!);
+                    const days = Math.floor((finishTruncated.getTime() - startTruncated.getTime()) / DateUtils.MS);
 
-                for (let day = 0; day <= days; day++) {
-                    const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
-                    let segX: number, segW: number;
+                    for (let day = 0; day <= days; day++) {
+                        const currentDay = new Date(startTruncated.getTime() + day * DateUtils.MS);
+                        let segX: number, segW: number;
 
-                    if (isWorkingDay(currentDay, this.getCalendarExceptions(task))) {
-                        const fill = ColorUtils.convertSprintColorToRgba(fillColor);
-                        if (days === 0) {
-                            // This is the left and right end
-                            segX = x1;
-                            segW = x2 - x1;
-                        } else if (day === 0) {
-                            // This is the left end
-                            const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
-                            const nextDayAt8 = new Date(currentDayAt8.getTime() + SECONDS_PER_DAY * 1000);
-                            const xFinish = this.calculateX(nextDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                            segX = x1;
-                            segW = xFinish - x1;
-                        } else if (day === days) {
-                            // This is the right end
-                            const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
-                            const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                            segX = xStart;
-                            segW = x2 - xStart;
+                        if (isWorkingDay(currentDay, this.getCalendarExceptions(task))) {
+                            const fill = ColorUtils.convertSprintColorToRgba(fillColor);
+                            if (days === 0) {
+                                // This is the left and right end
+                                segX = x1;
+                                segW = x2 - x1;
+                            } else if (day === 0) {
+                                // This is the left end
+                                const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                                const nextDayAt8 = new Date(currentDayAt8.getTime() + SECONDS_PER_DAY * 1000);
+                                const xFinish = this.calculateX(nextDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                                segX = x1;
+                                segW = xFinish - x1;
+                            } else if (day === days) {
+                                // This is the right end
+                                const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                                const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                                segX = xStart;
+                                segW = x2 - xStart;
+                            } else {
+                                // This is the middle
+                                const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
+                                const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+                                segX = xStart;
+                                segW = this.calendarXAxes.dayOfWeek.getWidth();
+                            }
+                            const rect = SvgUtils.createRect(segX, y1, segW, h, {class: 'task-body', fill});
+                            rect.appendChild(SvgUtils.createTitle(tooltip));
+                            g.appendChild(rect);
                         } else {
-                            // This is the middle
+                            // Weekend/non-working day
+                            const weekendFill = ColorUtils.hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
                             const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                             const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                            segX = xStart;
-                            segW = this.calendarXAxes.dayOfWeek.getWidth();
+                            const rectW = SvgUtils.createRect(xStart, y1, this.calendarXAxes.dayOfWeek.getWidth(), h, {class: 'task-body', fill: weekendFill});
+                            rectW.appendChild(SvgUtils.createTitle(tooltip));
+                            g.appendChild(rectW);
                         }
-                        const rect = SvgUtils.createRect(segX, y1, segW, h, {fill});
-                        rect.appendChild(SvgUtils.createTitle(tooltip));
-                        g.appendChild(rect);
-                    } else {
-                        // Weekend/non-working day
-                        const weekendFill = ColorUtils.hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
-                        const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
-                        const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                        const rectW = SvgUtils.createRect(xStart, y1, this.calendarXAxes.dayOfWeek.getWidth(), h, {fill: weekendFill});
-                        rectW.appendChild(SvgUtils.createTitle(tooltip));
-                        g.appendChild(rectW);
                     }
                 }
 
                 // Progress bar
-                if (progress > 0.0) {
+                if (progress > 0.0 && this.showDetail(this.ganttZoom.renderTaskProgressBarAtDayWidth)) {
                     const progressFill = task.progressColor ? ColorUtils.convertSprintColorToRgba(task.progressColor) : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
-                    const progressW = Math.floor((x2 - x1) * progress);
+                    const progressW = (x2 - x1) * progress;
                     if (progressW > 0) {
-                        const pRect = SvgUtils.createRect(x1, y1 + TASK_PROGRESS_PADDING, progressW, h - TASK_PROGRESS_PADDING * 2, {fill: progressFill});
+                        const pRect = SvgUtils.createRect(x1, y1 + TASK_PROGRESS_PADDING, progressW, h - TASK_PROGRESS_PADDING * 2, {class: 'task-progress-bar', fill: progressFill});
                         pRect.appendChild(SvgUtils.createTitle(tooltip));
                         g.appendChild(pRect);
                         if (progress < 1.0) {

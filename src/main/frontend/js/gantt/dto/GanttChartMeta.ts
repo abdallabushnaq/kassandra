@@ -2,6 +2,7 @@
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
 import {CalendarSize} from "../../CalendarSize.js";
+import {GanttZoomSettings} from './GanttZoomSettings.js';
 
 /**
  * DTO representing metadata for a Gantt chart.
@@ -19,5 +20,6 @@ export interface GanttChartMeta {
     preRun?: number;
     postRun?: number;
     calendarSize: CalendarSize;
+    ganttZoom: GanttZoomSettings;
     theme?: Record<string, unknown>;
 }

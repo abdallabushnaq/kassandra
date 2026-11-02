@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.dto.gantt;
 
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 
 import java.time.LocalDateTime;
@@ -37,6 +38,10 @@ public class GanttMetaDto {
     public LocalDateTime chartStart;
     public String        copyright;
     public int           firstDayX;
+    /**
+     * Effective-day-width thresholds for optional Gantt details.
+     */
+    public KassandraProperties.Gantt ganttZoom;
     /**
      * Current date/time (for the "now" marker line).
      */

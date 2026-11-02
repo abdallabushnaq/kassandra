@@ -21,6 +21,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.Relation;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
@@ -125,7 +126,7 @@ public class GanttGenerator extends EntityGenerator {
         StableDiffusionConfig     config       = new StableDiffusionConfig();
         LightTheme                lightTheme   = new LightTheme(config);
         DarkTheme                 darkTheme    = new DarkTheme(config);
-        GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme);
+        GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme, new KassandraProperties());
         GanttBurndownChartService chartService = new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
         String json = new JacksonConfig().jsonMapper().writeValueAsString(
                 chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
@@ -226,7 +227,7 @@ public class GanttGenerator extends EntityGenerator {
     public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
         Sprint                sprint       = prepareChartSprint(sprintId);
         StableDiffusionConfig config       = new StableDiffusionConfig();
-        GanttChartService     chartService = new GanttChartService(new LightTheme(config), new DarkTheme(config));
+        GanttChartService     chartService = new GanttChartService(new LightTheme(config), new DarkTheme(config), new KassandraProperties());
         String json = new JacksonConfig().jsonMapper().writeValueAsString(
                 chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
         captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart",

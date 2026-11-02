@@ -58,7 +58,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         //     milestonesList.length > 0 ? milestonesList[milestonesList.length - 1].time : chartStart,
         // );
 
-        super(chart/*, milestones*/, data.meta.preRun || 0, data.meta.postRun || 0);
+        super(chart/*, milestones*/, data.meta.preRun || 0, data.meta.postRun || 0, data.meta.ganttZoom);
         this.createMilestonesFromMeta(data.meta);
 
         this.data = data;
@@ -147,7 +147,9 @@ export class GanttRenderer extends AbstractGanttRenderer {
 
     drawGanttChart(g: SVGElement): void {
         for (const task of this.tasks) {
-            this.drawTask(g, 0, task, true, true, false, false, null, null, true);
+            const taskGroup = SvgUtils.createGroup({'data-task-id': String(task.id)});
+            this.drawTask(taskGroup, 0, task, true, true, false, false, null, null, true);
+            g.appendChild(taskGroup);
         }
     }
 

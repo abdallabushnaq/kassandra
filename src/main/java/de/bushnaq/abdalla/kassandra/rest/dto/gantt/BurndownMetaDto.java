@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.rest.dto.gantt;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 
@@ -46,6 +47,10 @@ public class BurndownMetaDto {
      */
     public long          estimatedBestWorkSeconds;
     public int           firstDayX;
+    /**
+     * Effective-day-width thresholds for optional Gantt details.
+     */
+    public KassandraProperties.Gantt ganttZoom;
     /**
      * F milestone: date of the first worklog entry. {@code null} if no worklogs.
      */

@@ -38,6 +38,8 @@ schedule. Set up the sprint and its work before interpreting a missing forecast.
 Compare Gantt scheduling and burndown progress. Forecasts depend on the recorded
 tasks, estimates, assignments, working calendars and worklogs; they are not a
 guarantee of delivery dates.
+Zoom in to reveal additional Gantt task and milestone details and dependency
+lines; zooming out simplifies the task bars.
 
 ![Separate chart window](images/help/light/QualityBoard/open-gantt-burndown-chart-button.png)
 

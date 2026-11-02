@@ -45,6 +45,10 @@ public class KassandraProperties {
      */
     private        About    about                  = new About();
     /**
+     * Bound from {@code kassandra.gantt.*}.
+     */
+    private        Gantt    gantt                  = new Gantt();
+    /**
      * Static holder so plain DTOs (e.g. User) can access the value without injection.
      * -- GETTER --
      * Get the number of months to look ahead for holidays.
@@ -75,6 +79,7 @@ public class KassandraProperties {
      */
     @PostConstruct
     void init() {
+        gantt.validate();
         holidayLookAheadMonths = holidays.getLookAheadMonths();
     }
 
@@ -128,6 +133,37 @@ public class KassandraProperties {
          * Optional Stable Diffusion LoRA prompt for the About View image. When null, a random LoRA is used.
          */
         private String imageLora = null;
+    }
+
+    /**
+     * Minimum effective day widths, in pixels, for Gantt chart details.
+     */
+    @Data
+    public static class Gantt {
+        private double renderTaskProgressBarAtDayWidth    = 20;
+        private double renderTaskProgressTextAtDayWidth   = 22;
+        private double renderTaskNonWorkingDaysAtDayWidth = 20;
+        private double renderTaskBorderAtDayWidth         = 20;
+        private double renderMilestoneStartDateAtDayWidth = 20;
+        private double renderMilestoneStartTimeAtDayWidth = 20;
+        private double renderMilestoneBorderAtDayWidth    = 20;
+        private double renderDependenciesAtDayWidth       = 20;
+
+        private void validate() {
+            validateThreshold("render-task-progress-bar-at-day-width", renderTaskProgressBarAtDayWidth);
+            validateThreshold("render-task-progress-text-at-day-width", renderTaskProgressTextAtDayWidth);
+            validateThreshold("render-task-non-working-days-at-day-width", renderTaskNonWorkingDaysAtDayWidth);
+            validateThreshold("render-task-border-at-day-width", renderTaskBorderAtDayWidth);
+            validateThreshold("render-milestone-start-date-at-day-width", renderMilestoneStartDateAtDayWidth);
+            validateThreshold("render-milestone-start-time-at-day-width", renderMilestoneStartTimeAtDayWidth);
+            validateThreshold("render-milestone-border-at-day-width", renderMilestoneBorderAtDayWidth);
+            validateThreshold("render-dependencies-at-day-width", renderDependenciesAtDayWidth);
+        }
+
+        private static void validateThreshold(String name, double value) {
+            if (!Double.isFinite(value) || value < 0)
+                throw new IllegalArgumentException("kassandra.gantt." + name + " must be finite and non-negative");
+        }
     }
 
     @Data

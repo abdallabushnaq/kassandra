@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
@@ -65,14 +66,23 @@ public class GanttChartService {
      */
     public static final int       DEFAULT_PRE_RUN  = 14;
     private final       DarkTheme darkTheme;
+    private final       KassandraProperties kassandraProperties;
 
     // ── Public API ────────────────────────────────────────────────────────────
     private final LightTheme lightTheme;
 
+    /**
+     * Creates the chart service with its themes and rendering settings.
+     *
+     * @param lightTheme light chart theme
+     * @param darkTheme dark chart theme
+     * @param kassandraProperties application configuration
+     */
     @Autowired
-    public GanttChartService(LightTheme lightTheme, DarkTheme darkTheme) {
+    public GanttChartService(LightTheme lightTheme, DarkTheme darkTheme, KassandraProperties kassandraProperties) {
         this.lightTheme = lightTheme;
         this.darkTheme  = darkTheme;
+        this.kassandraProperties = kassandraProperties;
     }
 
     private static void addUserCalendar(GanttChartDto chart, User user, Set<UUID> calendarIds,
@@ -165,6 +175,7 @@ public class GanttChartService {
         dto.meta.postRun      = postRun;
         dto.meta.theme        = ThemeDto.fromTheme(theme);
         dto.meta.calendarSize = CalendarSize.YEARS;
+        dto.meta.ganttZoom    = kassandraProperties.getGantt();
 
 
         // ── Task rows ─────────────────────────────────────────────────────

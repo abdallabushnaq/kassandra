@@ -367,6 +367,7 @@ public class GanttBurndownChartService {
         GanttChartDto ganttDto = ganttChartService.build(sprint, now, dark, preRun, postRun);
         dto.calendars = ganttDto.calendars;
         dto.tasks     = ganttDto.tasks;
+        dto.meta.ganttZoom = ganttDto.meta.ganttZoom;
 
         return dto;
     }

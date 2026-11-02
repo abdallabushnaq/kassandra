@@ -43,6 +43,7 @@ export class GanttBurndownChart extends AbstractChart {
                 preRun: data.meta.preRun,
                 postRun: data.meta.postRun,
                 theme: data.meta.theme,
+                ganttZoom: data.meta.ganttZoom,
                 calendarSize: CalendarSize.MONTHS
             },
         };

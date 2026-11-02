@@ -68,6 +68,8 @@ restructure a story or change dependencies rather than just track progress.
 
 Use the combined chart to compare planned timing with recorded progress.
 Missing assignments, estimates or worklogs can affect the displayed forecast.
+Zoom in to reveal additional Gantt task and milestone details and dependency
+lines; zooming out simplifies the task bars.
 
 ![Open chart separately](images/help/light/ActiveSprints/open-active-sprints-gantt-burndown-chart-button.png)
 
