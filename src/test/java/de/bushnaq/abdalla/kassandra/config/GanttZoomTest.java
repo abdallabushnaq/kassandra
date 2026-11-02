@@ -41,6 +41,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -64,6 +65,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "kassandra.gantt.render-task-progress-bar-at-day-width=10.5",
         "kassandra.gantt.render-task-progress-text-at-day-width=11.5",
+        "kassandra.gantt.render-task-key-at-day-width=22",
         "kassandra.gantt.render-task-non-working-days-at-day-width=12.5",
         "kassandra.gantt.render-task-border-at-day-width=13.5",
         "kassandra.gantt.render-milestone-start-date-at-day-width=14.5",
@@ -92,6 +94,7 @@ public class GanttZoomTest extends AbstractTestUtil {
         KassandraProperties.Gantt zoom = properties.getGantt();
         assertEquals(10.5, zoom.getRenderTaskProgressBarAtDayWidth());
         assertEquals(11.5, zoom.getRenderTaskProgressTextAtDayWidth());
+        assertEquals(22, zoom.getRenderTaskKeyAtDayWidth());
         assertEquals(12.5, zoom.getRenderTaskNonWorkingDaysAtDayWidth());
         assertEquals(13.5, zoom.getRenderTaskBorderAtDayWidth());
         assertEquals(14.5, zoom.getRenderMilestoneStartDateAtDayWidth());
@@ -114,11 +117,16 @@ public class GanttZoomTest extends AbstractTestUtil {
         GanttBurndownChartDto combined = burndownService.build(sprint, now, false);
         assertEquals(zoom, gantt.meta.ganttZoom);
         assertEquals(zoom, combined.meta.ganttZoom);
+        assertEquals(Color.blue.getRGB(), gantt.meta.theme.ganttTheme.progressColor);
+        assertEquals(Color.blue.getRGB(), combined.meta.theme.ganttTheme.progressColor);
+        assertEquals(Color.blue.getRGB(), ganttService.build(sprint, now, true).meta.theme.ganttTheme.progressColor);
+        assertEquals(Color.blue.getRGB(), burndownService.build(sprint, now, true).meta.theme.ganttTheme.progressColor);
 
         TaskDto task = task("00000000-0000-0000-0000-000000000001", "Alpha",
                 "2025-06-06T08:00:00", "2025-06-09T16:30:00", 0);
         task.progress         = 0.5;
         task.progressColor    = "#99bbddff";
+        task.key              = "K-1";
         task.assignedUserName = "Alice";
         TaskDto milestone = task("00000000-0000-0000-0000-000000000002", "Milestone",
                 "2025-06-10T08:00:00", "2025-06-10T08:00:00", 1);

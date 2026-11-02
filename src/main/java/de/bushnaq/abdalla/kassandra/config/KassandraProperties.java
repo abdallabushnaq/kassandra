@@ -142,6 +142,7 @@ public class KassandraProperties {
     public static class Gantt {
         private double renderTaskProgressBarAtDayWidth    = 20;
         private double renderTaskProgressTextAtDayWidth   = 22;
+        private double renderTaskKeyAtDayWidth            = 22;
         private double renderTaskNonWorkingDaysAtDayWidth = 20;
         private double renderTaskBorderAtDayWidth         = 20;
         private double renderMilestoneStartDateAtDayWidth = 20;
@@ -152,6 +153,7 @@ public class KassandraProperties {
         private void validate() {
             validateThreshold("render-task-progress-bar-at-day-width", renderTaskProgressBarAtDayWidth);
             validateThreshold("render-task-progress-text-at-day-width", renderTaskProgressTextAtDayWidth);
+            validateThreshold("render-task-key-at-day-width", renderTaskKeyAtDayWidth);
             validateThreshold("render-task-non-working-days-at-day-width", renderTaskNonWorkingDaysAtDayWidth);
             validateThreshold("render-task-border-at-day-width", renderTaskBorderAtDayWidth);
             validateThreshold("render-milestone-start-date-at-day-width", renderMilestoneStartDateAtDayWidth);

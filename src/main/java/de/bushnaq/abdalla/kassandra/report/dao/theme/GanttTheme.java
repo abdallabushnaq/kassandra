@@ -31,6 +31,10 @@ public class GanttTheme {
     public Color milestoneBgColor;
     public Color milestoneTextColor;
     public Color outOfOfficeColor;
+    /**
+     * Color of the task progress bar.
+     */
+    public Color progressColor;
     public Color relationColor;
     public Color requestMilestoneColor;
     public Color sickBgColor;

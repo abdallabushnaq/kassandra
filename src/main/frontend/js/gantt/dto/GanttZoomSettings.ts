@@ -19,6 +19,7 @@
 export interface GanttZoomSettings {
     renderTaskProgressBarAtDayWidth: number;
     renderTaskProgressTextAtDayWidth: number;
+    renderTaskKeyAtDayWidth: number;
     renderTaskNonWorkingDaysAtDayWidth: number;
     renderTaskBorderAtDayWidth: number;
     renderMilestoneStartDateAtDayWidth: number;

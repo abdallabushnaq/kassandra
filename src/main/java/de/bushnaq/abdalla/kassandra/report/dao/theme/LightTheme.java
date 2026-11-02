@@ -131,7 +131,8 @@ public class LightTheme extends Theme {
         ganttTheme.storyTextColor          = Color.darkGray;
         ganttTheme.taskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
         ganttTheme.taskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
-        ganttTheme.taskTransparency        = 128;
+        ganttTheme.progressColor           = Color.blue;
+        ganttTheme.taskTransparency        = 255;
         ganttTheme.taskWeekEndTransparency = 64;
         ganttTheme.idBgColor               = new Color(0xff, 0xff, 0xff, 0xff);
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);

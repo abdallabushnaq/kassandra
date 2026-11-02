@@ -13,6 +13,7 @@ export class GanttTheme {
     readonly milestoneBgColor:        number | null;
     readonly milestoneTextColor:      number | null;
     readonly outOfOfficeColor:        number | null;
+    readonly progressColor:           number | null;
     readonly relationColor:           number | null;
     readonly requestMilestoneColor:   number | null;
     readonly sickBgColor:             number | null;
@@ -39,6 +40,7 @@ export class GanttTheme {
         this.milestoneBgColor        = data['milestoneBgColor']        ?? null;
         this.milestoneTextColor      = data['milestoneTextColor']      ?? null;
         this.outOfOfficeColor        = data['outOfOfficeColor']        ?? null;
+        this.progressColor           = data['progressColor']           ?? null;
         this.relationColor           = data['relationColor']           ?? null;
         this.requestMilestoneColor   = data['requestMilestoneColor']   ?? null;
         this.sickBgColor             = data['sickBgColor']             ?? null;
@@ -54,4 +56,3 @@ export class GanttTheme {
         this.vacationBgColor         = data['vacationBgColor']         ?? null;
     }
 }
-

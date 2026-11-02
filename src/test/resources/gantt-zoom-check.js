@@ -58,6 +58,7 @@ function labels(id) {
 const features = {
     renderTaskProgressBarAtDayWidth: () => !!group(taskId).querySelector('.task-progress-bar'),
     renderTaskProgressTextAtDayWidth: () => !!group(taskId).querySelector('.task-progress-text'),
+    renderTaskKeyAtDayWidth: () => labels(taskId).some(label => label.includes('K-1')),
     renderTaskNonWorkingDaysAtDayWidth: () => group(taskId).querySelectorAll('.task-body').length > 1,
     renderTaskBorderAtDayWidth: () => !!group(taskId).querySelector('.task-border'),
     renderMilestoneStartDateAtDayWidth: () => milestoneLabel().includes('2025'),
@@ -93,8 +94,13 @@ export async function verifyGanttZoom(gantt, combined) {
         };
 
         for (const [key, visible] of Object.entries(features)) {
-            for (const [threshold, expected] of [[20.01, false], [20, true], [19.99, true]]) {
-                render({...settings(0), [key]: threshold});
+            const configuredThreshold = source.meta.ganttZoom[key];
+            for (const [threshold, expected] of [
+                [configuredThreshold + 0.01, false],
+                [configuredThreshold, true],
+                [Math.max(0, configuredThreshold - 0.01), true],
+            ]) {
+                render({...settings(0), [key]: threshold}, configuredThreshold);
                 assert(visible() === expected, `${type}: ${key} threshold ${threshold}`);
             }
         }
@@ -125,12 +131,29 @@ export async function verifyGanttZoom(gantt, combined) {
         const body = group(taskId).querySelectorAll('.task-body');
         assert(body.length === 1 && Number(body[0].getAttribute('height')) === 18, `${type}: continuous body`);
         assert(body[0].querySelector('title').textContent.includes('Alpha'), `${type}: task tooltip`);
+        const progress = group(taskId).querySelector('.task-progress-bar');
+        assert(progress.getAttribute('fill') === '#0000ffff', `${type}: default progress color`);
+        assert(Number(progress.getAttribute('height')) === 1, `${type}: progress height`);
+        assert(Number(body[0].getAttribute('y')) + Number(body[0].getAttribute('height'))
+            - Number(progress.getAttribute('y')) - Number(progress.getAttribute('height')) === 1,
+            `${type}: progress bottom gap`);
+        assert(Number(progress.getAttribute('width')) === Number(body[0].getAttribute('width')) / 2,
+            `${type}: progress width`);
+        assert(progress.querySelector('title').textContent.includes('Alpha'), `${type}: progress tooltip`);
+        assert(!group(shortTaskId).querySelector('.task-progress-bar'), `${type}: zero progress`);
+        assert(!group(taskId).querySelector('rect[fill="#000000"]'), `${type}: hidden progress marker`);
         assert(group(taskId).querySelectorAll('.task-border').length === 4, `${type}: solid border`);
         assert(!group(taskId).querySelector('.task-border[stroke-dasharray]'), `${type}: no dotted border`);
-        assert(labels(taskId).includes('Alice') && labels(taskId).includes('Alpha'), `${type}: task labels`);
+        assert(labels(taskId).includes('Alice') && labels(taskId).some(label => label.includes('Alpha')), `${type}: task labels`);
         assert(labels(storyId).includes('Story'), `${type}: story label`);
         assert(group(storyId).querySelector('.task-dependency'), `${type}: story dependency`);
         assert(document.querySelector('#chart svg').getAttribute('height') === chartHeight, `${type}: unchanged chart height`);
+
+        data.meta.theme.ganttTheme.progressColor = 0xff8000;
+        render(settings(0));
+        assert(group(taskId).querySelector('.task-progress-bar').getAttribute('fill') === '#ff8000ff',
+            `${type}: configured progress color`);
+        data.meta.theme.ganttTheme.progressColor = 0x0000ff;
 
         render({...settings(0), renderTaskNonWorkingDaysAtDayWidth: 30}, 2);
         assert(Number(group(shortTaskId).querySelector('.task-body').getAttribute('width')) > 0,

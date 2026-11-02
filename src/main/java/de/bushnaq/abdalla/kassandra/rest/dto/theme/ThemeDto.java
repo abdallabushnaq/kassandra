@@ -79,6 +79,7 @@ public class ThemeDto {
         dto.ganttTheme.milestoneBgColor        = rgb(theme.ganttTheme.milestoneBgColor);
         dto.ganttTheme.milestoneTextColor      = rgb(theme.ganttTheme.milestoneTextColor);
         dto.ganttTheme.outOfOfficeColor        = rgb(theme.ganttTheme.outOfOfficeColor);
+        dto.ganttTheme.progressColor           = rgb(theme.ganttTheme.progressColor);
         dto.ganttTheme.relationColor           = rgb(theme.ganttTheme.relationColor);
         dto.ganttTheme.requestMilestoneColor   = rgb(theme.ganttTheme.requestMilestoneColor);
         dto.ganttTheme.sickBgColor             = rgb(theme.ganttTheme.sickBgColor);
@@ -173,4 +174,3 @@ public class ThemeDto {
         return (a << 24) | (c.getRed() << 16) | (c.getGreen() << 8) | c.getBlue();
     }
 }
-

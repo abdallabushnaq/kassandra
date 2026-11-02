@@ -23,7 +23,8 @@ const RELATION_CORNER_LENGTH = 14;
 const RESOURCE_NAME_TO_TASK_GAP = 3;
 export const SECONDS_PER_DAY = 85 * 6 * 60; // 30600
 const TASK_BODY_BORDER = 1;
-const TASK_PROGRESS_PADDING = 4;
+const TASK_PROGRESS_HEIGHT = 1;
+const TASK_PROGRESS_BOTTOM_GAP = 1;
 const TASK_NAME_TO_TASK_GAP = 5 + 8;        // 13
 const NONE_WORKING_DAY_FONT_SIZE = 22;
 
@@ -75,10 +76,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         return LINE_HEIGHT;
     }
 
-    private showDetail(threshold: number): boolean {
-        return this.dayWidth * this.visualScale >= threshold;
-    }
-
     override calculateChartHeight(): number {
         const calH = this.calendarXAxes
             ? this.calendarXAxes.getHeight()
@@ -100,6 +97,9 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
         }
         return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
+    }
+
+    drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
     }
 
     // override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
@@ -133,9 +133,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //     if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
     //     return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
     // }
-
-    drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
-    }
 
     drawTaskBorder(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number): void {
         if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
@@ -266,9 +263,17 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (task.start && showDate && showTime)
             dateStr = DateUtils.toLocalYMDHMString(task.start, this.dateTimeFormat);
         else if (task.start && showDate)
-            dateStr = new Intl.DateTimeFormat('en-DE', {year: 'numeric', month: '2-digit', day: '2-digit'}).format(task.start);
+            dateStr = new Intl.DateTimeFormat('en-DE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(task.start);
         else if (task.start && showTime)
-            dateStr = new Intl.DateTimeFormat('en-DE', {hour: '2-digit', minute: '2-digit', hour12: false}).format(task.start);
+            dateStr = new Intl.DateTimeFormat('en-DE', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).format(task.start);
         const label = dateStr ? `${taskName} (${dateStr})` : taskName;
         const lbl = SvgUtils.createText(labelX, y, label, {
             class: 'milestone-label',
@@ -425,7 +430,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                 const clipW3 = Math.max(0, this.containerWidth - labelRight);
                 if (clipW3 > 8) {
                     g.appendChild(SvgUtils.createClipPath(clipId3, labelRight, y - th, clipW3, th * 2));
-                    const nameLabel = SvgUtils.createText(labelRight, y, (task.key ? task.key + ' ' : '') + taskName, {
+                    const taskLabel = (task.key && this.showDetail(this.ganttZoom.renderTaskKeyAtDayWidth) ? task.key + ' ' : '') + taskName;
+                    const nameLabel = SvgUtils.createText(labelRight, y, taskLabel, {
                         fill: textColor, 'font-size': '12', 'font-family': 'sans-serif',
                         'dominant-baseline': 'middle', 'clip-path': `url(#${clipId3})`,
                     });
@@ -532,7 +538,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                             const weekendFill = ColorUtils.hexToRgbaWithAlpha(fillColor, this.theme.ganttTheme.taskWeekEndTransparency);
                             const currentDayAt8 = DateUtils.withTime(currentDay, 8, 0)!;
                             const xStart = this.calculateX(currentDayAt8, currentDayAt8, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-                            const rectW = SvgUtils.createRect(xStart, y1, this.calendarXAxes.dayOfWeek.getWidth(), h, {class: 'task-body', fill: weekendFill});
+                            const rectW = SvgUtils.createRect(xStart, y1, this.calendarXAxes.dayOfWeek.getWidth(), h, {
+                                class: 'task-body',
+                                fill: weekendFill
+                            });
                             rectW.appendChild(SvgUtils.createTitle(tooltip));
                             g.appendChild(rectW);
                         }
@@ -541,15 +550,18 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
                 // Progress bar
                 if (progress > 0.0 && this.showDetail(this.ganttZoom.renderTaskProgressBarAtDayWidth)) {
-                    const progressFill = task.progressColor ? ColorUtils.convertSprintColorToRgba(task.progressColor) : ColorUtils.hexToRgbaWithAlpha(fillColor, 200);
+                    const progressFill = ColorUtils.intToHex(this.theme.ganttTheme.progressColor, '#0000ff');
                     const progressW = (x2 - x1) * progress;
                     if (progressW > 0) {
-                        const pRect = SvgUtils.createRect(x1, y1 + TASK_PROGRESS_PADDING, progressW, h - TASK_PROGRESS_PADDING * 2, {class: 'task-progress-bar', fill: progressFill});
+                        const pRect = SvgUtils.createRect(x1, y1 + h - TASK_PROGRESS_BOTTOM_GAP - TASK_PROGRESS_HEIGHT, progressW, TASK_PROGRESS_HEIGHT, {
+                            class: 'task-progress-bar',
+                            fill: progressFill
+                        });
                         pRect.appendChild(SvgUtils.createTitle(tooltip));
                         g.appendChild(pRect);
-                        if (progress < 1.0) {
-                            g.appendChild(SvgUtils.createRect(x1 + progressW, y - th / 2 + 2, 1, th - 4, {fill: '#000000'}));
-                        }
+                        // if (progress < 1.0) {
+                        //     g.appendChild(SvgUtils.createRect(x1 + progressW, y - th / 2 + 2, 1, th - 4, {fill: '#000000'}));
+                        // }
                     }
                 }
             }
@@ -600,6 +612,10 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     protected getCalendarExceptions(task: TaskDto): CalendarException[] | undefined {
         return task.calendarId ? this.calendarExceptionsById.get(String(task.calendarId)) : undefined;
+    }
+
+    private showDetail(threshold: number): boolean {
+        return this.dayWidth * this.visualScale >= threshold;
     }
 
     private drawUserName(g: SVGElement, task: TaskDto, x1: number, y: number, textColor: string) {
