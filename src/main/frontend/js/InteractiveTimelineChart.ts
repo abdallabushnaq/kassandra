@@ -139,11 +139,12 @@ function saveViewState(
  */
 export class InteractiveTimelineChart<TChart extends TimelineChart> implements ChartHandle {
     private readonly registeredEventListeners: RegisteredEventListener[] = [];
+    private readonly DEFAULT_SCALE = 0.75;
     private dayWidth: number;
     private scrollOffset = 0;
     private renderedScrollOffset = 0;
     private lazyRedrawTimerId: ReturnType<typeof setTimeout> | null = null;
-    private visualScale = 1.0;
+    private visualScale = this.DEFAULT_SCALE;
     private visualPanX = 0;
     private visualPanY = 0;
     private scrollYOffset = 0;
@@ -216,7 +217,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
         const saved = loadViewState(this.options.containerId);
         if (saved) {
             this.dayWidth = this.constrainDayWidth(saved.dayWidth);
-            this.visualScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, saved.visualScale ?? 1.0));
+            this.visualScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, saved.visualScale ?? this.DEFAULT_SCALE));
             this.scrollOffset = saved.scrollOffset;
             this.scrollYOffset = saved.scrollYOffset ?? 0;
             this.constrainScrollOffset();

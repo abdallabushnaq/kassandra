@@ -38,8 +38,7 @@ public class AuthorSeriesDto {
     public List<Long>   accumulatedWorkPerDay = new ArrayList<>();
     /**
      * Bar fill color in {@code #rrggbbaa} format.
-     * Mirrors Java: {@code generateBurnDownColor(user.getColor())} →
-     * lighten user color 75% towards white, alpha = 128.
+     * Matches the associated Gantt task fill color: the user color lightened by 50% with the theme's task transparency.
      */
     public long         color;
     /**

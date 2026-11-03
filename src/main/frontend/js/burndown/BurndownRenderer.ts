@@ -241,8 +241,7 @@ export class BurndownRenderer extends AbstractRenderer {
     }
 
     // ── Java: private Color generateBurnDownColor(Color color) ──
-    // Kept for parity with Java; this port receives the already-lightened/alpha'd author.color
-    // computed server-side in GanttBurndownChartService (same ColorUtil.lightenColor(0.75)+alpha 128
+    // Kept for parity with Java; author.color is precomputed server-side to match the Gantt task fill color.
 
     // ── Java: protected boolean isHideNow(LocalDateTime now, LocalDateTime end, boolean completed) ──
     private isHideNow(now: Date | null, end: Date | null, completed: boolean): boolean {

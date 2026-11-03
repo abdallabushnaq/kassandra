@@ -21,10 +21,18 @@ package de.bushnaq.abdalla.kassandra.report.ganttBurndown;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
+import de.bushnaq.abdalla.kassandra.service.GanttChartService;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.AuthorSeriesDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
+import de.bushnaq.abdalla.kassandra.rest.dto.gantt.TaskDto;
 import de.bushnaq.abdalla.kassandra.util.GanttGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,10 +40,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.awt.Color;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -54,9 +62,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("UnitTest")
 @Slf4j
 public class DynamicGanttBurndownTest extends AbstractGanttTester {
-    @Autowired
-    private       GanttBurndownChartService service;
+    private final GanttBurndownChartService service    = createChartService();
     private final String                    testFolder = "references/gantt-burndown";
+
+    private static GanttBurndownChartService createChartService() {
+        StableDiffusionConfig config       = new StableDiffusionConfig();
+        LightTheme            lightTheme   = new LightTheme(config);
+        DarkTheme             darkTheme    = new DarkTheme(config);
+        GanttChartService     ganttService = new GanttChartService(lightTheme, darkTheme, new KassandraProperties());
+        return new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
+    }
 
     @BeforeEach
     public void beforeEach() {
@@ -117,6 +132,22 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
             }
             log.info("Task {} {} has worklogs with total duration {}", task.getName(), task.getMinEstimate(), work);
         }
+
+        GanttBurndownChartDto chart = service.build(sprint, ParameterOptions.getLocalNow(), false);
+        int alignedTaskColors = 0;
+        for (AuthorSeriesDto author : chart.authors) {
+            TaskDto assignedTask = chart.tasks.stream()
+                    .filter(task -> author.userName.equals(task.assignedUserName))
+                    .findFirst()
+                    .orElse(null);
+            if (assignedTask != null) {
+                Color authorColor = new Color((int) author.color, true);
+                assertEquals(String.format("#%02x%02x%02x%02x", authorColor.getRed(), authorColor.getGreen(),
+                        authorColor.getBlue(), authorColor.getAlpha()), assignedTask.fillColor);
+                alignedTaskColors++;
+            }
+        }
+        assertTrue(alignedTaskColors > 0, "No Burndown author matched an assigned Gantt task");
 
 //        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
 //        g.generateBurndownChart(testInfo, sprint.getId(), testFolder);

@@ -238,8 +238,15 @@ public class GanttBurndownChartService {
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
                 AuthorSeriesDto a = new AuthorSeriesDto();
-                a.userName              = user.getName();
-                a.color                 = user.getColor().getRGB();
+                a.userName = user.getName();
+                Color userColor = user.getColor();
+                if (userColor == null) {
+                    a.color = theme.burndownTheme.getAuthorColor(28).getRGB();
+                } else {
+//                    Color lightened = ColorUtil.lightenColor(userColor, 0.5f);
+                    Color lightened = userColor;
+                    a.color = new Color(lightened.getRed(), lightened.getGreen(), lightened.getBlue(), theme.ganttTheme.taskTransparency).getRGB();
+                }
                 a.totalRemainingSeconds = usersTotalContribution.get(user).remaining.toSeconds();
                 a.totalWorkedSeconds    = usersTotalContribution.get(user).worked.toSeconds();
                 a.accumulatedWorkPerDay = new ArrayList<Long>();
@@ -365,8 +372,8 @@ public class GanttBurndownChartService {
 
         // ── Gantt task rows (delegate to GanttChartService) ───────────────────
         GanttChartDto ganttDto = ganttChartService.build(sprint, now, dark, preRun, postRun);
-        dto.calendars = ganttDto.calendars;
-        dto.tasks     = ganttDto.tasks;
+        dto.calendars      = ganttDto.calendars;
+        dto.tasks          = ganttDto.tasks;
         dto.meta.ganttZoom = ganttDto.meta.ganttZoom;
 
         return dto;

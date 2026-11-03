@@ -132,7 +132,7 @@ public class DarkTheme extends Theme {
         ganttTheme.taskTextColor           = basicTextColor;
         ganttTheme.taskBorderColor         = Color.lightGray;
         ganttTheme.progressColor           = Color.blue;
-        ganttTheme.taskTransparency        = 0;
+        ganttTheme.taskTransparency        = 255;
         ganttTheme.taskWeekEndTransparency = 128;
         ganttTheme.idBgColor               = baseBgColor;
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
