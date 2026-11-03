@@ -60,12 +60,12 @@ public class GanttChartService {
     /**
      * Default number of extra days rendered after the last task finishes.
      */
-    public static final int       DEFAULT_POST_RUN = 14;
+    public static final int                 DEFAULT_POST_RUN = 14;
     /**
      * Default number of extra days rendered before the first task starts.
      */
-    public static final int       DEFAULT_PRE_RUN  = 14;
-    private final       DarkTheme darkTheme;
+    public static final int                 DEFAULT_PRE_RUN  = 14;
+    private final       DarkTheme           darkTheme;
     private final       KassandraProperties kassandraProperties;
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -74,14 +74,14 @@ public class GanttChartService {
     /**
      * Creates the chart service with its themes and rendering settings.
      *
-     * @param lightTheme light chart theme
-     * @param darkTheme dark chart theme
+     * @param lightTheme          light chart theme
+     * @param darkTheme           dark chart theme
      * @param kassandraProperties application configuration
      */
     @Autowired
     public GanttChartService(LightTheme lightTheme, DarkTheme darkTheme, KassandraProperties kassandraProperties) {
-        this.lightTheme = lightTheme;
-        this.darkTheme  = darkTheme;
+        this.lightTheme          = lightTheme;
+        this.darkTheme           = darkTheme;
         this.kassandraProperties = kassandraProperties;
     }
 
@@ -242,8 +242,7 @@ public class GanttChartService {
             Color userColor = task.getAssignedUser().getColor();
             // lighten by 50% then apply taskTransparency alpha (mirrors generateGanttColor)
             Color lightened = ColorUtil.lightenColor(userColor, 0.5f);
-            fillColor = new Color(lightened.getRed(), lightened.getGreen(), lightened.getBlue(),
-                    theme.ganttTheme.taskTransparency);
+            fillColor = new Color(lightened.getRed(), lightened.getGreen(), lightened.getBlue(), theme.ganttTheme.taskTransparency);
             // progress bar: lighter user colour (60% lightening)
             Color progressBase = ColorUtil.lightenColor(userColor, 0.6f);
             dto.progressColor = colorToHexWithAlpha(progressBase, 255);

@@ -26,23 +26,6 @@ import java.awt.*;
 
 @Component
 public class LightTheme extends Theme {
-    public static final Color[] KELLY_COLORS = {
-
-            Color.red,//
-            new Color(0, 0xff, 0),//light green
-            Color.blue,//
-            Color.yellow,//
-            Color.cyan,//
-            Color.magenta,//
-            new Color(0xff, 0x7f, 0),//dark red
-            new Color(0x7f, 0xff, 0),//dark green
-            new Color(0, 0x7f, 0xff),//dark blue
-            new Color(0, 0xa0, 0x7f),//dark cyan
-            new Color(0x7f, 0, 0x7f),//dark magenta
-            Color.darkGray
-
-    };
-
     public LightTheme(StableDiffusionConfig stableDiffusionConfig) {
         super(ETheme.light);
         Color basicTextColor = Color.WHITE;
@@ -132,7 +115,7 @@ public class LightTheme extends Theme {
         ganttTheme.taskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
         ganttTheme.taskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
         ganttTheme.progressColor           = Color.blue;
-        ganttTheme.taskTransparency        = 255;
+        ganttTheme.taskTransparency        = 192;
         ganttTheme.taskWeekEndTransparency = 64;
         ganttTheme.idBgColor               = new Color(0xff, 0xff, 0xff, 0xff);
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);

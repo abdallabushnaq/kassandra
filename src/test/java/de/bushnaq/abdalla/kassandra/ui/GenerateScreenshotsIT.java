@@ -227,9 +227,9 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                         .minNumberOfFeatures(1).maxNumberOfFeatures(3)
                         .minNumberOfSprints(1).maxNumberOfSprints(3)
                         .maxTaskDurationDays(5)
-                        .minNumberOfStories(1).maxNumberOfStories(4)
+                        .minNumberOfStories(2).maxNumberOfStories(4)
                         .maxNumberOfUsers(8)
-                        .maxNumberOfUsersPerSprint(4)
+                        .maxNumberOfUsersPerSprint(5)
                         .maxNumberOfTasks(4)
                         .seed(7)
                         .build()//official screenshot data

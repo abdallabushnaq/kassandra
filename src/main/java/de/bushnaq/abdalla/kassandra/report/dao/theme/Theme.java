@@ -25,6 +25,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Theme {
+    /** Kelly's 19 chromatic colors, shared by light and dark themes. */
+    public static final Color[] KELLY_COLORS = {
+            new Color(0xebce2b), // yellow
+            new Color(0x702c8c), // purple
+            new Color(0xdb6917), // orange
+            new Color(0x96cde6), // light blue
+            new Color(0xba1c30), // red
+            new Color(0xc0bd7f), // buff
+            new Color(0x7f7e80), // grey
+            new Color(0x5fa641), // green
+            new Color(0xd485b2), // purple pink
+            new Color(0xdf8461), // yellow pink
+            new Color(0x463397), // violet
+            new Color(0xe1a11a), // orange yellow
+            new Color(0x91218c), // purple red
+            new Color(0xe8e948), // green yellow
+            new Color(0x7e1510), // red brown
+            new Color(0x92ae31), // yellow green
+            new Color(0x6f340d), // yellow brown
+            new Color(0xd32b1e), // red orange
+            new Color(0x2b3514)  // olive green
+    };
+
     public final BurndownTheme burndownTheme = new BurndownTheme();
     public final CalendarTheme calendarTheme = new CalendarTheme();
     public final ChartTheme    chartTheme    = new ChartTheme();

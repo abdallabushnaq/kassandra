@@ -100,7 +100,8 @@ export abstract class AbstractCanvas {
         const svg = SvgUtils.createSvg({
             width: this.chartWidth,
             height: this.chartHeight,
-            style: 'display:block;user-select:none;shape-rendering:crispEdges',
+            style: 'display:block;user-select:none',
+            // style: 'display:block;user-select:none;shape-rendering:crispEdges',
         });
         this.svgEl = svg;
         //--- lets clip to the size of our container.

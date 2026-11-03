@@ -1,11 +1,13 @@
 // theme/burndown-theme.ts
-// Mirrors Java: BurndownTheme (including burnDownColor[12] array)
+// Mirrors Java: BurndownTheme (including burnDownColor[19] array)
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
+const MAX_AUTHOR_COLORS = 19;
+
 export class BurndownTheme {
     readonly borderColor: number | null;
-    /** Array of 12 author colors. Mirrors Java BurndownTheme.burnDownColor[]. */
+    /** Array of 19 author colors. Mirrors Java BurndownTheme.burnDownColor[]. */
     readonly burnDownColor: (number)[];
     readonly delayEventColor: number | null;
     readonly inTimeColor: number | null;
@@ -19,7 +21,7 @@ export class BurndownTheme {
         this.borderColor = (data['borderColor'] as number | null) ?? null;
         this.burnDownColor = Array.isArray(data['burnDownColor'])
             ? (data['burnDownColor'] as (number)[]).slice()
-            : new Array<number>(12).fill(0);
+            : new Array<number>(MAX_AUTHOR_COLORS).fill(0);
         this.delayEventColor = (data['delayEventColor'] as number | null) ?? null;
         this.inTimeColor = (data['inTimeColor'] as number | null) ?? null;
         this.optimaleGuideColor = (data['optimaleGuideColor'] as number | null) ?? null;
@@ -32,7 +34,6 @@ export class BurndownTheme {
     /** Mirrors Java: BurndownTheme.getAuthorColor(int index) */
     getAuthorColor(index: number): number {
         const i = index < 0 ? -index : index;
-        return this.burnDownColor[i % 12];
+        return this.burnDownColor[i % MAX_AUTHOR_COLORS];
     }
 }
-

@@ -20,7 +20,8 @@ package de.bushnaq.abdalla.kassandra.report.dao.theme;
 import java.awt.*;
 
 public class BurndownTheme {
-    public static final int     MAX_AUTHOR_COLOR = 12/*(9-4) * 3*//*+ 3*//*+1*/;
+    /** Number of distinct colors available for author assignment. */
+    public static final int     MAX_AUTHOR_COLOR = Theme.KELLY_COLORS.length;
     //    public              Color   bankHolidayColor;
     public              Color   borderColor;
     public              Color[] burnDownColor;
