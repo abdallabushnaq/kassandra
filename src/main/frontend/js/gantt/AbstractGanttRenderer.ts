@@ -284,33 +284,45 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     }
 
     drawRelation(g: SVGElement, sourceTask: TaskDto, y2: number, targetTask: TaskDto, y1: number): void {
-        const signum = (n: number) => (n > 0 ? 1 : n < 0 ? -1 : 0);
-        const sign = signum(y2 - y1);
-        let yEnd: number, yMid: number;
         const th = this.getTaskHeight();
-        if (sign > 0) {
-            y2 -= th / 2 - TASK_BODY_BORDER;
-            yEnd = y2;
-            yMid = y2 - 5;
-        } else {
-            y2 += th / 2 - TASK_BODY_BORDER;
-            yEnd = y2;
-            yMid = y2 + 5;
-        }
-        const x1 = this.calculateX(targetTask.finish!, DateUtils.withTime(targetTask.finish, 8, 0), SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-        const x2 = RELATION_CORNER_LENGTH + this.calculateX(sourceTask.start!, DateUtils.withTime(sourceTask.start, 8, 0), SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2 - RESOURCE_NAME_TO_TASK_GAP;
-        if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
+        const milestoneHalfWidth = th / 2 - TASK_BODY_BORDER;
+        const x1 = this.calculateX(targetTask.finish!, DateUtils.withTime(targetTask.finish, 8, 0), SECONDS_PER_DAY)
+            - this.calendarXAxes.dayOfWeek.getWidth() / 2 + (targetTask.milestone ? milestoneHalfWidth : 0);
+        const x2 = this.calculateX(sourceTask.start!, DateUtils.withTime(sourceTask.start, 8, 0), SECONDS_PER_DAY)
+            - this.calendarXAxes.dayOfWeek.getWidth() / 2 - (sourceTask.milestone ? milestoneHalfWidth : 0);
+        const xExit = Math.max(x1, x2) + RELATION_CORNER_LENGTH;
+        const xEntry = x2 - RELATION_CORNER_LENGTH;
+        const rowDirection = y2 > y1 ? 1 : -1;
+        const yGap = y2 - rowDirection * (th + 1) / 2;
+        const exitDirection = Math.sign(yGap - y1);
+        const entryDirection = Math.sign(y2 - yGap);
+        const radius = Math.min(4, Math.abs(yGap - y1) / 2, Math.abs(y2 - yGap) / 2, (xExit - xEntry) / 2);
+        if (xExit <= 0 || Math.min(x1, xEntry) >= this.chart.containerWidth)
             return;
         const arrowColor = (sourceTask.critical && targetTask.critical)
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
-        g.appendChild(SvgUtils.createRect(x1 + 1, y1, x2 - x1, 1, {fill: arrowColor}));
-        g.appendChild(SvgUtils.createRect(x2, y1 + 1, 1, yMid - y1, {fill: arrowColor}));
-        const d = 5;
-        const pts = y2 > y1
-            ? `${x2 - d},${yEnd - d + sign} ${x2 + d},${yEnd - d + sign} ${x2},${yEnd + sign}`
-            : `${x2 + d},${yEnd + d + sign} ${x2 - d},${yEnd + d + sign} ${x2},${yEnd + sign}`;
-        g.appendChild(SvgUtils.createPolygon({points: pts, fill: arrowColor}));
+        const arrowLength = 5;
+        const path = [
+            `M ${x1} ${y1}`,
+            `H ${xExit - radius}`,
+            `Q ${xExit} ${y1} ${xExit} ${y1 + exitDirection * radius}`,
+            `V ${yGap - exitDirection * radius}`,
+            `Q ${xExit} ${yGap} ${xExit - radius} ${yGap}`,
+            `H ${xEntry + radius}`,
+            `Q ${xEntry} ${yGap} ${xEntry} ${yGap + entryDirection * radius}`,
+            `V ${y2 - entryDirection * radius}`,
+            `Q ${xEntry} ${y2} ${xEntry + radius} ${y2}`,
+            `H ${x2 - arrowLength}`,
+        ].join(' ');
+        g.appendChild(SvgUtils.createPath({
+            d: path, fill: 'none', stroke: arrowColor, 'stroke-width': FINE_LINE_STROKE_WIDTH,
+            'vector-effect': 'non-scaling-stroke',
+        }));
+        g.appendChild(SvgUtils.createPolygon({
+            points: `${x2 - arrowLength},${y2 - 3} ${x2 - arrowLength},${y2 + 3} ${x2},${y2}`,
+            fill: arrowColor,
+        }));
     }
 
     drawRibbon(g: SVGElement, y1: number, x1: number, y2: number, delta1: number, delta2: number, ribbonColor: string): void {
@@ -379,7 +391,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             for (const rel of task.predecessors) {
                 if (!rel.visible) continue;
                 const targetTask = this._taskById[String(rel.predecessorId)];
-                if (!targetTask) continue;
+                if (!targetTask?.finish) continue;
                 const y1 = this._calendarH + targetTask.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
                 const relation = SvgUtils.createGroup({class: 'task-dependency'});
                 this.drawRelation(relation, task, y, targetTask, y1);
@@ -484,8 +496,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const th = this.getTaskHeight();
 
         if (!alien) {
-            const y1 = y - th / 2/* + TASK_BODY_BORDER*/;
-            const h = th /*- TASK_BODY_BORDER * 2*/;
+            const y1 = y - th / 2 + TASK_BODY_BORDER;
+            const h = th - TASK_BODY_BORDER * 2;
             if (x2 > x1) {
                 if (!this.showDetail(this.ganttZoom.renderTaskNonWorkingDaysAtDayWidth)) {
                     const rect = SvgUtils.createRect(x1, y1, x2 - x1, h, {

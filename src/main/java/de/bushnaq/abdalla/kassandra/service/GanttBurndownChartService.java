@@ -25,7 +25,6 @@ import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
-import org.apache.xmlgraphics.java2d.color.ColorUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -244,8 +243,8 @@ public class GanttBurndownChartService {
                 if (userColor == null) {
                     a.color = theme.burndownTheme.getAuthorColor(28).getRGB();
                 } else {
-                    Color lightened = ColorUtil.lightenColor(userColor, 0.3f);
-//                    Color lightened = userColor;
+//                    Color lightened = ColorUtil.lightenColor(userColor, 0.3f);
+                    Color lightened = userColor;
                     a.color = new Color(lightened.getRed(), lightened.getGreen(), lightened.getBlue(), theme.ganttTheme.taskTransparency).getRGB();
                 }
                 a.totalRemainingSeconds = usersTotalContribution.get(user).remaining.toSeconds();

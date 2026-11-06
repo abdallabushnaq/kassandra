@@ -115,7 +115,7 @@ public class DarkTheme extends Theme {
         ganttTheme.taskTextColor           = basicTextColor;
         ganttTheme.taskBorderColor         = Color.lightGray;
         ganttTheme.progressColor           = Color.blue;
-        ganttTheme.taskTransparency        = 192;
+        ganttTheme.taskTransparency        = 0xff;
         ganttTheme.taskWeekEndTransparency = 64;
         ganttTheme.idBgColor               = baseBgColor;
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
@@ -141,8 +141,8 @@ public class DarkTheme extends Theme {
         int   i     = 0;
         int[] alpha = {0xff/*, 0x30*/};
 
-        for (i = 0; i < KELLY_COLORS.length; i++) {
-            burndownTheme.burnDownColor[i] = new Color(KELLY_COLORS[i].getRed(), KELLY_COLORS[i].getGreen(), KELLY_COLORS[i].getBlue(), alpha[0]);
+        for (i = 0; i < COLOR_PALLET.length; i++) {
+            burndownTheme.burnDownColor[i] = new Color(COLOR_PALLET[i].getRed(), COLOR_PALLET[i].getGreen(), COLOR_PALLET[i].getBlue(), alpha[0]);
         }
         burndownTheme.tickTextColor      = Color.darkGray;
         burndownTheme.borderColor        = new Color(0xff, 0xcc, 0x00, 0x77);

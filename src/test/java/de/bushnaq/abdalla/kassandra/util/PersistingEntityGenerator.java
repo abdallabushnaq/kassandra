@@ -20,8 +20,8 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
-import de.bushnaq.abdalla.kassandra.ai.stablediffusion.TiledDiffusionOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.TiledDiffusionOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
 import de.bushnaq.abdalla.kassandra.config.DefaultEntitiesInitializer;
 import de.bushnaq.abdalla.kassandra.dto.*;
@@ -75,6 +75,10 @@ public class PersistingEntityGenerator {
     @Autowired
     protected           EntityManager          entityManager;
     public              FeatureApi             featureApi;
+    /**
+     * Stable Diffusion seed used when generating fixture avatars and headers.
+     */
+    public              long                   imageGenerationSeed       = 1L;
     @Autowired
     protected           JsonMapper             jsonMapper;
     public              LocationApi            locationApi;
@@ -85,10 +89,6 @@ public class PersistingEntityGenerator {
     public              ProductAclApi          productAclApi;
     public              ProductApi             productApi;
     public final        Random                 random                    = new Random();
-    /**
-     * Stable Diffusion seed used when generating fixture avatars and headers.
-     */
-    public              long                   imageGenerationSeed       = 1L;
     public              SprintApi              sprintApi;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
@@ -105,11 +105,6 @@ public class PersistingEntityGenerator {
 
     public Availability addAvailability(User user, float availability, LocalDate start) {
         return eg.addAvailability(user, availability, start, a -> availabilityApi.persist(a, user.getId()));
-    }
-
-    private CozyStylePrompt deterministicHeaderStyle(String prompt) {
-        CozyStylePrompt[] styles = CozyStylePrompt.values();
-        return styles[Math.floorMod(Objects.hash(imageGenerationSeed, prompt), styles.length)];
     }
 
     public Feature addFeature(Version version, String name) {
@@ -370,9 +365,9 @@ public class PersistingEntityGenerator {
             GeneratedImageResult darkImage = avatarService.generateDarkAvatarWithFallback(avatarPrompt, negativePrompt, lightImage, DEFAULT_SPRINT_ICON, null);
             sprint.setDarkAvatarHash(AvatarUtil.computeHash(darkImage.getResizedImage()));
             // header
-            String               headerPrompt = HeaderPrompt.getDefaultHeaderPrompt(name);
-            CozyStylePrompt      style        = deterministicHeaderStyle(headerPrompt);
-            GeneratedImageResult lightHeader  = avatarService.generateLightHeaderWithFallback(headerPrompt, DEFAULT_SPRINT_ICON, null,
+            String          headerPrompt = HeaderPrompt.getDefaultHeaderPrompt(name);
+            CozyStylePrompt style        = deterministicHeaderStyle(headerPrompt);
+            GeneratedImageResult lightHeader = avatarService.generateLightHeaderWithFallback(headerPrompt, DEFAULT_SPRINT_ICON, null,
                     TiledDiffusionOptions.forHeader(AvatarService.HEADER_WIDTH, AvatarService.HEADER_HEIGHT), style, imageGenerationSeed);
             sprint.setLightHeaderHash(AvatarUtil.computeHash(lightHeader.getResizedImage()));
             GeneratedImageResult darkHeader = avatarService.generateDarkHeaderWithFallback(headerPrompt, lightHeader, DEFAULT_SPRINT_ICON, null, style);
@@ -576,6 +571,11 @@ public class PersistingEntityGenerator {
         return saved;
     }
 
+    private CozyStylePrompt deterministicHeaderStyle(String prompt) {
+        CozyStylePrompt[] styles = CozyStylePrompt.values();
+        return styles[Math.floorMod(Objects.hash(imageGenerationSeed, prompt), styles.length)];
+    }
+
     private User ensureUserAvatar(User user, String name) {
 //        if (!hasMissingAvatar(user)) {
 //            return user;
@@ -639,8 +639,8 @@ public class PersistingEntityGenerator {
     }
 
     public Color generateUserColor(int userIndex) {
-        int index = userIndex % LightTheme.KELLY_COLORS.length;
-        return LightTheme.KELLY_COLORS[index];
+        int index = userIndex % LightTheme.COLOR_PALLET.length;
+        return LightTheme.COLOR_PALLET[index];
     }
 
     public TreeSet<Availability> getAvailabilities() {

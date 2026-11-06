@@ -97,6 +97,13 @@ export class SvgUtils {
     }
 
     /**
+     * Creates an SVG path element.
+     */
+    static createPath(additionalAttrs?: SvgAttrs): SVGPathElement {
+        return SvgUtils.createSvgElement('path', additionalAttrs);
+    }
+
+    /**
      * Creates an SVG text element with specified position and attributes.
      */
     static createText(

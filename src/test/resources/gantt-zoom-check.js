@@ -58,7 +58,7 @@ function labels(id) {
 const features = {
     renderTaskProgressBarAtDayWidth: () => !!group(taskId).querySelector('.task-progress-bar'),
     renderTaskProgressTextAtDayWidth: () => !!group(taskId).querySelector('.task-progress-text'),
-    renderTaskKeyAtDayWidth: () => labels(taskId).some(label => label.includes('K-1')),
+    renderTaskKeyAtDayWidth: () => labels(taskId).some(label => label.includes('K-1') && label.includes('Alpha')),
     renderTaskNonWorkingDaysAtDayWidth: () => group(taskId).querySelectorAll('.task-body').length > 1,
     renderTaskBorderAtDayWidth: () => !!group(taskId).querySelector('.task-border'),
     renderMilestoneStartDateAtDayWidth: () => milestoneLabel().includes('2025'),
@@ -69,6 +69,123 @@ const features = {
 
 function settings(value) {
     return Object.fromEntries(Object.keys(features).map(key => [key, value]));
+}
+
+function taskEdge(id, side) {
+    const task = group(id);
+    const milestone = task.querySelector('.milestone-body');
+    if (milestone) {
+        const points = milestone.points;
+        return {x: points.getItem(side === 'right' ? 1 : 3).x, y: points.getItem(1).y};
+    }
+    const body = task.querySelector('.task-body');
+    const rect = body || (id === storyId ? task.querySelector(':scope > rect') : null);
+    assert(rect, `missing body for ${id}`);
+    const x = Number(rect.getAttribute('x'));
+    const width = Number(rect.getAttribute('width'));
+    const y = Number(rect.getAttribute('y'));
+    return {
+        x: side === 'right' ? x + width - (body ? 0 : 1) : x,
+        y: body ? y + Number(rect.getAttribute('height')) / 2 : y + 8,
+    };
+}
+
+function assertRelation(type, predecessorId, successorId, color) {
+    const start = taskEdge(predecessorId, 'right');
+    const end = taskEdge(successorId, 'left');
+    const relation = group(successorId).querySelector('.task-dependency');
+    const path = relation.querySelector('path');
+    const arrow = relation.querySelector('polygon');
+    assert(path && arrow, `${type}: missing connector or arrow`);
+    const commands = [...path.getAttribute('d').matchAll(/([MHVQ])\s+([^MHVQ]+)/g)]
+        .map(match => [match[1], ...match[2].trim().split(/\s+/).map(Number)]);
+    assert(commands.map(command => command[0]).join('') === 'MHQVQHQVQH', `${type}: rounded route`);
+    const near = (a, b) => Math.abs(a - b) < 0.01;
+    assert(near(commands[0][1], start.x) && near(commands[0][2], start.y), `${type}: predecessor edge`);
+    const tip = arrow.points.getItem(2);
+    assert(near(tip.x, end.x) && near(tip.y, end.y), `${type}: successor edge`);
+    assert(near(commands[9][1], end.x - 5), `${type}: path meets arrow base`);
+    assert(near(arrow.points.getItem(0).x, end.x - 5)
+        && near(arrow.points.getItem(1).x, end.x - 5), `${type}: arrow points right`);
+    const gap = end.y - Math.sign(end.y - start.y) * 9.5;
+    assert(near(commands[4][2], gap) && near(commands[4][4], gap), `${type}: return in row gap`);
+    assert(commands[5][1] < commands[4][3], `${type}: horizontal return moves left`);
+    const radius = commands[2][1] - commands[1][1];
+    assert(radius > 0 && near(commands[2][2], start.y)
+        && near(commands[2][3], commands[2][1])
+        && near(Math.abs(commands[2][4] - start.y), radius), `${type}: rounded exit`);
+    assert(near(commands[4][1], commands[2][1])
+        && near(commands[4][1] - commands[4][3], radius)
+        && near(commands[6][1], commands[6][3])
+        && near(commands[5][1] - commands[6][1], radius)
+        && near(commands[8][1], commands[6][1])
+        && near(commands[8][3] - commands[8][1], radius)
+        && near(commands[8][2], end.y) && near(commands[8][4], end.y), `${type}: rounded return and entry`);
+    assert(path.getAttribute('stroke') === color && arrow.getAttribute('fill') === color, `${type}: relation color`);
+}
+
+function verifyRelations(type, data, render) {
+    const originalTasks = structuredClone(data.tasks);
+    const originalTheme = structuredClone(data.meta.theme.ganttTheme);
+    try {
+        const task = data.tasks.find(item => item.id === taskId);
+        const milestone = data.tasks.find(item => item.id === milestoneId);
+        const shortTask = data.tasks.find(item => item.id === shortTaskId);
+        const story = data.tasks.find(item => item.id === storyId);
+        const relation = predecessorId => ({predecessorId, visible: true});
+        const thresholds = {...settings(0), renderTaskNonWorkingDaysAtDayWidth: 1000};
+        data.meta.theme.ganttTheme.relationColor = 0x112233;
+        data.meta.theme.ganttTheme.criticalRelationColor = 0xcc3344;
+
+        for (const width of [2, 20, 30]) {
+            render(thresholds, width);
+            assertRelation(`${type} milestone successor at ${width}`, taskId, milestoneId, '#112233ff');
+            assertRelation(`${type} milestone predecessor at ${width}`, milestoneId, storyId, '#112233ff');
+        }
+
+        shortTask.predecessors = [relation(taskId)];
+        task.rowIndex = 0;
+        shortTask.rowIndex = 2;
+        task.critical = shortTask.critical = true;
+        for (const [start, finish] of [
+            ['2025-06-11T08:00:00', '2025-06-11T16:30:00'],
+            ['2025-06-07T08:00:00', '2025-06-07T16:30:00'],
+            ['2025-06-09T16:30:00', '2025-06-10T14:00:00'],
+        ]) {
+            shortTask.start = start;
+            shortTask.finish = finish;
+            render(thresholds);
+            assertRelation(`${type} separated, overlapping or adjacent dates`, taskId, shortTaskId, '#cc3344ff');
+        }
+
+        task.rowIndex = 2;
+        shortTask.rowIndex = 0;
+        render(thresholds);
+        assertRelation(`${type} predecessor below successor`, taskId, shortTaskId, '#cc3344ff');
+
+        story.predecessors = [relation(shortTaskId)];
+        render(thresholds);
+        assertRelation(`${type} story successor`, shortTaskId, storyId, '#112233ff');
+
+        milestone.predecessors = [relation(storyId)];
+        render(thresholds);
+        assertRelation(`${type} story predecessor`, storyId, milestoneId, '#112233ff');
+
+        task.start = '2024-01-01T08:00:00';
+        task.finish = '2024-01-02T16:30:00';
+        render(thresholds);
+        assert(group(shortTaskId).querySelector('.task-dependency path'), `${type}: partially clipped relation`);
+        shortTask.start = '2024-01-03T08:00:00';
+        shortTask.finish = '2024-01-03T16:30:00';
+        render(thresholds);
+        assert(!group(shortTaskId).querySelector('.task-dependency path'), `${type}: fully clipped relation`);
+        task.finish = null;
+        render(thresholds);
+        assert(!group(shortTaskId).querySelector('.task-dependency path'), `${type}: unscheduled predecessor`);
+    } finally {
+        data.tasks = originalTasks;
+        data.meta.theme.ganttTheme = originalTheme;
+    }
 }
 
 /**
@@ -162,6 +279,8 @@ export async function verifyGanttZoom(gantt, combined) {
             `${type}: unchanged body height`);
         render({...settings(0), renderDependenciesAtDayWidth: 30});
         assert(!group(storyId).querySelector('.task-dependency'), `${type}: hidden story dependency`);
+
+        verifyRelations(type, data, render);
 
         render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
         assert(!features.renderTaskProgressBarAtDayWidth(), `${type}: initial zoom`);

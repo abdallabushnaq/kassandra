@@ -241,7 +241,8 @@ public class GanttChartService {
         } else if (task.getAssignedUser() != null && task.getAssignedUser().getColor() != null) {
             Color userColor = task.getAssignedUser().getColor();
             // lighten by 50% then apply taskTransparency alpha (mirrors generateGanttColor)
-            Color lightened = ColorUtil.lightenColor(userColor, 0.5f);
+//            Color lightened = ColorUtil.lightenColor(userColor, 0.5f);
+            Color lightened = userColor;
             fillColor = new Color(lightened.getRed(), lightened.getGreen(), lightened.getBlue(), theme.ganttTheme.taskTransparency);
             // progress bar: lighter user colour (60% lightening)
             Color progressBase = ColorUtil.lightenColor(userColor, 0.6f);
