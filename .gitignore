@@ -27,6 +27,7 @@
 /references/demo/*.png
 /references/debug/*.svg
 /references/debug/*.png
+/references/theme/*.png
 /legacy-references
 /node_modules
 /src/main/bundles
