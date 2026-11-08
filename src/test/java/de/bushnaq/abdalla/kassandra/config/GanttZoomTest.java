@@ -92,15 +92,15 @@ public class GanttZoomTest extends AbstractTestUtil {
     @Test
     public void rendersConfiguredZoomDetails() throws Exception {
         KassandraProperties.Gantt zoom = properties.getGantt();
-        assertEquals(10.5, zoom.getRenderTaskProgressBarAtDayWidth());
-        assertEquals(11.5, zoom.getRenderTaskProgressTextAtDayWidth());
-        assertEquals(22, zoom.getRenderTaskKeyAtDayWidth());
-        assertEquals(12.5, zoom.getRenderTaskNonWorkingDaysAtDayWidth());
-        assertEquals(13.5, zoom.getRenderTaskBorderAtDayWidth());
-        assertEquals(14.5, zoom.getRenderMilestoneStartDateAtDayWidth());
-        assertEquals(15.5, zoom.getRenderMilestoneStartTimeAtDayWidth());
-        assertEquals(16.5, zoom.getRenderMilestoneBorderAtDayWidth());
-        assertEquals(17.5, zoom.getRenderDependenciesAtDayWidth());
+        assertEquals(10.5, zoom.getRenderTaskProgressBarAtDayWidth(), "task progress bar zoom threshold");
+        assertEquals(11.5, zoom.getRenderTaskProgressTextAtDayWidth(), "task progress text zoom threshold");
+        assertEquals(22, zoom.getRenderTaskKeyAtDayWidth(), "task key zoom threshold");
+        assertEquals(12.5, zoom.getRenderTaskNonWorkingDaysAtDayWidth(), "task non-working days zoom threshold");
+        assertEquals(13.5, zoom.getRenderTaskBorderAtDayWidth(), "task border zoom threshold");
+        assertEquals(14.5, zoom.getRenderMilestoneStartDateAtDayWidth(), "milestone start date zoom threshold");
+        assertEquals(15.5, zoom.getRenderMilestoneStartTimeAtDayWidth(), "milestone start time zoom threshold");
+        assertEquals(16.5, zoom.getRenderMilestoneBorderAtDayWidth(), "milestone border zoom threshold");
+        assertEquals(17.5, zoom.getRenderDependenciesAtDayWidth(), "dependency zoom threshold");
 
         LocalDateTime start  = LocalDateTime.parse("2025-06-01T08:00:00");
         LocalDateTime end    = LocalDateTime.parse("2025-06-15T16:30:00");
@@ -115,12 +115,16 @@ public class GanttZoomTest extends AbstractTestUtil {
 
         GanttChartDto         gantt    = ganttService.build(sprint, now, false);
         GanttBurndownChartDto combined = burndownService.build(sprint, now, false);
-        assertEquals(zoom, gantt.meta.ganttZoom);
-        assertEquals(zoom, combined.meta.ganttZoom);
-        assertEquals(Color.blue.getRGB(), gantt.meta.theme.ganttTheme.progressColor);
-        assertEquals(Color.blue.getRGB(), combined.meta.theme.ganttTheme.progressColor);
-        assertEquals(Color.blue.getRGB(), ganttService.build(sprint, now, true).meta.theme.ganttTheme.progressColor);
-        assertEquals(Color.blue.getRGB(), burndownService.build(sprint, now, true).meta.theme.ganttTheme.progressColor);
+        assertEquals(zoom, gantt.meta.ganttZoom, "standalone Gantt DTO zoom settings");
+        assertEquals(zoom, combined.meta.ganttZoom, "combined chart DTO zoom settings");
+        assertEquals(Color.blue.getRGB(), gantt.meta.theme.ganttTheme.progressColor,
+                "standalone Gantt theme progress color");
+        assertEquals(Color.blue.getRGB(), combined.meta.theme.ganttTheme.progressColor,
+                "combined chart theme progress color");
+        assertEquals(Color.blue.getRGB(), ganttService.build(sprint, now, true).meta.theme.ganttTheme.progressColor,
+                "standalone Gantt theme progress color with default settings");
+        assertEquals(Color.blue.getRGB(), burndownService.build(sprint, now, true).meta.theme.ganttTheme.progressColor,
+                "combined chart theme progress color with default settings");
 
         TaskDto task = task("00000000-0000-0000-0000-000000000001", "Alpha",
                 "2025-06-06T08:00:00", "2025-06-09T16:30:00", 0);
@@ -166,7 +170,7 @@ public class GanttZoomTest extends AbstractTestUtil {
                             .then(() => done('ok'))
                             .catch(error => done(String(error.stack || error)));
                         """, jsonMapper.writeValueAsString(gantt), jsonMapper.writeValueAsString(combined));
-                assertEquals("ok", result);
+                assertEquals("ok", result, "browser Gantt zoom verification result: " + result);
             } finally {
                 driver.quit();
             }
@@ -182,11 +186,11 @@ public class GanttZoomTest extends AbstractTestUtil {
     public void rejectsInvalidThresholds() {
         KassandraProperties invalid = new KassandraProperties();
         invalid.getGantt().setRenderTaskProgressBarAtDayWidth(-1);
-        assertThrows(IllegalArgumentException.class, invalid::init);
+        assertThrows(IllegalArgumentException.class, invalid::init, "negative zoom threshold must be rejected");
         invalid.getGantt().setRenderTaskProgressBarAtDayWidth(Double.NaN);
-        assertThrows(IllegalArgumentException.class, invalid::init);
+        assertThrows(IllegalArgumentException.class, invalid::init, "NaN zoom threshold must be rejected");
         invalid.getGantt().setRenderTaskProgressBarAtDayWidth(Double.POSITIVE_INFINITY);
-        assertThrows(IllegalArgumentException.class, invalid::init);
+        assertThrows(IllegalArgumentException.class, invalid::init, "infinite zoom threshold must be rejected");
     }
 
     private static TaskDto task(String id, String name, String start, String finish, int row) {

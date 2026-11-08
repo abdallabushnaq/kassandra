@@ -137,14 +137,27 @@ We want to keep all these zoom levels independently configurable as properties.
 Let us measure zoom level by dayWidth.
 So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAtDayWidth could be set at 22
 
-# Burn Down Chart Rendering
+# Gantt-Chart rendering
 
-it looks as if the js renders the graph without any antialiasing.
-It was turned off for the Gantt chart, but it should be turned on for the Burn Down chart.
-Burn down chart grid is one line too high.
-Let us draw the vertical grid lines for the Burn-down-chart above the graph.
-Gantt chart should keep the grid below the chart.
-Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
+1. Tasks are 2 px too high. we want to reintroduce a margin of 1px at the top and bottom of each task to keep space for
+   the relation to pass between tasks horizontally.
+
+# Burn-Down-Chart Rendering
+
+1. it looks as if the js renders the graph without any antialiasing. It was turned off for the Gantt chart, but it
+   should be turned on for the Burn Down chart.
+2. Burn down chart grid is one line too high.
+3. Let us draw the vertical grid lines for the Burn-down-chart above the graph. Gantt chart should keep the grid below
+   the chart.
+4. Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
+5. Would be good if we could move the legend of the burn-down-chart at the right top corner of the chart and not at the
+   very right of the whole page.
+6. Horizontal grid should only reach until the end of the chart, not end of the screen.
+7. Y-axis labels are too light in color for dark mode.
+8. grid too light in color for dark mode.
+9. now line in dark mode should match light mode (too orange).
+10. legend should be drawn above the grid in z axis.
+11. year background color is black.
 
 # Disabling Video Recording for Tests
 
@@ -162,24 +175,30 @@ Let's add a new class CacheAwareAvatarService extending AvatarService to check i
 and stored in the cache.
 We will use this in our tests whenever we need to generate an image e.g. PersistingEntityGenerator.
 
-# Failing Tests
+# Overwriting Default Chart Scaling
 
-Running the Action scripts (maven-build.yml) in github a lot more tests fail than running them locally.
-All of the API tests fail.
-Let's pick one of them and try to figure out why it could be failing running in github, but it works fine locally:
-AvailabilityApiTest.
+for some of our tests, we would like to change the default zoom level of the graphs.
+e.g. TestResourceLeveling is using MPXJReader.generateGanttChart.
+the generated Gantt chart has a default visualScale of 0.75 (see TimelineRenderer in InteractiveTimelineChart.ts and
+DEFAULT_SCALE).
 
-All tests run green locally.
-All test fail running in grithub.
+can we add a parameter to generateGanttChart and the other generateXXX chart generation methods with a default scaling
+parameter that will overwrite the fixed default?
 
-I downloaded the results:
+# Redesign Undo/Redo
 
-.github\test-results\test-artifacts\target\surefire-reports\de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApiTest.txt
-.github\test-results\test-artifacts\target\surefire-reports\TEST-de.bushnaq.abdalla.kassandra.rest.api.AvailabilityApiTest.xml
+Currently, we implemented a undo/redo architecture per project. See ..\kassandra.wiki\undo-redo-design.md.
+This means that if a user is adding a worklog to a test belonging to a sprint. This operation can only be undone without
+side effects, if no other user has changed any other sprint belonging to the same project in the meantime.
 
-Can you figure out why this test is failing in github, but works fine locally?
-remark: we already isolated the test and run it in github and it succeeded, so it is probably a problem of other tests
-interfering with this test.
+This scope is safe but not practical.
 
-remark: since then we fixed several tests, but are no onger able to download the test artifacts, as windows defender is
-marking them as a virus.
+Usually users want to undo/redo their own actions, even if other users have changed other sprints in the meantime. For
+tasks, it is clear. A task belongs to a user and only that user can change anything for that task.
+
+Scoping undo/redo only for a users actions is also not so simple, as changes to a task might change a sprint start/end
+time. E.g. adding a task with a manual date might change the sprint start time. adding a task might change the
+sprint end time. But all these changes are calculated every time we draw the sprint. They are not destructive.
+
+Can you suggest a better design for our undo/redo architecture that is more practical for our users?
+

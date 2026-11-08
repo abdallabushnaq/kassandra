@@ -78,11 +78,19 @@ public class QualityBoardIT extends AbstractKeycloakUiTestUtil {
         return String.format("Feature-%d", t);
     }
 
+    private int generateRandomValue(int minNumber, int maxNumber) {
+        int valueCount = maxNumber - minNumber + 1;
+        if (valueCount > 0) {
+            return peg.random.nextInt(valueCount) + minNumber;
+        }
+        return (int) peg.random.nextLong(minNumber, (long) maxNumber + 1);
+    }
+
     private void generateTasks(RandomCase randomCase) {
         peg.random.setSeed(randomCase.getSeed());
-        int numberOfUsers    = peg.random.nextInt(randomCase.getMaxNumberOfUsers()) + 2;
-        int numberOfFeatures = peg.random.nextInt(randomCase.getMaxNumberOfStories()) + 1;
-        int numberOfTasks    = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
+        int numberOfUsers    = generateRandomValue(randomCase.users().min(), randomCase.users().max());
+        int numberOfFeatures = generateRandomValue(randomCase.stories().min(), randomCase.stories().max());
+        int numberOfTasks    = generateRandomValue(randomCase.tasks().min(), randomCase.tasks().max());
         {
             peg.addRandomUsers(numberOfUsers);
             Product product = peg.addProduct(peg.nameGenerator.generateProductName(0));
@@ -98,7 +106,7 @@ public class QualityBoardIT extends AbstractKeycloakUiTestUtil {
             Task   feature     = peg.addParentTask(featureName, sprint, null, startMilestone);
             for (int t = 0; t < numberOfTasks; t++) {
                 User   user     = peg.getUsers().stream().toList().get(peg.random.nextInt(numberOfUsers));
-                String duration = String.format("%dd", peg.random.nextInt(randomCase.getMaxTaskDurationDays()) + 1);
+                String duration = String.format("%dd", generateRandomValue(randomCase.taskDurationDays().min(), randomCase.taskDurationDays().max()));
                 String workName = NameGenerator.generateWorkName(featureName, t);
                 peg.addTask(workName, duration, null, user, sprint, feature, null);
             }
@@ -111,13 +119,13 @@ public class QualityBoardIT extends AbstractKeycloakUiTestUtil {
                         .testCaseIndex(1)
                         .now(OffsetDateTime.parse("2025-05-05T08:00:00+01:00"))
                         .startDate(LocalDate.parse("2024-12-15"))
-                        .minNumberOfProducts(1).maxNumberOfProducts(1)
-                        .minNumberOfVersions(1).maxNumberOfVersions(1)
-                        .minNumberOfFeatures(1).maxNumberOfFeatures(1)
-                        .minNumberOfSprints(1).maxNumberOfSprints(1)
-                        .maxTaskDurationDays(10).maxNumberOfStories(2)
-                        .maxNumberOfUsers(1).maxNumberOfUsersPerSprint(2)
-                        .maxNumberOfTasks(1).seed(1)
+                        .numberOfProducts(1, 1)
+                        .numberOfVersions(1, 1)
+                        .numberOfFeatures(1, 1)
+                        .numberOfSprints(1, 1)
+                        .taskDurationPerDay(1, 10).numberOfStories(1, 2)
+                        .numberOfUsers(2, 2).numberOfUsersPerSprint(1, 2)
+                        .numberOfTasks(1, 1).seed(1)
                         .build(),//
         };
         return Arrays.stream(randomCases).toList();

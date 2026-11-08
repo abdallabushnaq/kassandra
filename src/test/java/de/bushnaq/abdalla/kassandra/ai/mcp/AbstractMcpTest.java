@@ -70,13 +70,13 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
                         .testCaseIndex(3)
                         .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
                         .startDate(LocalDate.parse("2025-08-04"))
-                        .minNumberOfProducts(2).maxNumberOfProducts(2)
-                        .minNumberOfVersions(2).maxNumberOfVersions(2)
-                        .minNumberOfFeatures(2).maxNumberOfFeatures(2)
-                        .minNumberOfSprints(1).maxNumberOfSprints(5)
-                        .maxTaskDurationDays(5).maxNumberOfStories(8)
-                        .maxNumberOfUsers(8).maxNumberOfUsersPerSprint(8)
-                        .maxNumberOfTasks(6).seed(7)
+                        .numberOfProducts(2, 2)
+                        .numberOfVersions(2, 2)
+                        .numberOfFeatures(2, 2)
+                        .numberOfSprints(1, 4)
+                        .taskDurationPerDay(1, 5).numberOfStories(1, 7)
+                        .numberOfUsers(1, 8).numberOfUsersPerSprint(1, 8)
+                        .numberOfTasks(1, 6).seed(7)
                         .build()//
         };
         return Arrays.stream(randomCases).toList();

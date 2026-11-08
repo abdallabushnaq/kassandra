@@ -251,8 +251,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
         ParameterOptions.setNow(randomCase.getNow());
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
-        // Create a snapshot name based on the test case
-        String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex();
+        // Include generation settings so range changes cannot load stale cached data.
+        String snapshotConfigHash = Integer.toUnsignedString(randomCase.toString().hashCode(), 16);
+        String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex() + "-" +
+                snapshotConfigHash;
         // Try to find and load an existing database snapshot
         String  latestSnapshot = databaseStateManager.findLatestSnapshot(snapshotName);
         boolean dataLoaded     = false;
@@ -286,28 +288,28 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         WorkWeek ww = peg.persistWorkWeek("western 5x7.5", "Monday-Friday 8:00 - 12:00, 13:00 - 16:30", LocalTime.of(8, 0), LocalTime.of(12, 0), LocalTime.of(13, 0), LocalTime.of(16, 30), false, false, true, true, true, true, true);
         peg.getUsers().clear();
         try (Profiler pc = new Profiler(SampleType.JPA)) {
-            peg.addRandomUsers(randomCase.getMaxNumberOfUsers(), ww);
+            peg.addRandomUsers(randomCase.users().max(), ww);
         }
 
         PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates all the user groups as admin
         UserGroup group = peg.userGroupApi.create("Team", "Dev team", new HashSet<>(peg.getUsers().stream().map(User::getId).toList()));
         Profiler.log("generating users for test case " + randomCase.getTestCaseIndex());
         {
-            int numberOfProducts = generateRandomValue(randomCase.getMinNumberOfProducts(), randomCase.getMaxNumberOfProducts());
+            int numberOfProducts = generateRandomValue(randomCase.products().min(), randomCase.products().max());
             try (Profiler pc = new Profiler(SampleType.JPA)) {
                 for (int p = 0; p < numberOfProducts; p++) {
                     PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the products
                     Product product = peg.addProduct(peg.nameGenerator.generateProductName(peg.getProductIndex()));
                     peg.productAclApi.grantGroupAccess(product.getId(), group.getId());
-                    int numberOfVersions = generateRandomValue(randomCase.getMinNumberOfVersions(), randomCase.getMaxNumberOfVersions());
+                    int numberOfVersions = generateRandomValue(randomCase.versions().min(), randomCase.versions().max());
                     for (int v = 0; v < numberOfVersions; v++) {
                         PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the versions
                         Version version          = peg.addVersion(product, peg.nameGenerator.generateVersionName(v));
-                        int     numberOfFeatures = generateRandomValue(randomCase.getMinNumberOfFeatures(), randomCase.getMaxNumberOfFeatures());
+                        int     numberOfFeatures = generateRandomValue(randomCase.features().min(), randomCase.features().max());
                         for (int f = 0; f < numberOfFeatures; f++) {
                             PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the features
                             Feature feature         = peg.addFeature(version, peg.nameGenerator.generateFeatureName(peg.getFeatureIndex()));
-                            int     numberOfSprints = generateRandomValue(randomCase.getMinNumberOfSprints(), randomCase.getMaxNumberOfSprints());
+                            int     numberOfSprints = generateRandomValue(randomCase.sprints().min(), randomCase.sprints().max());
                             for (int s = 0; s < numberOfSprints; s++) {
                                 generateSprint(testInfo, randomCase, feature);
                             }
@@ -333,17 +335,33 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         log.trace("----------------------------------------------------------------------------------------------------");
     }
 
-    private int generateRandomValue(int minNumber, int maxNumberExclusive) {
-        if (maxNumberExclusive - minNumber > 0)
-            return peg.random.nextInt(maxNumberExclusive - minNumber) + minNumber;
-        else
+    private int generateRandomValue(int minNumber, int maxNumber) {
+        if (minNumber == maxNumber) {
             return minNumber;
+        }
+        int valueCount = maxNumber - minNumber + 1;
+        if (valueCount > 0) {
+            return peg.random.nextInt(valueCount) + minNumber;
+        }
+        return (int) peg.random.nextLong(minNumber, (long) maxNumber + 1);
+    }
+
+    private float generateRandomValue(float minNumber, float maxNumber) {
+        if (minNumber == maxNumber) {
+            return minNumber;
+        }
+        return Math.min(peg.random.nextFloat(Math.nextUp(maxNumber) - minNumber) + minNumber, maxNumber);
     }
 
     @Transactional
     private void generateSprint(TestInfo testInfo, RandomCase randomCase, Feature project) throws Exception {
-        int        maxUsersPerSprint = Math.min(randomCase.getMaxNumberOfUsersPerSprint(), peg.getUsers().size());
-        int        numberOfUsers     = peg.random.nextInt(maxUsersPerSprint) + 1;
+        int availableUsers = peg.getUsers().size();
+        if (availableUsers == 0) {
+            throw new IllegalStateException("Cannot generate a sprint without available users");
+        }
+        int        minUsersPerSprint = Math.max(1, Math.min(randomCase.usersPerSprint().min(), availableUsers));
+        int        maxUsersPerSprint = Math.max(minUsersPerSprint, Math.min(randomCase.usersPerSprint().max(), availableUsers));
+        int        numberOfUsers     = peg.random.nextInt(maxUsersPerSprint - minUsersPerSprint + 1) + minUsersPerSprint;
         List<User> shuffledUsers     = new ArrayList<>(peg.getUsers());
         Collections.shuffle(shuffledUsers, peg.random);
         List<User> sprintUsers = shuffledUsers.subList(0, numberOfUsers);
@@ -356,8 +374,8 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             Sprint generatedSprint = peg.addRandomSprint(project);
             Sprint sprint          = generatedSprint;//sprintApi.getById(generatedSprint.getId());
             sprint.initialize();
-            if (randomCase.getMaxNumberOfStories() > 0) {
-                int           numberOfStories = generateRandomValue(randomCase.getMinNumberOfStories(), randomCase.getMaxNumberOfStories());
+            if (randomCase.stories().max() > 0) {
+                int           numberOfStories = generateRandomValue(randomCase.stories().min(), randomCase.stories().max());
                 LocalDateTime startDateTime   = randomCase.getStartDate().atStartOfDay().plusHours(8);
                 startDateTime = sprint.getCalendar().getNextWorkStart(startDateTime);
                 PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates the milestone of every sprint
@@ -370,12 +388,14 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
                     String storyName = sprintStoryNames.get(f);
                     PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_USER");//Christopher creates teh story of every sprint
                     Task story         = peg.addParentTask(storyName, sprint, null, startMilestone);
-                    int  numberOfTasks = peg.random.nextInt(randomCase.getMaxNumberOfTasks()) + 1;
+                    int  numberOfTasks = generateRandomValue(randomCase.tasks().min(), randomCase.tasks().max());
                     for (int t = 0; t < numberOfTasks; t++) {
+                        //pic a user from the sprint users to assign the task to
                         int userIndex = peg.random.nextInt(sprintUsers.size());
 //                    System.out.println("User index=" + userIndex);
-                        User   user             = sprintUsers.get(userIndex);
-                        float  minHours         = peg.random.nextFloat(randomCase.getMaxTaskDurationDays() * 7.5f) + 1;
+                        User user = sprintUsers.get(userIndex);
+                        // Convert the configured day range to its original hour interval before truncating to whole hours.
+                        float  minHours         = peg.random.nextFloat(randomCase.taskDurationDays().max() * 7.5f) + 1;
                         float  maxHours         = minHours + peg.random.nextFloat() * minHours;
                         String minWork          = String.format("%dh", (int) minHours);
                         String maxWork          = String.format("%dh", (int) maxHours);

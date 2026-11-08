@@ -147,13 +147,13 @@ public abstract class AbstractIntroductionVideo extends AbstractKeycloakUiTestUt
                         .testCaseIndex(1)
                         .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
                         .startDate(LocalDate.parse("2025-08-04"))
-                        .minNumberOfProducts(0).maxNumberOfProducts(0)
-                        .minNumberOfVersions(0).maxNumberOfVersions(0)
-                        .minNumberOfFeatures(0).maxNumberOfFeatures(0)
-                        .minNumberOfSprints(0).maxNumberOfSprints(0)
-                        .maxTaskDurationDays(6).maxNumberOfStories(8)
-                        .maxNumberOfUsers(12).maxNumberOfUsersPerSprint(4)
-                        .maxNumberOfTasks(6).seed(13)
+                        .numberOfProducts(0, 0)
+                        .numberOfVersions(0, 0)
+                        .numberOfFeatures(0, 0)
+                        .numberOfSprints(0, 0)
+                        .taskDurationPerDay(1, 6).numberOfStories(1, 7)
+                        .numberOfUsers(1, 12).numberOfUsersPerSprint(1, 4)
+                        .numberOfTasks(1, 6).seed(13)
                         .build()//
         };
         return Arrays.stream(randomCases).toList();

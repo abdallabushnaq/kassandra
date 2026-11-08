@@ -21,9 +21,32 @@ const shortTaskId = '00000000-0000-0000-0000-000000000003';
 const storyId = '00000000-0000-0000-0000-000000000004';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-function assert(condition, message) {
+function formatValue(value) {
+    if (typeof value === 'string')
+        return JSON.stringify(value);
+    if (value && typeof value.tagName === 'string' && typeof value.getAttribute === 'function')
+        return `<${value.tagName.toLowerCase()} class="${value.getAttribute('class') || ''}">`;
+    if (value !== null && typeof value === 'object')
+        return JSON.stringify(value);
+    return String(value);
+}
+
+function assertEqual(actual, expected, message) {
+    if (actual !== expected)
+        throw new Error(`${message}: expected ${formatValue(expected)}, found ${formatValue(actual)}`);
+}
+
+function assertCondition(condition, message, expected, actual) {
     if (!condition)
-        throw new Error(message);
+        throw new Error(`${message}: expected ${formatValue(expected)}, found ${formatValue(actual)}`);
+}
+
+function assertPresent(element, message) {
+    assertCondition(!!element, message, 'element present', element || 'no element');
+}
+
+function assertAbsent(element, message) {
+    assertCondition(!element, message, 'no element', element || 'no element');
 }
 
 async function waitFor(condition, message) {
@@ -32,7 +55,7 @@ async function waitFor(condition, message) {
             return;
         await delay(100);
     }
-    throw new Error(message);
+    throw new Error(`${message}: expected condition to become true, found false after 50 attempts`);
 }
 
 function state(dayWidth, visualScale = 1) {
@@ -43,12 +66,15 @@ function state(dayWidth, visualScale = 1) {
 
 function group(id) {
     const element = document.querySelector(`[data-task-id="${id}"]`);
-    assert(element, `missing task group ${id}`);
+    assertPresent(element, `task group ${id}`);
     return element;
 }
 
 function milestoneLabel() {
-    return group(milestoneId).querySelector('.milestone-label').firstChild.textContent;
+    const label = group(milestoneId).querySelector('.milestone-label');
+    assertPresent(label, 'milestone label element');
+    assertPresent(label.firstChild, 'milestone label text node');
+    return label.firstChild.textContent;
 }
 
 function labels(id) {
@@ -63,7 +89,10 @@ const features = {
     renderTaskBorderAtDayWidth: () => !!group(taskId).querySelector('.task-border'),
     renderMilestoneStartDateAtDayWidth: () => milestoneLabel().includes('2025'),
     renderMilestoneStartTimeAtDayWidth: () => milestoneLabel().includes('08:00'),
-    renderMilestoneBorderAtDayWidth: () => group(milestoneId).querySelector('.milestone-body').getAttribute('stroke') !== 'none',
+    renderMilestoneBorderAtDayWidth: () => {
+        const body = group(milestoneId).querySelector('.milestone-body');
+        return !!body && body.getAttribute('stroke') !== 'none';
+    },
     renderDependenciesAtDayWidth: () => !!group(milestoneId).querySelector('.task-dependency'),
 };
 
@@ -80,7 +109,7 @@ function taskEdge(id, side) {
     }
     const body = task.querySelector('.task-body');
     const rect = body || (id === storyId ? task.querySelector(':scope > rect') : null);
-    assert(rect, `missing body for ${id}`);
+    assertPresent(rect, `task body for ${id}`);
     const x = Number(rect.getAttribute('x'));
     const width = Number(rect.getAttribute('width'));
     const y = Number(rect.getAttribute('y'));
@@ -94,34 +123,65 @@ function assertRelation(type, predecessorId, successorId, color) {
     const start = taskEdge(predecessorId, 'right');
     const end = taskEdge(successorId, 'left');
     const relation = group(successorId).querySelector('.task-dependency');
+    assertPresent(relation, `${type} dependency group for successor ${successorId}`);
     const path = relation.querySelector('path');
     const arrow = relation.querySelector('polygon');
-    assert(path && arrow, `${type}: missing connector or arrow`);
+    assertPresent(path, `${type} dependency connector path`);
+    assertPresent(arrow, `${type} dependency arrowhead`);
     const commands = [...path.getAttribute('d').matchAll(/([MHVQ])\s+([^MHVQ]+)/g)]
         .map(match => [match[1], ...match[2].trim().split(/\s+/).map(Number)]);
-    assert(commands.map(command => command[0]).join('') === 'MHQVQHQVQH', `${type}: rounded route`);
+    assertEqual(commands.map(command => command[0]).join(''), 'MHQVQHQVQH', `${type} dependency route commands`);
     const near = (a, b) => Math.abs(a - b) < 0.01;
-    assert(near(commands[0][1], start.x) && near(commands[0][2], start.y), `${type}: predecessor edge`);
+    assertCondition(near(commands[0][1], start.x) && near(commands[0][2], start.y),
+        `${type} predecessor edge`, start, {x: commands[0][1], y: commands[0][2]});
     const tip = arrow.points.getItem(2);
-    assert(near(tip.x, end.x) && near(tip.y, end.y), `${type}: successor edge`);
-    assert(near(commands[9][1], end.x - 5), `${type}: path meets arrow base`);
-    assert(near(arrow.points.getItem(0).x, end.x - 5)
-        && near(arrow.points.getItem(1).x, end.x - 5), `${type}: arrow points right`);
+    assertCondition(near(tip.x, end.x) && near(tip.y, end.y),
+        `${type} successor edge`, end, {x: tip.x, y: tip.y});
+    assertCondition(near(commands[9][1], end.x - 5), `${type} path meets arrow base`, end.x - 5, commands[9][1]);
+    const arrowBaseX = end.x - 5;
+    const arrowBasePoints = [arrow.points.getItem(0).x, arrow.points.getItem(1).x];
+    assertCondition(arrowBasePoints.every(x => near(x, arrowBaseX)), `${type} arrow points toward successor`,
+        [arrowBaseX, arrowBaseX], arrowBasePoints);
     const gap = end.y - Math.sign(end.y - start.y) * 9.5;
-    assert(near(commands[4][2], gap) && near(commands[4][4], gap), `${type}: return in row gap`);
-    assert(commands[5][1] < commands[4][3], `${type}: horizontal return moves left`);
+    const rowGapY = [commands[4][2], commands[4][4]];
+    assertCondition(rowGapY.every(y => near(y, gap)), `${type} return in row gap`, [gap, gap], rowGapY);
+    assertCondition(commands[5][1] < commands[4][3], `${type} horizontal return moves left`,
+        `< ${commands[4][3]}`, commands[5][1]);
     const radius = commands[2][1] - commands[1][1];
-    assert(radius > 0 && near(commands[2][2], start.y)
+    const roundedExit = {
+        radius,
+        horizontalY: commands[2][2],
+        verticalX: commands[2][3],
+        verticalDistance: Math.abs(commands[2][4] - start.y),
+    };
+    assertCondition(radius > 0 && near(commands[2][2], start.y)
         && near(commands[2][3], commands[2][1])
-        && near(Math.abs(commands[2][4] - start.y), radius), `${type}: rounded exit`);
-    assert(near(commands[4][1], commands[2][1])
+        && near(Math.abs(commands[2][4] - start.y), radius), `${type} rounded exit`,
+        {radius: '> 0', horizontalY: start.y, verticalX: commands[2][1], verticalDistance: radius}, roundedExit);
+    const roundedReturn = {
+        rowGapX: commands[4][1],
+        rowGapWidth: commands[4][1] - commands[4][3],
+        verticalX: commands[6][1],
+        returnWidth: commands[5][1] - commands[6][1],
+        entryX: commands[8][1],
+        entryWidth: commands[8][3] - commands[8][1],
+        entryStartY: commands[8][2],
+        entryEndY: commands[8][4],
+    };
+    assertCondition(near(commands[4][1], commands[2][1])
         && near(commands[4][1] - commands[4][3], radius)
         && near(commands[6][1], commands[6][3])
         && near(commands[5][1] - commands[6][1], radius)
         && near(commands[8][1], commands[6][1])
         && near(commands[8][3] - commands[8][1], radius)
-        && near(commands[8][2], end.y) && near(commands[8][4], end.y), `${type}: rounded return and entry`);
-    assert(path.getAttribute('stroke') === color && arrow.getAttribute('fill') === color, `${type}: relation color`);
+        && near(commands[8][2], end.y) && near(commands[8][4], end.y), `${type} rounded return and entry`,
+        {
+            rowGapX: commands[2][1], rowGapWidth: radius, verticalX: commands[6][1], returnWidth: radius,
+            entryX: commands[6][1], entryWidth: radius, entryY: end.y
+        }, roundedReturn);
+    assertCondition(path.getAttribute('stroke') === color && arrow.getAttribute('fill') === color,
+        `${type} relation color`, {pathStroke: color, arrowFill: color},
+        {pathStroke: path.getAttribute('stroke'), arrowFill: arrow.getAttribute('fill')});
 }
 
 function verifyRelations(type, data, render) {
@@ -174,14 +234,14 @@ function verifyRelations(type, data, render) {
         task.start = '2024-01-01T08:00:00';
         task.finish = '2024-01-02T16:30:00';
         render(thresholds);
-        assert(group(shortTaskId).querySelector('.task-dependency path'), `${type}: partially clipped relation`);
+        assertPresent(group(shortTaskId).querySelector('.task-dependency path'), `${type} partially clipped relation`);
         shortTask.start = '2024-01-03T08:00:00';
         shortTask.finish = '2024-01-03T16:30:00';
         render(thresholds);
-        assert(!group(shortTaskId).querySelector('.task-dependency path'), `${type}: fully clipped relation`);
+        assertAbsent(group(shortTaskId).querySelector('.task-dependency path'), `${type} fully clipped relation`);
         task.finish = null;
         render(thresholds);
-        assert(!group(shortTaskId).querySelector('.task-dependency path'), `${type}: unscheduled predecessor`);
+        assertAbsent(group(shortTaskId).querySelector('.task-dependency path'), `${type} unscheduled predecessor`);
     } finally {
         data.tasks = originalTasks;
         data.meta.theme.ganttTheme = originalTheme;
@@ -207,7 +267,7 @@ export async function verifyGanttZoom(gantt, combined) {
             data.meta.ganttZoom = thresholds;
             state(dayWidth, visualScale);
             mount('chart', data, 'Zoom test');
-            assert(document.querySelector('#chart svg'), `${type} did not render`);
+            assertPresent(document.querySelector('#chart svg'), `${type} chart SVG`);
         };
 
         for (const [key, visible] of Object.entries(features)) {
@@ -218,72 +278,100 @@ export async function verifyGanttZoom(gantt, combined) {
                 [Math.max(0, configuredThreshold - 0.01), true],
             ]) {
                 render({...settings(0), [key]: threshold}, configuredThreshold);
-                assert(visible() === expected, `${type}: ${key} threshold ${threshold}`);
+                assertEqual(visible(), expected, `${type} ${key} visibility at threshold ${threshold}`);
             }
         }
 
         render({...settings(0), renderTaskProgressBarAtDayWidth: 30, renderTaskProgressTextAtDayWidth: 0});
-        assert(!features.renderTaskProgressBarAtDayWidth() && features.renderTaskProgressTextAtDayWidth(),
-            `${type}: progress text must not depend on the bar`);
+        const progressIndependence = {
+            progressBar: features.renderTaskProgressBarAtDayWidth(),
+            progressText: features.renderTaskProgressTextAtDayWidth(),
+        };
+        assertCondition(!progressIndependence.progressBar && progressIndependence.progressText,
+            `${type} progress text independent of progress bar`,
+            {progressBar: false, progressText: true}, progressIndependence);
 
         for (const [showDate, showTime] of [[false, false], [true, false], [false, true], [true, true]]) {
-            render({...settings(0),
+            render({
+                ...settings(0),
                 renderMilestoneStartDateAtDayWidth: showDate ? 0 : 30,
                 renderMilestoneStartTimeAtDayWidth: showTime ? 0 : 30,
             });
-            assert(features.renderMilestoneStartDateAtDayWidth() === showDate, `${type}: milestone date`);
-            assert(features.renderMilestoneStartTimeAtDayWidth() === showTime, `${type}: milestone time`);
-            assert(milestoneLabel().startsWith('Milestone'), `${type}: milestone name`);
-            assert(showDate || showTime || !milestoneLabel().includes('('), `${type}: empty milestone suffix`);
+            const label = milestoneLabel();
+            assertEqual(features.renderMilestoneStartDateAtDayWidth(), showDate,
+                `${type} milestone start-date visibility for label ${JSON.stringify(label)}`);
+            assertEqual(features.renderMilestoneStartTimeAtDayWidth(), showTime,
+                `${type} milestone start-time visibility for label ${JSON.stringify(label)}`);
+            assertCondition(label.startsWith('Milestone'), `${type} milestone name`, 'starts with "Milestone"', label);
+            const hasEmptySuffix = label.includes('(') && !showDate && !showTime;
+            assertCondition(!hasEmptySuffix, `${type} milestone label has no empty date/time suffix`,
+                'no empty suffix', label);
         }
 
         render(settings(0));
         const detailedBody = group(taskId).querySelectorAll('.task-body');
-        assert(new Set([...detailedBody].map(element => element.getAttribute('fill'))).size > 1,
-            `${type}: non-working day fill`);
-        assert(group(taskId).querySelector('.task-border[stroke-dasharray]'), `${type}: dotted off-day border`);
+        const distinctFills = [...new Set([...detailedBody].map(element => element.getAttribute('fill')))];
+        assertCondition(distinctFills.length > 1, `${type} non-working-day segment fills`,
+            'more than 1 distinct fill', distinctFills);
+        assertPresent(group(taskId).querySelector('.task-border[stroke-dasharray]'),
+            `${type} dotted off-day border`);
         const chartHeight = document.querySelector('#chart svg').getAttribute('height');
 
         render({...settings(0), renderTaskNonWorkingDaysAtDayWidth: 30});
         const body = group(taskId).querySelectorAll('.task-body');
-        assert(body.length === 1 && Number(body[0].getAttribute('height')) === 18, `${type}: continuous body`);
-        assert(body[0].querySelector('title').textContent.includes('Alpha'), `${type}: task tooltip`);
+        assertEqual(body.length, 1, `${type} continuous task-body segment count`);
+        assertEqual(Number(body[0].getAttribute('height')), 16, `${type} continuous task-body height`);
+        const taskTitle = body[0].querySelector('title');
+        assertPresent(taskTitle, `${type} task tooltip element`);
+        const taskTooltip = taskTitle.textContent;
+        assertCondition(taskTooltip.includes('Alpha'), `${type} task tooltip includes task name`,
+            'contains "Alpha"', taskTooltip);
         const progress = group(taskId).querySelector('.task-progress-bar');
-        assert(progress.getAttribute('fill') === '#0000ffff', `${type}: default progress color`);
-        assert(Number(progress.getAttribute('height')) === 1, `${type}: progress height`);
-        assert(Number(body[0].getAttribute('y')) + Number(body[0].getAttribute('height'))
-            - Number(progress.getAttribute('y')) - Number(progress.getAttribute('height')) === 1,
-            `${type}: progress bottom gap`);
-        assert(Number(progress.getAttribute('width')) === Number(body[0].getAttribute('width')) / 2,
-            `${type}: progress width`);
-        assert(progress.querySelector('title').textContent.includes('Alpha'), `${type}: progress tooltip`);
-        assert(!group(shortTaskId).querySelector('.task-progress-bar'), `${type}: zero progress`);
-        assert(!group(taskId).querySelector('rect[fill="#000000"]'), `${type}: hidden progress marker`);
-        assert(group(taskId).querySelectorAll('.task-border').length === 4, `${type}: solid border`);
-        assert(!group(taskId).querySelector('.task-border[stroke-dasharray]'), `${type}: no dotted border`);
-        assert(labels(taskId).includes('Alice') && labels(taskId).some(label => label.includes('Alpha')), `${type}: task labels`);
-        assert(labels(storyId).includes('Story'), `${type}: story label`);
-        assert(group(storyId).querySelector('.task-dependency'), `${type}: story dependency`);
-        assert(document.querySelector('#chart svg').getAttribute('height') === chartHeight, `${type}: unchanged chart height`);
+        assertPresent(progress, `${type} progress bar`);
+        assertEqual(progress.getAttribute('fill'), '#0000ffff', `${type} default progress-bar fill`);
+        assertEqual(Number(progress.getAttribute('height')), 1, `${type} progress-bar height`);
+        const progressBottomGap = Number(body[0].getAttribute('y')) + Number(body[0].getAttribute('height'))
+            - Number(progress.getAttribute('y')) - Number(progress.getAttribute('height'));
+        assertEqual(progressBottomGap, 1, `${type} progress-bar bottom gap`);
+        const expectedProgressWidth = Number(body[0].getAttribute('width')) / 2;
+        assertEqual(Number(progress.getAttribute('width')), expectedProgressWidth, `${type} progress-bar width`);
+        const progressTitle = progress.querySelector('title');
+        assertPresent(progressTitle, `${type} progress-bar tooltip element`);
+        const progressTooltip = progressTitle.textContent;
+        assertCondition(progressTooltip.includes('Alpha'), `${type} progress tooltip includes task name`,
+            'contains "Alpha"', progressTooltip);
+        assertAbsent(group(shortTaskId).querySelector('.task-progress-bar'), `${type} zero-progress task bar`);
+        assertAbsent(group(taskId).querySelector('rect[fill="#000000"]'), `${type} hidden progress marker`);
+        assertEqual(group(taskId).querySelectorAll('.task-border').length, 4, `${type} solid task-border count`);
+        assertAbsent(group(taskId).querySelector('.task-border[stroke-dasharray]'), `${type} dotted task border`);
+        const taskLabels = labels(taskId);
+        assertCondition(taskLabels.includes('Alice') && taskLabels.some(label => label.includes('Alpha')),
+            `${type} task labels`, 'includes "Alice" and a label containing "Alpha"', taskLabels);
+        const storyLabels = labels(storyId);
+        assertCondition(storyLabels.includes('Story'), `${type} story label`, 'includes "Story"', storyLabels);
+        assertPresent(group(storyId).querySelector('.task-dependency'), `${type} story dependency connector`);
+        assertEqual(document.querySelector('#chart svg').getAttribute('height'), chartHeight,
+            `${type} chart height after task rendering`);
 
         data.meta.theme.ganttTheme.progressColor = 0xff8000;
         render(settings(0));
-        assert(group(taskId).querySelector('.task-progress-bar').getAttribute('fill') === '#ff8000ff',
-            `${type}: configured progress color`);
+        assertEqual(group(taskId).querySelector('.task-progress-bar').getAttribute('fill'), '#ff8000ff',
+            `${type} configured progress-bar fill`);
         data.meta.theme.ganttTheme.progressColor = 0x0000ff;
 
         render({...settings(0), renderTaskNonWorkingDaysAtDayWidth: 30}, 2);
-        assert(Number(group(shortTaskId).querySelector('.task-body').getAttribute('width')) > 0,
-            `${type}: short task body`);
-        assert(Number(group(shortTaskId).querySelector('.task-body').getAttribute('height')) === 18,
-            `${type}: unchanged body height`);
+        const shortTaskBody = group(shortTaskId).querySelector('.task-body');
+        assertPresent(shortTaskBody, `${type} short task body`);
+        const shortTaskBodyWidth = Number(shortTaskBody.getAttribute('width'));
+        assertCondition(shortTaskBodyWidth > 0, `${type} short task body width`, 'greater than 0', shortTaskBodyWidth);
+        assertEqual(Number(shortTaskBody.getAttribute('height')), 16, `${type} short task-body height`);
         render({...settings(0), renderDependenciesAtDayWidth: 30});
-        assert(!group(storyId).querySelector('.task-dependency'), `${type}: hidden story dependency`);
+        assertAbsent(group(storyId).querySelector('.task-dependency'), `${type} hidden story dependency`);
 
         verifyRelations(type, data, render);
 
         render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
-        assert(!features.renderTaskProgressBarAtDayWidth(), `${type}: initial zoom`);
+        assertEqual(features.renderTaskProgressBarAtDayWidth(), false, `${type} progress bar visibility at initial zoom`);
         document.getElementById('chart').dispatchEvent(new WheelEvent('wheel', {
             bubbles: true, cancelable: true, altKey: true, deltaY: -1, clientX: 400,
         }));
@@ -304,9 +392,9 @@ export async function verifyGanttZoom(gantt, combined) {
         };
         try {
             window.detachKassandraChart('chart');
-            assert(popup, `${type}: popup was blocked`);
+            assertPresent(popup, `${type} detached-chart popup`);
             await waitFor(() => popup.document.querySelector('.task-body'), `${type}: detached chart did not render`);
-            assert(!popup.document.querySelector('.task-progress-bar'), `${type}: detached threshold`);
+            assertAbsent(popup.document.querySelector('.task-progress-bar'), `${type} detached-chart progress bar before zoom`);
             popup.document.getElementById('chart').dispatchEvent(new popup.WheelEvent('wheel', {
                 bubbles: true, cancelable: true, altKey: true, deltaY: -1, clientX: 400,
             }));

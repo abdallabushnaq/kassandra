@@ -87,13 +87,13 @@ public class LegacyCalendarTest extends AbstractGanttTestUtil {
                         .testCaseIndex(1)
                         .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
                         .startDate(LocalDate.parse("2025-08-04"))
-                        .minNumberOfProducts(1).maxNumberOfProducts(1)
-                        .minNumberOfVersions(1).maxNumberOfVersions(1)
-                        .minNumberOfFeatures(1).maxNumberOfFeatures(1)
-                        .minNumberOfSprints(1).maxNumberOfSprints(1)
-                        .maxTaskDurationDays(0).maxNumberOfStories(0)
-                        .maxNumberOfUsers(6).maxNumberOfUsersPerSprint(6)
-                        .maxNumberOfTasks(0).seed(13)
+                        .numberOfProducts(1, 1)
+                        .numberOfVersions(1, 1)
+                        .numberOfFeatures(1, 1)
+                        .numberOfSprints(1, 1)
+                        .taskDurationPerDay(0, 0).numberOfStories(0, 0)
+                        .numberOfUsers(1, 6).numberOfUsersPerSprint(1, 6)
+                        .numberOfTasks(0, 0).seed(13)
                         .build()//
         };
         return Arrays.stream(randomCases).toList();
