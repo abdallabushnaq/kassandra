@@ -109,8 +109,8 @@ public class AbstractGanttTester extends DTOAsserts {
         // The MPP contains the schedule, not Kassandra's sprint status; simulate work on both schedules.
         referenceProject.generateWorklogs(referenceSprint.getId(), ParameterOptions.getLocalNow());
         project.generateWorklogs(sprint.getId(), ParameterOptions.getLocalNow());
-        project.generateGanttChart(testInfo, sprint.getId(), testFolder);
-        project.generateBurndownChart(testInfo, sprint.getId(), testFolder);
+        project.generateGanttChart(testInfo, sprint.getId(), testFolder, 1.0);
+        project.generateBurndownChart(testInfo, sprint.getId(), testFolder, 1.0);
 
         sanitizeTasks(sprint);
         for (int i = 0; i < referenceSprint.getTasks().size(); i++) {

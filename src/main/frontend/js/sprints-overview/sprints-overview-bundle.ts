@@ -19,7 +19,7 @@ let currentChartInstance: ChartHandle | null = null;
 function createChart(
     container: HTMLElement,
     data: SprintOverviewDto,
-    options: { containerId?: string } = {},
+    options: { containerId?: string; initialVisualScale?: number } = {},
 ): ChartHandle {
     const containerId = options.containerId || container.id || 'chart';
     const theme = new Theme(data.meta.theme as Record<string, unknown>);
@@ -34,6 +34,7 @@ function createChart(
         minDayWidth: MIN_DW,
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
+        initialVisualScale: options.initialVisualScale,
         initialScrollOffset: (dayWidth, containerWidth) => {
             const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate, renderer.chartStart);
             const visibleDays = containerWidth / dayWidth;
@@ -60,7 +61,12 @@ function createChart(
 
 // ── Public mount API (called by SprintListView via Vaadin executeJs) ────────
 
-function mountSprintsOverviewChart(containerId: string, injectedData: SprintOverviewDto): void {
+function mountSprintsOverviewChart(
+    containerId: string,
+    injectedData: SprintOverviewDto,
+    _title: string = 'Sprints overview chart',
+    initialVisualScale?: number,
+): void {
     const elementId = containerId || 'sprints-overview-chart-container';
     const containerElement = document.getElementById(elementId);
     if (!containerElement)
@@ -71,7 +77,7 @@ function mountSprintsOverviewChart(containerId: string, injectedData: SprintOver
     markChartRendering(containerElement);
 
     if (injectedData) {
-        currentChartInstance = createChart(containerElement, injectedData, {containerId: elementId});
+        currentChartInstance = createChart(containerElement, injectedData, {containerId: elementId, initialVisualScale});
         markChartRendered(containerElement, ['sprints-overview-chart']);
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No chart data provided.</div>';

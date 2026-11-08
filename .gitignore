@@ -7,10 +7,12 @@
 /docker/index-tts/voices
 /docker/index-tts/checkpoints
 /docs/lm-studio-api
-/references/critical/*.svg
-/references/critical/*.png
+/references/CriticalTest/*.svg
+/references/CriticalTest/*.png
 /references/dynamic-gantt/*.svg
 /references/dynamic-gantt/*.png
+/references/DynamicGanttBurndownTest/*.svg
+/references/DynamicGanttBurndownTest/*.png
 /references/gantt-burndown/*.svg
 /references/gantt-burndown/*.png
 /references/gantt/*.svg

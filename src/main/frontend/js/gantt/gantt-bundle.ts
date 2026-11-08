@@ -16,7 +16,7 @@ import {GanttRenderer} from './GanttRenderer.js';
 export function createGanttChart(
     container: HTMLElement,
     data: GanttChartDto,
-    options: { containerId?: string } = {},
+    options: { containerId?: string; initialVisualScale?: number } = {},
 ): ChartHandle {
     const containerId = options.containerId || container.id || 'chart';
     const theme = new Theme(data.meta.theme as Record<string, unknown>);
@@ -31,6 +31,7 @@ export function createGanttChart(
         minDayWidth: MIN_DW,
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
+        initialVisualScale: options.initialVisualScale,
         getContainerHeight: () => {
             const naturalHeight = Number.isFinite(chart.chartHeight) ? chart.chartHeight : 0;
             return Math.max(200, naturalHeight || container.clientHeight || 600);
@@ -47,7 +48,12 @@ export function createGanttChart(
 
 // ── Public mount API (called by Backlog.java via Vaadin executeJs) ───────────
 
-function mountGanttChart(containerId: string, injectedData: GanttChartDto, title: string = 'Gantt chart'): void {
+function mountGanttChart(
+    containerId: string,
+    injectedData: GanttChartDto,
+    title: string = 'Gantt chart',
+    initialVisualScale?: number,
+): void {
     const elementId = containerId || 'gantt-chart-container';
     const containerElement = document.getElementById(elementId);
     if (!containerElement)
@@ -66,6 +72,7 @@ function mountGanttChart(containerId: string, injectedData: GanttChartDto, title
             containerElement,
             injectedData,
             title,
+            initialVisualScale,
         );
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No Gantt chart data provided.</div>';

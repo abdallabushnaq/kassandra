@@ -71,6 +71,7 @@ export interface InteractiveTimelineChartOptions<TChart extends TimelineChart> {
     maxDayWidth: number;
     dayWidthZoomStep: number;
     initialScrollOffset: (dayWidth: number, containerWidth: number) => number;
+    initialVisualScale?: number;
     getContainerHeight?: () => number;
     beforeRender?: () => void;
     afterRender?: () => void;
@@ -158,6 +159,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
 
     constructor(private readonly options: InteractiveTimelineChartOptions<TChart>) {
         this.dayWidth = options.defaultDayWidth;
+        this.visualScale = options.initialVisualScale ?? this.DEFAULT_SCALE;
         this.restoreViewState();
         this.registerEventListeners();
         this.observeResize();

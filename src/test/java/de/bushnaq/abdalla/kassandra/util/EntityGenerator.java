@@ -19,63 +19,54 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.gantt.ColorGenerator;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 @Slf4j
 public class EntityGenerator {
     @Getter
-    private final TreeSet<Availability> availabilities = new TreeSet<>();
-    private final ColorGenerator        colorGenerator = new ColorGenerator();
+    private final TreeSet<Availability> availabilities     = new TreeSet<>();
+    private final Set<Instant>          creationTimestamps = new HashSet<>();
     @Getter
-    private       int                   featureIndex   = 0;
+    private       int                   featureIndex       = 0;
     @Getter
-    private final List<Feature>         features       = new ArrayList<>();
+    private final List<Feature>         features           = new ArrayList<>();
     @Getter
-    private final TreeSet<Location>     locations      = new TreeSet<>();
-    private final NameGenerator         nameGenerator  = new NameGenerator();
+    private final TreeSet<Location>     locations          = new TreeSet<>();
+    private final NameGenerator         nameGenerator      = new NameGenerator();
     @Getter
-    private       int                   productIndex   = 0;
+    private       int                   productIndex       = 0;
     @Getter
-    private final List<Product>         products       = new ArrayList<>();
+    private final List<Product>         products           = new ArrayList<>();
     @Getter
-    private       int                   sprintIndex    = 0;
+    private       int                   sprintIndex        = 0;
     @Getter
-    private final List<Sprint>          sprints        = new ArrayList<>();
-    protected     LocalDate             startOfTime    = LocalDate.of(2000, 1, 1);
+    private final List<Sprint>          sprints            = new ArrayList<>();
+    protected     LocalDate             startOfTime        = LocalDate.of(2000, 1, 1);
     @Getter
-    private final List<Task>            tasks          = new ArrayList<>();
+    private final List<Task>            tasks              = new ArrayList<>();
+    private       long                  timestampIndex;
     @Setter
     @Getter
-    private       int                   userIndex      = 0;
+    private       int                   userIndex          = 0;
     @Getter
-    private final TreeSet<User>         users          = new TreeSet<>();
+    private final TreeSet<User>         users              = new TreeSet<>();
     @Getter
-    private       int                   versionIndex   = 0;
+    private       int                   versionIndex       = 0;
     @Getter
-    private final List<Version>         versions       = new ArrayList<>();
+    private final List<Version>         versions           = new ArrayList<>();
     @Getter
-    private final List<Worklog>         worklogs       = new ArrayList<>();
-    private long timestampIndex;
-    private final Set<Instant> creationTimestamps = new HashSet<>();
+    private final List<Worklog>         worklogs           = new ArrayList<>();
 
     protected Availability addAvailability(User user, float availability, LocalDate start) {
         return addAvailability(user, availability, start, UnaryOperator.identity());
@@ -241,8 +232,7 @@ public class EntityGenerator {
     }
 
     public User addUser(String name, float availability) {
-        User saved = addUser(name, name, null, startOfTime,
-                colorGenerator.generateUserColor(getUsers().size()), UnaryOperator.identity());
+        User saved = addUser(name, name, null, startOfTime, generateUserColor(getUserIndex()), UnaryOperator.identity());
         addAvailability(saved, availability, startOfTime);
         addLocation(saved, "de", "nw", startOfTime);
         return saved;
@@ -320,6 +310,11 @@ public class EntityGenerator {
         return task;
     }
 
+    public Color generateUserColor(int userIndex) {
+        int index = userIndex % LightTheme.COLOR_PALLET.length;
+        return LightTheme.COLOR_PALLET[index];
+    }
+
     public List<Task> getSprintTasks(UUID id) {
         return getTasks().stream().filter(task -> task.getSprintId().equals(id)).toList();
     }
@@ -347,34 +342,6 @@ public class EntityGenerator {
     }
 
     /**
-     * Assigns distinct fixture timestamps before an entity is sent to its persister.
-     *
-     * @param entity the generated entity
-     */
-    protected void initializeTimestamps(AbstractTimeAware entity) {
-        initializeTimestamps(entity, null);
-    }
-
-    /**
-     * Assigns timestamps while retaining an explicitly historical creation date.
-     *
-     * @param entity the generated entity
-     * @param historicalTime the historical anchor, or {@code null} for the fixture time
-     */
-    protected void initializeTimestamps(AbstractTimeAware entity, OffsetDateTime historicalTime) {
-        OffsetDateTime timestamp = ParameterOptions.getPersistenceNow();
-        if (historicalTime != null) {
-            timestamp = historicalTime.truncatedTo(ChronoUnit.SECONDS).plusSeconds(timestampIndex + 1);
-        }
-        while (!creationTimestamps.add(timestamp.toInstant())) {
-            timestamp = timestamp.plusSeconds(1);
-        }
-        timestampIndex++;
-        entity.setCreated(timestamp);
-        entity.setUpdated(timestamp);
-    }
-
-    /**
      * Clears generated entities and resets their historical timestamp offsets.
      */
     public void init() {
@@ -394,6 +361,34 @@ public class EntityGenerator {
         getSprints().clear();
         getTasks().clear();
         getWorklogs().clear();
+    }
+
+    /**
+     * Assigns distinct fixture timestamps before an entity is sent to its persister.
+     *
+     * @param entity the generated entity
+     */
+    protected void initializeTimestamps(AbstractTimeAware entity) {
+        initializeTimestamps(entity, null);
+    }
+
+    /**
+     * Assigns timestamps while retaining an explicitly historical creation date.
+     *
+     * @param entity         the generated entity
+     * @param historicalTime the historical anchor, or {@code null} for the fixture time
+     */
+    protected void initializeTimestamps(AbstractTimeAware entity, OffsetDateTime historicalTime) {
+        OffsetDateTime timestamp = ParameterOptions.getPersistenceNow();
+        if (historicalTime != null) {
+            timestamp = historicalTime.truncatedTo(ChronoUnit.SECONDS).plusSeconds(timestampIndex + 1);
+        }
+        while (!creationTimestamps.add(timestamp.toInstant())) {
+            timestamp = timestamp.plusSeconds(1);
+        }
+        timestampIndex++;
+        entity.setCreated(timestamp);
+        entity.setUpdated(timestamp);
     }
 
 }

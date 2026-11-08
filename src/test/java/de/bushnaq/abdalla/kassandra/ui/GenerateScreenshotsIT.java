@@ -842,7 +842,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         User   helpUser  = peg.userApi.getAll().stream().filter(user -> userEmail.equals(user.getEmail())).findFirst().orElse(null);
         if (helpUser == null) {
             helpUser = peg.addUser("Jennifer Holleman", userEmail, "USER", "de", "nw",
-                    firstDay, peg.generateUserColor(peg.getUserIndex()), 1f, null);
+                    firstDay, peg.eg.generateUserColor(peg.getUserIndex()), 1f, null);
         }
         assertEquals("USER", helpUser.getRoles(), "The help account must be a regular user");
         var provider = oidcProviderService.getProviders().stream().filter(candidate -> "Test Keycloak".equals(candidate.getDisplayName())).findFirst().orElseThrow();

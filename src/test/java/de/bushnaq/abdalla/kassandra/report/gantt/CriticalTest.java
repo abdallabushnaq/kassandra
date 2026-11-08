@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 @Slf4j
 public class CriticalTest extends AbstractGanttTester {
 
-    private static final String testFolder = "references/critical";
+    private static final String testFolder = "references/CriticalTest";
 
     @BeforeEach
     public void beforeEach() {

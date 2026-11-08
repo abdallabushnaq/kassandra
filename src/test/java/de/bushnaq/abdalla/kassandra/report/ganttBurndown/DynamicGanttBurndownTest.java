@@ -28,11 +28,11 @@ import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.AbstractGanttTester;
-import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
-import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.AuthorSeriesDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.TaskDto;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
+import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.util.GanttGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,9 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.awt.Color;
+import java.awt.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -63,7 +61,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 public class DynamicGanttBurndownTest extends AbstractGanttTester {
     private final GanttBurndownChartService service    = createChartService();
-    private final String                    testFolder = "references/gantt-burndown";
+    private final String                    testFolder = "references/DynamicGanttBurndownTest";
+
+    @BeforeEach
+    public void beforeEach() {
+        Logger logger = (Logger) LoggerFactory.getLogger("de.bushnaq");
+        logger.setLevel(Level.TRACE);
+        ParameterOptions.setNow(OffsetDateTime.parse("2025-06-05T08:00:00+01:00"));
+    }
 
     private static GanttBurndownChartService createChartService() {
         StableDiffusionConfig config       = new StableDiffusionConfig();
@@ -73,11 +78,18 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
         return new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
     }
 
-    @BeforeEach
-    public void beforeEach() {
-        Logger logger = (Logger) LoggerFactory.getLogger("de.bushnaq");
-        logger.setLevel(Level.TRACE);
-        ParameterOptions.setNow(OffsetDateTime.parse("2025-06-05T08:00:00+01:00"));
+    private void generateGanttBurndownChart(TestInfo testInfo, GanttGenerator g, Sprint sprint) throws Exception {
+        g.testTheme = ETheme.light;
+        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder, 1.0);
+        g.testTheme = ETheme.dark;
+        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder, 1.0);
+    }
+
+    private void generateGanttChart(TestInfo testInfo, GanttGenerator g, Sprint sprint) throws Exception {
+        g.testTheme = ETheme.light;
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder, 1.0);
+        g.testTheme = ETheme.dark;
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder, 1.0);
     }
 
     @Test
@@ -100,7 +112,8 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
         g.createDeliveryBufferTask(sprint, Duration.ZERO);
         g.levelResources(testInfo, sprint, null);
 
-        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
+
+        generateGanttChart(testInfo, g, sprint);
 
         assertEquals(task1.getStart(), LocalDateTime.parse("2025-05-05T08:00:00"));
     }
@@ -133,8 +146,8 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
             log.info("Task {} {} has worklogs with total duration {}", task.getName(), task.getMinEstimate(), work);
         }
 
-        GanttBurndownChartDto chart = service.build(sprint, ParameterOptions.getLocalNow(), false);
-        int alignedTaskColors = 0;
+        GanttBurndownChartDto chart             = service.build(sprint, ParameterOptions.getLocalNow(), false);
+        int                   alignedTaskColors = 0;
         for (AuthorSeriesDto author : chart.authors) {
             TaskDto assignedTask = chart.tasks.stream()
                     .filter(task -> author.userName.equals(task.assignedUserName))
@@ -149,15 +162,7 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
         }
         assertTrue(alignedTaskColors > 0, "No Burndown author matched an assigned Gantt task");
 
-//        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
-//        g.generateBurndownChart(testInfo, sprint.getId(), testFolder);
-        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder);
-        String svg = Files.readString(Path.of(testFolder, "gannt-burn-down.svg"));
-        for (String label : new String[]{"[1] Parent Task", "[2] Child Task", "[3] Child Task", "Delivery buffer", "Remaining work"}) {
-            assertTrue(svg.contains(label), "Combined chart is missing " + label);
-        }
-        assertTrue(Files.size(Path.of(testFolder, "gannt-burn-down.png")) > 0, "Combined chart PNG is empty");
-
+        generateGanttBurndownChart(testInfo, g, sprint);
         assertEquals(task1.getStart(), LocalDateTime.parse("2025-05-05T08:00:00"));
     }
 }

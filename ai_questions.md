@@ -184,6 +184,7 @@ DEFAULT_SCALE).
 
 can we add a parameter to generateGanttChart and the other generateXXX chart generation methods with a default scaling
 parameter that will overwrite the fixed default?
+Example: DynamicGanttBurndownTest. Let's change the default scaling to 1.0 for this test.
 
 # Redesign Undo/Redo
 

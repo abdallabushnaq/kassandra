@@ -83,7 +83,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         int       count         = 1;
         String    testUserEmail = "christopher.paul@kassandra.org";
         LocalDate firstDate     = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
+        peg.addUser("Christopher Paul", testUserEmail, "ADMIN,USER", "de", "nw", firstDate, peg.eg.generateUserColor(peg.getUserIndex()), 0.5f, null);
 
         for (int i = 0; i < count; i++) {
             Product product = peg.addProduct(peg.nameGenerator.generateProductName(i));
@@ -272,8 +272,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             logger.info("Successfully loaded test data from snapshot. Skipping data generation.");
         }
         ParameterOptions.setNow(randomCase.getNow());
-        Number latestRevisionTime = (Number) entityManager.createNativeQuery("SELECT MAX(timestamp) FROM audit_revisions")
-                .getSingleResult();
+        Number latestRevisionTime = (Number) entityManager.createNativeQuery("SELECT MAX(timestamp) FROM audit_revisions").getSingleResult();
         if (latestRevisionTime != null) {
             ParameterOptions.getPersistenceNow(Instant.ofEpochMilli(latestRevisionTime.longValue())
                     .atOffset(randomCase.getNow().getOffset()));

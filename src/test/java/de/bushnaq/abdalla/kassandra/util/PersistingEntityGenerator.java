@@ -29,7 +29,6 @@ import de.bushnaq.abdalla.kassandra.dto.util.AvatarPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.AvatarUtil;
 import de.bushnaq.abdalla.kassandra.dto.util.HeaderPrompt;
 import de.bushnaq.abdalla.kassandra.dto.util.IconPrompt;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.profiler.Profiler;
@@ -254,7 +253,7 @@ public class PersistingEntityGenerator {
     public User addRandomUser(LocalDate firstDate) {
         String       name  = nameGenerator.generateUserName(getUserIndex());
         String       email = nameGenerator.generateUserEmail(getUserIndex());
-        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f, null);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, eg.generateUserColor(getUserIndex()), 0.7f, null);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -274,7 +273,7 @@ public class PersistingEntityGenerator {
         String    email     = nameGenerator.generateUserEmail(getUserIndex());
         LocalDate firstDate = ParameterOptions.getNow().toLocalDate();
 
-        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.7f, null);
+        User         saved = addUser(name, email, "USER", "de", "nw", firstDate, eg.generateUserColor(getUserIndex()), 0.7f, null);
         GanttContext gc    = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -295,7 +294,7 @@ public class PersistingEntityGenerator {
         String       name      = nameGenerator.generateUserName(index);
         String       email     = nameGenerator.generateUserEmail(getUserIndex());
         LocalDate    firstDate = ParameterOptions.getNow().toLocalDate().minusYears(1);
-        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), availability, null);
+        User         saved     = addUser(name, email, "USER", "de", "nw", firstDate, eg.generateUserColor(getUserIndex()), availability, null);
         GanttContext gc        = new GanttContext();
         gc.initialize();
         saved.initialize(gc);
@@ -323,10 +322,10 @@ public class PersistingEntityGenerator {
             LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
             User      saved;
             if (email.equalsIgnoreCase(INITIAL_ADMIN)) {
-                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f, workWeek);
+                saved = addUser(name, email, "ADMIN,USER", "de", "nw", firstDate, eg.generateUserColor(getUserIndex()), 0.5f, workWeek);
             } else {
                 PersistingEntityGenerator.setUser(INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates all the users as admin
-                saved = addUser(name, email, "USER", "de", "nw", firstDate, generateUserColor(getUserIndex()), 0.5f + ((float) random.nextInt(6)) / 10f, workWeek);
+                saved = addUser(name, email, "USER", "de", "nw", firstDate, eg.generateUserColor(getUserIndex()), 0.5f + ((float) random.nextInt(6)) / 10f, workWeek);
             }
 //            System.out.println("Adding user: " + saved.getName() + " took " + (System.currentTimeMillis() - time) + " ms");
             saved.initialize();
@@ -638,10 +637,6 @@ public class PersistingEntityGenerator {
         offDayGenerator.generateRandomSickDays(users);
     }
 
-    public Color generateUserColor(int userIndex) {
-        int index = userIndex % LightTheme.COLOR_PALLET.length;
-        return LightTheme.COLOR_PALLET[index];
-    }
 
     public TreeSet<Availability> getAvailabilities() {
         return eg.getAvailabilities();

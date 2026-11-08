@@ -220,7 +220,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     public void setupTestUser() {
         StableDiffusionService.setEnabled(false);
         LocalDate firstDate = ParameterOptions.getNow().toLocalDate().minusYears(2);
-        peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.generateUserColor(peg.getUserIndex()), 0.5f, null);
+        peg.addUser("Christopher Paul", TEST_USER_EMAIL, "ADMIN,USER", "de", "nw", firstDate, peg.eg.generateUserColor(peg.getUserIndex()), 0.5f, null);
         var provider = oidcProviderService.createProvider(
                 KEYCLOAK_PROVIDER_NAME,
                 getIssuerUri(),

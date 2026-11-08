@@ -11,7 +11,7 @@ export interface DetachableChartOptions<T> {
     containerId: string;
     chartIds: readonly string[];
     factoryExportName: string;
-    factory: (container: HTMLElement, data: T, options: { containerId: string }) => ChartHandle;
+    factory: (container: HTMLElement, data: T, options: { containerId: string; initialVisualScale?: number }) => ChartHandle;
     title: string;
 }
 
@@ -25,6 +25,7 @@ interface PopupRenderMessage<T> {
     bundleUrl: string;
     containerId: string;
     data: T;
+    initialVisualScale?: number;
     factoryExportName: string;
     title: string;
 }
@@ -36,6 +37,7 @@ interface PopupClearMessage {
 class DetachableChartHost<T> {
     private container: HTMLElement | null = null;
     private data: T | null = null;
+    private initialVisualScale?: number;
     private normalHandle: ChartHandle | null = null;
     private originalDisplay = '';
     private popup: Window | null = null;
@@ -47,13 +49,14 @@ class DetachableChartHost<T> {
         window.addEventListener('message', this.handlePopupMessage);
     }
 
-    public mount(container: HTMLElement, data: T, title: string): void {
+    public mount(container: HTMLElement, data: T, title: string, initialVisualScale?: number): void {
         if (activeDetachedHost && activeDetachedHost !== this)
             activeDetachedHost.transferTo(this as DetachableChartHost<unknown>);
 
         const containerChanged = this.container !== container;
         this.container = container;
         this.data = data;
+        this.initialVisualScale = initialVisualScale;
         this.options.title = title;
         markChartRendering(container);
         if (this.isDetached()) {
@@ -192,7 +195,10 @@ class DetachableChartHost<T> {
         if (!this.container || !this.data)
             return;
         this.normalHandle?.destroy();
-        this.normalHandle = this.options.factory(this.container, this.data, {containerId: this.options.containerId});
+        this.normalHandle = this.options.factory(this.container, this.data, {
+            containerId: this.options.containerId,
+            initialVisualScale: this.initialVisualScale,
+        });
         markChartRendered(this.container, this.options.chartIds);
     }
 
@@ -204,6 +210,7 @@ class DetachableChartHost<T> {
             bundleUrl: this.options.bundleUrl,
             containerId: this.options.containerId,
             data: this.data,
+            ...(this.initialVisualScale !== undefined && {initialVisualScale: this.initialVisualScale}),
             factoryExportName: this.options.factoryExportName,
             title: this.options.title,
         };
@@ -327,7 +334,10 @@ window.addEventListener('message', async (event) => {
         chart.textContent = '';
         chart.style.padding = '';
         chart.style.textAlign = '';
-        chartHandle = factory(chart, message.data, {containerId: message.containerId});
+        chartHandle = factory(chart, message.data, {
+            containerId: message.containerId,
+            initialVisualScale: message.initialVisualScale,
+        });
     } catch (error) {
         const detail = error instanceof Error ? error.message : 'Unknown chart rendering error.';
         if (window.opener && !window.opener.closed)
@@ -351,13 +361,14 @@ export function mountDetachableChart<T>(
     container: HTMLElement,
     data: T,
     title: string,
+    initialVisualScale?: number,
 ): void {
     let host = hosts.get(options.containerId) as DetachableChartHost<T> | undefined;
     if (!host) {
         host = new DetachableChartHost(options);
         hosts.set(options.containerId, host as DetachableChartHost<unknown>);
     }
-    host.mount(container, data, title);
+    host.mount(container, data, title, initialVisualScale);
 }
 
 export function detachChart(containerId: string): void {

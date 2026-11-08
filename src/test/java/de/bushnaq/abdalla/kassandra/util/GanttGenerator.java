@@ -75,20 +75,21 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @Service
 public class GanttGenerator extends EntityGenerator {
-    private static final String CHART_PAGE = """
+    private static final String CHART_PAGE           = """
             <!doctype html>
             <html><head><meta charset="utf-8"><style>
             html, body { margin: 0; }
             #chart { width: 2400px; height: 900px; }
             </style></head><body><div id="chart"></div></body></html>
             """;
-    protected final      Random random     = new Random();
+    private static final double DEFAULT_VISUAL_SCALE = 0.75;
+    protected final      Random random               = new Random();
     /**
      * Theme used for Gantt chart generation in tests.
      * Defaults to {@link ETheme#dark} to preserve pre-existing test reference images.
      * Tests that need to switch theme (e.g. {@code CriticalTest}) set this field directly.
      */
-    public               ETheme testTheme  = ETheme.light;
+    public               ETheme testTheme            = ETheme.light;
 
     public GanttGenerator(GanttBurndownChartService service) {
         super();
@@ -121,20 +122,18 @@ public class GanttGenerator extends EntityGenerator {
         return true;
     }
 
-    private void captureGanttBurndownChart(UUID sprintId, String testFolder, String name) throws Exception {
+    private void captureGanttBurndownChart(UUID sprintId, String testFolder, String name, double visualScale) throws Exception {
         Sprint                    sprint       = prepareChartSprint(sprintId);
         StableDiffusionConfig     config       = new StableDiffusionConfig();
         LightTheme                lightTheme   = new LightTheme(config);
         DarkTheme                 darkTheme    = new DarkTheme(config);
         GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme, new KassandraProperties());
         GanttBurndownChartService chartService = new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
-        String json = new JacksonConfig().jsonMapper().writeValueAsString(
-                chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart",
-                json, name, "gantt-burndown-chart");
+        String                    json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
+        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart", json, name, "gantt-burndown-chart", visualScale);
     }
 
-    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected) throws IOException {
+    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected, double visualScale) throws IOException {
         Files.createDirectories(outputDirectory);
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", GanttGenerator::serveChartResource);
@@ -148,10 +147,10 @@ public class GanttGenerator extends EntityGenerator {
                 driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
                 driver.get("http://127.0.0.1:" + server.getAddress().getPort() + "/");
                 Object result = driver.executeAsyncScript("""
-                        const [url, mount, json, expected, done] = arguments;
+                        const [url, mount, json, expected, visualScale, done] = arguments;
                         import(url).then(async () => {
                             localStorage.clear();
-                            window[mount]('chart', JSON.parse(json), 'Test chart');
+                            window[mount]('chart', JSON.parse(json), 'Test chart', visualScale);
                             await document.fonts.ready;
                             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                             const container = document.getElementById('chart');
@@ -160,7 +159,7 @@ public class GanttGenerator extends EntityGenerator {
                                 throw new Error('Expected chart did not render an SVG: ' + expected);
                             done({svg: new XMLSerializer().serializeToString(svg)});
                         }).catch(error => done({error: String(error.stack || error)}));
-                        """, module, mount, json, expected);
+                        """, module, mount, json, expected, visualScale);
                 if (!(result instanceof Map<?, ?> response) || !(response.get("svg") instanceof String svg)) {
                     throw new IllegalStateException("Failed to render " + name + " chart: " + result);
                 }
@@ -199,7 +198,21 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        captureGanttBurndownChart(sprintId, testFolder, chartName(testInfo));
+        generateBurndownChart(testInfo, sprintId, testFolder, DEFAULT_VISUAL_SCALE);
+    }
+
+    /**
+     * Generates the production combined Gantt and burndown chart as SVG and PNG at the requested visual scale.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo    test metadata used to name the chart
+     * @param sprintId    identifier of the sprint to render
+     * @param testFolder  output directory for the chart
+     * @param visualScale initial visual scale for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
+    public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
+        captureGanttBurndownChart(sprintId, testFolder, chartName(testInfo), visualScale);
     }
 
     /**
@@ -212,7 +225,21 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateGanttBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
-        captureGanttBurndownChart(sprintId, testFolder, "gannt-burn-down");
+        generateGanttBurndownChart(testInfo, sprintId, testFolder, DEFAULT_VISUAL_SCALE);
+    }
+
+    /**
+     * Generates the production combined Gantt and burndown chart as SVG and PNG at the requested visual scale.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo    test metadata
+     * @param sprintId    identifier of the sprint to render
+     * @param testFolder  output directory for the chart
+     * @param visualScale initial visual scale for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
+    public void generateGanttBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
+        captureGanttBurndownChart(sprintId, testFolder, chartName(testInfo) + "-gannt-burn-down", visualScale);
     }
 
     /**
@@ -225,13 +252,25 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
+        generateGanttChart(testInfo, sprintId, testFolder, DEFAULT_VISUAL_SCALE);
+    }
+
+    /**
+     * Generates the production Gantt chart as SVG and PNG at the requested visual scale.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo    test metadata used to name the chart
+     * @param sprintId    identifier of the sprint to render
+     * @param testFolder  output directory for the chart
+     * @param visualScale initial visual scale for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
+    public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
         Sprint                sprint       = prepareChartSprint(sprintId);
         StableDiffusionConfig config       = new StableDiffusionConfig();
         GanttChartService     chartService = new GanttChartService(new LightTheme(config), new DarkTheme(config), new KassandraProperties());
-        String json = new JacksonConfig().jsonMapper().writeValueAsString(
-                chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart",
-                json, chartName(testInfo) + "-gant-chart", "gantt-chart");
+        String                json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
+        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart", json, chartName(testInfo) + "-gant-chart", "gantt-chart", visualScale);
     }
 
     /**
@@ -244,6 +283,20 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateOverviewChart(TestInfo testInfo, UUID sprintId, String testFolder) throws Exception {
+        generateOverviewChart(testInfo, sprintId, testFolder, DEFAULT_VISUAL_SCALE);
+    }
+
+    /**
+     * Generates the production sprint overview chart as SVG and PNG at the requested visual scale.
+     * Requires the static frontend bundles and Chrome.
+     *
+     * @param testInfo    test metadata used to name the chart
+     * @param sprintId    identifier of the sprint to render
+     * @param testFolder  output directory for the chart
+     * @param visualScale initial visual scale for the chart
+     * @throws Exception if the sprint, browser rendering, or file output fails
+     */
+    public void generateOverviewChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
         Sprint    sprint    = prepareChartSprint(sprintId);
         SprintDAO sprintDao = new SprintDAO();
         sprintDao.setId(sprint.getId());
@@ -257,8 +310,7 @@ public class GanttGenerator extends EntityGenerator {
         SprintsOverviewService overviewService = new SprintsOverviewService(repository, new LightTheme(config), new DarkTheme(config));
         String json = new JacksonConfig().jsonMapper().writeValueAsString(
                 overviewService.getOverview(ParameterOptions.getLocalNow(), null, testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart",
-                json, chartName(testInfo) + "-overview-chart-projectOverviewChart", "sprints-overview-chart");
+        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart", json, chartName(testInfo) + "-overview-chart-projectOverviewChart", "sprints-overview-chart", visualScale);
     }
 
     /**

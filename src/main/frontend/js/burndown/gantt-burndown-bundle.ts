@@ -48,7 +48,7 @@ function createTooltipElement(container: HTMLElement): HTMLDivElement {
 export function createGanttBurndownChart(
     container: HTMLElement,
     data: GanttBurndownChartDto,
-    options: { containerId?: string } = {},
+    options: { containerId?: string; initialVisualScale?: number } = {},
 ): ChartHandle {
     const containerId = options.containerId || container.id || 'gantt-burndown-chart';
     const theme = new Theme(data.meta.theme as Record<string, unknown>);
@@ -106,6 +106,7 @@ export function createGanttBurndownChart(
         minDayWidth: MIN_DW,
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
+        initialVisualScale: options.initialVisualScale,
         beforeRender: () => {
             container.style.position = 'relative';
         },
@@ -127,6 +128,7 @@ function mountGanttBurndownChart(
     containerId: string,
     injectedData: GanttBurndownChartDto,
     title: string = 'Gantt and burndown chart',
+    initialVisualScale?: number,
 ): void {
     const elementId = containerId || 'gantt-burndown-chart-container';
     const containerElement = document.getElementById(elementId);
@@ -146,6 +148,7 @@ function mountGanttBurndownChart(
             containerElement,
             injectedData,
             title,
+            initialVisualScale,
         );
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No Gantt burndown chart data provided.</div>';
