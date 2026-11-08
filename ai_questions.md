@@ -151,9 +151,6 @@ So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAt
 4. Would be good if we could move the legend of the burn-down-chart at the right top corner of the chart and not at the
    very right of the whole page.
 5. Horizontal grid should only reach until the end of the chart, not end of the screen.
-6. Y-axis labels are too light in color for dark mode.
-7. grid too light in color for dark mode.
-8. now line in dark mode should match light mode (too orange).
 9. legend should be drawn above the grid in z axis.
 10. year background color is black.
 

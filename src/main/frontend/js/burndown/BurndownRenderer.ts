@@ -32,7 +32,7 @@ const ONE_WORK_WEEK = 5 * 75 * 60 * 6;
 const SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
 /** Mirrors Java: public static final int Y_AXIS_WIDTH = 50; */
 export const Y_AXIS_WIDTH = 50;
-const STANDARD_LINE_STROKE_WIDTH = 2;
+const STANDARD_LINE_STROKE_WIDTH = 3;
 
 /**
  * Fixed plot (diagram) height in pixels. Mirrors Java's {@code dao.chartHeight}, which is
@@ -390,7 +390,7 @@ export class BurndownRenderer extends AbstractRenderer {
                     // ---a new day started, so we can draw the polygon of last day
                     if (yesterdayX !== 0 && lastX !== 0) {
                         const DayFromDayIndex = this.calendarFromDayIndex(dayIndex - 1);
-                        this.drawPolygon(group, yesterdayX, yesterdayY, yesterdayY2, lastX, lastY, lastY2,
+                        this.drawPolygon(group, yesterdayX, yesterdayY, yesterdayY2, lastX - 1, lastY, lastY2,
                             authorIndex === authors.length - 1, DateUtils.isWorkDay(DayFromDayIndex),
                             ColorUtils.intToHex(this.theme.burndownTheme.borderColor, '#334155'),
                             this.generateBurnDownColor(author.color), tooltip, author.userName || '');
