@@ -106,22 +106,22 @@ public class DarkTheme extends Theme {
         //---------------------------------------------------------------------
         //-- GanttTheme
         //---------------------------------------------------------------------
-        ganttTheme.relationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
-        ganttTheme.criticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
-        ganttTheme.milestoneBgColor        = new Color(0x4f, 0xbb, 0xc2, 0xff);
-        ganttTheme.milestoneTextColor      = new Color(0x50, 0x50, 0x50, 0xff);
+        ganttTheme.relationColor           = new Color(0x34, 0x66, 0xed);
+        ganttTheme.criticalRelationColor   = new Color(0xff, 0, 0);
+        ganttTheme.milestoneBgColor        = new Color(0x4f, 0xbb, 0xc2);
+        ganttTheme.milestoneTextColor      = new Color(0x50, 0x50, 0x50);
         ganttTheme.storyColor              = Color.lightGray;
         ganttTheme.storyTextColor          = basicTextColor;
         ganttTheme.taskTextColor           = basicTextColor;
-        ganttTheme.taskBorderColor         = Color.lightGray;
+        ganttTheme.taskBorderColor         = new Color(0x34, 0x66, 0xed);
         ganttTheme.progressColor           = Color.blue;
         ganttTheme.taskTransparency        = 0xff;
         ganttTheme.taskWeekEndTransparency = 64;
         ganttTheme.idBgColor               = baseBgColor;
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
-        ganttTheme.idTextColor = new Color(0xaa, 0xaa, 0xaa, 0xff);
+        ganttTheme.idTextColor = new Color(0xaa, 0xaa, 0xaa);
 //        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xff);
+        ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0);
         ganttTheme.gridColor               = baseBorderColor;//ColorUtil.colorFraction(new Color(0xe5f2ff, false), 0.1);//done
         //--DayStripeColors
         ganttTheme.outOfOfficeColor      = baseBgColor;

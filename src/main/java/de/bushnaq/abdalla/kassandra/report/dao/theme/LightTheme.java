@@ -106,25 +106,25 @@ public class LightTheme extends Theme {
         //---------------------------------------------------------------------
         //-- GanttTheme
         //---------------------------------------------------------------------
-        ganttTheme.relationColor           = new Color(0x34, 0x66, 0xed, 0x7f);
-        ganttTheme.criticalRelationColor   = new Color(0xff, 0, 0, 0x7f);
-        ganttTheme.milestoneBgColor        = new Color(0x4f, 0xbb, 0xc2, 0xff);
-        ganttTheme.milestoneTextColor      = new Color(0x50, 0x50, 0x50, 0xff);
+        ganttTheme.relationColor           = new Color(0x34, 0x66, 0xed);
+        ganttTheme.criticalRelationColor   = new Color(0xff, 0, 0);
+        ganttTheme.milestoneBgColor        = new Color(0x4f, 0xbb, 0xc2);
+        ganttTheme.milestoneTextColor      = new Color(0x50, 0x50, 0x50);
         ganttTheme.storyColor              = Color.black;//new Color(64, 64, 64, 0xa0);
         ganttTheme.storyTextColor          = Color.darkGray;
-        ganttTheme.taskTextColor           = new Color(0x30, 0x30, 0x30, 0xff);
-        ganttTheme.taskBorderColor         = new Color(0x30, 0x30, 0x30, 0x7F);
+        ganttTheme.taskTextColor           = new Color(0x30, 0x30, 0x30);
+        ganttTheme.taskBorderColor         = new Color(0x34, 0x66, 0xed);
         ganttTheme.progressColor           = Color.blue;
         ganttTheme.taskTransparency        = 0xff;
         ganttTheme.taskWeekEndTransparency = 64;
-        ganttTheme.idBgColor               = new Color(0xff, 0xff, 0xff, 0xff);
+        ganttTheme.idBgColor               = new Color(0xff, 0xff, 0xff);
 //        ganttTheme.ganttIdErrorColor            = new Color(0xff, 0x0, 0x0, 0xff);
         ganttTheme.idTextColor = new Color(0xaa, 0xaa, 0xaa, 0xff);
 //        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
-        ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0, 0xC0);
+        ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0);
         ganttTheme.gridColor               = new Color(0xe4e8f3, false);
         //--DayStripeColors
-        ganttTheme.outOfOfficeColor      = new Color(0xff, 0xff, 0xff, 0xff);
+        ganttTheme.outOfOfficeColor      = new Color(0xff, 0xff, 0xff);
         ganttTheme.holidayBgColor        = new Color(0xffefef);
         ganttTheme.sickBgColor           = new Color(0xffefef);
         ganttTheme.tripBgColor           = new Color(0xffefef);
