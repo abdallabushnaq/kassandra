@@ -259,10 +259,6 @@ export class BurndownRenderer extends AbstractRenderer {
         const chartEndX = this.getChartEndX();
         const legendX = chartEndX - 130;
 
-        this.drawAuthorLegend(svg, legendX);
-        this.drawLegend(svg, legendX, this.diagram.y, this.extrapolationColor);
-
-
         if (this.maxWorked && this.maxWorked !== 0) {
             // y axis markings
             this.drawYAxes(svg, startX, this.maxWorked);
@@ -308,6 +304,10 @@ export class BurndownRenderer extends AbstractRenderer {
                 // }));
             }
         }
+
+        this.drawAuthorLegend(svg, legendX);
+        this.drawLegend(svg, legendX, this.diagram.y, this.extrapolationColor);
+
         // ---Maybe this is a test case ticket? (nothing to draw)
     }
 

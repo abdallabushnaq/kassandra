@@ -146,9 +146,15 @@ export class GanttRenderer extends AbstractGanttRenderer {
     }
 
     drawGanttChart(g: SVGElement): void {
+        const relationGroup = SvgUtils.createGroup({class: 'task-relations'});
+        for (const task of this.tasks) {
+            this.drawTaskRelations(relationGroup, task);
+        }
+        g.appendChild(relationGroup);
+
         for (const task of this.tasks) {
             const taskGroup = SvgUtils.createGroup({'data-task-id': String(task.id)});
-            this.drawTask(taskGroup, 0, task, true, true, false, false, null, null, true);
+            this.drawTask(taskGroup, 0, task, true, false, false, null, null, true);
             g.appendChild(taskGroup);
         }
     }

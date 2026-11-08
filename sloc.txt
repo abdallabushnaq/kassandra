@@ -262,11 +262,11 @@
 | kassandra.report.dao.theme               | CalendarTheme.java                                           | src      |        3 |        0 |       16 |       21 |       40 |
 | kassandra.report.dao.theme               | ChartTheme.java                                              | src      |        4 |        0 |       16 |       14 |       34 |
 | kassandra.report.dao.theme               | ColorConstants.java                                          | src      |        4 |        0 |       17 |       13 |       34 |
-| kassandra.report.dao.theme               | DarkTheme.java                                               | src      |       26 |        0 |       78 |      101 |      205 |
+| kassandra.report.dao.theme               | DarkTheme.java                                               | src      |       26 |        0 |       80 |      100 |      206 |
 | kassandra.report.dao.theme               | GanttTheme.java                                              | src      |        4 |        3 |       18 |       27 |       52 |
-| kassandra.report.dao.theme               | LightTheme.java                                              | src      |       29 |        0 |       79 |       99 |      207 |
-| kassandra.report.dao.theme               | Theme.java                                                   | src      |       18 |        8 |       71 |       61 |      158 |
-| kassandra.report.dao.theme               | XAxesTheme.java                                              | src      |        4 |        0 |       23 |       44 |       71 |
+| kassandra.report.dao.theme               | LightTheme.java                                              | src      |       29 |        0 |       81 |       98 |      208 |
+| kassandra.report.dao.theme               | Theme.java                                                   | src      |       21 |       17 |       71 |       71 |      180 |
+| kassandra.report.dao.theme               | XAxesTheme.java                                              | src      |        4 |        0 |       25 |       42 |       71 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.dao                     | AuthorContribution.java                                      | src      |       11 |        0 |       16 |       32 |       59 |
 | kassandra.report.dao                     | AuthorsContribution.java                                     | src      |       13 |        0 |       22 |       35 |       70 |
@@ -293,7 +293,6 @@
 | kassandra.report.dao                     | WorklogRemaining.java                                        | src      |        7 |        0 |       34 |       24 |       65 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.gantt                   | AbstractGanttTester.java                                     | src      |       31 |       37 |       23 |      244 |      335 |
-| kassandra.report.gantt                   | ColorGenerator.java                                          | src      |        4 |        0 |       19 |       11 |       34 |
 | kassandra.report.gantt                   | CriticalTest.java                                            | src      |       11 |       13 |       16 |       36 |       76 |
 | kassandra.report.gantt                   | DynamicGanttTest.java                                        | src      |       28 |        8 |       16 |       97 |      149 |
 | kassandra.report.gantt                   | GanttContext.java                                            | src      |       13 |        0 |       43 |       80 |      136 |
@@ -304,10 +303,10 @@
 | kassandra.report.gantt                   | LegacyLegacyAbstractGanttRenderer.java                       | src      |       41 |       12 |       91 |      534 |      678 |
 | kassandra.report.gantt                   | LevelingResourcesException.java                              | src      |        2 |        0 |       16 |        6 |       24 |
 | kassandra.report.gantt                   | OldGanttTest.java                                            | src      |       20 |        9 |       34 |      125 |      188 |
-| kassandra.report.gantt                   | TestResourceLeveling.java                                    | src      |        9 |        8 |       16 |       40 |       73 |
+| kassandra.report.gantt                   | TestResourceLeveling.java                                    | src      |       10 |        8 |       16 |       43 |       77 |
 | kassandra.report.gantt                   | TestTest.java                                                | src      |       10 |       13 |       16 |       36 |       75 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.report.ganttBurndown           | DynamicGanttBurndownTest.java                                | src      |       22 |        8 |       18 |      115 |      163 |
+| kassandra.report.ganttBurndown           | DynamicGanttBurndownTest.java                                | src      |       24 |        8 |       16 |      120 |      168 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report.html.dao                | ReportCell.java                                              | src      |       22 |        0 |       16 |      112 |      150 |
 | kassandra.report.html.dao                | ReportLink.java                                              | src      |        8 |        0 |       16 |       20 |       44 |
@@ -318,7 +317,7 @@
 | kassandra.report.overview                | LegacySprintsOverviewRendererLegacy.java                     | src      |       31 |        6 |      181 |      266 |      484 |
 | kassandra.report.overview                | OverviewChartTest.java                                       | src      |       13 |        8 |       18 |       55 |       94 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.report.theme                   | ColorPaletteTest.java                                        | src      |       10 |        5 |       16 |       46 |       77 |
+| kassandra.report.theme                   | ColorPaletteTest.java                                        | src      |       10 |        5 |       16 |       50 |       81 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.report                         | AbstractCanvas.java                                          | src      |       22 |        8 |       25 |      124 |      179 |
 | kassandra.report                         | LegacyAbstractChart.java                                     | src      |        9 |        0 |       16 |       41 |       66 |
@@ -441,7 +440,7 @@
 | kassandra.rest.dto.theme                 | CalendarThemeDto.java                                        | src      |        3 |        3 |       16 |       22 |       44 |
 | kassandra.rest.dto.theme                 | ChartThemeDto.java                                           | src      |        3 |        3 |       16 |       13 |       35 |
 | kassandra.rest.dto.theme                 | GanttThemeDto.java                                           | src      |        3 |       12 |       16 |       28 |       59 |
-| kassandra.rest.dto.theme                 | ThemeDto.java                                                | src      |       15 |       22 |       23 |      116 |      176 |
+| kassandra.rest.dto.theme                 | ThemeDto.java                                                | src      |       15 |       22 |       25 |      114 |      176 |
 | kassandra.rest.dto.theme                 | XAxesThemeDto.java                                           | src      |        3 |        3 |       23 |       30 |       59 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.rest.exception                 | UniqueConstraintViolationException.java                      | src      |        7 |       19 |       16 |       21 |       63 |
@@ -650,25 +649,25 @@
 | kassandra.ui                             | HtmlColor.java                                               | src      |        6 |        0 |       36 |       22 |       64 |
 | kassandra.ui                             | MainErrorHandler.java                                        | src      |        5 |        0 |       16 |       28 |       49 |
 | kassandra.ui                             | MainLayout.java                                              | src      |      105 |       91 |       58 |      754 |     1008 |
-| kassandra.ui                             | PageHelpIT.java                                              | src      |       29 |        3 |       16 |      546 |      594 |
+| kassandra.ui                             | PageHelpIT.java                                              | src      |       29 |        3 |       16 |      541 |      589 |
 | kassandra.ui                             | PageHelpResourcesTest.java                                   | src      |        7 |        3 |       16 |       76 |      102 |
 | kassandra.ui                             | SprintStatus.java                                            | src      |        2 |        0 |       16 |        4 |       22 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| kassandra.util                           | AbstractGanttTestUtil.java                                   | src      |       58 |       27 |       68 |      560 |      713 |
+| kassandra.util                           | AbstractGanttTestUtil.java                                   | src      |       58 |       27 |       68 |      559 |      712 |
 | kassandra.util                           | AbstractTestUtil.java                                        | src      |       14 |       16 |       20 |       68 |      118 |
 | kassandra.util                           | BackendPlanningDataGenerator.java                            | src      |        8 |       23 |       16 |       67 |      114 |
 | kassandra.util                           | BurnDownUtil.java                                            | src      |       10 |       26 |       40 |       93 |      169 |
 | kassandra.util                           | DTOAsserts.java                                              | src      |       34 |       15 |       40 |      135 |      224 |
 | kassandra.util                           | DeprecatedAbstractLegacyGanttTestUtil.java                   | src      |       10 |        0 |       19 |       85 |      114 |
-| kassandra.util                           | EntityGenerator.java                                         | src      |       48 |       20 |       19 |      312 |      399 |
+| kassandra.util                           | EntityGenerator.java                                         | src      |       49 |       20 |       19 |      305 |      393 |
 | kassandra.util                           | EntityTimestampTest.java                                     | src      |       16 |        3 |       16 |      169 |      204 |
-| kassandra.util                           | GanttGenerator.java                                          | src      |       28 |       79 |       33 |      336 |      476 |
+| kassandra.util                           | GanttGenerator.java                                          | src      |       34 |      119 |       33 |      367 |      553 |
 | kassandra.util                           | H2DatabaseStateManager.java                                  | src      |       22 |       27 |       27 |      125 |      201 |
 | kassandra.util                           | MPXJReader.java                                              | src      |       14 |        0 |       58 |      168 |      240 |
 | kassandra.util                           | MinMaxNumber.java                                            | src      |        2 |       13 |       16 |        8 |       39 |
 | kassandra.util                           | NameGenerator.java                                           | src      |       29 |       22 |       25 |      200 |      276 |
 | kassandra.util                           | OffDayGenerator.java                                         | src      |       33 |       22 |       34 |      215 |      304 |
-| kassandra.util                           | PersistingEntityGenerator.java                               | src      |      128 |      116 |       74 |      825 |     1143 |
+| kassandra.util                           | PersistingEntityGenerator.java                               | src      |      128 |      116 |       74 |      820 |     1138 |
 | kassandra.util                           | RandomCase.java                                              | src      |       30 |      148 |       16 |      147 |      341 |
 | kassandra.util                           | TestInfoUtil.java                                            | src      |       15 |       86 |       16 |       51 |      168 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -748,5 +747,5 @@
 | util                                     | TaskUtil.java                                                | src      |       17 |       13 |      139 |      108 |      277 |
 | util                                     | Util.java                                                    | src      |       21 |        0 |       30 |      162 |      213 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 76 package(s)                            | 671 file(s)                                                  | java     |    14025 |    15454 |    18356 |    82228 |   130063 |
+| 76 package(s)                            | 670 file(s)                                                  | java     |    14034 |    15503 |    18343 |    82246 |   130126 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

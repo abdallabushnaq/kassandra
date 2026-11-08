@@ -324,6 +324,22 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         }));
     }
 
+    drawTaskRelations(g: SVGElement, task: TaskDto): void {
+        if (!task.start || !task.finish || !this.showDetail(this.ganttZoom.renderDependenciesAtDayWidth) || !task.predecessors?.length)
+            return;
+
+        const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
+        for (const rel of task.predecessors) {
+            if (!rel.visible) continue;
+            const targetTask = this._taskById[String(rel.predecessorId)];
+            if (!targetTask?.finish) continue;
+            const y1 = this._calendarH + targetTask.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
+            const relation = SvgUtils.createGroup({class: 'task-dependency'});
+            this.drawRelation(relation, task, y, targetTask, y1);
+            g.appendChild(relation);
+        }
+    }
+
     drawRibbon(g: SVGElement, y1: number, x1: number, y2: number, delta1: number, delta2: number, ribbonColor: string): void {
         const points = `${x1},${y2} ${x1 + delta1},${y1} ${x1 + delta1 + delta2},${y1} ${x1 + delta2},${y2}`;
         g.appendChild(SvgUtils.createPolygon({points, fill: ribbonColor}));
@@ -372,7 +388,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         _gantUniqueId: number,
         task: TaskDto,
         doDrawId: boolean,
-        drawRelations: boolean,
         labelInside: boolean,
         alien: boolean,
         marker: string | null,
@@ -386,17 +401,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
         this.drawTaskInner(g, task, x1, x2, y, labelInside, alien, marker, conflict);
         if (doDrawId) this.drawId(g, task, y);
-        if (drawRelations && this.showDetail(this.ganttZoom.renderDependenciesAtDayWidth) && task.predecessors?.length) {
-            for (const rel of task.predecessors) {
-                if (!rel.visible) continue;
-                const targetTask = this._taskById[String(rel.predecessorId)];
-                if (!targetTask?.finish) continue;
-                const y1 = this._calendarH + targetTask.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
-                const relation = SvgUtils.createGroup({class: 'task-dependency'});
-                this.drawRelation(relation, task, y, targetTask, y1);
-                g.appendChild(relation);
-            }
-        }
     }
 
     drawTaskInner(

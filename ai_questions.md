@@ -139,20 +139,13 @@ So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAt
 
 # Gantt-Chart rendering
 
-1. Tasks are 2 px too high. we want to reintroduce a margin of 1px at the top and bottom of each task to keep space for
-   the relation to pass between tasks horizontally.
-
 # Burn-Down-Chart Rendering
 
 1. Burn down chart grid is one line too high.
 2. Let us draw the vertical grid lines for the Burn-down-chart above the graph. Gantt chart should keep the grid below
    the chart.
-3. Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
-4. Would be good if we could move the legend of the burn-down-chart at the right top corner of the chart and not at the
-   very right of the whole page.
-5. Horizontal grid should only reach until the end of the chart, not end of the screen.
-9. legend should be drawn above the grid in z axis.
-10. year background color is black.
+3. Horizontal grid should only reach until the end of the chart, not end of the screen.
+4. legend should be drawn above the grid in z axis.
 
 # Disabling Video Recording for Tests
 
