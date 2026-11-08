@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectFile;
 import org.junit.jupiter.api.TestInfo;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -82,7 +83,8 @@ public class GanttGenerator extends EntityGenerator {
             #chart { width: 2400px; height: 900px; }
             </style></head><body><div id="chart"></div></body></html>
             """;
-    private static final double DEFAULT_VISUAL_SCALE = 0.75;
+    private static final double DEFAULT_VISUAL_SCALE = 2.0;
+    private static final int    SCREENSHOT_MARGIN     = 16;
     protected final      Random random               = new Random();
     /**
      * Theme used for Gantt chart generation in tests.
@@ -165,6 +167,7 @@ public class GanttGenerator extends EntityGenerator {
                 }
                 Files.writeString(outputDirectory.resolve(name + ".svg"), svg, StandardCharsets.UTF_8);
                 WebElement    chart = driver.findElement(By.cssSelector("#chart svg"));
+                resizeViewportToFit(driver, chart);
                 byte[]        png   = chart.getScreenshotAs(OutputType.BYTES);
                 BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
                 if (image == null || image.getWidth() < chart.getSize().getWidth() || image.getHeight() < chart.getSize().getHeight()) {
@@ -178,6 +181,28 @@ public class GanttGenerator extends EntityGenerator {
         } finally {
             server.stop(0);
         }
+    }
+
+    private static void resizeViewportToFit(ChromeDriver driver, WebElement element) {
+        Dimension windowSize = driver.manage().window().getSize();
+        int viewportWidth = executeIntScript(driver, "return document.documentElement.clientWidth");
+        int viewportHeight = executeIntScript(driver, "return document.documentElement.clientHeight");
+        int elementRight = executeIntScript(driver, "return Math.ceil(arguments[0].getBoundingClientRect().right)", element);
+        int elementBottom = executeIntScript(driver, "return Math.ceil(arguments[0].getBoundingClientRect().bottom)", element);
+        int widthDelta = Math.max(0, elementRight + SCREENSHOT_MARGIN - viewportWidth);
+        int heightDelta = Math.max(0, elementBottom + SCREENSHOT_MARGIN - viewportHeight);
+        if (widthDelta > 0 || heightDelta > 0) {
+            driver.manage().window().setSize(new Dimension(windowSize.getWidth() + widthDelta, windowSize.getHeight() + heightDelta));
+            driver.executeAsyncScript("const done = arguments[arguments.length - 1]; requestAnimationFrame(() => requestAnimationFrame(done));");
+        }
+    }
+
+    private static int executeIntScript(ChromeDriver driver, String script, Object... arguments) {
+        Object result = driver.executeScript(script, arguments);
+        if (result instanceof Number number) {
+            return number.intValue();
+        }
+        throw new IllegalStateException("Expected a numeric result from browser script: " + script);
     }
 
     private String chartName(TestInfo testInfo) {

@@ -67,6 +67,10 @@ public class TestResourceLeveling extends AbstractGanttTester {
         Sprint sprint = g.load(Path.of("references/resource-leveling/Tokyo.xml"), false);
 
         g.levelResources(testInfo, sprint, null);
+
+        g.testTheme = ETheme.light;
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
+        g.testTheme = ETheme.dark;
         g.generateGanttChart(testInfo, sprint.getId(), testFolder);
     }
 

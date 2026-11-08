@@ -80,16 +80,16 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
 
     private void generateGanttBurndownChart(TestInfo testInfo, GanttGenerator g, Sprint sprint) throws Exception {
         g.testTheme = ETheme.light;
-        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder, 1.0);
+        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder);
         g.testTheme = ETheme.dark;
-        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder, 1.0);
+        g.generateGanttBurndownChart(testInfo, sprint.getId(), testFolder);
     }
 
     private void generateGanttChart(TestInfo testInfo, GanttGenerator g, Sprint sprint) throws Exception {
         g.testTheme = ETheme.light;
-        g.generateGanttChart(testInfo, sprint.getId(), testFolder, 1.0);
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
         g.testTheme = ETheme.dark;
-        g.generateGanttChart(testInfo, sprint.getId(), testFolder, 1.0);
+        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
     }
 
     @Test

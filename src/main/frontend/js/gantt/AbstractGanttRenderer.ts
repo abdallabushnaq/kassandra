@@ -19,7 +19,7 @@ import {GraphColorUtil} from "../GraphColorUtil.js";
 // ── Constants (mirrors Java LegacyLegacyAbstractGanttRenderer field declarations) ────────
 export const LINE_HEIGHT = 18;
 const RELATION_CORNER_LENGTH = 14;
-const RELATION_STROKE_WIDTH = 2.0;
+const RELATION_STROKE_WIDTH = 2;
 const RESOURCE_NAME_TO_TASK_GAP = 3;
 export const SECONDS_PER_DAY = 85 * 6 * 60; // 30600
 const TASK_BODY_MARGIN = 3;
@@ -317,7 +317,6 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         ].join(' ');
         g.appendChild(SvgUtils.createPath({
             d: path, fill: 'none', stroke: arrowColor, 'stroke-width': RELATION_STROKE_WIDTH,
-            'vector-effect': 'non-scaling-stroke',
         }));
         g.appendChild(SvgUtils.createPolygon({
             points: `${x2 - arrowLength},${y2 - 3} ${x2 - arrowLength},${y2 + 3} ${x2},${y2}`,
