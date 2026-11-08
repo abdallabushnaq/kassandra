@@ -149,10 +149,10 @@ public class Demo extends AbstractKeycloakUiTestUtil {
                         .numberOfFeatures(1, 2)
                         .numberOfSprints(1, 2)
                         .taskDurationPerDay(1, 5)
-                        .numberOfStories(1, 3)
+                        .numberOfStories(1, 4)
                         .numberOfUsers(1, 8)
-                        .numberOfUsersPerSprint(1, 4)
-                        .numberOfTasks(1, 4)
+                        .numberOfUsersPerSprint(2, 4)
+                        .numberOfTasks(2, 4)
                         .seed(7)
                         .build()//official screenshot data
         };

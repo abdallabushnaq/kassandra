@@ -122,7 +122,7 @@ public class DarkTheme extends Theme {
         ganttTheme.idTextColor = new Color(0xaa, 0xaa, 0xaa);
 //        ganttTheme.ganttIdTextErrorColor        = new Color(0xff, 0xff, 0xff, 0xff);
         ganttTheme.criticalTaskBorderColor = new Color(0xff, 0x0, 0x0);
-        ganttTheme.gridColor               = new Color(0x646494, false);
+        ganttTheme.gridColor               = new Color(0x444464, false);
         //--DayStripeColors
         ganttTheme.outOfOfficeColor      = baseBgColor;
         ganttTheme.holidayBgColor        = ColorUtil.colorMerger(baseBorderColor, new Color(0xff00000), 0.1f);
