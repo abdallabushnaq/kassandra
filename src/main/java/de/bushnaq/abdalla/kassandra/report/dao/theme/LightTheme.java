@@ -78,11 +78,11 @@ public class LightTheme extends Theme {
         xAxesTheme.dayOfMonthWeekendBgColor   = new Color(0xd7d7d7);
         xAxesTheme.dayOfMonthWeekendTextColor = Color.BLACK;
         //------------------------- Day of Week
-        xAxesTheme.dayOfweekBgColor          = Color.WHITE;
-        xAxesTheme.dayOfWeekBorderColor      = Color.WHITE;
-        xAxesTheme.dayOfWeekTextColor        = Color.BLACK;
-        xAxesTheme.dayOfweekSaturdayBgColor  = new Color(0xd7d7d7);
-        xAxesTheme.dayOfweekSundayBgColor    = new Color(0xd7d7d7);
+        xAxesTheme.dayOfweekBgColor     = Color.WHITE;
+        xAxesTheme.dayOfWeekBorderColor = Color.WHITE;
+        xAxesTheme.dayOfWeekTextColor   = Color.BLACK;
+//        xAxesTheme.dayOfweekSaturdayBgColor  = new Color(0xd7d7d7);
+//        xAxesTheme.dayOfweekSundayBgColor    = new Color(0xd7d7d7);
         xAxesTheme.dayOfWeekWeekendTextColor = Color.BLACK;
         //------------------------- Month
         xAxesTheme.monthBorderColor = Color.WHITE;

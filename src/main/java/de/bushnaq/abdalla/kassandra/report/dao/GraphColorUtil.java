@@ -51,8 +51,8 @@ public class GraphColorUtil {
     public static Color getDayOfWeekBgColor(Theme theme, LocalDate startCal) {
         return switch (startCal.getDayOfWeek()) {
             case FRIDAY, MONDAY, THURSDAY, TUESDAY, WEDNESDAY -> theme.xAxesTheme.dayOfweekBgColor;
-            case SATURDAY -> theme.xAxesTheme.dayOfweekSaturdayBgColor;
-            case SUNDAY -> theme.xAxesTheme.dayOfweekSundayBgColor;
+            case SATURDAY -> theme.chartTheme.dayOfweekSaturdayBgColor;
+            case SUNDAY -> theme.chartTheme.dayOfweekSundayBgColor;
             default -> null;
         };
 

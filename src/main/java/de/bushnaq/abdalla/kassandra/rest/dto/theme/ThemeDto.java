@@ -104,11 +104,11 @@ public class ThemeDto {
         dto.xAxesTheme.dayOfWeekTextColor         = rgb(theme.xAxesTheme.dayOfWeekTextColor);
         dto.xAxesTheme.dayOfWeekWeekendTextColor  = rgb(theme.xAxesTheme.dayOfWeekWeekendTextColor);
         dto.xAxesTheme.dayOfweekBgColor           = rgb(theme.xAxesTheme.dayOfweekBgColor);
-        dto.xAxesTheme.dayOfweekSaturdayBgColor   = rgb(theme.xAxesTheme.dayOfweekSaturdayBgColor);
-        dto.xAxesTheme.dayOfweekSundayBgColor     = rgb(theme.xAxesTheme.dayOfweekSundayBgColor);
-        dto.xAxesTheme.futureEventColor           = rgb(theme.xAxesTheme.futureEventColor);
-        dto.xAxesTheme.milestoneFlagColor         = rgb(theme.xAxesTheme.milestoneFlagColor);
-        dto.xAxesTheme.milestoneTextColor         = rgb(theme.xAxesTheme.milestoneTextColor);
+//        dto.xAxesTheme.dayOfweekSaturdayBgColor   = rgb(theme.xAxesTheme.dayOfweekSaturdayBgColor);
+//        dto.xAxesTheme.dayOfweekSundayBgColor     = rgb(theme.xAxesTheme.dayOfweekSundayBgColor);
+        dto.xAxesTheme.futureEventColor   = rgb(theme.xAxesTheme.futureEventColor);
+        dto.xAxesTheme.milestoneFlagColor = rgb(theme.xAxesTheme.milestoneFlagColor);
+        dto.xAxesTheme.milestoneTextColor = rgb(theme.xAxesTheme.milestoneTextColor);
         if (theme.xAxesTheme.monthBgColors != null) {
             for (int i = 0; i < theme.xAxesTheme.monthBgColors.length && i < 12; i++) {
                 dto.xAxesTheme.monthBgColors[i] = rgb(theme.xAxesTheme.monthBgColors[i]);
