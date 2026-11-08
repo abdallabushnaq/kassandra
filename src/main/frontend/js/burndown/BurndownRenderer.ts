@@ -75,7 +75,6 @@ export class BurndownRenderer extends AbstractRenderer {
     private readonly maxActualWorked: number;
     private readonly maxWorked!: number;
     private readonly sprintClosed: boolean;
-    private yAxis!: GraphSquare;
     private readonly calendarSize: CalendarSize;
 
     constructor(chart: AbstractChart, data: GanttBurndownChartDto) {
@@ -157,8 +156,6 @@ export class BurndownRenderer extends AbstractRenderer {
         // this.diagram.initSize(this.containerWidth, PLOT_HEIGHT);
 
         this.initPosition(this.firstDayX + x, y);
-        this.yAxis = new GraphSquare(2, this.diagram.y, Y_AXIS_WIDTH, this.diagram.height);
-
         this.drawCalendar(svg, true, this.containerWidth);
         this.drawMilestones(svg);
         this.createBurnDownChart(svg);
@@ -530,6 +527,12 @@ export class BurndownRenderer extends AbstractRenderer {
 
     // ── Java: private void drawYAxes(int startX, Duration estimatedWork) ──
     private drawYAxes(svg: SVGElement, startX: number, estimatedWork: number): void {
+        const yAxis = new GraphSquare(
+            startX - this.dayWidth / 2 - Y_AXIS_WIDTH,
+            this.diagram.y,
+            Y_AXIS_WIDTH,
+            this.diagram.height,
+        );
         let mark = Math.floor(estimatedWork / 5);
         let markUnit: string;
         if (mark > ONE_WORK_MONTH) {
@@ -572,7 +575,7 @@ export class BurndownRenderer extends AbstractRenderer {
                     }));
                 const label = `${Math.round(timeMark / mark)}${markUnit}`;
                 svg.appendChild(SvgUtils.createText(
-                    this.yAxis.x + this.yAxis.width - 5 - this.scrollOffset * this.dayWidth,
+                    yAxis.x + yAxis.width - 5,
                     markY,
                     label,
                     {
