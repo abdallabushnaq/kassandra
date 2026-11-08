@@ -98,8 +98,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Slf4j
 public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
-    private static final String                          ACTIVE_SPRINT_NAME                = "London";//manually picked after data generation
-    private static final String                          ACTIVE_SPRINT_USER_NAME           = "grace.martin@kassandra.org";
+    private static final String                          ACTIVE_SPRINT_NAME                = "Rome";//manually picked after data generation
+    private static final String                          ACTIVE_SPRINT_USER_NAME           = "claudine.fick@kassandra.org";
     private static final String                          ADMINISTRATOR_USER_NAME           = "christopher.paul@kassandra.org";
     private static final String                          BACKLOG_SPRINT_NAME               = "Vienna";//manually picked after data generation
     private static final String                          MAIN_LAYOUT_USER_NAME             = "jennifer.holleman@kassandra.org";
@@ -227,10 +227,10 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                         .numberOfFeatures(1, 2)
                         .numberOfSprints(1, 2)
                         .taskDurationPerDay(1, 5)
-                        .numberOfStories(2, 3)
+                        .numberOfStories(1, 4)
                         .numberOfUsers(1, 8)
-                        .numberOfUsersPerSprint(1, 5)
-                        .numberOfTasks(1, 4)
+                        .numberOfUsersPerSprint(2, 4)
+                        .numberOfTasks(2, 4)
                         .seed(7)
                         .build()//official screenshot data
         };
