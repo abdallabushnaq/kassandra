@@ -19,7 +19,7 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -311,8 +311,7 @@ public class EntityGenerator {
     }
 
     public Color generateUserColor(int userIndex) {
-        int index = userIndex % LightTheme.COLOR_PALLET.length;
-        return LightTheme.COLOR_PALLET[index];
+        return Theme.getPaletteColor(userIndex);
     }
 
     public List<Task> getSprintTasks(UUID id) {

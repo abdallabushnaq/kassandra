@@ -71,7 +71,11 @@ class ColorPaletteTest {
         Path outputDirectory = Path.of("references", "theme");
         Files.createDirectories(outputDirectory);
 
-        writeColorGrid(outputDirectory.resolve("light-theme-colors.png"), Theme.COLOR_PALLET);
-        writeColorGrid(outputDirectory.resolve("dark-theme-colors.png"), Theme.COLOR_PALLET);
+        Color[] colors = new Color[Theme.PALETTE_SIZE];
+        for (int i = 0; i < colors.length; i++) {
+            colors[i] = Theme.getPaletteColor(i);
+        }
+        writeColorGrid(outputDirectory.resolve("light-theme-colors.png"), colors);
+        writeColorGrid(outputDirectory.resolve("dark-theme-colors.png"), colors);
     }
 }

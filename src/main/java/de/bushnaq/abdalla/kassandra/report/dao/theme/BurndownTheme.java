@@ -23,7 +23,7 @@ public class BurndownTheme {
     /**
      * Number of distinct colors available for author assignment.
      */
-    public static final int     MAX_AUTHOR_COLOR = Theme.COLOR_PALLET.length;
+    public static final int     MAX_AUTHOR_COLOR = Theme.PALETTE_SIZE;
     //    public              Color   bankHolidayColor;
     public              Color   borderColor;
     public              Color[] burnDownColor;

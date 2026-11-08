@@ -21,6 +21,8 @@ import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
 
 import java.awt.*;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,7 +50,7 @@ public class Theme {
 //            new Color(0x2b3514)  // olive green
 //    };
     // Pure, solid Okabe-Ito palette (No transparency adjustments)
-//    public static final Color[] COLOR_PALLET = {
+//    private static final Color[] OKABE_ITO_PALETTE = {
 //            new Color(0x000000), // Black
 //            new Color(0xE69F00), // Orange
 //            new Color(0x56B4E9), // Sky Blue
@@ -78,7 +80,7 @@ public class Theme {
 //            new Color(0x977CBD)  // Muted Lavender
 //    };
 
-    public static final Color[] COLOR_PALLET = {
+    private static final Color[] BASE_COLOR_PALETTE = {
             new Color(0xBE002A), // Crimson Red
             new Color(0xE75A24), // Vivid Orange
             new Color(0xF9BE00), // Marigold Yellow
@@ -92,6 +94,16 @@ public class Theme {
             new Color(0x4EC1E7), // Sky Blue
             new Color(0x977CBD)  // Muted Lavender
     };
+    private static final Color[] RANDOMIZED_COLOR_PALETTE = BASE_COLOR_PALETTE.clone();
+
+    /**
+     * Number of colors available in the shared palette.
+     */
+    public static final int PALETTE_SIZE = BASE_COLOR_PALETTE.length;
+
+    static {
+        Collections.shuffle(Arrays.asList(RANDOMIZED_COLOR_PALETTE));
+    }
 
 
     public final BurndownTheme burndownTheme = new BurndownTheme();
@@ -103,6 +115,16 @@ public class Theme {
 
     public Theme(ETheme themeVariance) {
         this.themeVariance = themeVariance;
+    }
+
+    /**
+     * Returns a color from the shared palette, wrapping the index when it exceeds the palette size.
+     *
+     * @param index the palette index
+     * @return the color at the wrapped index
+     */
+    public static Color getPaletteColor(int index) {
+        return RANDOMIZED_COLOR_PALETTE[Math.floorMod(index, PALETTE_SIZE)];
     }
 
     /**
