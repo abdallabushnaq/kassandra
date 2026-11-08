@@ -32,7 +32,7 @@ const ONE_WORK_WEEK = 5 * 75 * 60 * 6;
 const SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
 /** Mirrors Java: public static final int Y_AXIS_WIDTH = 50; */
 export const Y_AXIS_WIDTH = 50;
-const STANDARD_LINE_STROKE_WIDTH = 3.1;
+const STANDARD_LINE_STROKE_WIDTH = 2;
 
 /**
  * Fixed plot (diagram) height in pixels. Mirrors Java's {@code dao.chartHeight}, which is
@@ -300,11 +300,12 @@ export class BurndownRenderer extends AbstractRenderer {
                 const x1 = startX - this.dayWidth / 2 + 1;
                 const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHeight(this.maxActualWorked);
                 const x = firstDayX + (DateUtils.calculateDays(firstDay, releaseMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth + this.dayWidth / 2;
-                svg.appendChild(SvgUtils.createLine(x1, y1, x, this.diagram.y + this.diagram.height, {
-                    stroke: ColorUtils.intToHex(this.extrapolationColor),
-                    'stroke-width': STANDARD_LINE_STROKE_WIDTH,
-                    'stroke-dasharray': '3'
-                }));
+                this.drawDottedGuideLine(svg, x1, y1, x, this.diagram.y + this.diagram.height, ColorUtils.intToHex(this.extrapolationColor));
+                // svg.appendChild(SvgUtils.createLine(x1, y1, x, this.diagram.y + this.diagram.height, {
+                //     stroke: ColorUtils.intToHex(this.extrapolationColor),
+                //     'stroke-width': STANDARD_LINE_STROKE_WIDTH,
+                //     'stroke-dasharray': '3'
+                // }));
             }
         }
         // ---Maybe this is a test case ticket? (nothing to draw)
@@ -481,9 +482,7 @@ export class BurndownRenderer extends AbstractRenderer {
             if (dow !== 6 && dow !== 0) workingdays++;
             const work = estimatedWork - workingdays * workPerWorkingDay;
             const y = this.diagram.y + this.diagram.height - this.calculateGraphHeight(work);
-            svg.appendChild(SvgUtils.createLine(lastX, lastY, daysX, y, {
-                stroke: color, 'stroke-width': STANDARD_LINE_STROKE_WIDTH, 'stroke-dasharray': '3',
-            }));
+            this.drawDottedGuideLine(svg, lastX, lastY, daysX, y, color);
             lastX = daysX;
             lastY = y;
         }
@@ -510,13 +509,20 @@ export class BurndownRenderer extends AbstractRenderer {
             const x = firstDayX + (i - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
             const y = this.diagram.y + this.diagram.height - this.calculateGraphHeight(r);
             if (i !== 0) {
-                svg.appendChild(SvgUtils.createLine(lastX, lastY, x, y, {
-                    stroke: color, 'stroke-width': STANDARD_LINE_STROKE_WIDTH, 'stroke-dasharray': '3',
-                }));
+                this.drawDottedGuideLine(svg, lastX, lastY, x, y, color);
             }
             lastX = x;
             lastY = y;
         }
+    }
+
+    private drawDottedGuideLine(svg: SVGElement, x1: number, y1: number, x2: number, y2: number, color: string): void {
+        svg.appendChild(SvgUtils.createLine(x1, y1, x2, y2, {
+            stroke: '#ffffff', 'stroke-width': STANDARD_LINE_STROKE_WIDTH - 1,
+        }));
+        svg.appendChild(SvgUtils.createLine(x1, y1, x2, y2, {
+            stroke: color, 'stroke-width': STANDARD_LINE_STROKE_WIDTH, 'stroke-dasharray': '3',
+        }));
     }
 
     // ── Java: private void drawWatermark(int x, int y, String watermark, Color watermarkColor) ──
