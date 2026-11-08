@@ -256,9 +256,11 @@ export class BurndownRenderer extends AbstractRenderer {
         const firstDayX = this.diagram.x + this.calendarXAxes.dayOfWeek.getWidth() / 2;
         const startMilestone = this.milestones.get('S')!;
         const startX = firstDayX + (DateUtils.calculateDays(firstDay, startMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth;
+        const chartEndX = this.getChartEndX();
+        const legendX = chartEndX - 130;
 
-        this.drawAuthorLegend(svg);
-        this.drawLegend(svg, this.diagram.width - 130, this.diagram.y, this.extrapolationColor);
+        this.drawAuthorLegend(svg, legendX);
+        this.drawLegend(svg, legendX, this.diagram.y, this.extrapolationColor);
 
 
         if (this.maxWorked && this.maxWorked !== 0) {
@@ -309,7 +311,7 @@ export class BurndownRenderer extends AbstractRenderer {
     }
 
     // ── Java: protected void drawAuthorLegend() / drawAuthorLegend(x, y) ──
-    private drawAuthorLegend(svg: SVGElement): void {
+    private drawAuthorLegend(svg: SVGElement, legendX: number): void {
         const authors = this.data.authors;
         const fontSize = 10;
         // Estimate the widest author name (mirrors FontMetrics.stringWidth loop in Java).
@@ -318,7 +320,7 @@ export class BurndownRenderer extends AbstractRenderer {
             const w = (author.userName?.length || 0) * (fontSize * 0.6);
             authorLegendWidth = Math.max(authorLegendWidth, w);
         }
-        const x = this.diagram.width - 130 - authorLegendWidth - 5;
+        const x = legendX - authorLegendWidth - 5;
         const lineHeight = 14;
         let ay = this.diagram.y + lineHeight * authors.length;
         for (const author of authors) {
@@ -566,7 +568,7 @@ export class BurndownRenderer extends AbstractRenderer {
                 svg.appendChild(SvgUtils.createLine(
                     startX - 1,
                     markY,
-                    this.diagram.width,
+                    this.getChartEndX(),
                     markY,
                     {
                         stroke: gridColor,
@@ -585,5 +587,9 @@ export class BurndownRenderer extends AbstractRenderer {
                 lastMarkY = markY;
             }
         }
+    }
+
+    private getChartEndX(): number {
+        return this.diagram.x + (this.days - this.scrollOffset) * this.dayWidth;
     }
 }

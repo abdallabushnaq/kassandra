@@ -144,20 +144,18 @@ So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAt
 
 # Burn-Down-Chart Rendering
 
-1. it looks as if the js renders the graph without any antialiasing. It was turned off for the Gantt chart, but it
-   should be turned on for the Burn Down chart.
-2. Burn down chart grid is one line too high.
-3. Let us draw the vertical grid lines for the Burn-down-chart above the graph. Gantt chart should keep the grid below
+1. Burn down chart grid is one line too high.
+2. Let us draw the vertical grid lines for the Burn-down-chart above the graph. Gantt chart should keep the grid below
    the chart.
-4. Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
-5. Would be good if we could move the legend of the burn-down-chart at the right top corner of the chart and not at the
+3. Would be good if we could move the y-axis ticks and labels right left of the graph start and not at the left.
+4. Would be good if we could move the legend of the burn-down-chart at the right top corner of the chart and not at the
    very right of the whole page.
-6. Horizontal grid should only reach until the end of the chart, not end of the screen.
-7. Y-axis labels are too light in color for dark mode.
-8. grid too light in color for dark mode.
-9. now line in dark mode should match light mode (too orange).
-10. legend should be drawn above the grid in z axis.
-11. year background color is black.
+5. Horizontal grid should only reach until the end of the chart, not end of the screen.
+6. Y-axis labels are too light in color for dark mode.
+7. grid too light in color for dark mode.
+8. now line in dark mode should match light mode (too orange).
+9. legend should be drawn above the grid in z axis.
+10. year background color is black.
 
 # Disabling Video Recording for Tests
 
