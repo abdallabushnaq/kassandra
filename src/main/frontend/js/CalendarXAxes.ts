@@ -212,7 +212,7 @@ export class CalendarXAxes {
     ): void {
         const FLAG_HEIGHT = 13;
         const theme = this.parent.theme;
-        const darkRed = '#cc4a31';
+        const darkRed = '#ff0000';
         const milestoneTextColor = ColorUtils.intToHex(theme.xAxesTheme?.milestoneTextColor, '#ffffff');
 
         if (text?.charAt(0) === 'N' && drawNowLine) {
@@ -225,7 +225,7 @@ export class CalendarXAxes {
             const diameter = Math.max((this.dayOfWeek.width ?? 0) / 3, 6);
             const radius = diameter / 2;
             parentGroup.appendChild(SvgUtils.createCircle(
-                x + 1,
+                x,
                 this.calendarAtBottom
                     ? this.parent.diagram.y
                     : this.parent.diagram.y + this.parent.diagram.height - radius,
@@ -239,7 +239,7 @@ export class CalendarXAxes {
                 this.milestone.width, this.milestone.height - 1,
                 {fill: ColorUtils.intToHex(fillColor)},
             ));
-            const textEl = SvgUtils.createText(x - 1, y + this.milestone.height / 2, text, {
+            const textEl = SvgUtils.createText(x, y + this.milestone.height / 2, text, {
                 fill: milestoneTextColor,
                 ...SvgUtils.createFontSpecAttribute(this.milestone.font),
                 'text-anchor': 'middle',
