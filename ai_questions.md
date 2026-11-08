@@ -175,17 +175,6 @@ Let's add a new class CacheAwareAvatarService extending AvatarService to check i
 and stored in the cache.
 We will use this in our tests whenever we need to generate an image e.g. PersistingEntityGenerator.
 
-# Overwriting Default Chart Scaling
-
-for some of our tests, we would like to change the default zoom level of the graphs.
-e.g. TestResourceLeveling is using MPXJReader.generateGanttChart.
-the generated Gantt chart has a default visualScale of 0.75 (see TimelineRenderer in InteractiveTimelineChart.ts and
-DEFAULT_SCALE).
-
-can we add a parameter to generateGanttChart and the other generateXXX chart generation methods with a default scaling
-parameter that will overwrite the fixed default?
-Example: DynamicGanttBurndownTest. Let's change the default scaling to 1.0 for this test.
-
 # Redesign Undo/Redo
 
 Currently, we implemented a undo/redo architecture per project. See ..\kassandra.wiki\undo-redo-design.md.

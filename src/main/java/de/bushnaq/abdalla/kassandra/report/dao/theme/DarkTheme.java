@@ -29,7 +29,7 @@ public class DarkTheme extends Theme {
     public DarkTheme(StableDiffusionConfig stableDiffusionConfig) {
         super(ETheme.dark);
 
-        Color basicTextColor   = new Color(0x7c7a7a);
+        Color basicTextColor   = new Color(0x9c9c9c);
         Color subtileTextColor = Color.lightGray;
         Color baseBgColor      = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1f);
         Color baseBorderColor  = ColorUtil.colorFraction(ColorUtil.hexStringToColor(stableDiffusionConfig.getAvatarDarkBackgroundColor()), 1.2f);
@@ -92,7 +92,7 @@ public class DarkTheme extends Theme {
         xAxesTheme.weekBorderColor = baseBorderColor;
         xAxesTheme.weekTextColor   = subtileTextColor;
         //------------------------- Year
-        xAxesTheme.yearBgColor     = baseBgColor;
+        xAxesTheme.yearBgColor     = ColorUtil.colorFraction(baseBgColor, 2);
         xAxesTheme.yearBorderColor = baseBorderColor;
         xAxesTheme.yearTextColor   = subtileTextColor;
         //-------------------------
@@ -144,7 +144,7 @@ public class DarkTheme extends Theme {
         for (i = 0; i < COLOR_PALLET.length; i++) {
             burndownTheme.burnDownColor[i] = new Color(COLOR_PALLET[i].getRed(), COLOR_PALLET[i].getGreen(), COLOR_PALLET[i].getBlue(), alpha[0]);
         }
-        burndownTheme.tickTextColor      = Color.darkGray;
+        burndownTheme.tickTextColor      = basicTextColor;
         burndownTheme.borderColor        = new Color(0xff, 0xcc, 0x00, 0x77);
         burndownTheme.optimaleGuideColor = new Color(0xa0a0a0);
         burndownTheme.plannedGuideColor  = new Color(0x7f7f7f);
