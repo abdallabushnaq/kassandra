@@ -113,12 +113,6 @@ We want to keep all these zoom levels independently configurable as properties.
 Let us measure zoom level by dayWidth.
 So, renderTaskProgressBarAtDayWidth could be set to 20 and renderTaskProgressTextAtDayWidth could be set at 22
 
-# Chart legend user colors
-
-Chart legend user colors do not match user colors in the chart (too dark).
-The graph colors are actually too light compared to the Gantt chart because the Gantt chart draws the task body 2 times
-on top of each other to visualize the progress in percent.
-
 # Add Zoom Adaptation to Sprint Overview Chart
 
 All our charts support day width zoom (zooms horizontally) and full chart zoom (both directions).

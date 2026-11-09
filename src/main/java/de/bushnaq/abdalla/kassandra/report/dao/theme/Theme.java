@@ -140,6 +140,8 @@ public class Theme {
     public final CalendarTheme calendarTheme = new CalendarTheme();
     public final ChartTheme    chartTheme    = new ChartTheme();
     public final GanttTheme    ganttTheme    = new GanttTheme();
+    /** Theme colors for the sprint overview chart. */
+    public final SprintOverviewTheme sprintOverviewTheme = new SprintOverviewTheme();
     public final ETheme        themeVariance;
     public final XAxesTheme    xAxesTheme    = new XAxesTheme();
 

@@ -190,7 +190,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
 
                 this.sprintHitAreas.push({sprint, x: sprintX, y: laneY, width: sprintW, height: SPRINT_H});
 
-                const fillColor = ColorUtils.convertSprintColorToRgba(sprint.color);
+                const fillColor = this.getSprintBackgroundColor(sprint.status);
                 const rect = SvgUtils.createRect(sprintX, laneY, sprintW, SPRINT_H, {fill: fillColor});
                 rect.appendChild(SvgUtils.createTitle(this.buildSprintTooltip(sprint)));
                 g.appendChild(rect);
@@ -200,7 +200,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                     g.appendChild(SvgUtils.createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
                     const textY = laneY + LINE_HEIGHT - 2;
                     g.appendChild(SvgUtils.createText(sprintX + 1, textY, sprint.name || '', {
-                        fill: '#000000',
+                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintTextColor, '#202124'),
                         'font-size': '12',
                         'font-family': 'Arial,sans-serif',
                         'font-weight': 'bold',
@@ -209,6 +209,20 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
             });
         });
         svg.appendChild(g);
+    }
+
+    private getSprintBackgroundColor(status: string | undefined): string {
+        const theme = this.theme.sprintOverviewTheme;
+        switch (status) {
+            case 'CREATED':
+                return ColorUtils.intToHex(theme.createdSprintBgColor, '#d9e8ff');
+            case 'STARTED':
+                return ColorUtils.intToHex(theme.startedSprintBgColor, '#9bc9ff');
+            case 'CLOSED':
+                return ColorUtils.intToHex(theme.closedSprintBgColor, '#e5e7eb');
+            default:
+                return ColorUtils.intToHex(theme.createdSprintBgColor, '#d9e8ff');
+        }
     }
 
     // renderCurrentDateLine(chartHeight: number): SVGGElement {

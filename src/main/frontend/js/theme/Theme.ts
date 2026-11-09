@@ -8,6 +8,7 @@ import {BurndownTheme} from './BurndownTheme.js';
 import {CalendarTheme} from './CalendarTheme.js';
 import {ChartTheme} from './ChartTheme.js';
 import {GanttTheme} from './GanttTheme.js';
+import {SprintOverviewTheme} from './SprintOverviewTheme.js';
 import {XAxesTheme} from './XAxesTheme.js';
 
 export class Theme {
@@ -16,6 +17,7 @@ export class Theme {
     readonly calendarTheme: CalendarTheme;
     readonly chartTheme: ChartTheme;
     readonly ganttTheme: GanttTheme;
+    readonly sprintOverviewTheme: SprintOverviewTheme;
     readonly xAxesTheme: XAxesTheme;
 
     /**
@@ -28,7 +30,7 @@ export class Theme {
         this.calendarTheme = new CalendarTheme((data['calendarTheme'] as Record<string, number | null>) || {});
         this.chartTheme = new ChartTheme((data['chartTheme'] as Record<string, number | null>) || {});
         this.ganttTheme = new GanttTheme((data['ganttTheme'] as Record<string, number | null>) || {});
+        this.sprintOverviewTheme = new SprintOverviewTheme((data['sprintOverviewTheme'] as Record<string, number | null>) || {});
         this.xAxesTheme = new XAxesTheme((data['xAxesTheme'] as Record<string, unknown>) || {});
     }
 }
-

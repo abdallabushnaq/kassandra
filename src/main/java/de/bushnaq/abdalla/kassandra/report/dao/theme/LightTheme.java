@@ -155,6 +155,15 @@ public class LightTheme extends Theme {
         burndownTheme.watermarkColor     = new Color(0x10, 0x10, 0x10, 0x10);
         //---------------------------------------------------------------------
 
+        //---------------------------------------------------------------------
+        //-- SprintOverviewTheme
+        //---------------------------------------------------------------------
+        sprintOverviewTheme.createdSprintBgColor = new Color(0xd9e8ff);
+        sprintOverviewTheme.startedSprintBgColor = new Color(0x9bc9ff);
+        sprintOverviewTheme.closedSprintBgColor  = new Color(0xe5e7eb);
+        sprintOverviewTheme.sprintTextColor      = new Color(0x202124);
+        //---------------------------------------------------------------------
+
 
         // gray
 //        Color basicBackgroundColor = new Color(0x7a7a7a);

@@ -154,6 +154,15 @@ public class DarkTheme extends Theme {
         burndownTheme.watermarkColor     = new Color(0x10, 0x10, 0x10, 0x10);
         //---------------------------------------------------------------------
 
+        //---------------------------------------------------------------------
+        //-- SprintOverviewTheme
+        //---------------------------------------------------------------------
+        sprintOverviewTheme.createdSprintBgColor = new Color(0x34445a);
+        sprintOverviewTheme.startedSprintBgColor = new Color(0x24598d);
+        sprintOverviewTheme.closedSprintBgColor  = new Color(0x484b52);
+        sprintOverviewTheme.sprintTextColor      = new Color(0xf1f3f4);
+        //---------------------------------------------------------------------
+
 
         // gray
 //        Color basicBackgroundColor = new Color(0x7a7a7a);

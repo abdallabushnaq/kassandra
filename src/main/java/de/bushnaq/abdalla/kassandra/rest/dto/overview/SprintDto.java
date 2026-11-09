@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class SprintDto {
+    @Deprecated
     public String        color; // hex rgba string like #rrggbbaa
     public Boolean       delay;
     public LocalDateTime end;

@@ -38,6 +38,8 @@ public class ThemeDto {
     public CalendarThemeDto calendarTheme = new CalendarThemeDto();
     public ChartThemeDto    chartTheme    = new ChartThemeDto();
     public GanttThemeDto    ganttTheme    = new GanttThemeDto();
+    /** Theme colors for the sprint overview chart. */
+    public SprintOverviewThemeDto sprintOverviewTheme = new SprintOverviewThemeDto();
     /**
      * "light" or "dark" – mirrors {@code Theme.themeVariance.name()}
      */
@@ -158,6 +160,12 @@ public class ThemeDto {
                 dto.burndownTheme.burnDownColor[i] = rgb(theme.burndownTheme.burnDownColor[i]);
             }
         }
+
+        // ── SprintOverviewTheme ────────────────────────────────────────────────
+        dto.sprintOverviewTheme.createdSprintBgColor = rgb(theme.sprintOverviewTheme.createdSprintBgColor);
+        dto.sprintOverviewTheme.startedSprintBgColor = rgb(theme.sprintOverviewTheme.startedSprintBgColor);
+        dto.sprintOverviewTheme.closedSprintBgColor  = rgb(theme.sprintOverviewTheme.closedSprintBgColor);
+        dto.sprintOverviewTheme.sprintTextColor      = rgb(theme.sprintOverviewTheme.sprintTextColor);
 
         return dto;
     }
