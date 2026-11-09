@@ -68,9 +68,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -98,12 +96,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Slf4j
 public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
-    private static final String                          ACTIVE_SPRINT_NAME                = "Rome";//manually picked after data generation
+    private static final String                          ACTIVE_SPRINT_NAME                = "London";//manually picked after data generation
     private static final String                          ACTIVE_SPRINT_USER_NAME           = "claudine.fick@kassandra.org";
     private static final String                          ADMINISTRATOR_USER_NAME           = "christopher.paul@kassandra.org";
     private static final String                          BACKLOG_SPRINT_NAME               = "Vienna";//manually picked after data generation
     private static final String                          MAIN_LAYOUT_USER_NAME             = "jennifer.holleman@kassandra.org";
-    private static final String                          QUALITY_BOARD_SPRINT_NAME_DELAYED = "Frankfurt";//manually picked after data generation
+    private static final String                          QUALITY_BOARD_SPRINT_NAME_DELAYED = "Tokyo";//manually picked after data generation
     private static final String                          QUALITY_BOARD_SPRINT_NAME_IN_TIME = "Berlin";//manually picked after data generation
     private static final String                          SPRINT_OVERVIEW_NAME              = "Berlin";//manually picked after data generation
     @Autowired
@@ -216,27 +214,6 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         screenshotComparisonReport = new ScreenshotComparisonReport();
     }
 
-    private static List<RandomCase> listRandomCases() {
-        RandomCase[] randomCases = new RandomCase[]{//
-                RandomCase.builder()
-                        .testCaseIndex(4)
-                        .now(OffsetDateTime.parse("2026-03-23T08:00:00+01:00"))
-                        .startDate(LocalDate.parse("2026-02-01"))
-                        .numberOfProducts(8, 8)
-                        .numberOfVersions(1, 2)
-                        .numberOfFeatures(1, 2)
-                        .numberOfSprints(1, 2)
-                        .taskDurationPerDay(1, 5)
-                        .numberOfStories(1, 4)
-                        .numberOfUsers(1, 8)
-                        .numberOfUsersPerSprint(2, 4)
-                        .numberOfTasks(2, 4)
-                        .seed(7)
-                        .build()//official screenshot data
-        };
-        return Arrays.stream(randomCases).toList();
-    }
-
     private void navigateTo(String route) {
         seleniumHandler.getAndCheck("http://localhost:" + allocatedPort + "/ui/" + route);
     }
@@ -297,6 +274,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 By.cssSelector("#" + ActiveSprints.ID_GROUPING_MODE_SELECTOR + " input"),
                 "value", mode.getDisplayName()));
         seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(By.id(ActiveSprints.BOARD_ID), "data-grouping-mode", mode.name()));
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
         scrollIntoView(ActiveSprints.BOARD_ID);
         seleniumHandler.takeScreenShot(folder + "/active-sprints-board-" + mode.name().toLowerCase(Locale.ROOT) + ".png");
     }
@@ -1222,7 +1200,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
      * @throws Exception when fixture generation or screenshot capture fails
      */
     @ParameterizedTest
-    @MethodSource("listRandomCases")
+    @MethodSource("de.bushnaq.abdalla.kassandra.ui.RandomCases#listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void takeScreenshots(RandomCase randomCase, TestInfo testInfo) throws Exception {
         prepareScreenshotFixture(randomCase, testInfo);

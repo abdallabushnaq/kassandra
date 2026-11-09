@@ -80,38 +80,72 @@ public class Theme {
 //            new Color(0x977CBD)  // Muted Lavender
 //    };
 
-    private static final Color[] BASE_COLOR_PALETTE = {
-            new Color(0xBE002A), // Crimson Red
-            new Color(0xE75A24), // Vivid Orange
-            new Color(0xF9BE00), // Marigold Yellow
-            new Color(0x00A572), // Emerald Green
-            new Color(0x0095D9), // Cerulean Blue
-            new Color(0x632FA9),  // Deep Violet
-            new Color(0xEE5D6C), // Coral Pink
-            new Color(0xF68D4E), // Light Apricot
-            new Color(0xFCD768), // Soft Maize Yellow
-            new Color(0x59C398), // Mint Green
-            new Color(0x4EC1E7), // Sky Blue
-            new Color(0x977CBD)  // Muted Lavender
-    };
-    private static final Color[] RANDOMIZED_COLOR_PALETTE = BASE_COLOR_PALETTE.clone();
+    //    private static final Color[] BASE_COLOR_PALETTE = {
+//            new Color(0xBE002A), // Crimson Red
+//            new Color(0xE75A24), // Vivid Orange
+//            new Color(0xF9BE00), // Marigold Yellow
+//            new Color(0x00A572), // Emerald Green
+//            new Color(0x0095D9), // Cerulean Blue
+//            new Color(0x632FA9),  // Deep Violet
+//            new Color(0xEE5D6C), // Coral Pink
+//            new Color(0xF68D4E), // Light Apricot
+//            new Color(0xFCD768), // Soft Maize Yellow
+//            new Color(0x59C398), // Mint Green
+//            new Color(0x4EC1E7), // Sky Blue
+//            new Color(0x977CBD)  // Muted Lavender
+//    };
+    private static final Color[] BASE_COLOR_PALETTE       = {
+            // Red
+            new Color(0xC1002D), // Deep Crimson
+            new Color(0xE7374B), // Vivid Red
+            new Color(0xF99B9D), // Soft Coral
+            new Color(0xF9DADE), // Pale Pink
 
+            // Orange
+            new Color(0xFF6941), // Vivid Orange
+            new Color(0xFF8B2C), // Bright Orange
+            new Color(0xFFC397), // Light Apricot
+            new Color(0xFAE8D3), // Cream
+
+            // Yellow
+            new Color(0xFFBC00), // Marigold Yellow
+            new Color(0xFFD350), // Golden Yellow
+            new Color(0xFFE7A9), // Soft Maize
+            new Color(0xFAF3DD), // Pale Butter
+
+            // Green
+            new Color(0x00A484), // Emerald Green
+            new Color(0x5BC3A5), // Mint Green
+            new Color(0xB1DDCC), // Soft Sage
+            new Color(0xE0EFDE), // Pale Mint
+
+            // Blue
+            new Color(0x0099BE), // Deep Cyan
+            new Color(0x26B9CF), // Turquoise Blue
+            new Color(0x9BD6E1), // Sky Blue
+            new Color(0xD8EAF0), // Pale Blue
+
+            // Purple
+            new Color(0x673097), // Deep Violet
+            new Color(0x9775C0), // Muted Lavender
+            new Color(0xC7B1D8), // Soft Lilac
+            new Color(0xE8DEF1)  // Pale Lavender
+    };
     /**
      * Number of colors available in the shared palette.
      */
     public static final int PALETTE_SIZE = BASE_COLOR_PALETTE.length;
-
-    static {
-        Collections.shuffle(Arrays.asList(RANDOMIZED_COLOR_PALETTE));
-    }
-
-
+    private static final Color[] RANDOMIZED_COLOR_PALETTE = BASE_COLOR_PALETTE.clone();
     public final BurndownTheme burndownTheme = new BurndownTheme();
     public final CalendarTheme calendarTheme = new CalendarTheme();
     public final ChartTheme    chartTheme    = new ChartTheme();
     public final GanttTheme    ganttTheme    = new GanttTheme();
     public final ETheme        themeVariance;
     public final XAxesTheme    xAxesTheme    = new XAxesTheme();
+
+    static {
+        Collections.shuffle(Arrays.asList(RANDOMIZED_COLOR_PALETTE));
+    }
 
     public Theme(ETheme themeVariance) {
         this.themeVariance = themeVariance;

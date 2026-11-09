@@ -42,7 +42,7 @@ public class BurnDownUtil {
     /**
      * Maximum over-run factor applied to {@code maxEstimate} when a sprint is delayed.
      */
-    private static final float MAX_DELAY_FACTOR = 0.5f;
+    private static final float MAX_DELAY_FACTOR = 0.6f;
 
     public static void generateWorkLogs(PersistingEntityGenerator peg) throws Exception {
         log.info("--------------------------");

@@ -46,9 +46,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 @ExtendWith(SpringExtension.class)
@@ -138,29 +135,8 @@ public class Demo extends AbstractKeycloakUiTestUtil {
 //        logger.info("=== Natural Language Search Demo Completed ===");
     }
 
-    private static List<RandomCase> listRandomCases() {
-        RandomCase[] randomCases = new RandomCase[]{//
-                RandomCase.builder()
-                        .testCaseIndex(4)
-                        .now(OffsetDateTime.parse("2026-03-23T08:00:00+01:00"))
-                        .startDate(LocalDate.parse("2026-02-01"))
-                        .numberOfProducts(8, 8)
-                        .numberOfVersions(1, 2)
-                        .numberOfFeatures(1, 2)
-                        .numberOfSprints(1, 2)
-                        .taskDurationPerDay(1, 5)
-                        .numberOfStories(1, 4)
-                        .numberOfUsers(1, 8)
-                        .numberOfUsersPerSprint(2, 4)
-                        .numberOfTasks(2, 4)
-                        .seed(7)
-                        .build()//official screenshot data
-        };
-        return Arrays.stream(randomCases).toList();
-    }
-
     @ParameterizedTest
-    @MethodSource("listRandomCases")
+    @MethodSource("de.bushnaq.abdalla.kassandra.ui.RandomCases#listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testDemo(RandomCase randomCase, TestInfo testInfo) throws Exception {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
