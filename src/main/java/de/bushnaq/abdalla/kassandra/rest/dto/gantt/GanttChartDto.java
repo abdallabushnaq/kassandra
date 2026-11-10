@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DTO for the interactive client-side Gantt chart rendered by gantt-chart.js.
+ * DTO for the interactive client-side Gantt chart.
  * <p>
  * Contains all data needed to render the chart client-side including:
  * task scheduling information, colors, calendar exceptions (non-working days),

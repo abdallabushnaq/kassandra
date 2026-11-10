@@ -154,7 +154,7 @@ Times measured on mid-range hardware. Use DevTools Performance tab for detailed 
 **Chart doesn't render:**
 
 - Check console for JavaScript errors
-- Verify `sprints-overview-chart.js` exists in parent `js/` directory
+- Verify the generated Sprints Overview bundle is available at `/js/generated/sprints-overview/sprints-overview-bundle.js`
 - Ensure D3.js CDN is accessible
 
 **Chart looks wrong:**
@@ -194,5 +194,4 @@ To add a new test scenario:
 
 ### Questions?
 
-See the comprehensive documentation in `docs/` or check the source code comments in `js/sprints-overview-chart.js`.
-
+See the comprehensive documentation in `docs/` or the Sprints Overview sources under `src/main/frontend/js/sprints-overview/`.

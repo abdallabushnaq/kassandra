@@ -45,7 +45,7 @@ import java.util.UUID;
 
 /**
  * Builds a {@link GanttChartDto} from a fully-loaded {@link Sprint} so that
- * the client-side {@code gantt-chart.js} can render an interactive, zoomable
+ * the client-side Gantt chart bundle can render an interactive, zoomable
  * Gantt chart without any further server calls.
  *
  * <p>Colour computation mirrors {@code LegacyLegacyAbstractGanttRenderer.drawTask()} and

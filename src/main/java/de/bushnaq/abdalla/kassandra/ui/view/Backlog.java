@@ -1350,7 +1350,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
     /**
      * Builds the {@link GanttChartDto} server-side and pushes it to the browser via
-     * {@code mountGanttChart(containerId, data)} so that {@code gantt-chart.js} can
+     * {@code mountGanttChart(containerId, data)} so the generated frontend bundle can
      * render the interactive, zoomable client-side Gantt chart.
      * <p>
      * The chart window is padded by {@code preRun}/{@code postRun} days (matching the

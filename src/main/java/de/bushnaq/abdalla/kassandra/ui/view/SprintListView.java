@@ -70,13 +70,7 @@ import java.util.stream.Collectors;
 
 /**
  * Sprints Overview combines the full LegacySprintListView UI (grid, filters, AI panel, dialogs)
- * with a client-side virtual-canvas chart rendered by {@code sprints-overview-chart.js}.
- *
- * <p>Scripts loaded (in order):
- * <ol>
- *   <li>{@code /js/calendar-x-axes.js} – calendar header renderer</li>
- *   <li>{@code /js/sprints-overview-chart.js} – chart orchestrator</li>
- * </ol>
+ * with a client-side virtual-canvas chart rendered by the generated frontend bundle.
  *
  * <p>Theme changes are handled by the server-side {@link ThemeChangedEvent}: when the user
  * switches themes {@link #refreshClientChart()} is called again, which rebuilds the
@@ -623,7 +617,6 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      * The browser will serve it from cache on subsequent references.
      */
     private void refreshClientChart() {
-        boolean useLegacy = false;
         getUI().ifPresent(ui -> {
             boolean isDark = ui.getElement().getThemeList().contains(com.vaadin.flow.theme.lumo.Lumo.DARK);
             try {
@@ -631,33 +624,11 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
                 SprintOverviewDto dto  = sprintsOverviewService.getOverview(ParameterOptions.getLocalNow(), null, isDark);
                 String            json = jsonMapper.writeValueAsString(dto);
                 log.info("SprintOverview Chart data size = {}", json.length());
-                // Dev:  individual ES module files (npm run build:static)
-                // Prod: single minified bundle (npm run build:static:prod, built by Maven)
-                if (useLegacy) {
-                    //TODO remove reference legacy code when no longer needed
-                    ui.getPage().addJavaScript("/js/theme-class.js");
-                    ui.getPage().addJavaScript("/js/theme-color-constants.js");
-                    ui.getPage().addJavaScript("/js/svg-utils.js");
-                    ui.getPage().addJavaScript("/js/color-utils.js");
-                    ui.getPage().addJavaScript("/js/date-utils.js");
-                    ui.getPage().addJavaScript("/js/date-utils.js");
-                    ui.getPage().addJavaScript("/js/chart-util.js");
-                    ui.getPage().addJavaScript("/js/chart-elements.js");
-                    ui.getPage().addJavaScript("/js/graph-color-util.js");
-                    ui.getPage().addJavaScript("/js/calendar-x-axes.js");
-                    ui.getPage().addJavaScript("/js/milestone.js");
-                    ui.getPage().addJavaScript("/js/sprints-overview-chart.js");
-                    ui.getPage().executeJs(
-                            "if(window.mountSprintsOverviewChart) window.mountSprintsOverviewChart($0, JSON.parse($1));",
-                            OVERVIEW_CONTAINER_ID, json
-                    );
-                } else {
-                    ui.getPage().executeJs(
-                            "import('/js/generated/sprints-overview/sprints-overview-bundle.js')" +
-                                    ".then(() => window.mountSprintsOverviewChart($0, JSON.parse($1)));",
-                            OVERVIEW_CONTAINER_ID, json
-                    );
-                }
+                ui.getPage().executeJs(
+                        "import('/js/generated/sprints-overview/sprints-overview-bundle.js')" +
+                                ".then(() => window.mountSprintsOverviewChart($0, JSON.parse($1)));",
+                        OVERVIEW_CONTAINER_ID, json
+                );
 
             } catch (Exception e) {
                 log.error("Failed to build sprints overview chart data", e);
