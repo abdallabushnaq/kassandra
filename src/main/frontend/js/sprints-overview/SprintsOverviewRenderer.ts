@@ -16,13 +16,16 @@ import {LaneDto} from './dto/LaneDto.js';
 import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 import {HitArea} from './dto/HitArea.js';
 import {AbstractChart} from '../AbstractChart.js';
+import {FontMetrics} from '../FontMetrics.js';
+import {FontSpec} from '../FontSpec.js';
 
 // ── Layout constants (mirrors Java LegacySprintsOverviewRendererLegacy) ──────────────
 const LINE_HEIGHT = 13;
 const NUMBER_OF_LINES = 3;
 const SPRINT_H = LINE_HEIGHT * NUMBER_OF_LINES;        // 39 px
-const TASK_H = LINE_HEIGHT * NUMBER_OF_LINES + 17;   // 56 px
-const LANE_H = TASK_H + 2;                           // 58 px
+const SPRINT_PROGRESS_H = 8;
+const SPRINT_LANE_GAP = 4;
+const LANE_H = SPRINT_H + SPRINT_LANE_GAP;             // 43 px
 
 export const DEFAULT_DW = 8;
 export const MIN_DW = 1;
@@ -49,6 +52,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     // totalDays: number;
     dayWidth: number;
     sprintHitAreas: HitArea[];
+    zoomSettings: SprintOverviewDto['meta']['zoomSettings'];
     // 24-hour format
     readonly options24: Intl.DateTimeFormatOptions = {
         year: 'numeric',
@@ -59,6 +63,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         hour12: false
     };
     dateTimeFormat: Intl.DateTimeFormat = new Intl.DateTimeFormat('en-DE', this.options24);
+    private readonly nameFontMetrics = new FontMetrics(new FontSpec('Arial,sans-serif', 12, 'bold'));
+    private readonly detailFontMetrics = new FontMetrics(new FontSpec('Arial,sans-serif', 10, 'normal'));
 
     constructor(chart: AbstractChart, data: SprintOverviewDto, preRun: number, postRun: number) {
         const chartStart = new Date(data.meta.chartStart || Date.now());
@@ -83,6 +89,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         this.chartStart = chartStart;
         this.chartEnd = chartEnd;
         this.currentDate = currentDate;
+        this.zoomSettings = data.meta.zoomSettings;
         this.days = this.calculateMaxDays();
         // this.totalDays = DateUtils.calculateDayCount(chartStart, chartEnd);
         this.dayWidth = DEFAULT_DW;
@@ -195,15 +202,76 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                 rect.appendChild(SvgUtils.createTitle(this.buildSprintTooltip(sprint)));
                 g.appendChild(rect);
 
-                if (sprintW > 20) {
-                    const clipId = `sp${laneIndex}_${sprint.id}`;
-                    g.appendChild(SvgUtils.createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
-                    const textY = laneY + LINE_HEIGHT - 2;
-                    g.appendChild(SvgUtils.createText(sprintX + 1, textY, sprint.name || '', {
-                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintTextColor, '#202124'),
-                        'font-size': '12',
+                if (this.showDetail(this.zoomSettings.renderSprintProgressAtDayWidth) && Number.isFinite(sprint.progress)) {
+                    const progress = Math.max(0, Math.min(1, sprint.progress ?? 0));
+                    const progressWidth = Math.max(0, sprintW - 2) * progress;
+                    if (progressWidth > 0) {
+                        const progressY = laneY + (SPRINT_H - SPRINT_PROGRESS_H) / 2;
+                        const progressColor = ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintProgressColor, '#1676f3');
+                        g.appendChild(SvgUtils.createRect(sprintX + 1, progressY, progressWidth, SPRINT_PROGRESS_H, {fill: progressColor}));
+                    }
+                }
+
+                const sprintName = sprint.name || '';
+                const statusBadgeWidth = sprint.status ? this.detailFontMetrics.stringWidth(sprint.status) + 8 : 0;
+                const showStatus = this.showDetail(this.zoomSettings.renderSprintStatusAtDayWidth)
+                    && !!sprint.status
+                    && this.nameFontMetrics.stringWidth(sprintName) + statusBadgeWidth + 3 <= sprintW;
+                const visibleStatusText = showStatus ? sprint.status! : '';
+                const visibleStatusBadgeWidth = showStatus ? statusBadgeWidth : 0;
+                const clipId = `sp${laneIndex}_${sprint.id}`;
+                g.appendChild(SvgUtils.createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
+
+                const textY = laneY + LINE_HEIGHT - 2;
+                const nameClipWidth = Math.max(0, sprintW - visibleStatusBadgeWidth - (showStatus ? 4 : 2));
+                g.appendChild(SvgUtils.createClipPath(`${clipId}_name`, sprintX + 1, laneY, nameClipWidth, SPRINT_H));
+                g.appendChild(SvgUtils.createText(sprintX + 1, textY, sprintName, {
+                    fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintTextColor, '#202124'),
+                    'font-size': '12',
+                    'font-family': 'Arial,sans-serif',
+                    'font-weight': 'bold',
+                    'clip-path': `url(#${clipId}_name)`,
+                }));
+
+                if (showStatus) {
+                    const badgeColors = this.getStatusBadgeColors(sprint.status);
+                    g.appendChild(SvgUtils.createRect(sprintX + sprintW - visibleStatusBadgeWidth - 2, laneY + 1, visibleStatusBadgeWidth, 11, {
+                        fill: badgeColors.background,
+                        rx: 5.5,
+                        'clip-path': `url(#${clipId})`,
+                    }));
+                    g.appendChild(SvgUtils.createText(sprintX + sprintW - 6, laneY + LINE_HEIGHT - 3, visibleStatusText, {
+                        fill: badgeColors.text,
+                        'font-size': '10',
                         'font-family': 'Arial,sans-serif',
-                        'font-weight': 'bold',
+                        'text-anchor': 'end',
+                        'clip-path': `url(#${clipId})`,
+                    }));
+                }
+
+                const dateY = laneY + SPRINT_H - 3;
+                const dateWidth = Math.max(0, sprintW / 2 - 3);
+                const startDate = this.formatSprintDate(sprint.start);
+                const endDate = this.formatSprintDate(sprint.end);
+                const datesFit = this.detailFontMetrics.stringWidth(startDate) <= dateWidth
+                    && this.detailFontMetrics.stringWidth(endDate) <= dateWidth;
+                if (datesFit && this.showDetail(this.zoomSettings.renderSprintStartDateAtDayWidth)) {
+                    g.appendChild(SvgUtils.createClipPath(`${clipId}_start`, sprintX + 3, laneY, dateWidth, SPRINT_H));
+                    g.appendChild(SvgUtils.createText(sprintX + 3, dateY, startDate, {
+                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintDateTextColor, '#a0a0a0'),
+                        'font-size': '10',
+                        'font-family': 'Arial,sans-serif',
+                        'clip-path': `url(#${clipId}_start)`,
+                    }));
+                }
+                if (datesFit && this.showDetail(this.zoomSettings.renderSprintEndDateAtDayWidth)) {
+                    g.appendChild(SvgUtils.createClipPath(`${clipId}_end`, sprintX + sprintW / 2, laneY, dateWidth, SPRINT_H));
+                    g.appendChild(SvgUtils.createText(sprintX + sprintW - 3, dateY, endDate, {
+                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintDateTextColor, '#a0a0a0'),
+                        'font-size': '10',
+                        'font-family': 'Arial,sans-serif',
+                        'text-anchor': 'end',
+                        'clip-path': `url(#${clipId}_end)`,
                     }));
                 }
             });
@@ -223,6 +291,28 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
             default:
                 return ColorUtils.intToHex(theme.createdSprintBgColor, '#d9e8ff');
         }
+    }
+
+    private getStatusBadgeColors(status: string | undefined): { background: string; text: string } {
+        switch (status) {
+            case 'STARTED':
+                return {background: 'var(--lumo-primary-color)', text: 'var(--lumo-primary-contrast-color, #fff)'};
+            case 'CLOSED':
+                return {background: 'var(--lumo-success-color)', text: 'var(--lumo-success-contrast-color, #fff)'};
+            default:
+                return {background: 'var(--lumo-contrast-60pct)', text: 'var(--lumo-base-color)'};
+        }
+    }
+
+    private formatSprintDate(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    private showDetail(threshold: number): boolean {
+        return this.dayWidth * this.visualScale >= threshold;
     }
 
     // renderCurrentDateLine(chartHeight: number): SVGGElement {

@@ -28,4 +28,8 @@ public class SprintOverviewTheme {
     public Color closedSprintBgColor;
     /** Text color for sprint labels. */
     public Color sprintTextColor;
+    /** Text color for sprint start and end dates. */
+    public Color sprintDateTextColor;
+    /** Fill color for the sprint progress bar. */
+    public Color sprintProgressColor;
 }

@@ -17,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -56,6 +57,8 @@ public class SprintsOverviewServiceTest {
         a.setStart(LocalDateTime.of(2026, 5, 1, 9, 0));
         a.setEnd(LocalDateTime.of(2026, 5, 10, 17, 0));
         a.setStatus(Status.STARTED);
+        a.setWorked(Duration.ofHours(2));
+        a.setRemaining(Duration.ofHours(6));
 
         SprintDAO b = new SprintDAO();
         b.setName("B");
@@ -71,6 +74,10 @@ public class SprintsOverviewServiceTest {
         assertEquals(2, dto.lanes.size());
         // lane 0 should contain first sprint
         assertEquals(1, dto.lanes.get(0).sprints.size());
+        assertEquals(0.25, dto.lanes.get(0).sprints.get(0).progress, 0.0001);
+        assertEquals(8, dto.meta.zoomSettings.renderSprintStartDateAtDayWidth);
+        assertEquals(8, dto.meta.zoomSettings.renderSprintEndDateAtDayWidth);
+        assertEquals(8, dto.meta.zoomSettings.renderSprintProgressAtDayWidth);
+        assertEquals(8, dto.meta.zoomSettings.renderSprintStatusAtDayWidth);
     }
 }
-

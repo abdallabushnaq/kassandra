@@ -161,6 +161,8 @@ public class DarkTheme extends Theme {
         sprintOverviewTheme.startedSprintBgColor = new Color(0x24598d);
         sprintOverviewTheme.closedSprintBgColor  = new Color(0x484b52);
         sprintOverviewTheme.sprintTextColor      = new Color(0xf1f3f4);
+        sprintOverviewTheme.sprintDateTextColor  = new Color(0xa0a0a0);
+        sprintOverviewTheme.sprintProgressColor  = new Color(0x6ca8ff);
         //---------------------------------------------------------------------
 
 

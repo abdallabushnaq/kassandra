@@ -166,6 +166,8 @@ public class ThemeDto {
         dto.sprintOverviewTheme.startedSprintBgColor = rgb(theme.sprintOverviewTheme.startedSprintBgColor);
         dto.sprintOverviewTheme.closedSprintBgColor  = rgb(theme.sprintOverviewTheme.closedSprintBgColor);
         dto.sprintOverviewTheme.sprintTextColor      = rgb(theme.sprintOverviewTheme.sprintTextColor);
+        dto.sprintOverviewTheme.sprintDateTextColor  = rgb(theme.sprintOverviewTheme.sprintDateTextColor);
+        dto.sprintOverviewTheme.sprintProgressColor  = rgb(theme.sprintOverviewTheme.sprintProgressColor);
 
         return dto;
     }

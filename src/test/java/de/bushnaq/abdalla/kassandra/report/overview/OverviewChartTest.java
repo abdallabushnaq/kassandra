@@ -85,7 +85,7 @@ public class OverviewChartTest {
             log.info("Task {} {} has worklogs with total duration {}", task.getName(), task.getMinEstimate(), work);
         }
 
-        g.generateOverviewChart(testInfo, sprint.getId(), testFolder);
+        g.generateOverviewChart(testInfo, sprint.getId(), testFolder, 2.0);
 //        g.generateGanttChart(testInfo, sprint.getId(), testFolder);
 //        g.generateBurndownChart(testInfo, sprint.getId(), testFolder);
 

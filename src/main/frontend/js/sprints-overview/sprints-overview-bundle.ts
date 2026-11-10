@@ -34,7 +34,7 @@ function createChart(
         minDayWidth: MIN_DW,
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
-        initialVisualScale: options.initialVisualScale,
+        initialVisualScale: options.initialVisualScale ?? 1.0,
         initialScrollOffset: (dayWidth, containerWidth) => {
             const todayIdx = DateUtils.calculateDayIndex(renderer.currentDate, renderer.chartStart);
             const visibleDays = containerWidth / dayWidth;

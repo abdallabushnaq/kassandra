@@ -13,6 +13,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.overview.SprintOverviewDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
+import de.bushnaq.abdalla.util.date.ReportUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -186,6 +187,10 @@ public class SprintsOverviewService {
                 sd.hasGantt = s.getStart() != null && s.getEnd() != null; // preserve original hasGantt semantics
                 sd.delay    = Boolean.FALSE; // frontend can compute delay if needed
                 sd.color    = getStatusColorHex(s.getStatus());
+                var estimated = DateUtil.add(s.getWorked(), s.getRemaining());
+                sd.progress = estimated == null || estimated.isZero()
+                        ? null
+                        : ReportUtil.calcualteProgress(s.getWorked(), estimated);
                 lane.sprints.add(sd);
             }
             dto.lanes.add(lane);
@@ -213,6 +218,5 @@ public class SprintsOverviewService {
     }
 
 }
-
 
 

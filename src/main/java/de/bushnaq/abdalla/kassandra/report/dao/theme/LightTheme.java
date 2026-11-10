@@ -161,7 +161,9 @@ public class LightTheme extends Theme {
         sprintOverviewTheme.createdSprintBgColor = new Color(0xd9e8ff);
         sprintOverviewTheme.startedSprintBgColor = new Color(0x9bc9ff);
         sprintOverviewTheme.closedSprintBgColor  = new Color(0xe5e7eb);
-        sprintOverviewTheme.sprintTextColor      = new Color(0x202124);
+        sprintOverviewTheme.sprintTextColor      = new Color(0x707070);
+        sprintOverviewTheme.sprintDateTextColor  = new Color(0x808080);
+        sprintOverviewTheme.sprintProgressColor  = new Color(0x1676f3);
         //---------------------------------------------------------------------
 
 

@@ -27,6 +27,8 @@ public class SprintOverviewMetaDto {
     public String        copyright;
     public Integer       laneCount;
     public LocalDateTime now;
+    /** Day-width thresholds used to adapt sprint details to the current zoom level. */
+    public SprintOverviewZoomSettings zoomSettings = new SprintOverviewZoomSettings();
     /**
      * Theme colors as a nested class-structured object mirroring Java's {@code Theme} hierarchy.
      * Mirrors Java: {@code Theme → ChartTheme / GanttTheme / XAxesTheme / ...}

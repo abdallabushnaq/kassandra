@@ -8,6 +8,7 @@ export interface SprintDto {
     id: number | string;
     key?: string;
     name?: string;
+    progress?: number | null;
     start: Date | null;
     end: Date | null;
     status?: string;

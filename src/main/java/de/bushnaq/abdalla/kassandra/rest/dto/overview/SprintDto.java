@@ -33,6 +33,8 @@ public class SprintDto {
     public String        jiraUrl;
     public String        key;
     public String        name;
+    /** Work progress as a fraction of total estimated effort, or {@code null} when unavailable. */
+    public Double        progress;
     public LocalDateTime start;
     public String        status;
 }

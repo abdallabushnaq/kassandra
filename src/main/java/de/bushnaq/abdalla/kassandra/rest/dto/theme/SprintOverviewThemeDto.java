@@ -32,4 +32,8 @@ public class SprintOverviewThemeDto {
     public Integer closedSprintBgColor;
     /** Text color for sprint labels. */
     public Integer sprintTextColor;
+    /** Text color for sprint start and end dates. */
+    public Integer sprintDateTextColor;
+    /** Fill color for the sprint progress bar. */
+    public Integer sprintProgressColor;
 }

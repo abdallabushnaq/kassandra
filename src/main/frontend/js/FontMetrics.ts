@@ -35,7 +35,7 @@ export class FontMetrics {
         }
 
         this.ctx = ctx;
-        this.ctx.font = `${fontSpec.size}px ${fontSpec.family}`;
+        this.ctx.font = `${fontSpec.weight} ${fontSpec.size}px ${fontSpec.family}`;
     }
 
     public stringWidth(text: string): number {

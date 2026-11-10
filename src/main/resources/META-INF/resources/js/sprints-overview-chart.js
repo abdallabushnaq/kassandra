@@ -48,12 +48,8 @@
      *   LINE_HEIGHT * numberOfLines = 39. The rect is drawn with this height.
      */
     var SPRINT_H = LINE_HEIGHT * NUMBER_OF_LINES;          // 39 px
-    /**
-     * Lane spacing = getTaskHeight() + 2.
-     * Java getTaskHeight() when numberOfLines > 1: LINE_HEIGHT * numberOfLines + 17 = 56.
-     */
-    var TASK_H = LINE_HEIGHT * NUMBER_OF_LINES + 17;     // 56 px
-    var LANE_H = TASK_H + 2;                             // 58 px
+    /** Lane spacing leaves only a 2px gap below the 39px sprint bar. */
+    var LANE_H = SPRINT_H + 2;                           // 41 px
 
     /** Default pixel width per day. Mirrors Java SprintsOverviewRenderer.calculateDayWidth() → dayOfWeek.width = 8. */
     var DEFAULT_DW = 8;
@@ -219,6 +215,12 @@
             super(theme, milestones, preRun, postRun);
 
             this.lanes = data.lanes || [];
+            this.zoomSettings = data.meta.zoomSettings || {
+                renderSprintStartDateAtDayWidth: 20,
+                renderSprintEndDateAtDayWidth: 22,
+                renderSprintProgressAtDayWidth: 18,
+                renderSprintStatusAtDayWidth: 16
+            };
             this.chartStart = chartStart;
             this.chartEnd = chartEnd;
             this.currentDate = currentDate;
@@ -245,6 +247,17 @@
             // super.calculateDayWidth();
             // this.calendarXAxes.dayOfWeek.setWidth(8);
             return this.dayWidth;
+        }
+
+        showDetail(threshold) {
+            return this.dayWidth * (this.visualScale || 1) >= threshold;
+        }
+
+        formatSprintDate(date) {
+            var year = date.getFullYear();
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            return year + '-' + month + '-' + day;
         }
 
         /**
@@ -357,18 +370,63 @@
                     rect.appendChild(createSvgElement('title', {}, self.buildSprintTooltip(sprint)));
                     g.appendChild(rect);
 
+                    if (self.showDetail(self.zoomSettings.renderSprintProgressAtDayWidth) && Number.isFinite(sprint.progress)) {
+                        var progress = Math.max(0, Math.min(1, sprint.progress));
+                        if (progress > 0) {
+                            g.appendChild(createRect(sprintX, laneY, sprintW * progress, SPRINT_H, {fill: '#808080'}));
+                        }
+                    }
+
+                    var showStatus = self.showDetail(self.zoomSettings.renderSprintStatusAtDayWidth) && !!sprint.status;
+                    var statusText = showStatus ? sprint.status : '';
+                    var clipId = 'sp' + laneIndex + '_' + sprint.id;
+                    g.appendChild(createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
+
                     // Sprint name label (clipped to rect width)
                     if (sprintW > 20) {
-                        var clipId = 'sp' + laneIndex + '_' + sprint.id;
-                        g.appendChild(createClipPath(clipId, sprintX, laneY, sprintW, SPRINT_H));
                         // Java: drawString at x1+1, y1 + (0+1)*LINE_HEIGHT - 2 = y1 + LINE_HEIGHT - 2
                         var textY = laneY + LINE_HEIGHT - 2;
+                        var reservedStatusWidth = showStatus ? statusText.length * 7 + 8 : 0;
+                        var nameWidth = Math.max(0, sprintW - reservedStatusWidth);
+                        g.appendChild(createClipPath(clipId + '_name', sprintX, laneY, nameWidth, SPRINT_H));
                         g.appendChild(createText(sprintX + 1, textY, sprint.name || '', {
-                            fill: '#000000',
+                            fill: intToHex(self.theme.sprintOverviewTheme.sprintTextColor, '#202124'),
                             'font-size': '12',
                             'font-family': 'Arial,sans-serif',
                             'font-weight': 'bold',
+                            'clip-path': 'url(#' + clipId + '_name)'
+                        }));
+                    }
+
+                    if (showStatus) {
+                        g.appendChild(createText(sprintX + sprintW - 3, laneY + LINE_HEIGHT - 2, statusText, {
+                            fill: intToHex(self.theme.sprintOverviewTheme.sprintTextColor, '#202124'),
+                            'font-size': '10',
+                            'font-family': 'Arial,sans-serif',
+                            'text-anchor': 'end',
                             'clip-path': 'url(#' + clipId + ')'
+                        }));
+                    }
+
+                    var dateY = laneY + SPRINT_H - 3;
+                    var dateWidth = Math.max(0, sprintW / 2 - 3);
+                    if (self.showDetail(self.zoomSettings.renderSprintStartDateAtDayWidth)) {
+                        g.appendChild(createClipPath(clipId + '_start', sprintX + 2, laneY, dateWidth, SPRINT_H));
+                        g.appendChild(createText(sprintX + 3, dateY, self.formatSprintDate(new Date(sprint.start)), {
+                            fill: intToHex(self.theme.sprintOverviewTheme.sprintDateTextColor, '#a0a0a0'),
+                            'font-size': '10',
+                            'font-family': 'Arial,sans-serif',
+                            'clip-path': 'url(#' + clipId + '_start)'
+                        }));
+                    }
+                    if (self.showDetail(self.zoomSettings.renderSprintEndDateAtDayWidth)) {
+                        g.appendChild(createClipPath(clipId + '_end', sprintX + sprintW / 2, laneY, dateWidth, SPRINT_H));
+                        g.appendChild(createText(sprintX + sprintW - 3, dateY, self.formatSprintDate(new Date(sprint.end)), {
+                            fill: intToHex(self.theme.sprintOverviewTheme.sprintDateTextColor, '#a0a0a0'),
+                            'font-size': '10',
+                            'font-family': 'Arial,sans-serif',
+                            'text-anchor': 'end',
+                            'clip-path': 'url(#' + clipId + '_end)'
                         }));
                     }
                 });
@@ -687,5 +745,3 @@
     window.SprintsOverviewRenderer = SprintsOverviewRenderer;
     window.SprintsOverviewChart = SprintsOverviewChart;
 })();
-
-
