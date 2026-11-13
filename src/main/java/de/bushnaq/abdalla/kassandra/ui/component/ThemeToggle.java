@@ -56,6 +56,7 @@ public class ThemeToggle extends Button {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        getElement().setAttribute("data-theme-restored", "false");
 
         // Load saved preference from browser localStorage
         UI.getCurrent().getPage().executeJs("return localStorage.getItem('theme')")
@@ -72,6 +73,7 @@ public class ThemeToggle extends Button {
                     themeSessionState.setTheme(newTheme);
                     ComponentUtil.fireEvent(UI.getCurrent(), new ThemeChangedEvent(UI.getCurrent(), newTheme));
                     updateTooltip();
+                    getElement().setAttribute("data-theme-restored", "true");
                 });
     }
 

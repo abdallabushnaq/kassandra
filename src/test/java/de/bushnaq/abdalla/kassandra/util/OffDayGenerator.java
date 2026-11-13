@@ -55,7 +55,7 @@ public class OffDayGenerator {
     private final TreeSet<OffDay>  offDays      = new TreeSet<>();
     @Getter
     private       int              offDaysIterations;
-    private final Random           random       = new Random();
+    private final Random           random       = new LoggingRandom("OffDayGenerator.random");
     @Autowired
     private       TestRestTemplate testRestTemplate; // Use TestRestTemplate instead of RestTemplate
     private       UserApi          userApi;

@@ -1129,6 +1129,7 @@ class SeleniumHandler {
      * @param theme the theme to capture
      */
     public void setHelpScreenshotTheme(ETheme theme) {
+        waitUntil(ExpectedConditions.attributeToBe(By.id(MainLayout.ID_THEME_TOGGLE), "data-theme-restored", "true"));
         boolean dark = Boolean.TRUE.equals(executeJavaScript(
                 "return document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]')"));
         if (dark != ETheme.dark.equals(theme)) {
@@ -1610,6 +1611,22 @@ class SeleniumHandler {
             return;
         log.trace("Waiting for {} chart to be rendered.", chartId);
         waitUntil(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("[data-chart-rendered~='" + chartId + "'] svg"))
+                .stream()
+                .anyMatch(WebElement::isDisplayed)));
+    }
+
+    /**
+     * Waits for a visible chart rendered with the expected theme.
+     *
+     * @param chartId the chart identifier from {@code RenderUtil}
+     * @param theme the expected chart theme
+     */
+    public void waitForChartRendered(String chartId, ETheme theme) {
+        if (!isEnabled())
+            return;
+        log.trace("Waiting for {} chart to be rendered in {} theme.", chartId, theme);
+        waitUntil(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector(
+                        "[data-chart-rendered~='" + chartId + "'][data-chart-rendered-theme='" + theme.name() + "'] svg"))
                 .stream()
                 .anyMatch(WebElement::isDisplayed)));
     }

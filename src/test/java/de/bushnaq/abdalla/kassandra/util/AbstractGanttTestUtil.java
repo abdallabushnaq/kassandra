@@ -23,6 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChartLegacy;
 import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
+import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttChartLegacy;
@@ -249,6 +250,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     }
 
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase) throws Exception {
+        generateProductsIfNeeded(testInfo, randomCase, false);
+    }
+
+    protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean forceGeneration) throws Exception {
         ParameterOptions.setNow(randomCase.getNow());
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
         // Include generation settings so range changes cannot load stale cached data.
@@ -256,7 +261,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex() + "-" +
                 snapshotConfigHash;
         // Try to find and load an existing database snapshot
-        String  latestSnapshot = databaseStateManager.findLatestSnapshot(snapshotName);
+        if (forceGeneration) {
+            logger.info("Forcing fresh test data generation and skipping existing snapshots.");
+        }
+        String  latestSnapshot = forceGeneration ? null : databaseStateManager.findLatestSnapshot(snapshotName);
         boolean dataLoaded     = false;
         if (latestSnapshot != null) {
             logger.info("Found existing database snapshot: {}. Attempting to load...", latestSnapshot);
@@ -283,6 +291,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         log.trace("----------------------------------------------------------------------------------------------------");
         long startTime = System.currentTimeMillis();
         peg.random.setSeed(randomCase.getSeed());
+        Theme.shufflePalette(randomCase.getSeed());
         PersistingEntityGenerator.setUser(PersistingEntityGenerator.INITIAL_ADMIN, "ROLE_ADMIN");//Christopher creates the persistent work week
         WorkWeek ww = peg.persistWorkWeek("western 5x7.5", "Monday-Friday 8:00 - 12:00, 13:00 - 16:30", LocalTime.of(8, 0), LocalTime.of(12, 0), LocalTime.of(13, 0), LocalTime.of(16, 30), false, false, true, true, true, true, true);
         peg.getUsers().clear();
@@ -327,7 +336,10 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             }
         }
         ParameterOptions.setNow(randomCase.getNow());
-        peg.generateRandomSickDays(peg.getUsers().stream().toList());
+        List<User> usersSortedByName = peg.getUsers().stream()
+                .sorted(Comparator.comparing(User::getName).thenComparing(User::getEmail))
+                .toList();
+        peg.generateRandomSickDays(usersSortedByName);
         //TODO sprint user calendars are not initialized with user off days.
         BurnDownUtil.generateWorkLogs(peg);
         log.trace("Generated synthetic data in " + DateUtil.createDurationString(Duration.ofMillis(System.currentTimeMillis() - startTime), true, true, false));
@@ -362,6 +374,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         int        maxUsersPerSprint = Math.max(minUsersPerSprint, Math.min(randomCase.usersPerSprint().max(), availableUsers));
         int        numberOfUsers     = peg.random.nextInt(maxUsersPerSprint - minUsersPerSprint + 1) + minUsersPerSprint;
         List<User> shuffledUsers     = new ArrayList<>(peg.getUsers());
+        shuffledUsers.sort(Comparator.comparing(User::getName).thenComparing(User::getEmail));
         Collections.shuffle(shuffledUsers, peg.random);
         List<User> sprintUsers = shuffledUsers.subList(0, numberOfUsers);
         peg.random.setSeed(peg.nameGenerator.generateSprintName(peg.getSprintIndex()).hashCode());

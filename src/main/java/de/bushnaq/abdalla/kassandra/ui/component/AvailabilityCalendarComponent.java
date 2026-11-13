@@ -17,7 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.ui.component;
 
-import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.*;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -28,6 +28,8 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.shared.Registration;
+import com.vaadin.flow.theme.lumo.Lumo;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Availability;
@@ -58,11 +60,13 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
     public static final  String                LEGEND_ITEM_ID_80_PERCENT  = "availability-calendar-legend-item-80";
     public static final  String                LEGEND_ITEM_ID_PREFIX      = "availability-calendar-legend-item-";
     private final        Map<LocalDate, Float> availabilityMap            = new HashMap<>();
-    private final        Map<Float, String>    colorMap                   = new HashMap<>();
     @Getter
     private              int                   currentYear;
+    private final        Map<Float, String>    darkColorMap               = new HashMap<>();
     private final        Consumer<LocalDate>   dayClickHandler;
+    private final        Map<Float, String>    lightColorMap              = new HashMap<>();
     private              List<Availability>    sortedAvailabilities;
+    private              Registration          themeChangedRegistration;
     private              User                  user;
     private              Consumer<Integer>     yearChangeHandler;
 
@@ -392,10 +396,11 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
      */
     private String getColorForAvailability(float availability) {
         // Find the closest matching color in the map
-        float closestKey = 0.0f;
-        float minDiff    = Float.MAX_VALUE;
+        Map<Float, String> activeColorMap = isDarkTheme() ? darkColorMap : lightColorMap;
+        float              closestKey     = 0.0f;
+        float              minDiff        = Float.MAX_VALUE;
 
-        for (float key : colorMap.keySet()) {
+        for (float key : activeColorMap.keySet()) {
             float diff = Math.abs(availability - key);
             if (diff < minDiff) {
                 minDiff    = diff;
@@ -403,7 +408,7 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
             }
         }
 
-        return colorMap.get(closestKey);
+        return activeColorMap.get(closestKey);
     }
 
     /**
@@ -413,12 +418,24 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
     private void initializeColorMap() {
         // Define light pastel colors for different availability percentages
         // Matching the lightness of --calendar-sick-color: #F8D7DA
-        colorMap.put(1.0f, "#D4EDDA"); // Light Green (100%) - matches vacation color
-        colorMap.put(0.8f, "#D1F2EB"); // Pale Teal (80%)
-        colorMap.put(0.6f, "#FFF3CD"); // Light Yellow (60%)
-        colorMap.put(0.4f, "#FFE5CC"); // Light Orange (40%)
-        colorMap.put(0.2f, "#F8D7DA"); // Light Red (20%) - matches sick color
-        colorMap.put(0.0f, "#E2E3E5"); // Light Gray (0%)
+        lightColorMap.put(1.0f, "#D4EDDA"); // Light Green (100%) - matches vacation color
+        lightColorMap.put(0.8f, "#D1F2EB"); // Pale Teal (80%)
+        lightColorMap.put(0.6f, "#FFF3CD"); // Light Yellow (60%)
+        lightColorMap.put(0.4f, "#FFE5CC"); // Light Orange (40%)
+        lightColorMap.put(0.2f, "#F8D7DA"); // Light Red (20%) - matches sick color
+        lightColorMap.put(0.0f, "#E2E3E5"); // Light Gray (0%)
+
+        darkColorMap.put(1.0f, "#2E7D32"); // Green (100%)
+        darkColorMap.put(0.8f, "#00796B"); // Teal (80%)
+        darkColorMap.put(0.6f, "#8D6E00"); // Amber (60%)
+        darkColorMap.put(0.4f, "#C15B12"); // Orange (40%)
+        darkColorMap.put(0.2f, "#B71C1C"); // Red (20%)
+        darkColorMap.put(0.0f, "#343A40"); // Gray (0%)
+    }
+
+    private boolean isDarkTheme() {
+        UI ui = UI.getCurrent();
+        return ui != null && ui.getElement().getThemeList().contains(Lumo.DARK);
     }
 
     /**
@@ -427,6 +444,25 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
     private boolean isWeekend(LocalDate date) {
         int dayOfWeek = date.getDayOfWeek().getValue();
         return dayOfWeek == 6 || dayOfWeek == 7; // Saturday or Sunday
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(
+                attachEvent.getUI(), ThemeChangedEvent.class, event -> updateCalendar(user, sortedAvailabilities));
+        if (sortedAvailabilities != null) {
+            updateCalendar(user, sortedAvailabilities);
+        }
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
+        }
+        super.onDetach(detachEvent);
     }
 
     /**
@@ -491,4 +527,3 @@ public class AvailabilityCalendarComponent extends VerticalLayout {
         add(createLegend());
     }
 }
-

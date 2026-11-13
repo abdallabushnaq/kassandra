@@ -133,6 +133,9 @@ So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAt
 
 # Gantt-Chart rendering
 
+1. milestone dates overlap milestone tasks.
+2. milestones have a empty row between them and the year.
+
 # Burn-Down-Chart Rendering
 
 1. Burn down chart grid is one line too high.
@@ -140,6 +143,7 @@ So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAt
    the chart.
 3. Horizontal grid should only reach until the end of the chart, not end of the screen.
 4. legend should be drawn above the grid in z axis.
+5. burndown chart guides and interpolation lines should have black background in dark mode.
 
 # Disabling Video Recording for Tests
 
@@ -177,4 +181,21 @@ Can you suggest a better design for our undo/redo architecture that is more prac
 # Optimize ColorUtils.intToHex
 
 ColorUtils.intToHex takes 2 parameters, the second one being a default color. let's get rid of that second parameter
-everywhere we call it.
+everywhere we call it and throw an exception if the color is null.
+
+# Screenshot Generation
+
+GenerateScreenshotsIT generates screenshots for both light/dark themes.
+Often during the generation of the dark theme some charts are drawn using the light theme.
+These are
+
+1. active-sprints
+2. active-sprints-board-features
+
+The rest of the screen is correctly drawn in dark theme.
+Just before taking that first screenshot, we login as ACTIVE_SPRINT_USER_NAME.
+As the screenshots are not always in light theme mode, we assume that it is a timing issue.
+It seems that they are redrawn after about 1s in dark mode, but we take the screenshot before that happens.
+I disabled most of the test code to reduce the time it takes to run it to ~2min.
+How can we wait for the chart to be drawn in dark mode before taking the screenshot?
+

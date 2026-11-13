@@ -246,7 +246,9 @@ public class NameGenerator {
         }
 
         // Shuffle with a deterministic seed based on sprint index
-        Collections.shuffle(availableStories, new Random(123L + sprintIndex));
+        LoggingRandom random = new LoggingRandom("NameGenerator.storyShuffle-" + sprintIndex);
+        random.setSeed(123L + sprintIndex);
+        Collections.shuffle(availableStories, random);
 
         // Take the first 'count' stories, or all available if we still don't have enough
         int storiesToTake = Math.min(count, availableStories.size());

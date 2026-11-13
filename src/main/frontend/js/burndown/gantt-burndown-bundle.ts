@@ -16,6 +16,7 @@
  */
 
 import {DateUtils} from '../DateUtils.js';
+import {CHART_RENDERED_THEME_ATTRIBUTE} from '../ChartRenderState.js';
 import {mountDetachableChart} from '../DetachableChartHost.js';
 import {ChartHandle, InteractiveTimelineChart} from '../InteractiveTimelineChart.js';
 import {Theme} from '../theme/Theme.js';
@@ -121,6 +122,7 @@ export function createGanttBurndownChart(
     interactiveChart.addEventListener('mousemove', handleMouseMove as EventListener);
     interactiveChart.addEventListener('mouseleave', hideTooltip as EventListener);
     interactiveChart.render();
+    container.setAttribute(CHART_RENDERED_THEME_ATTRIBUTE, theme.themeVariance);
     return interactiveChart;
 }
 

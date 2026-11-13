@@ -101,7 +101,7 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
      * @throws Exception if fixture creation or restoration fails
      */
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean generateImages) throws Exception {
-        super.generateProductsIfNeeded(testInfo, randomCase);
+        super.generateProductsIfNeeded(testInfo, randomCase, false);
         refreshRestoredKeycloakProvider();
     }
 

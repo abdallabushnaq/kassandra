@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("UnitTest")
@@ -35,6 +36,23 @@ class ColorPaletteTest {
     private static final int BORDER_WIDTH = 2;
     private static final int COLUMNS      = 4;
     private static final int TILE_SIZE    = 64;
+
+    @Test
+    void paletteShuffleIsReproducibleWithTheSameSeed() {
+        Theme.shufflePalette(7L);
+        Color[] firstOrder = new Color[Theme.PALETTE_SIZE];
+        for (int i = 0; i < firstOrder.length; i++) {
+            firstOrder[i] = Theme.getPaletteColor(i);
+        }
+
+        Theme.shufflePalette(7L);
+        Color[] secondOrder = new Color[Theme.PALETTE_SIZE];
+        for (int i = 0; i < secondOrder.length; i++) {
+            secondOrder[i] = Theme.getPaletteColor(i);
+        }
+
+        assertArrayEquals(firstOrder, secondOrder);
+    }
 
     private void writeColorGrid(Path outputPath, Color[] colors) throws IOException {
         int           columns  = Math.min(COLUMNS, Math.max(colors.length, 1));
@@ -70,6 +88,7 @@ class ColorPaletteTest {
     void writeColorPaletteSamples() throws IOException {
         Path outputDirectory = Path.of("references", "theme");
         Files.createDirectories(outputDirectory);
+        Theme.shufflePalette(7L);
 
         Color[] colors = new Color[Theme.PALETTE_SIZE];
         for (int i = 0; i < colors.length; i++) {

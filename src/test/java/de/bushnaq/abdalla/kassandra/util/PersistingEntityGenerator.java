@@ -87,7 +87,7 @@ public class PersistingEntityGenerator {
     private             OffDayGenerator        offDayGenerator;
     public              ProductAclApi          productAclApi;
     public              ProductApi             productApi;
-    public final        Random                 random                    = new Random();
+    public final        Random                 random                    = new LoggingRandom("PersistingEntityGenerator.random");
     public              SprintApi              sprintApi;
     @Autowired
     protected           StableDiffusionService stableDiffusionService;
@@ -446,6 +446,8 @@ public class PersistingEntityGenerator {
             ensureUserAvatar(existingUser, name);
             getUsers().add(existingUser);
             eg.setUserIndex(eg.getUserIndex() + 1);
+            existingUser.setColor(color);// Update color, as on the first run the random seed was not set yet.
+            userApi.update(existingUser);
             return existingUser;
         }
 
