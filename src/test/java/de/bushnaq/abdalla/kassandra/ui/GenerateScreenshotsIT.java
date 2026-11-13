@@ -1037,96 +1037,96 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         aboutViewTester.login(ADMINISTRATOR_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         seleniumHandler.setHelpScreenshotTheme(eTheme);
         if (false) {
-            // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
-            new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
-                    .withMessage("About View banner did not finish loading before screenshot capture")
-                    .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
-                            .stream()
-                            .anyMatch(image -> image.isDisplayed()
-                                    && "true".equals(image.getDomProperty("complete"))
-                                    && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
-            takeHelpElements(AboutView.class, AboutView.ABOUT_PAGE_TITLE, eTheme, AboutView.ABOUT_PAGE_TITLE, AboutView.LICENSE_LINK_ID, AboutView.GITHUB_LINK_ID, MainLayout.ID_THEME_TOGGLE, MainLayout.ID_USER_MENU);
-            takePageHelpScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
-            seleniumHandler.takeScreenShot(folder + "/about-view.png");
-            //-----------------
-            //ProductListView
-            //-----------------
-            productListViewTester.switchToProductListView();
-            takeProductElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
-            takeProductDialogScreenshots(folder);
-            takeProductHistoryScreenshots(folder);
-            productListViewTester.selectProduct(productName);
-
-            //-----------------
-            //VersionListView
-            //-----------------
-            takeVersionElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
-            takeVersionDialogScreenshots(folder);
-            versionListViewTester.selectVersion(versionName);
-
-            //-----------------
-            //FeatureListView
-            //-----------------
-            takeFeatureElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
-            takeFeatureDialogScreenshots(folder);
-            featureListViewTester.selectFeature(featureName);
-
-            //-----------------
-            //SprintListView
-            //-----------------
-            seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
-            takeSprintElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
-            takeSprintDialogScreenshots(folder);
-            // Clear the feature selector in SprintOverview before capturing the backlog sprint.
-            seleniumHandler.clearMultiSelectComboBoxValue(SprintListView.FEATURE_SELECTOR);
-            seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
-            sprintListViewTester.selectSprint(QUALITY_BOARD_SPRINT_NAME_DELAYED);
-
-
-            //-----------------
-            //QualityBoard
-            //-----------------
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-            takeHelpElements(QualityBoard.class, "page-header", eTheme,
-                    QualityBoard.SPRINT_SELECTOR_ID, QualityBoard.EXPORT_JSON_BUTTON_ID, QualityBoard.EXPORT_XML_BUTTON_ID,
-                    QualityBoard.EXPORT_XLSX_BUTTON_ID, QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
-                    QualityBoard.GANTT_BURNDOWN_CONTAINER_ID);
-            takePageHelpScreenshot(QualityBoard.class, QualityBoard.HELP_BUTTON_ID);
-            seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
-            seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, QUALITY_BOARD_SPRINT_NAME_IN_TIME);
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
-            seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
-
-            //-----------------
-            //UserProfileView
-            //-----------------
-            takeUserProfileScreenshots(folder, eTheme);
-
-            //-----------------
-            //UserGroupListView
-            //-----------------
-            seleniumHandler.click(MainLayout.ID_USER_MENU);
-            seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS);
-            seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
-            takeUserGroupElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
-            takeUserGroupDialogScreenshots(folder);
-
-
-            //-----------------
-            //Backlog
-            //-----------------
-            backlogTester.switchToBacklog();
-            seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, BACKLOG_SPRINT_NAME);
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
-            takeBacklogElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/backlog.png");
-            takeDependencyDialogScreenshots(folder);
         }
+        // Allow for checkpoint loading and generation, then wait for browser-side image decoding.
+        new WebDriverWait(seleniumHandler.getDriver(), Duration.ofMinutes(10))
+                .withMessage("About View banner did not finish loading before screenshot capture")
+                .until(ExpectedConditions.refreshed(driver -> driver.findElements(By.cssSelector("#" + AboutView.ABOUT_VIEW + " img"))
+                        .stream()
+                        .anyMatch(image -> image.isDisplayed()
+                                && "true".equals(image.getDomProperty("complete"))
+                                && Integer.parseInt(image.getDomProperty("naturalWidth")) > 0)));
+        takeHelpElements(AboutView.class, AboutView.ABOUT_PAGE_TITLE, eTheme, AboutView.ABOUT_PAGE_TITLE, AboutView.LICENSE_LINK_ID, AboutView.GITHUB_LINK_ID, MainLayout.ID_THEME_TOGGLE, MainLayout.ID_USER_MENU);
+        takePageHelpScreenshot(AboutView.class, AboutView.HELP_BUTTON_ID);
+        seleniumHandler.takeScreenShot(folder + "/about-view.png");
+        //-----------------
+        //ProductListView
+        //-----------------
+        productListViewTester.switchToProductListView();
+        takeProductElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/product-list-view.png");
+        takeProductDialogScreenshots(folder);
+        takeProductHistoryScreenshots(folder);
+        productListViewTester.selectProduct(productName);
+
+        //-----------------
+        //VersionListView
+        //-----------------
+        takeVersionElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/version-list-view.png");
+        takeVersionDialogScreenshots(folder);
+        versionListViewTester.selectVersion(versionName);
+
+        //-----------------
+        //FeatureListView
+        //-----------------
+        takeFeatureElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/feature-list-view.png");
+        takeFeatureDialogScreenshots(folder);
+        featureListViewTester.selectFeature(featureName);
+
+        //-----------------
+        //SprintListView
+        //-----------------
+        seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
+        takeSprintElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
+        takeSprintDialogScreenshots(folder);
+        // Clear the feature selector in SprintOverview before capturing the backlog sprint.
+        seleniumHandler.clearMultiSelectComboBoxValue(SprintListView.FEATURE_SELECTOR);
+        seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
+        sprintListViewTester.selectSprint(QUALITY_BOARD_SPRINT_NAME_DELAYED);
+
+
+        //-----------------
+        //QualityBoard
+        //-----------------
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        takeHelpElements(QualityBoard.class, "page-header", eTheme,
+                QualityBoard.SPRINT_SELECTOR_ID, QualityBoard.EXPORT_JSON_BUTTON_ID, QualityBoard.EXPORT_XML_BUTTON_ID,
+                QualityBoard.EXPORT_XLSX_BUTTON_ID, QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
+                QualityBoard.GANTT_BURNDOWN_CONTAINER_ID);
+        takePageHelpScreenshot(QualityBoard.class, QualityBoard.HELP_BUTTON_ID);
+        seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
+        seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, QUALITY_BOARD_SPRINT_NAME_IN_TIME);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
+
+        //-----------------
+        //UserProfileView
+        //-----------------
+        takeUserProfileScreenshots(folder, eTheme);
+
+        //-----------------
+        //UserGroupListView
+        //-----------------
+        seleniumHandler.click(MainLayout.ID_USER_MENU);
+        seleniumHandler.click(MainLayout.ID_USER_MENU_MANAGE_USER_GROUPS);
+        seleniumHandler.waitForElementToBeClickable(UserGroupListView.GROUP_LIST_PAGE_TITLE);
+        takeUserGroupElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/user-group-list-view.png");
+        takeUserGroupDialogScreenshots(folder);
+
+
+        //-----------------
+        //Backlog
+        //-----------------
+        backlogTester.switchToBacklog();
+        seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, BACKLOG_SPRINT_NAME);
+        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        takeBacklogElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/backlog.png");
+        takeDependencyDialogScreenshots(folder);
         //-----------------
         //ActiveSprints
         //-----------------
@@ -1142,59 +1142,59 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.takeScreenShot(folder + "/active-sprints.png");
         takeActiveSprintsDialogScreenshots(folder, eTheme);
         if (false) {
-            //-----------------
-            //UserListView
-            //-----------------
-            aboutViewTester.login(ADMINISTRATOR_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-            userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-            takeUserElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
-            takeUserDialogScreenshots(folder);
-            //-----------------
-            //AvailabilityListView
-            //-----------------
-            availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-            takeAvailabilityElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
-            takeAvailabilityDialogScreenshots(folder);
-
-            //-----------------
-            //LocationListView
-            //-----------------
-            locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-            takeLocationElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
-            takeLocationDialogScreenshots(folder);
-
-            //-----------------
-            //OffdayListView
-            //-----------------
-            offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-            takeOffDayElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
-            takeOffDayDialogScreenshots(folder);
-
-            //-----------------
-            //UserWorkWeekListView
-            //-----------------
-            userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
-            takeUserWorkWeekElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
-            takeUserWorkWeekDialogScreenshots(folder);
-
-            //-----------------
-            //WorkWeekListView
-            //-----------------
-            workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-            takeWorkWeekElementScreenshots(eTheme);
-            seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
-            takeWorkWeekDialogScreenshots(folder);
-
-            takeAdministrationScreenshots(folder, eTheme);
-            takeKassandraElementScreenshots(eTheme);
-            //aboutViewTester.logout();
-            takeAuthenticationScreenshots(folder, eTheme);
         }
+        //-----------------
+        //UserListView
+        //-----------------
+        aboutViewTester.login(ADMINISTRATOR_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        userListViewTester.switchToUserListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        takeUserElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/user-list-view.png");
+        takeUserDialogScreenshots(folder);
+        //-----------------
+        //AvailabilityListView
+        //-----------------
+        availabilityListViewTester.switchToAvailabilityListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        takeAvailabilityElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/availability-list-view.png");
+        takeAvailabilityDialogScreenshots(folder);
+
+        //-----------------
+        //LocationListView
+        //-----------------
+        locationListViewTester.switchToLocationListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        takeLocationElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/location-list-view.png");
+        takeLocationDialogScreenshots(folder);
+
+        //-----------------
+        //OffdayListView
+        //-----------------
+        offDayListViewTester.switchToOffDayListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        takeOffDayElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/offday-list-view.png");
+        takeOffDayDialogScreenshots(folder);
+
+        //-----------------
+        //UserWorkWeekListView
+        //-----------------
+        userWorkWeekListViewTester.switchToUserWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo), null);
+        takeUserWorkWeekElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/user-work-week-list-view.png");
+        takeUserWorkWeekDialogScreenshots(folder);
+
+        //-----------------
+        //WorkWeekListView
+        //-----------------
+        workWeekListViewTester.switchToWorkWeekListView(testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        takeWorkWeekElementScreenshots(eTheme);
+        seleniumHandler.takeScreenShot(folder + "/work-week-list-view.png");
+        takeWorkWeekDialogScreenshots(folder);
+
+        takeAdministrationScreenshots(folder, eTheme);
+        takeKassandraElementScreenshots(eTheme);
+        //aboutViewTester.logout();
+        takeAuthenticationScreenshots(folder, eTheme);
     }
 
     /**
@@ -1225,22 +1225,22 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takeScreenshot(testInfo, "../kassandra.wiki/light-screenshots/", ETheme.light);
         takeScreenshot(testInfo, "../kassandra.wiki/dark-screenshots/", ETheme.dark);
         if (false) {
-            takeMainLayoutHelpScreenshots(testInfo, productName);
-            aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
-            for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
-                seleniumHandler.setWindowSize(1600, 1000);
-                navigateTo(ProductListView.ROUTE);
-                seleniumHandler.setHelpScreenshotTheme(theme);
-                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
-                seleniumHandler.setWindowSize(480, 1000);
-                seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
-                seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
-                seleniumHandler.setWindowSize(1600, 1000);
-            }
-
-            seleniumHandler.waitUntilBrowserClosed(1000);
         }
+        takeMainLayoutHelpScreenshots(testInfo, productName);
+        aboutViewTester.login("christopher.paul@kassandra.org", "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
+        for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
+            seleniumHandler.setWindowSize(1600, 1000);
+            navigateTo(ProductListView.ROUTE);
+            seleniumHandler.setHelpScreenshotTheme(theme);
+            seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout");
+            seleniumHandler.setWindowSize(480, 1000);
+            seleniumHandler.prepareHelpScreenshots(ProductListView.PRODUCT_LIST_PAGE_TITLE);
+            seleniumHandler.takeHelpElementScreenshot(ProductListView.class, "page-layout", "narrow");
+            seleniumHandler.setWindowSize(1600, 1000);
+        }
+
+        seleniumHandler.waitUntilBrowserClosed(1000);
     }
 
     private void takeScrollableScreenshots(String id, String filePrefix) {
