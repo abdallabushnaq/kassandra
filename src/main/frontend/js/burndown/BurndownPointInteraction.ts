@@ -68,7 +68,7 @@ export class BurndownPointInteraction {
         if (!layer)
             return;
         const doc = this.viewport.ownerDocument;
-        const color = ColorUtils.intToHex(this.renderer.theme.burndownTheme.borderColor, '#334155');
+        const color = ColorUtils.intToHex(this.renderer.theme.burndownTheme.borderColor);
         for (const point of this.renderer.actualInspectionPoints) {
             const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('class', 'burndown-actual-point');

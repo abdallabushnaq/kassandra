@@ -125,8 +125,8 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //     const xAxesTheme = this.theme.xAxesTheme;
     //
     //     if (this.dayWidth >= 4) {
-    //         const satColor = intToHex(xAxesTheme.dayOfweekSaturdayBgColor, '');
-    //         const sunColor = intToHex(xAxesTheme.dayOfweekSundayBgColor, '');
+    //         const satColor = intToHex(xAxesTheme.dayOfweekSaturdayBgColor);
+    //         const sunColor = intToHex(xAxesTheme.dayOfweekSundayBgColor);
     //         const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
     //         const lastDay = Math.min(this.totalDays - 1, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
     //         for (let d = firstDay; d <= lastDay; d++) {
@@ -138,7 +138,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //             g.appendChild(SvgUtils.createRect(xPos, baseY, this.dayWidth, baseHeight, {fill: bgColor}));
     //         }
     //     } else {
-    //         const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //         const gridColor = intToHex(this.theme.ganttTheme.gridColor);
     //         const firstD = Math.max(0, Math.floor(this.scrollOffset));
     //         const lastD = Math.min(this.totalDays - 1, firstD + Math.ceil(containerWidth / this.dayWidth) + 8);
     //         for (let dd = firstD; dd <= lastD; dd++) {
@@ -157,7 +157,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
     //     const g = SvgUtils.createGroup({class: 'grid-lines'});
     //     if (this.dayWidth < 4) return g;
     //     const containerWidth = this.containerWidth;
-    //     const gridColor = intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //     const gridColor = intToHex(this.theme.ganttTheme.gridColor);
     //     const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
     //     const lastDay = Math.min(this.totalDays, firstDay + Math.ceil(containerWidth / this.dayWidth) + 2);
     //     for (let d = firstDay; d <= lastDay; d++) {
@@ -207,7 +207,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                     const progressWidth = Math.max(0, sprintW - 2) * progress;
                     if (progressWidth > 0) {
                         const progressY = laneY + (SPRINT_H - SPRINT_PROGRESS_H) / 2;
-                        const progressColor = ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintProgressColor, '#1676f3');
+                        const progressColor = ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintProgressColor);
                         g.appendChild(SvgUtils.createRect(sprintX + 1, progressY, progressWidth, SPRINT_PROGRESS_H, {fill: progressColor}));
                     }
                 }
@@ -226,7 +226,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                 const nameClipWidth = Math.max(0, sprintW - visibleStatusBadgeWidth - (showStatus ? 4 : 2));
                 g.appendChild(SvgUtils.createClipPath(`${clipId}_name`, sprintX + 1, laneY, nameClipWidth, SPRINT_H));
                 g.appendChild(SvgUtils.createText(sprintX + 1, textY, sprintName, {
-                    fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintTextColor, '#202124'),
+                    fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintTextColor),
                     'font-size': '12',
                     'font-family': 'Arial,sans-serif',
                     'font-weight': 'bold',
@@ -258,7 +258,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                 if (datesFit && this.showDetail(this.zoomSettings.renderSprintStartDateAtDayWidth)) {
                     g.appendChild(SvgUtils.createClipPath(`${clipId}_start`, sprintX + 3, laneY, dateWidth, SPRINT_H));
                     g.appendChild(SvgUtils.createText(sprintX + 3, dateY, startDate, {
-                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintDateTextColor, '#a0a0a0'),
+                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintDateTextColor),
                         'font-size': '10',
                         'font-family': 'Arial,sans-serif',
                         'clip-path': `url(#${clipId}_start)`,
@@ -267,7 +267,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
                 if (datesFit && this.showDetail(this.zoomSettings.renderSprintEndDateAtDayWidth)) {
                     g.appendChild(SvgUtils.createClipPath(`${clipId}_end`, sprintX + sprintW / 2, laneY, dateWidth, SPRINT_H));
                     g.appendChild(SvgUtils.createText(sprintX + sprintW - 3, dateY, endDate, {
-                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintDateTextColor, '#a0a0a0'),
+                        fill: ColorUtils.intToHex(this.theme.sprintOverviewTheme.sprintDateTextColor),
                         'font-size': '10',
                         'font-family': 'Arial,sans-serif',
                         'text-anchor': 'end',
@@ -283,13 +283,13 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         const theme = this.theme.sprintOverviewTheme;
         switch (status) {
             case 'CREATED':
-                return ColorUtils.intToHex(theme.createdSprintBgColor, '#d9e8ff');
+                return ColorUtils.intToHex(theme.createdSprintBgColor);
             case 'STARTED':
-                return ColorUtils.intToHex(theme.startedSprintBgColor, '#9bc9ff');
+                return ColorUtils.intToHex(theme.startedSprintBgColor);
             case 'CLOSED':
-                return ColorUtils.intToHex(theme.closedSprintBgColor, '#e5e7eb');
+                return ColorUtils.intToHex(theme.closedSprintBgColor);
             default:
-                return ColorUtils.intToHex(theme.createdSprintBgColor, '#d9e8ff');
+                return ColorUtils.intToHex(theme.createdSprintBgColor);
         }
     }
 

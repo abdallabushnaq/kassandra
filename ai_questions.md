@@ -165,19 +165,3 @@ Can you suggest a better design for our undo/redo architecture that is more prac
 ColorUtils.intToHex takes 2 parameters, the second one being a default color. let's get rid of that second parameter
 everywhere we call it and throw an exception if the color is null.
 
-# Screenshot Generation
-
-GenerateScreenshotsIT generates screenshots for both light/dark themes.
-Often during the generation of the dark theme some charts are drawn using the light theme.
-These are
-
-1. active-sprints
-2. active-sprints-board-features
-
-The rest of the screen is correctly drawn in dark theme.
-Just before taking that first screenshot, we login as ACTIVE_SPRINT_USER_NAME.
-As the screenshots are not always in light theme mode, we assume that it is a timing issue.
-It seems that they are redrawn after about 1s in dark mode, but we take the screenshot before that happens.
-I disabled most of the test code to reduce the time it takes to run it to ~2min.
-How can we wait for the chart to be drawn in dark mode before taking the screenshot?
-

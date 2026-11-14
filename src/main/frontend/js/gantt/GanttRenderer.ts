@@ -129,7 +129,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
                 if (ex?.letter && this.dayWidth >= 14) {
                     const cx = x1 + this.dayWidth / 2;
                     const letter = SvgUtils.createText(cx, y1 + this.getTaskHeight() / 2 + 1, ex.letter, {
-                        fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+                        fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor),
                         ...SvgUtils.createFontSpecAttribute(GanttRenderer.noneWorkingDayFont),
                         'text-anchor': 'middle',
                         'dominant-baseline': 'alphabetic',
@@ -139,7 +139,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
                     g.appendChild(letter);
                 }
             } else {
-                const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+                const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor);
                 g.appendChild(SvgUtils.createLine(dayLeft + this.dayWidth, y1, dayLeft + this.dayWidth, y1 + this.getTaskHeight() + 1, {
                     stroke: gridColor,
                     'vector-effect': 'non-scaling-stroke',

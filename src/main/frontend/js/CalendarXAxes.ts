@@ -213,7 +213,7 @@ export class CalendarXAxes {
         const FLAG_HEIGHT = 13;
         const theme = this.parent.theme;
         const darkRed = '#ff0000';
-        const milestoneTextColor = ColorUtils.intToHex(theme.xAxesTheme?.milestoneTextColor, '#ffffff');
+        const milestoneTextColor = ColorUtils.intToHex(theme.xAxesTheme?.milestoneTextColor);
 
         if (text?.charAt(0) === 'N' && drawNowLine) {
             // now line

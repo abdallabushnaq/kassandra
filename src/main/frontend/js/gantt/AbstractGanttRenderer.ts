@@ -91,12 +91,12 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const exception = getCalendarException(dayDate, this.getCalendarExceptions(task));
         if (exception) {
             const t = exception.type;
-            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor, '#a0c8ff');
-            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor, '#c8a0ff');
-            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor, '#ffa0a0');
-            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor, '#ffd0a0');
+            if (t === 'VACATION') return ColorUtils.intToHex(this.theme.ganttTheme.vacationBgColor);
+            if (t === 'TRIP') return ColorUtils.intToHex(this.theme.ganttTheme.tripBgColor);
+            if (t === 'SICK') return ColorUtils.intToHex(this.theme.ganttTheme.sickBgColor);
+            return ColorUtils.intToHex(this.theme.ganttTheme.holidayBgColor);
         }
-        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor, '#d7d7d7');
+        return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfMonthWeekendBgColor);
     }
 
     drawConflictMarker(_g: SVGElement, _y: number, _conflict: unknown): void { /* team planner only */
@@ -105,7 +105,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     // override drawDayBars(g: SVGElement, dayDate: Date, calendarH = 0): void {
     //     const dayIdx = calculateDayIndex(dayDate, this.chartStart!);
     //     const dayLeft = this.dayIndexToPixelX(dayIdx);
-    //     const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
+    //     const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor);
     //     for (const task of this.tasks) {
     //         const rowY = calendarH + task.rowIndex * (this.getTaskHeight() + 1);
     //         g.appendChild(SvgUtils.createRect(dayLeft, rowY - 1, this.dayWidth, 1, {fill: gridColor}));
@@ -116,7 +116,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     //         if (exception?.letter && this.dayWidth >= 14) {
     //             const cx = dayLeft + this.dayWidth / 2;
     //             const letter = SvgUtils.createText(cx, rowY + LINE_HEIGHT / 2, exception.letter, {
-    //                 fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor, '#ffffff'),
+    //                 fill: ColorUtils.intToHex(this.theme.ganttTheme.outOfOfficeColor),
     //                 'font-size': String(NONE_WORKING_DAY_FONT_SIZE),
     //                 'font-family': 'sans-serif', 'font-weight': 'bold',
     //                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
@@ -129,17 +129,17 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
     // getDayOfWeekStripBgColor(dayDate: Date): string {
     //     const dow = dayDate.getDay();
-    //     if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor, '#d7d7d7');
-    //     if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor, '#d7d7d7');
-    //     return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor, '#ffffff');
+    //     if (dow === 6) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSaturdayBgColor);
+    //     if (dow === 0) return ColorUtils.intToHex(this.theme.chartTheme.dayOfweekSundayBgColor);
+    //     return ColorUtils.intToHex(this.theme.xAxesTheme.dayOfweekBgColor);
     // }
 
     drawTaskBorder(g: SVGElement, task: TaskDto, x1: number, x2: number, y: number): void {
         if (SvgUtils.isClipped(x1, x2, this.chart.containerWidth))
             return;
         const borderColor = task.critical
-            ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor, '#ff0000')
-            : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor, '#888888');
+            ? ColorUtils.intToHex(this.theme.ganttTheme.criticalTaskBorderColor)
+            : ColorUtils.intToHex(this.theme.ganttTheme.taskBorderColor);
 
         // Calculate days between start and finish (both truncated to day precision)
         const startTruncated = DateUtils.getDayMidnight(task.start!);
@@ -217,8 +217,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const x2 = x1 + this.calendarXAxes.dayOfWeek.getWidth();
         // const x1 = this.dayIndexToPixelX(0);
         // const x2 = x1 + this.dayWidth;
-        const fillColor = ColorUtils.intToHex(this.theme.ganttTheme.idBgColor, '#cccccc');
-        const textColor = ColorUtils.intToHex(this.theme.ganttTheme.idTextColor, '#000000');
+        const fillColor = ColorUtils.intToHex(this.theme.ganttTheme.idBgColor);
+        const textColor = ColorUtils.intToHex(this.theme.ganttTheme.idTextColor);
         g.appendChild(SvgUtils.createRect(x1 + 1, y - this.getTaskHeight() / 2, x2 - x1 - 1, this.getTaskHeight(), {fill: fillColor}));
         const keyText = SvgUtils.createText(x1 + 4, y, task.key || '', {
             fill: textColor, 'font-size': '12', 'font-family': 'sans-serif', 'dominant-baseline': 'middle',
@@ -255,7 +255,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         });
         poly.appendChild(SvgUtils.createTitle(this.generateTaskToolTip(task)));
         g.appendChild(poly);
-        const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
+        const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor);
         const labelX = x1 + mW / 2 + 10;
         const showDate = this.showDetail(this.ganttZoom.renderMilestoneStartDateAtDayWidth);
         const showTime = this.showDetail(this.ganttZoom.renderMilestoneStartTimeAtDayWidth);
@@ -300,8 +300,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         if (xExit <= 0 || Math.min(x1, xEntry) >= this.chart.containerWidth)
             return;
         const arrowColor = (sourceTask.critical && targetTask.critical)
-            ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
-            : ColorUtils.intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
+            ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor)
+            : ColorUtils.intToHex(this.theme.ganttTheme.relationColor);
         g.style.setProperty('--dependency-color', arrowColor);
         const arrowLength = 5;
         const path = [
@@ -358,7 +358,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
             return;
         const fillColor = task.fillColor
             ? ColorUtils.convertSprintColorToRgba(task.fillColor)
-            : ColorUtils.intToHex(this.theme.ganttTheme.storyColor, '#444444');
+            : ColorUtils.intToHex(this.theme.ganttTheme.storyColor);
         const tooltip = this.generateTaskToolTip(task);
         const th = this.getTaskHeight();
 
@@ -420,7 +420,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         marker: string | null,
         conflict: unknown,
     ): void {
-        const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor, '#303030');
+        const textColor = task.textColor || ColorUtils.intToHex(this.theme.ganttTheme.taskTextColor);
         const taskName = task.name || '';
         const th = this.getTaskHeight();
 
@@ -573,7 +573,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
 
                 // Progress bar
                 // if (progress > 0.0 && this.showDetail(this.ganttZoom.renderTaskProgressBarAtDayWidth)) {
-                //     const progressFill = ColorUtils.intToHex(this.theme.ganttTheme.progressColor, '#0000ff');
+                //     const progressFill = ColorUtils.intToHex(this.theme.ganttTheme.progressColor);
                 //     const progressW = (x2 - x1) * progress;
                 //     if (progressW > 0) {
                 //         const pRect = SvgUtils.createRect(x1, y1 + h - TASK_PROGRESS_BOTTOM_GAP - TASK_PROGRESS_HEIGHT, progressW, TASK_PROGRESS_HEIGHT, {

@@ -348,8 +348,8 @@ export class BurndownRenderer extends AbstractRenderer {
 
     // ── Java: protected void drawAuthor(int x, int y, int with, Color fillColor, String text, ...) ──
     private drawAuthor(svg: SVGElement, x: number, y: number, width: number, fillColor: number, text: string): void {
-        const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor, '#334155');
-        svg.appendChild(SvgUtils.createRect(x, y - 6, width + 4, 12, {fill: ColorUtils.intToHex(fillColor, '#1f8fff')}));
+        const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor);
+        svg.appendChild(SvgUtils.createRect(x, y - 6, width + 4, 12, {fill: ColorUtils.intToHex(fillColor)}));
         svg.appendChild(SvgUtils.createText(x + 2, y + 3, text, {
             fill: textColor, 'font-size': '10px', 'font-family': 'sans-serif', 'font-weight': 'bold',
         }));
@@ -432,7 +432,7 @@ export class BurndownRenderer extends AbstractRenderer {
                         const DayFromDayIndex = this.calendarFromDayIndex(dayIndex - 1);
                         this.drawPolygon(group, yesterdayX, yesterdayY, yesterdayY2, lastX - 1, lastY, lastY2,
                             authorIndex === authors.length - 1, DateUtils.isWorkDay(DayFromDayIndex),
-                            ColorUtils.intToHex(this.theme.burndownTheme.borderColor, '#334155'),
+                            ColorUtils.intToHex(this.theme.burndownTheme.borderColor),
                             this.generateBurnDownColor(author.color), tooltip, author.userName || '');
                     }
                     yesterdayX = lastX;
@@ -524,7 +524,7 @@ export class BurndownRenderer extends AbstractRenderer {
         const lastDay = this.milestones.get('E')!.time;
         const workingDays = DateUtils.calculateWorkingDaysIncluding(firstDay, lastDay);
         const workPerWorkingDay = estimatedWork / workingDays;
-        const color = ColorUtils.intToHex(this.theme.burndownTheme.optimaleGuideColor, '#a855f7');
+        const color = ColorUtils.intToHex(this.theme.burndownTheme.optimaleGuideColor);
 
         let workingdays = 0;
         let lastX = firstDayX + (DateUtils.calculateDays(firstDay, firstDay) - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth() - this.calendarXAxes.dayOfWeek.getWidth() / 2 + 1;
@@ -555,7 +555,7 @@ export class BurndownRenderer extends AbstractRenderer {
         } else {
             lastY = this.diagram.y + this.diagram.height - this.calculateGraphHeight(this.maxWorked);
         }
-        const color = ColorUtils.intToHex(this.theme.burndownTheme.plannedGuideColor, '#3b82f6');
+        const color = ColorUtils.intToHex(this.theme.burndownTheme.plannedGuideColor);
 
         // Java: guide.getSize() — the guide's own (firstMilestone-relative) length.
         // const guideSize = guide.length - this.legacyCalendarXAxes.priRun;
@@ -583,7 +583,7 @@ export class BurndownRenderer extends AbstractRenderer {
     // ── Java: private void drawWatermark(int x, int y, String watermark, Color watermarkColor) ──
     private drawWatermark(svg: SVGElement, x: number, y: number, watermark: string, watermarkColor: number | null): void {
         svg.appendChild(SvgUtils.createText(x, y, watermark, {
-            fill: ColorUtils.intToHex(watermarkColor, '#787878'),
+            fill: ColorUtils.intToHex(watermarkColor),
             'font-size': '64px', 'font-family': 'Arial, sans-serif', 'font-weight': 'bold',
         }));
     }
@@ -609,9 +609,9 @@ export class BurndownRenderer extends AbstractRenderer {
             markUnit = 'pd';
         }
         const plotBottom = this.diagram.y + this.diagram.height;
-        const tickColor = ColorUtils.intToHex(this.theme.burndownTheme.ticksColor, '#94a3b8');
-        const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor, '#e4e8f3');
-        const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor, '#334155');
+        const tickColor = ColorUtils.intToHex(this.theme.burndownTheme.ticksColor);
+        const gridColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor);
+        const textColor = ColorUtils.intToHex(this.theme.burndownTheme.tickTextColor);
         let lastMarkY = 99999;
         for (let timeMark = 0; timeMark < estimatedWork; timeMark += mark) {
             const markY = plotBottom - 1 - this.calculateGraphHeight(timeMark);

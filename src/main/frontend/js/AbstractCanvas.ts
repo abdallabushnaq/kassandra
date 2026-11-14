@@ -61,7 +61,7 @@ export abstract class AbstractCanvas {
 
     /** Fills the entire SVG with the theme background color. */
     drawBackground(svg: SVGElement): void {
-        const bgColor = ColorUtils.intToHex(this.theme.chartTheme.backgroundColor, '#fffff0');
+        const bgColor = ColorUtils.intToHex(this.theme.chartTheme.backgroundColor);
         const rect = SvgUtils.createRect(0, 0, this.chartWidth, this.chartHeight, {fill: bgColor});
         this.backgroundEl = rect;
         svg.appendChild(rect);
@@ -69,7 +69,7 @@ export abstract class AbstractCanvas {
 
     /** Draws a 1px border around the chart. */
     drawBorder(svg: SVGElement): void {
-        const borderColor = ColorUtils.intToHex(this.theme.chartTheme.chartBorderColor, '#aaaaaa');
+        const borderColor = ColorUtils.intToHex(this.theme.chartTheme.chartBorderColor);
         const rect = SvgUtils.createRect(0.5, 0.5, this.chartWidth - 1, this.chartHeight - 1, {
             fill: 'none',
             stroke: borderColor,

@@ -37,7 +37,7 @@ export class FooterElement extends TextElement {
     }
 
     protected getTextColor(): string {
-        return ColorUtils.intToHex(this.theme.chartTheme.footerTextColor, '#2c7bf4');
+        return ColorUtils.intToHex(this.theme.chartTheme.footerTextColor);
     }
 
     protected getTextY(_rightAligned: boolean, _lineIndex: number): number {

@@ -53,7 +53,7 @@ export class CaptionElement extends TextElement {
     }
 
     protected getTextColor(): string {
-        return ColorUtils.intToHex(this.theme.chartTheme.captionTextColor, '#2c7bf4');
+        return ColorUtils.intToHex(this.theme.chartTheme.captionTextColor);
     }
 
     protected getFont(rightAligned: boolean): FontSpec {

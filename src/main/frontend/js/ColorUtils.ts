@@ -34,27 +34,23 @@ export class ColorUtils {
      * Converts a 0xRRGGBB ro 0xAARRGGBB integer (as sent by the server ThemeDto) to a CSS hex color string.
      * Mirrors the inverse of Java ThemeDto.rgb() helper.
      *
-     * @param value   0xRRGGBB integer, or null/undefined/string
-     * @param fallback default color when value is null (defaults to '#ffffff')
+     * @param value 0xRRGGBB integer or CSS color string
      * @returns CSS hex color string, e.g. '#3a7bc8'
      */
-    static intToHex(value: number | string | null, fallback = '#ffffff'): string {
+    static intToHex(value: number | string | null): string {
         if (value == null)
-            return fallback;
+            throw new TypeError('Color must not be null');
         if (typeof value === 'string')
             return value;
-        if (typeof value === 'number') {
-            const unsigned = value >>> 0;
-            const r = (unsigned >> 16) & 0xff;
-            const g = (unsigned >> 8) & 0xff;
-            const b = unsigned & 0xff;
-            let a = (unsigned >> 24) & 0xff;
-            if (a == 0)
-                a = 0xff;
-            return '#' + [r, g, b, a].map(x => x.toString(16).padStart(2, '0')).join('');
-            // return '#' + (value >>> 0).toString(16).padStart(6, '0').slice(-6);
-        }
-        return fallback;
+        const unsigned = value >>> 0;
+        const r = (unsigned >> 16) & 0xff;
+        const g = (unsigned >> 8) & 0xff;
+        const b = unsigned & 0xff;
+        let a = (unsigned >> 24) & 0xff;
+        if (a == 0)
+            a = 0xff;
+        return '#' + [r, g, b, a].map(x => x.toString(16).padStart(2, '0')).join('');
+        // return '#' + (value >>> 0).toString(16).padStart(6, '0').slice(-6);
     }
 
     /**
