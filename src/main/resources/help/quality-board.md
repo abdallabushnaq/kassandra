@@ -41,6 +41,12 @@ guarantee of delivery dates.
 Zoom in to reveal additional Gantt task and milestone details and dependency
 lines; zooming out simplifies the task bars.
 
+Hover over an author's actual-work dot in the burn-down plot to see the day's
+total remaining work and the author's share. Overlapping dots list all authors
+at that boundary. Values reflect recorded work through the end of the day (or
+so far today) and use working weeks, days, hours and minutes. Forecasts and
+future days are not inspected.
+
 Select a task, story or milestone to show its details and highlight its direct
 visible predecessor relations. Indirect and hidden resource dependencies are
 excluded from the inspection; direct arrows remain visible even when zoomed out.

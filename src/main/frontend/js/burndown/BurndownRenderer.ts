@@ -43,6 +43,15 @@ const PLOT_HEIGHT = 240;
 
 let burndownClipSeq = 0;
 
+export interface ActualInspectionPoint {
+    date: Date;
+    seconds: number;
+    authorName: string;
+    authorSeconds: number;
+    x: number;
+    y: number;
+}
+
 /**
  * Standard agile burn down chart, based on logged work in jira tickets of a
  * specific sprint.
@@ -51,6 +60,8 @@ let burndownClipSeq = 0;
  */
 export class BurndownRenderer extends AbstractRenderer {
     readonly data: GanttBurndownChartDto;
+    actualInspectionPoints: readonly ActualInspectionPoint[] = [];
+    inspectionLayer: SVGGElement | null = null;
 
     // ── fields mirroring LegacyBurnDownRendererLegacy.java ──────────────────────────────
     /**
@@ -147,6 +158,8 @@ export class BurndownRenderer extends AbstractRenderer {
 
     // ── Java: public void draw(ExtendedGraphics2D graphics2D, int x, int y) ──
     override draw(svg: SVGElement, x: number, y: number): void {
+        this.actualInspectionPoints = [];
+        this.inspectionLayer = null;
         // Java: init(dao) -> initSize(...) is called once during construction; here we redo the
         // size computation on every draw() because containerWidth/dayWidth can change between
         // renders (interactive zoom/pan/resize), unlike the static Java export.
@@ -308,6 +321,9 @@ export class BurndownRenderer extends AbstractRenderer {
         this.drawAuthorLegend(svg, legendX);
         this.drawLegend(svg, legendX, this.diagram.y, this.extrapolationColor);
 
+        this.inspectionLayer = SvgUtils.createGroup({class: 'burndown-inspection-layer', 'pointer-events': 'none'});
+        svg.appendChild(this.inspectionLayer);
+
         // ---Maybe this is a test case ticket? (nothing to draw)
     }
 
@@ -357,6 +373,13 @@ export class BurndownRenderer extends AbstractRenderer {
         // graphHeight[dayIndex] = the accumulated stacked band height of all authors drawn so far
         const days = DateUtils.calculateDays(firstDay, maxLastOrNow) + 1;
         const graphHeight = new Array<number>(days + 3).fill(0);
+        const remaining = new Array<number>(days + 3).fill(0);
+        const valid = new Array<boolean>(days + 3).fill(true);
+        const reportingDay = this.currentDate ?? DateUtils.getDayMidnight(new Date());
+        const lastDayIndex = Math.min(DateUtils.calculateDays(firstDay, minLastOrNow),
+            DateUtils.calculateDays(firstDay, reportingDay));
+        const authorPoints = new Map<number, {authorName: string; authorSeconds: number; y: number}[]>();
+        let renderedAuthors = 0;
 
         let authorIndex = 0;
         for (const author of authors) {
@@ -365,6 +388,7 @@ export class BurndownRenderer extends AbstractRenderer {
                 authorIndex++;
                 continue;
             }
+            renderedAuthors++;
 
             let yesterdayX = 0, yesterdayY = 0, yesterdayY2 = 0;
             let lastX = 0, lastY = 0, lastY2 = 0;
@@ -379,7 +403,23 @@ export class BurndownRenderer extends AbstractRenderer {
                 if (dayIndex <= maxDayIndex + 2) {
                     // const arrIndex = this.toArrayIndex(dayIndex);
                     currentDayAuthorGraphHeight = this.calculateAuthorGraphHeight(author.accumulatedWorkPerDay[dayIndex], authorEstimatedWork, this.maxWorked);
+                    if (Number.isFinite(author.accumulatedWorkPerDay[dayIndex]))
+                        remaining[dayIndex] += authorEstimatedWork - author.accumulatedWorkPerDay[dayIndex];
+                    else
+                        valid[dayIndex] = false;
                     y = this.diagram.y + this.diagram.height - graphHeight[dayIndex] - currentDayAuthorGraphHeight;
+                    const pointX = x - this.dayWidth / 2;
+                    if (dayIndex >= 1 && dayIndex <= lastDayIndex + 1
+                        && pointX >= this.diagram.x && pointX <= this.containerWidth
+                        && Number.isFinite(author.accumulatedWorkPerDay[dayIndex]) && Number.isFinite(y)) {
+                        const points = authorPoints.get(dayIndex) ?? [];
+                        points.push({
+                            authorName: author.userName || 'Unknown',
+                            authorSeconds: authorEstimatedWork - author.accumulatedWorkPerDay[dayIndex],
+                            y,
+                        });
+                        authorPoints.set(dayIndex, points);
+                    }
                     if (dayIndex > 0) {
                         const tIdx = dayIndex - 1;
                         tooltip = (tIdx >= 0 && tIdx < author.tooltipPerDay.length) ? author.tooltipPerDay[tIdx] : null;
@@ -410,6 +450,25 @@ export class BurndownRenderer extends AbstractRenderer {
         }
 
         svg.appendChild(group);
+        if (renderedAuthors) {
+            const points: ActualInspectionPoint[] = [];
+            for (const [index, samples] of authorPoints) {
+                if (!valid[index] || !Number.isFinite(graphHeight[index]))
+                    continue;
+                const x = firstDayX + (index - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth - this.dayWidth / 2;
+                for (const sample of samples) {
+                    points.push({
+                        date: DateUtils.addDay(firstDay, index - 1),
+                        seconds: remaining[index],
+                        authorName: sample.authorName,
+                        authorSeconds: sample.authorSeconds,
+                        x,
+                        y: sample.y,
+                    });
+                }
+            }
+            this.actualInspectionPoints = points;
+        }
     }
 
     private generateBurnDownColor(color: number): string {
@@ -451,10 +510,6 @@ export class BurndownRenderer extends AbstractRenderer {
             fill: color,
             stroke: 'none'
         });
-        if (tooltip) {
-            polygon.setAttribute('data-tooltip-html', tooltip);
-            polygon.setAttribute('pointer-events', 'all');
-        }
         svg.appendChild(polygon);
         if (drawBorder) {
             svg.appendChild(SvgUtils.createLine(x1 - dw / 2, y1, x2 - 1 - dw / 2, y2, {

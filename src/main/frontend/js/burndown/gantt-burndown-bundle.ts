@@ -26,6 +26,7 @@ import {BurndownRenderer} from './BurndownRenderer.js';
 import {GanttBurndownChart} from './GanttBurndownChart.js';
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 import {GanttTaskInteraction} from '../gantt/GanttTaskInteraction.js';
+import {BurndownPointInteraction} from './BurndownPointInteraction.js';
 
 function createTooltipElement(container: HTMLElement): HTMLDivElement {
     const tooltip = document.createElement('div');
@@ -59,6 +60,7 @@ export function createGanttBurndownChart(
     const gantt = chart.renderers[1] as GanttRenderer;
     const inspection = new GanttTaskInteraction(container, gantt, theme);
     const viewport = inspection.viewport;
+    const points = new BurndownPointInteraction(viewport, burndown);
 
     function ensureTooltip(): HTMLDivElement {
         let tooltip = viewport.querySelector<HTMLDivElement>('.gantt-burndown-tooltip');
@@ -115,6 +117,7 @@ export function createGanttBurndownChart(
         afterRender: () => {
             ensureTooltip();
             inspection.afterRender();
+            points.afterRender();
         },
         initialScrollOffset: (dayWidth, containerWidth) => {
             const referenceDate = gantt.currentDate || burndown.currentDate || new Date(data.meta.sprintStart);
@@ -125,7 +128,19 @@ export function createGanttBurndownChart(
     });
     interactiveChart.addEventListener('mousemove', handleMouseMove as EventListener);
     interactiveChart.addEventListener('mouseleave', hideTooltip as EventListener);
-    const handle = inspection.attach(interactiveChart);
+    interactiveChart.addEventListener('pointermove', (event => points.handlePointerMove(event as PointerEvent)) as EventListener);
+    interactiveChart.addEventListener('pointerleave', () => points.clear());
+    interactiveChart.addEventListener('pointerdown', () => points.clear());
+    interactiveChart.addEventListener('pointercancel', () => points.clear());
+    interactiveChart.addEventListener('wheel', () => points.clear());
+    const handle = inspection.attach({
+        render: () => interactiveChart.render(),
+        schedule: () => interactiveChart.schedule(),
+        destroy: () => {
+            points.destroy();
+            interactiveChart.destroy();
+        },
+    });
     handle.render();
     container.setAttribute(CHART_RENDERED_THEME_ATTRIBUTE, theme.themeVariance);
     return handle;

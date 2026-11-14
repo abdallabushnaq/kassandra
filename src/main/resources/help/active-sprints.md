@@ -71,6 +71,12 @@ Missing assignments, estimates or worklogs can affect the displayed forecast.
 Zoom in to reveal additional Gantt task and milestone details and dependency
 lines; zooming out simplifies the task bars.
 
+Hover over a dot on an author's burn-down boundary to see that day's total
+remaining work and the author's share. Overlapping dots list all authors at
+that boundary. Values reflect recorded work through the end of the day (or so
+far today) and use working weeks, days, hours and minutes. Forecasts and future
+days are not inspected.
+
 Click a task, story or milestone to inspect its details and highlight its direct
 visible predecessor relations. These remain visible when zoomed out; indirect
 and hidden resource dependencies are excluded from the inspection. Details dock

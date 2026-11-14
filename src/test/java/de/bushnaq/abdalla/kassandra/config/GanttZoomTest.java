@@ -56,6 +56,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -106,6 +107,16 @@ public class GanttZoomTest extends AbstractTestUtil {
     @Test
     public void inspectsTaskPredecessors() throws Exception {
         verifyCharts("verifyGanttInspection");
+    }
+
+    /**
+     * Checks actual burn-down point inspection and real mouse movement.
+     *
+     * @throws Exception if chart generation or browser verification fails
+     */
+    @Test
+    public void inspectsBurndownPoints() throws Exception {
+        verifyCharts("verifyBurndownPoints");
     }
 
     private void verifyCharts(String browserVerification) throws Exception {
@@ -191,6 +202,21 @@ public class GanttZoomTest extends AbstractTestUtil {
                 assertEquals("ok", result, "browser Gantt verification result: " + result);
                 if ("verifyGanttInspection".equals(browserVerification))
                     verifyPointerInspection(driver, jsonMapper.writeValueAsString(gantt), jsonMapper.writeValueAsString(combined));
+                if ("verifyBurndownPoints".equals(browserVerification)) {
+                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                    WebElement point = driver.findElement(By.cssSelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Alice']"));
+                    new Actions(driver).moveToElement(point).perform();
+                    wait.until(ignored -> driver.findElement(By.cssSelector(".burndown-point-readout")).isDisplayed());
+                    assertEquals("2025-06-01", driver.findElement(By.cssSelector(".burndown-point-readout")).getAttribute("data-date"));
+                    assertTrue(driver.findElement(By.cssSelector(".burndown-point-readout")).getText().contains("Alice: 6h 30m"));
+                    WebElement upper = driver.findElement(By.cssSelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Bob']"));
+                    new Actions(driver).moveToElement(upper).perform();
+                    String upperReadout = driver.findElement(By.cssSelector(".burndown-point-readout")).getText();
+                    assertTrue(upperReadout.contains("Bob: 3h 15m"));
+                    assertTrue(upperReadout.contains("Carol: 0m"));
+                    new Actions(driver).moveByOffset(30, 30).perform();
+                    wait.until(ignored -> !driver.findElement(By.cssSelector(".burndown-point-readout")).isDisplayed());
+                }
             } finally {
                 driver.quit();
             }

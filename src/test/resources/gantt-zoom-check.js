@@ -652,3 +652,105 @@ export async function verifyGanttInspection(gantt, combined) {
         }
     }
 }
+
+            /** Exercises actual daily burn-down inspection using known stacked values. */
+            export async function verifyBurndownPoints(gantt, source) {
+                await import('/js/generated/burndown/gantt-burndown-bundle.js');
+                const data = structuredClone(source);
+                data.meta.maxWorkedSeconds = 40500;
+                data.meta.estimatedBestWorkSeconds = 40500;
+                data.authors = [
+                    {userName: 'Alice', color: 0xff336699, totalWorkedSeconds: 18000, totalRemainingSeconds: 9000,
+                        accumulatedWorkPerDay: [0, 3600, 7200, 7200, 10800, 14400, 18000, ...Array(20).fill(18000)], tooltipPerDay: []},
+                    {userName: 'Bob', color: 0xffaa6633, totalWorkedSeconds: 7200, totalRemainingSeconds: 6300,
+                        accumulatedWorkPerDay: [0, 1800, 1800, 3600, 3600, 5400, 7200, ...Array(20).fill(7200)], tooltipPerDay: []},
+                    {userName: 'Carol', color: 0xff448855, totalWorkedSeconds: 3600, totalRemainingSeconds: 0,
+                        accumulatedWorkPerDay: [0, ...Array(26).fill(3600)], tooltipPerDay: []},
+                ];
+                const mount = (dayWidth = 40, visualScale = 1) => {
+                    state(dayWidth, visualScale);
+                    document.getElementById('chart').style.width = '1600px';
+                    window.mountGanttBurndownChart('chart', data, 'Burn-down inspection');
+                };
+                const hover = point => {
+                    const svg = point.ownerSVGElement;
+                    const screen = svg.createSVGPoint();
+                    screen.x = Number(point.getAttribute('cx'));
+                    screen.y = Number(point.getAttribute('cy'));
+                    const location = screen.matrixTransform(point.getScreenCTM());
+                    document.querySelector('.gantt-inspection-viewport').dispatchEvent(new PointerEvent('pointermove', {
+                        bubbles: true, clientX: location.x, clientY: location.y, pointerType: 'mouse',
+                    }));
+                };
+                mount();
+                const point = document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Alice']");
+                const upper = document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Bob']");
+                const overlapping = document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Carol']");
+                assertPresent(point, 'first actual end-of-day point');
+                assertPresent(upper, 'upper author point');
+                assertPresent(overlapping, 'overlapping author point');
+                assertEqual(point.dataset.seconds, '35100', 'stacked actual remaining');
+                assertEqual(point.dataset.authorSeconds, '23400', 'lower author remaining');
+                assertEqual(upper.dataset.authorSeconds, '11700', 'upper author remaining');
+                assertEqual(overlapping.dataset.authorSeconds, '0', 'zero author remaining');
+                assertCondition(Number(point.getAttribute('cy')) > Number(upper.getAttribute('cy')),
+                    'author boundaries follow the stack', 'lower boundary below upper boundary', point.getAttribute('cy'));
+                assertCondition(Math.abs(Number(overlapping.getAttribute('cy')) - Number(upper.getAttribute('cy'))) < 1e-7,
+                    'zero-height boundaries overlap', upper.getAttribute('cy'), overlapping.getAttribute('cy'));
+                assertEqual(document.querySelectorAll('.burndown-actual-point[data-date="2025-06-07"]').length, 0,
+                    'future actual points excluded');
+                assertEqual(document.querySelectorAll('[data-tooltip-html]').length, 0, 'old worklog tooltip removed');
+                const svg = document.querySelector('svg');
+                hover(point);
+                const readout = document.querySelector('.burndown-point-readout');
+                assertEqual(readout.style.display, 'block', 'point hover shows readout');
+                assertCondition(readout.textContent.includes('2025-06-01 (end of day)')
+                    && readout.textContent.includes('Total remaining: 1d 02h 15m')
+                    && readout.textContent.includes('Alice: 6h 30m')
+                    && !readout.textContent.includes('Bob:'), 'lower boundary readout', 'total and Alice', readout.textContent);
+                assertEqual(document.querySelector('.burndown-point-guide').getAttribute('display'), null, 'vertical guide shown');
+                assertEqual(document.querySelector('.burndown-point-marker').getAttribute('display'), null, 'active marker shown');
+                assertEqual(document.querySelector('.burndown-point-marker').getAttribute('fill'), 'red', 'active marker is red');
+                assertEqual(document.querySelector('.burndown-point-marker').getAttribute('r'), '6', 'active marker diameter is 12');
+                hover(upper);
+                assertCondition(readout.textContent.includes('Total remaining: 1d 02h 15m')
+                    && readout.textContent.includes('Bob: 3h 15m')
+                    && readout.textContent.includes('Carol: 0m')
+                    && !readout.textContent.includes('Alice:'), 'overlapping boundary readout', 'total, Bob and Carol', readout.textContent);
+                assertCondition(Math.abs(Number(document.querySelector('.burndown-point-marker').getAttribute('cy'))
+                    - Number(upper.getAttribute('cy'))) < 1e-7, 'marker follows selected boundary',
+                    upper.getAttribute('cy'), document.querySelector('.burndown-point-marker').getAttribute('cy'));
+                assertEqual(document.querySelector('svg'), svg, 'hover does not redraw SVG');
+                document.querySelector('.gantt-inspection-viewport').dispatchEvent(new PointerEvent('pointermove', {
+                    bubbles: true, clientX: 0, clientY: 0, pointerType: 'mouse',
+                }));
+                assertEqual(readout.style.display, 'none', 'moving away clears readout');
+                hover(point);
+                document.querySelector('.gantt-inspection-viewport').dispatchEvent(new PointerEvent('pointermove', {
+                    bubbles: true, buttons: 1, pointerId: 99, pointerType: 'mouse', isPrimary: true,
+                }));
+                assertEqual(readout.style.display, 'none', 'drag start clears readout');
+                window.disposeKassandraChart('chart');
+                assertEqual(document.querySelector('.burndown-point-readout'), null, 'destroy removes readout');
+                mount(20, 1.4);
+                const zoomedPoint = document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Alice']");
+                assertPresent(zoomedPoint, 'author point after zoom');
+                hover(zoomedPoint);
+                assertCondition(document.querySelector('.burndown-point-readout').textContent.includes('Alice: 6h 30m'),
+                    'author inspection after zoom', 'Alice: 6h 30m', document.querySelector('.burndown-point-readout').textContent);
+                window.disposeKassandraChart('chart');
+                data.authors[2].accumulatedWorkPerDay[1] = 3599;
+                mount();
+                hover(document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Bob']"));
+                assertCondition(document.querySelector('.burndown-point-readout').textContent.includes('Carol: 0m'),
+                    'subpixel-separated authors remain inspectable', 'Carol: 0m', document.querySelector('.burndown-point-readout').textContent);
+                window.disposeKassandraChart('chart');
+                data.authors[2].accumulatedWorkPerDay[1] = 3600;
+                data.authors[1].accumulatedWorkPerDay[1] = undefined;
+                mount();
+                assertEqual(document.querySelectorAll(".burndown-actual-point[data-date='2025-06-01']").length, 0,
+                    'incomplete day has no misleading total or author points');
+                window.disposeKassandraChart('chart');
+                data.authors[1].accumulatedWorkPerDay[1] = 1800;
+                mount();
+            }
