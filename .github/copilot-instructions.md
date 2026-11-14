@@ -229,6 +229,13 @@ where.
 | Index TTS container          | (configured separately) | `docker/index-tts/`        | Alternative TTS engine for `IndexTTSIT`                      |
 | Stable Diffusion container   | `http://localhost:7860` | `docker/stable-diffusion/` | Image generation for `StableDiffusionServiceIT`              |
 
+Test application contexts use `CacheAwareAvatarService` to reuse successful Stable Diffusion avatars and headers in
+`public/testCache/stable-diffusion/`. The directory is gitignored and persists across test runs; delete it to regenerate
+images. Cache keys include the composed prompts, model, dimensions, seed, sampling and tiled-diffusion settings. A
+random-seed request reuses its first result, including the actual seed for the matching dark image. Explicitly disabled
+Stable Diffusion still uses the normal fallback and fallback images are never cached. Direct calls to
+`StableDiffusionService` and callers that independently check availability retain their existing behavior.
+
 Start Chatterbox: `cd docker/chatterbox && chatterbox-helper.bat start`
 Start Stable Diffusion: `cd docker/stable-diffusion && docker-compose up -d`
 

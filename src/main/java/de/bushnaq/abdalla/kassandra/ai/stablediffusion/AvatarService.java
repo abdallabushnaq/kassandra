@@ -88,11 +88,27 @@ public class AvatarService {
     public GeneratedImageResult generateDarkAvatar(String basePrompt, String negativePrompt, GeneratedImageResult lightResult,
                                                    StableDiffusionService.ProgressCallback progress)
             throws StableDiffusionException {
+        return generateAvatarImage(themedPrompt(basePrompt, true), negativePrompt, progress, lightResult.getSeed());
+    }
+
+    /**
+     * Generates a square avatar image after its theme prompt has been composed.
+     *
+     * @param prompt composed prompt
+     * @param negativePrompt negative prompt
+     * @param progress optional progress callback
+     * @param seed requested seed
+     * @return generated image and metadata
+     * @throws StableDiffusionException if generation is unavailable or fails
+     */
+    protected GeneratedImageResult generateAvatarImage(String prompt, String negativePrompt,
+                                                        StableDiffusionService.ProgressCallback progress, long seed)
+            throws StableDiffusionException {
         if (!stableDiffusionService.isAvailable()) {
             throw new StableDiffusionException("Stable Diffusion is not available");
         }
-        return stableDiffusionService.text2ImgWithOriginal(themedPrompt(basePrompt, true), negativePrompt,
-                config.getAvatarOutputSize(), progress, lightResult.getSeed(), config.getCfgScale());
+        return stableDiffusionService.text2ImgWithOriginal(prompt, negativePrompt,
+                config.getAvatarOutputSize(), progress, seed, config.getCfgScale());
     }
 
     /**
@@ -157,16 +173,33 @@ public class AvatarService {
                                                             String fallbackIconName, boolean dark, StableDiffusionService.ProgressCallback progress,
                                                             TiledDiffusionOptions options) {
         try {
-            if (!stableDiffusionService.isAvailable()) {
-                throw new StableDiffusionException("Stable Diffusion is not available");
-            }
-            return stableDiffusionService.text2ImgWithOriginal(
-                    prompt, negativePrompt, 1024, HEADER_GENERATION_HEIGHT,
-                    progress, seed, config.getCfgScale(), options);
+            return generateHeaderImage(prompt, negativePrompt, progress, seed, options);
         } catch (StableDiffusionException e) {
             log.warn("Stable Diffusion not available, using default {} header {} with custom background color {}", dark ? "dark" : "light", fallbackIconName != null ? " with icon: " + fallbackIconName : "", dark ? config.getAvatarDarkBackgroundColor() : config.getAvatarLightBackgroundColor());
             return fallbackResult(stableDiffusionService.generateDefaultHeader(fallbackIconName, dark), prompt, negativePrompt, null);
         }
+    }
+
+    /**
+     * Generates a header image after its theme and style have been composed.
+     *
+     * @param prompt composed prompt
+     * @param negativePrompt negative prompt
+     * @param progress optional progress callback
+     * @param seed requested seed
+     * @param options tiled diffusion settings
+     * @return generated image and metadata
+     * @throws StableDiffusionException if generation is unavailable or fails
+     */
+    protected GeneratedImageResult generateHeaderImage(String prompt, String negativePrompt,
+                                                        StableDiffusionService.ProgressCallback progress, long seed,
+                                                        TiledDiffusionOptions options) throws StableDiffusionException {
+        if (!stableDiffusionService.isAvailable()) {
+            throw new StableDiffusionException("Stable Diffusion is not available");
+        }
+        return stableDiffusionService.text2ImgWithOriginal(
+                prompt, negativePrompt, 1024, HEADER_GENERATION_HEIGHT,
+                progress, seed, config.getCfgScale(), options);
     }
 
     /**
@@ -195,11 +228,7 @@ public class AvatarService {
      */
     public GeneratedImageResult generateLightAvatar(String prompt, String negativePrompt, StableDiffusionService.ProgressCallback progress, Long seed)
             throws StableDiffusionException {
-        if (!stableDiffusionService.isAvailable()) {
-            throw new StableDiffusionException("Stable Diffusion is not available");
-        }
-        return stableDiffusionService.text2ImgWithOriginal(themedPrompt(prompt, false), negativePrompt, config.getAvatarOutputSize(),
-                progress, seed != null ? seed : -1L, config.getCfgScale());
+        return generateAvatarImage(themedPrompt(prompt, false), negativePrompt, progress, seed != null ? seed : -1L);
     }
 
     /**

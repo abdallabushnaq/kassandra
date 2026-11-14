@@ -22,8 +22,10 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.AvatarService;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.CacheAwareAvatarService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.GeneratedImageResult;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionConfig;
+import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionException;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.TiledDiffusionOptions;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.sdxl.prompt.CozyStylePrompt;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +57,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -74,6 +84,8 @@ import static org.mockito.Mockito.*;
 @AutoConfigureMockMvc
 @WithMockUser(username = "admin-user", roles = "ADMIN")
 public class AvatarMetadataApiTest extends AbstractTestUtil {
+    @Autowired
+    private AvatarService avatarService;
     @Autowired
     private PersistingEntityGenerator peg;
 
@@ -312,6 +324,205 @@ public class AvatarMetadataApiTest extends AbstractTestUtil {
         assertFalse(AvatarPrompt.getDefaultAvatarPrompt("Developer").contains(AvatarService.LIGHT_PROMPT_SUFFIX));
         assertFalse(IconPrompt.getDefaultAvatarPrompt("Product").contains(AvatarService.DARK_PROMPT_SUFFIX));
         assertFalse(HeaderPrompt.getDefaultHeaderPrompt("Product").contains(AvatarService.LIGHT_PROMPT_SUFFIX));
+    }
+
+    @Test
+    void testContextInjectsCacheAwareAvatarService() {
+        assertInstanceOf(CacheAwareAvatarService.class, avatarService);
+        assertSame(avatarService, ReflectionTestUtils.getField(peg, "avatarService"));
+    }
+
+    @Test
+    void cachePersistsResultsAndSeparatesAvatarParameters(@TempDir Path directory) throws Exception {
+        StableDiffusionService diffusion = mock(StableDiffusionService.class);
+        StableDiffusionConfig config = new StableDiffusionConfig();
+        when(diffusion.isAvailable()).thenReturn(true);
+        when(diffusion.text2ImgWithOriginal(anyString(), nullable(String.class), anyInt(), isNull(), anyLong(), anyDouble()))
+                .thenAnswer(invocation -> {
+                    GeneratedImageResult result = new GeneratedImageResult(new byte[]{1, 2}, invocation.getArgument(0),
+                            new byte[]{3, 4}, 42L);
+                    String negative = invocation.getArgument(1);
+                    result.setNegativePrompt(negative == null || negative.isBlank() ? StableDiffusionService.NEGATIVE_PROMPT : negative);
+                    return result;
+                });
+        CacheAwareAvatarService first = cachedAvatarService(directory, diffusion, config);
+        CacheAwareAvatarService second = cachedAvatarService(directory, diffusion, config);
+        StableDiffusionService.setEnabled(true);
+        try {
+            GeneratedImageResult original = first.generateLightAvatar("Compass", "text", null);
+            when(diffusion.isAvailable()).thenReturn(false);
+            GeneratedImageResult cached = second.generateLightAvatar("Compass", "text", null);
+            assertEquals(original, cached);
+            assertEquals(42L, cached.getSeed());
+            assertArrayEquals(new byte[]{1, 2}, cached.getOriginalImage());
+            assertArrayEquals(new byte[]{3, 4}, cached.getResizedImage());
+            assertEquals("Compass" + AvatarService.LIGHT_PROMPT_SUFFIX, cached.getPrompt());
+            assertEquals("text", cached.getNegativePrompt());
+            when(diffusion.isAvailable()).thenReturn(true);
+            second.generateLightAvatar("Other", "text", null);
+            second.generateLightAvatar("Compass", "letters", null);
+            second.generateLightAvatar("Compass", "text", null, 1L);
+            second.generateDarkAvatar("Compass", "text", cached, null);
+            config.setAvatarOutputSize(config.getAvatarOutputSize() + 1);
+            second.generateLightAvatar("Compass", "text", null);
+            config.setGenerationSize(config.getGenerationSize() + 1);
+            second.generateLightAvatar("Compass", "text", null);
+            config.setModelName("another-model");
+            second.generateLightAvatar("Compass", "text", null);
+            config.setDefaultSampler("another-sampler");
+            second.generateLightAvatar("Compass", "text", null);
+            config.setDefaultSteps(config.getDefaultSteps() + 1);
+            second.generateLightAvatar("Compass", "text", null);
+            config.setCfgScale(config.getCfgScale() + 1);
+            second.generateLightAvatar("Compass", "text", null);
+            config.setApiUrl("http://another-host");
+            second.generateLightAvatar("Compass", "text", null);
+            GeneratedImageResult defaultNegative = second.generateLightAvatar("No negative", null, null);
+            assertEquals(defaultNegative, second.generateLightAvatar("No negative", " ", null));
+            verify(diffusion, times(13)).text2ImgWithOriginal(anyString(), nullable(String.class), anyInt(), isNull(), anyLong(), anyDouble());
+            verify(diffusion).text2ImgWithOriginal(eq("Compass" + AvatarService.DARK_PROMPT_SUFFIX), eq("text"),
+                    anyInt(), isNull(), eq(42L), anyDouble());
+        } finally {
+            StableDiffusionService.setEnabled(false);
+        }
+    }
+
+    @Test
+    void cacheSeparatesHeaderStylesAndTiledOptions(@TempDir Path directory) throws Exception {
+        StableDiffusionService diffusion = mock(StableDiffusionService.class);
+        StableDiffusionConfig config = new StableDiffusionConfig();
+        when(diffusion.isAvailable()).thenReturn(true);
+        when(diffusion.text2ImgWithOriginal(anyString(), anyString(), anyInt(), anyInt(), isNull(), anyLong(), anyDouble(),
+                any(TiledDiffusionOptions.class))).thenAnswer(invocation -> {
+            GeneratedImageResult result = new GeneratedImageResult(new byte[]{1}, invocation.getArgument(0), new byte[]{2}, 73L);
+            result.setNegativePrompt(invocation.getArgument(1));
+            return result;
+        });
+        CacheAwareAvatarService service = cachedAvatarService(directory, diffusion, config);
+        TiledDiffusionOptions options = TiledDiffusionOptions.forHeader(4096, 256);
+        StableDiffusionService.setEnabled(true);
+        try {
+            GeneratedImageResult light = service.generateLightHeaderWithFallback("Mountains", "cube", null, options, CozyStylePrompt.MARY_BLAIR, null);
+            GeneratedImageResult cached = service.generateLightHeaderWithFallback("Mountains", "cube", null, options, CozyStylePrompt.MARY_BLAIR, null);
+            assertEquals(light, cached);
+            assertEquals(CozyStylePrompt.MARY_BLAIR, cached.getStyle());
+            service.generateDarkHeaderWithFallback("Mountains", cached, "cube", null, options, null);
+            service.generateLightHeaderWithFallback("Mountains", "cube", null, options, CozyStylePrompt.DEFAULT, null);
+            service.generateLightHeaderWithFallback("Mountains", "cube", null, TiledDiffusionOptions.forHeader(2048, 256), CozyStylePrompt.MARY_BLAIR, null);
+            TiledDiffusionOptions changedTile = TiledDiffusionOptions.builder().enabled(true).overwriteImageSize(true)
+                    .imageWidth(4096).imageHeight(256).latentTileWidth(64).build();
+            service.generateLightHeaderWithFallback("Mountains", "cube", null, changedTile, CozyStylePrompt.MARY_BLAIR, null);
+            List<TiledDiffusionOptions> variants = List.of(
+                    TiledDiffusionOptions.builder().enabled(true).overwriteImageSize(true).imageWidth(4096).imageHeight(512).build(),
+                    TiledDiffusionOptions.builder().enabled(true).overwriteImageSize(true).imageWidth(4096).imageHeight(256).latentTileHeight(64).build(),
+                    TiledDiffusionOptions.builder().enabled(true).overwriteImageSize(true).imageWidth(4096).imageHeight(256).latentTileOverlap(32).build(),
+                    TiledDiffusionOptions.builder().enabled(true).overwriteImageSize(true).imageWidth(4096).imageHeight(256).latentTileBatchSize(2).build(),
+                    TiledDiffusionOptions.builder().enabled(true).overwriteImageSize(false).imageWidth(4096).imageHeight(256).build(),
+                    TiledDiffusionOptions.builder().enabled(false).build());
+            for (TiledDiffusionOptions variant : variants) {
+                service.generateLightHeaderWithFallback("Mountains", "cube", null, variant, CozyStylePrompt.MARY_BLAIR, null);
+            }
+            service.generateLightHeaderWithFallback("Mountains", "cube", null, null, CozyStylePrompt.MARY_BLAIR, null);
+            verify(diffusion, times(11)).text2ImgWithOriginal(anyString(), anyString(), anyInt(), anyInt(), isNull(), anyLong(), anyDouble(),
+                    any(TiledDiffusionOptions.class));
+            verify(diffusion).text2ImgWithOriginal(contains(AvatarService.DARK_PROMPT_SUFFIX), anyString(), anyInt(), anyInt(),
+                    isNull(), eq(73L), anyDouble(), any(TiledDiffusionOptions.class));
+        } finally {
+            StableDiffusionService.setEnabled(false);
+        }
+    }
+
+    @Test
+    void cacheDoesNotStoreFallbacksAndRejectsCorruptEntries(@TempDir Path directory) throws Exception {
+        StableDiffusionService diffusion = mock(StableDiffusionService.class);
+        StableDiffusionConfig config = new StableDiffusionConfig();
+        when(diffusion.generateDefaultLightAvatar(anyString(), anyString()))
+                .thenReturn(new GeneratedImageResult(new byte[]{8}, "fallback", new byte[]{9}));
+        when(diffusion.generateDefaultHeader("cube", false))
+                .thenReturn(new GeneratedImageResult(new byte[]{6}, "fallback", new byte[]{7}));
+        CacheAwareAvatarService service = cachedAvatarService(directory, diffusion, config);
+        StableDiffusionService.setEnabled(true);
+        try {
+            GeneratedImageResult fallback = service.generateLightAvatarWithFallback("Compass", "text", "cube", null);
+            assertArrayEquals(new byte[]{9}, fallback.getResizedImage());
+            GeneratedImageResult header = service.generateLightHeaderWithFallback("Mountains", "cube", null, CozyStylePrompt.MARY_BLAIR);
+            assertArrayEquals(new byte[]{7}, header.getResizedImage());
+            try (Stream<Path> files = Files.list(directory)) {
+                assertEquals(0, files.filter(path -> path.toString().endsWith(".json")).count());
+            }
+            when(diffusion.isAvailable()).thenReturn(true);
+            when(diffusion.text2ImgWithOriginal(anyString(), anyString(), anyInt(), isNull(), anyLong(), anyDouble()))
+                    .thenThrow(new StableDiffusionException("generation failed"));
+            assertArrayEquals(new byte[]{9}, service.generateLightAvatarWithFallback("Compass", "text", "cube", null).getResizedImage());
+            try (Stream<Path> files = Files.list(directory)) {
+                assertEquals(0, files.filter(path -> path.toString().endsWith(".json")).count());
+            }
+            doReturn(new GeneratedImageResult(new byte[]{1}, "generated", new byte[]{2}, 42))
+                    .when(diffusion).text2ImgWithOriginal(anyString(), anyString(), anyInt(), isNull(), anyLong(), anyDouble());
+            service.generateLightAvatar("Compass", "text", null);
+            StableDiffusionService.setEnabled(false);
+            when(diffusion.isAvailable()).thenReturn(false);
+            assertThrows(StableDiffusionException.class, () -> service.generateLightAvatar("Compass", "text", null));
+            StableDiffusionService.setEnabled(true);
+            Path entry;
+            try (Stream<Path> files = Files.list(directory)) {
+                entry = files.filter(path -> path.toString().endsWith(".json")).findFirst().orElseThrow();
+            }
+            Files.writeString(entry, "not json");
+            IllegalStateException error = assertThrows(IllegalStateException.class, () -> service.generateLightAvatar("Compass", "text", null));
+            assertTrue(error.getMessage().contains(entry.toString()));
+        } finally {
+            StableDiffusionService.setEnabled(false);
+        }
+    }
+
+    @Test
+    void cacheSurfacesStorageErrors(@TempDir Path directory) throws Exception {
+        Path notDirectory = Files.createFile(directory.resolve("not-a-directory"));
+        StableDiffusionService diffusion = mock(StableDiffusionService.class);
+        CacheAwareAvatarService service = cachedAvatarService(notDirectory, diffusion, new StableDiffusionConfig());
+        StableDiffusionService.setEnabled(true);
+        try {
+            IllegalStateException error = assertThrows(IllegalStateException.class,
+                    () -> service.generateLightAvatarWithFallback("Compass", "text", "cube", null));
+            assertTrue(error.getMessage().contains(notDirectory.toString()));
+            assertNotNull(error.getCause());
+            verifyNoInteractions(diffusion);
+        } finally {
+            StableDiffusionService.setEnabled(false);
+        }
+    }
+
+    @Test
+    void concurrentRequestsGenerateOnlyOnce(@TempDir Path directory) throws Exception {
+        StableDiffusionService diffusion = mock(StableDiffusionService.class);
+        StableDiffusionConfig config = new StableDiffusionConfig();
+        when(diffusion.isAvailable()).thenReturn(true);
+        when(diffusion.text2ImgWithOriginal(anyString(), anyString(), anyInt(), isNull(), anyLong(), anyDouble()))
+                .thenReturn(new GeneratedImageResult(new byte[]{1}, "generated", new byte[]{2}, 42));
+        CacheAwareAvatarService first = cachedAvatarService(directory, diffusion, config);
+        CacheAwareAvatarService second = cachedAvatarService(directory, diffusion, config);
+        StableDiffusionService.setEnabled(true);
+        try (ExecutorService executor = Executors.newFixedThreadPool(8)) {
+            List<Future<GeneratedImageResult>> results = new ArrayList<>();
+            for (int i = 0; i < 16; i++) {
+                CacheAwareAvatarService service = i % 2 == 0 ? first : second;
+                results.add(executor.submit(() -> service.generateLightAvatar("Compass", "text", null)));
+            }
+            for (Future<GeneratedImageResult> result : results) {
+                assertEquals(42L, result.get().getSeed());
+            }
+            verify(diffusion, times(1)).text2ImgWithOriginal(anyString(), anyString(), anyInt(), isNull(), anyLong(), anyDouble());
+        } finally {
+            StableDiffusionService.setEnabled(false);
+        }
+    }
+
+    private CacheAwareAvatarService cachedAvatarService(Path directory, StableDiffusionService diffusion, StableDiffusionConfig config) {
+        CacheAwareAvatarService service = new CacheAwareAvatarService(directory);
+        ReflectionTestUtils.setField(service, "stableDiffusionService", diffusion);
+        ReflectionTestUtils.setField(service, "config", config);
+        return service;
     }
 
     private AvatarService avatarService(StableDiffusionService diffusion, StableDiffusionConfig config) {

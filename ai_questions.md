@@ -160,8 +160,3 @@ sprint end time. But all these changes are calculated every time we draw the spr
 
 Can you suggest a better design for our undo/redo architecture that is more practical for our users?
 
-# Optimize ColorUtils.intToHex
-
-ColorUtils.intToHex takes 2 parameters, the second one being a default color. let's get rid of that second parameter
-everywhere we call it and throw an exception if the color is null.
-
