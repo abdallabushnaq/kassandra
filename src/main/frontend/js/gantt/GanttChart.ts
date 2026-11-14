@@ -10,7 +10,8 @@ import {GanttChartDto} from './dto/GanttChartDto.js';
 
 export class GanttChart extends AbstractChart {
     constructor(data: GanttChartDto, theme: Theme) {
-        super('Gantt Chart', AbstractChart.TIMELINE_CONTROLS_HINT, data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-chart', theme);
+        super('Gantt Chart', AbstractChart.TIMELINE_CONTROLS_HINT + ';Click task: inspect, Esc: clear',
+            data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-chart', theme);
         this.addRenderer(new GanttRenderer(this, data, 5, 5));
     }
 

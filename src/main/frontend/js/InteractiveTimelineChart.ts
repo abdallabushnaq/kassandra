@@ -75,6 +75,7 @@ export interface InteractiveTimelineChartOptions<TChart extends TimelineChart> {
     getContainerHeight?: () => number;
     beforeRender?: () => void;
     afterRender?: () => void;
+    onActivate?: (target: Element | null) => void;
 }
 
 interface RegisteredEventListener {
@@ -84,6 +85,9 @@ interface RegisteredEventListener {
 }
 
 interface DragState {
+    pointerId: number;
+    target: Element | null;
+    maxMovement: number;
     startX: number;
     startOffset: number;
     startY: number;
@@ -406,9 +410,12 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     };
 
     private handlePointerDown = (event: PointerEvent): void => {
-        if (event.button !== 0)
+        if (event.button !== 0 || this.dragState || (this.options.onActivate && !event.isPrimary))
             return;
         this.dragState = {
+            pointerId: event.pointerId,
+            target: event.target instanceof Element ? event.target : null,
+            maxMovement: 0,
             startX: event.clientX,
             startOffset: this.scrollOffset,
             startY: event.clientY,
@@ -419,7 +426,10 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     };
 
     private handlePointerMove = (event: PointerEvent): void => {
-        if (!this.dragState)
+        if (!this.dragState || event.pointerId !== this.dragState.pointerId)
+            return;
+        this.trackPointerMovement(event);
+        if (this.options.onActivate && this.dragState.maxMovement < 5)
             return;
         this.scrollOffset = this.dragState.startOffset
             - (event.clientX - this.dragState.startX) / (this.dayWidth * this.visualScale);
@@ -432,19 +442,41 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
         this.scheduleLazyRedraw();
     };
 
-    private handlePointerUp = (): void => {
-        if (this.dragState) {
-            this.dragState = null;
-            this.scheduleSave();
-        }
+    private trackPointerMovement(event: PointerEvent): void {
+        if (this.dragState)
+            this.dragState.maxMovement = Math.max(this.dragState.maxMovement,
+                Math.hypot(event.clientX - this.dragState.startX, event.clientY - this.dragState.startY));
+    }
+
+    private handlePointerUp = (event: PointerEvent): void => {
+        if (!this.dragState || event.pointerId !== this.dragState.pointerId)
+            return;
+        this.trackPointerMovement(event);
+        const drag = this.dragState;
+        this.dragState = null;
+        if (this.options.container.hasPointerCapture(event.pointerId))
+            this.options.container.releasePointerCapture(event.pointerId);
+        this.scheduleSave();
+        if (drag.maxMovement < 5)
+            this.options.onActivate?.(drag.target);
+    };
+
+    private handlePointerCancel = (event: PointerEvent): void => {
+        if (!this.dragState || event.pointerId !== this.dragState.pointerId)
+            return;
+        this.dragState = null;
+        if (this.options.container.hasPointerCapture(event.pointerId))
+            this.options.container.releasePointerCapture(event.pointerId);
+        this.scheduleSave();
     };
 
     private registerEventListeners(): void {
         this.addEventListener('wheel', this.handleWheelEvent as EventListener, {passive: false});
         this.addEventListener('pointerdown', this.handlePointerDown as EventListener, {passive: false});
         this.addEventListener('pointermove', this.handlePointerMove as EventListener, {passive: true});
-        this.addEventListener('pointerup', this.handlePointerUp);
-        this.addEventListener('pointercancel', this.handlePointerUp);
+        this.addEventListener('pointerup', this.handlePointerUp as EventListener);
+        this.addEventListener('pointercancel', this.handlePointerCancel as EventListener);
+        this.addEventListener('lostpointercapture', this.handlePointerCancel as EventListener);
     }
 
     private observeResize(): void {

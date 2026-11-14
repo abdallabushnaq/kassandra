@@ -113,24 +113,6 @@ We want to keep all these zoom levels independently configurable as properties.
 Let us measure zoom level by dayWidth.
 So, renderTaskProgressBarAtDayWidth could be set to 20 and renderTaskProgressTextAtDayWidth could be set at 22
 
-# Add Zoom Adaptation to Sprint Overview Chart
-
-All our charts support day width zoom (zooms horizontally) and full chart zoom (both directions).
-We want the chart to adapt what it renders depending on the zoom level.
-There currently is too much unused vertical space between the lanes.
-Current Sprint Overview Chart should show:
-
-1. sprint name
-2. sprint start date in lower left corner (lets add a property to hide this at low zoom levels)
-3. sprint end date in lower right corner (lets add a property to hide this at low zoom levels)
-4. sprint progress gray background color covering the left percentage of the bar (lets add a property to hide this at
-   low zoom levels)
-5. sprint status in upper right corner (lets add a property to hide this at low zoom levels)
-
-We want to keep all these zoom levels independently configurable as properties.
-Let us measure zoom level by dayWidth.
-So, renderSprintStartDateAtDayWidth could be set to 20 and renderSprintEndDateAtDayWidth could be set at 22
-
 # Gantt-Chart rendering
 
 1. milestone dates overlap milestone tasks.

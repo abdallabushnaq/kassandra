@@ -31,8 +31,12 @@ import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -91,6 +95,20 @@ public class GanttZoomTest extends AbstractTestUtil {
      */
     @Test
     public void rendersConfiguredZoomDetails() throws Exception {
+        verifyCharts("verifyGanttZoom");
+    }
+
+    /**
+     * Checks task inspection, predecessor highlighting and real pointer gestures in both charts.
+     *
+     * @throws Exception if chart generation or browser verification fails
+     */
+    @Test
+    public void inspectsTaskPredecessors() throws Exception {
+        verifyCharts("verifyGanttInspection");
+    }
+
+    private void verifyCharts(String browserVerification) throws Exception {
         KassandraProperties.Gantt zoom = properties.getGantt();
         assertEquals(10.5, zoom.getRenderTaskProgressBarAtDayWidth(), "task progress bar zoom threshold");
         assertEquals(11.5, zoom.getRenderTaskProgressTextAtDayWidth(), "task progress text zoom threshold");
@@ -164,18 +182,92 @@ public class GanttZoomTest extends AbstractTestUtil {
                 driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(120));
                 driver.get("http://127.0.0.1:" + server.getAddress().getPort() + "/");
                 Object result = driver.executeAsyncScript("""
-                        const [gantt, combined, done] = arguments;
+                        const [gantt, combined, verification, done] = arguments;
                         import('/gantt-zoom-check.js')
-                            .then(module => module.verifyGanttZoom(JSON.parse(gantt), JSON.parse(combined)))
+                            .then(module => module[verification](JSON.parse(gantt), JSON.parse(combined)))
                             .then(() => done('ok'))
                             .catch(error => done(String(error.stack || error)));
-                        """, jsonMapper.writeValueAsString(gantt), jsonMapper.writeValueAsString(combined));
-                assertEquals("ok", result, "browser Gantt zoom verification result: " + result);
+                        """, jsonMapper.writeValueAsString(gantt), jsonMapper.writeValueAsString(combined), browserVerification);
+                assertEquals("ok", result, "browser Gantt verification result: " + result);
+                if ("verifyGanttInspection".equals(browserVerification))
+                    verifyPointerInspection(driver, jsonMapper.writeValueAsString(gantt), jsonMapper.writeValueAsString(combined));
             } finally {
                 driver.quit();
             }
         } finally {
             server.stop(0);
+        }
+    }
+
+    private static void verifyPointerInspection(ChromeDriver driver, String gantt, String combined) {
+        String taskId      = "00000000-0000-0000-0000-000000000001";
+        String milestoneId = "00000000-0000-0000-0000-000000000002";
+        String storyId     = "00000000-0000-0000-0000-000000000004";
+        for (String type : new String[]{"gantt", "combined"}) {
+            // Production bundles each own their window-global detachable host API.
+            driver.navigate().refresh();
+            Object result = driver.executeAsyncScript("""
+                    const [type, gantt, combined, done] = arguments;
+                    import('/gantt-zoom-check.js')
+                        .then(module => module.mountGanttPointerInspection(type, JSON.parse(gantt), JSON.parse(combined)))
+                        .then(() => done('ok'))
+                        .catch(error => done(String(error.stack || error)));
+                    """, type, gantt, combined);
+            assertEquals("ok", result, type + " pointer fixture");
+            WebDriverWait wait      = new WebDriverWait(driver, Duration.ofSeconds(10));
+            By            selected  = By.cssSelector(".gantt-task.is-selected");
+            By            body      = By.cssSelector("[data-task-id='" + taskId + "'] .task-body");
+            By            milestone = By.cssSelector("[data-task-id='" + milestoneId + "'] .milestone-body");
+            By            viewport  = By.cssSelector(".gantt-inspection-viewport");
+            try {
+                WebElement svg = driver.findElement(By.cssSelector("#chart svg"));
+                new Actions(driver).moveToElement(driver.findElement(body)).perform();
+                assertEquals("0.5", driver.findElement(By.cssSelector("[data-task-id='" + taskId + "'] .gantt-task-outline"))
+                        .getCssValue("opacity"), type + " hover feedback");
+                assertEquals(svg, driver.findElement(By.cssSelector("#chart svg")), type + " hover does not rebuild SVG");
+                new Actions(driver).click().perform();
+                wait.until(ignored -> driver.findElement(selected).getAttribute("data-task-id").equals(taskId));
+                wait.until(ignored -> driver.findElement(By.cssSelector(".gantt-task-details")).isDisplayed());
+                driver.executeScript("""
+                        document.querySelector('.gantt-inspection-viewport').addEventListener('pointerdown',
+                            event => event.currentTarget.dataset.testPointerId = String(event.pointerId));
+                        """);
+                int originalX = driver.findElement(milestone).getLocation().getX();
+                new Actions(driver).moveToElement(driver.findElement(milestone)).clickAndHold()
+                        .moveByOffset(-80, 0).pause(Duration.ofMillis(200)).perform();
+                wait.until(ignored -> driver.findElement(milestone).getLocation().getX() < originalX);
+                new Actions(driver).moveByOffset(80, 0).release().pause(Duration.ofMillis(200)).perform();
+                assertEquals(taskId, driver.findElement(selected).getAttribute("data-task-id"),
+                        type + " drag away and back does not select");
+
+                new Actions(driver).moveToElement(driver.findElement(milestone)).clickAndHold().perform();
+                driver.executeScript("""
+                        const viewport = document.querySelector('.gantt-inspection-viewport');
+                        viewport.dispatchEvent(new PointerEvent('pointercancel', {
+                            pointerId: Number(viewport.dataset.testPointerId), bubbles: true
+                        }));
+                        """);
+                new Actions(driver).release().perform();
+                assertEquals(taskId, driver.findElement(selected).getAttribute("data-task-id"),
+                        type + " cancelled pointer does not select");
+                new Actions(driver).moveToElement(driver.findElement(milestone)).click().perform();
+                wait.until(ignored -> driver.findElement(selected).getAttribute("data-task-id").equals(milestoneId));
+                new Actions(driver).moveToElement(driver.findElement(By.cssSelector("[data-task-id='" + storyId + "'] text"))).click().perform();
+                wait.until(ignored -> driver.findElement(selected).getAttribute("data-task-id").equals(storyId));
+                assertEquals(1, driver.findElements(By.cssSelector(".task-dependency.is-emphasized")).size(),
+                        type + " real label selection highlights direct relation");
+                driver.findElement(By.cssSelector(".gantt-task-details button")).click();
+                wait.until(ignored -> driver.findElements(selected).isEmpty());
+                new Actions(driver).moveToElement(driver.findElement(body)).click().perform();
+                wait.until(ignored -> !driver.findElements(selected).isEmpty());
+                WebElement chartViewport = driver.findElement(viewport);
+                new Actions(driver).moveToElement(chartViewport, chartViewport.getSize().getWidth() / 2 - 15, 0).click().perform();
+                wait.until(ignored -> driver.findElements(selected).isEmpty());
+            } finally {
+                driver.executeScript("window.disposeKassandraChart('chart');");
+            }
+            assertEquals(0, driver.findElements(By.cssSelector(".gantt-inspection-layout")).size(),
+                    type + " inspector disposed");
         }
     }
 

@@ -70,6 +70,14 @@ function group(id) {
     return element;
 }
 
+function dependency(predecessorId, successorId) {
+    return document.querySelector(`.task-dependency[data-predecessor-id="${predecessorId}"][data-successor-id="${successorId}"]`);
+}
+
+function incomingDependencies(successorId) {
+    return document.querySelectorAll(`.task-dependency[data-successor-id="${successorId}"]`);
+}
+
 function milestoneLabel() {
     const label = group(milestoneId).querySelector('.milestone-label');
     assertPresent(label, 'milestone label element');
@@ -93,7 +101,7 @@ const features = {
         const body = group(milestoneId).querySelector('.milestone-body');
         return !!body && body.getAttribute('stroke') !== 'none';
     },
-    renderDependenciesAtDayWidth: () => !!group(milestoneId).querySelector('.task-dependency'),
+    renderDependenciesAtDayWidth: () => incomingDependencies(milestoneId).length > 0,
 };
 
 function settings(value) {
@@ -122,7 +130,7 @@ function taskEdge(id, side) {
 function assertRelation(type, predecessorId, successorId, color) {
     const start = taskEdge(predecessorId, 'right');
     const end = taskEdge(successorId, 'left');
-    const relation = group(successorId).querySelector('.task-dependency');
+    const relation = dependency(predecessorId, successorId);
     assertPresent(relation, `${type} dependency group for successor ${successorId}`);
     const path = relation.querySelector('path');
     const arrow = relation.querySelector('polygon');
@@ -234,18 +242,213 @@ function verifyRelations(type, data, render) {
         task.start = '2024-01-01T08:00:00';
         task.finish = '2024-01-02T16:30:00';
         render(thresholds);
-        assertPresent(group(shortTaskId).querySelector('.task-dependency path'), `${type} partially clipped relation`);
+        assertPresent(dependency(taskId, shortTaskId)?.querySelector('path'), `${type} partially clipped relation`);
         shortTask.start = '2024-01-03T08:00:00';
         shortTask.finish = '2024-01-03T16:30:00';
         render(thresholds);
-        assertAbsent(group(shortTaskId).querySelector('.task-dependency path'), `${type} fully clipped relation`);
+        assertAbsent(dependency(taskId, shortTaskId)?.querySelector('path'), `${type} fully clipped relation`);
         task.finish = null;
         render(thresholds);
-        assertAbsent(group(shortTaskId).querySelector('.task-dependency path'), `${type} unscheduled predecessor`);
+        assertAbsent(dependency(taskId, shortTaskId)?.querySelector('path'), `${type} unscheduled predecessor`);
     } finally {
         data.tasks = originalTasks;
         data.meta.theme.ganttTheme = originalTheme;
     }
+}
+
+async function selectTask(id, key = 'Enter', target = group(id)) {
+    group(id).focus();
+    target.dispatchEvent(new KeyboardEvent('keydown', {key, bubbles: true, cancelable: true}));
+    await waitFor(() => group(id).classList.contains('is-selected'), `select task ${id}`);
+}
+
+async function clearTaskSelection() {
+    document.querySelector('.gantt-inspection-viewport').dispatchEvent(
+        new KeyboardEvent('keydown', {key: 'Escape', bubbles: true, cancelable: true}));
+    await waitFor(() => !document.querySelector('.gantt-task.is-selected'), 'clear task selection');
+}
+
+async function verifyTaskInspection(type, data, render) {
+    const originalTasks = structuredClone(data.tasks);
+    const host = document.getElementById('chart');
+    const originalWidth = host.style.width;
+    const hiddenId = '00000000-0000-0000-0000-000000000005';
+    const branchId = '00000000-0000-0000-0000-000000000006';
+    const isolatedId = '00000000-0000-0000-0000-000000000007';
+    const missingId = '00000000-0000-0000-0000-000000000008';
+    const relation = (predecessorId, visible = true) => ({predecessorId, visible});
+    const details = () => document.querySelector('.gantt-task-details');
+    const field = name => [...details().querySelectorAll('dt')]
+        .find(term => term.textContent === name)?.nextElementSibling?.textContent;
+    try {
+        host.style.width = '1600px';
+        const [task, milestone, shortTask, story] = data.tasks;
+        shortTask.predecessors = [relation(taskId)];
+        story.predecessors = [relation(milestoneId), relation(shortTaskId), relation(hiddenId, false), relation(missingId)];
+        task.critical = milestone.critical = true;
+        const notes = '<img src=x onerror="window.inspectorInjected=true">';
+        story.notes = notes;
+        data.tasks.push(
+            {
+                ...structuredClone(shortTask),
+                id: hiddenId,
+                name: 'Hidden resource predecessor',
+                rowIndex: 4,
+                predecessors: [relation(isolatedId)]
+            },
+            {...structuredClone(shortTask), id: branchId, name: 'Unrelated successor', rowIndex: 5},
+            {
+                ...structuredClone(task),
+                id: isolatedId,
+                name: 'Isolated task',
+                rowIndex: 6,
+                progress: 0,
+                predecessors: []
+            },
+        );
+        render(settings(0));
+        await waitFor(() => document.querySelector('svg').getAttribute('width') === '1600', `${type} initial inspection width`);
+        assertEqual(details().hidden, true, `${type} details initially hidden`);
+        await selectTask(storyId);
+        assertEqual(group(storyId).getAttribute('aria-pressed'), 'true', `${type} accessible selection`);
+        assertEqual(document.querySelectorAll('.gantt-task.is-predecessor, .gantt-task.is-muted').length, 0,
+            `${type} other task styling unchanged`);
+        assertEqual(getComputedStyle(group(milestoneId)).opacity, '1', `${type} direct predecessor not faded`);
+        assertEqual(group(storyId).querySelector('.gantt-task-outline').tagName.toLowerCase(), 'path',
+            `${type} story outline follows story shape`);
+        assertEqual(group(milestoneId).querySelector('.gantt-task-outline').getAttribute('points'),
+            group(milestoneId).querySelector('.milestone-body').getAttribute('points').replace(/ (\S+)$/, ''),
+            `${type} milestone outline follows diamond`);
+        const body = group(taskId).querySelector('.task-body');
+        const outline = group(taskId).querySelector('.gantt-task-outline');
+        assertEqual(outline.getAttribute('x'), body.getAttribute('x'), `${type} task outline starts at task`);
+        assertEqual(outline.getAttribute('y'), body.getAttribute('y'), `${type} task outline top matches task`);
+        assertEqual(outline.getAttribute('height'), body.getAttribute('height'), `${type} task outline height matches task`);
+        assertCondition(Number(outline.getAttribute('width')) < Number(document.querySelector('svg').getAttribute('width')),
+            `${type} task outline is not row-wide`, 'less than chart width', outline.getAttribute('width'));
+        assertEqual(dependency(hiddenId, storyId), null, `${type} hidden arrow excluded`);
+        assertEqual(dependency(taskId, branchId).classList.contains('is-muted'), true, `${type} unrelated arrow faded`);
+        assertEqual(document.querySelectorAll('.task-dependency.is-emphasized').length, 2, `${type} direct edges only`);
+        assertEqual(dependency(taskId, milestoneId).classList.contains('is-emphasized'), false,
+            `${type} indirect edge not emphasized`);
+        const emphasized = dependency(milestoneId, storyId);
+        assertEqual(getComputedStyle(emphasized.querySelector('path')).strokeWidth, '3px', `${type} highlighted connector`);
+        assertEqual(getComputedStyle(emphasized.querySelector('polygon')).strokeWidth, '1px', `${type} highlighted arrowhead`);
+        assertEqual(emphasized.querySelector('path').getAttribute('stroke'),
+            emphasized.querySelector('polygon').getAttribute('fill'), `${type} arrow colours preserved`);
+        assertEqual(field('Notes'), notes, `${type} notes rendered literally`);
+        assertEqual(details().querySelector('img'), null, `${type} notes do not create HTML`);
+        assertEqual(details().querySelectorAll('li').length, 3, `${type} direct predecessors including missing reference`);
+        assertCondition(details().textContent.includes(`Unavailable task (${missingId})`),
+            `${type} unresolved predecessor`, 'unavailable reference displayed', details().textContent);
+        assertEqual(details().querySelector(`[data-predecessor-id="${taskId}"]`), null,
+            `${type} indirect predecessor not listed`);
+        await waitFor(() => details().getBoundingClientRect().left
+            >= document.querySelector('.gantt-inspection-viewport').getBoundingClientRect().right, `${type} right docking`);
+        assertEqual(document.activeElement.getAttribute('data-task-id'), storyId, `${type} selection focus restored`);
+
+        host.style.width = '700px';
+        await waitFor(() => document.querySelector('.gantt-inspection-layout').classList.contains('is-narrow')
+                && details().getBoundingClientRect().top >= document.querySelector('.gantt-inspection-viewport').getBoundingClientRect().bottom,
+            `${type} below-chart inspector`);
+        assertEqual(group(storyId).classList.contains('is-selected'), true, `${type} selection survives responsive redraw`);
+        host.style.width = '1600px';
+        await waitFor(() => !document.querySelector('.gantt-inspection-layout').classList.contains('is-narrow'), `${type} wide layout restored`);
+        const beforePanelWheel = document.querySelector('[contentGroup]').getAttribute('transform');
+        details().dispatchEvent(new WheelEvent('wheel', {
+            bubbles: true,
+            cancelable: true,
+            shiftKey: true,
+            deltaY: 100
+        }));
+        await delay(150);
+        assertEqual(document.querySelector('[contentGroup]').getAttribute('transform'), beforePanelWheel, `${type} panel wheel does not pan chart`);
+        details().querySelector('button').click();
+        await waitFor(() => details().hidden, `${type} close details`);
+
+        render({...settings(0), renderDependenciesAtDayWidth: 1000});
+        assertEqual(document.querySelectorAll('.task-dependency').length, 0, `${type} low-zoom dependencies initially hidden`);
+        await selectTask(storyId);
+        assertEqual(document.querySelectorAll('.task-dependency').length, 2, `${type} only direct edges override zoom threshold`);
+        for (const modifiers of [{shiftKey: true}, {altKey: true}, {}]) {
+            const viewport = document.querySelector('.gantt-inspection-viewport');
+            const svg = viewport.querySelector('svg');
+            viewport.dispatchEvent(new WheelEvent('wheel', {
+                bubbles: true, cancelable: true, deltaY: -1, deltaX: Object.keys(modifiers).length ? 0 : 20,
+                clientX: viewport.getBoundingClientRect().left + 200, ...modifiers,
+            }));
+            await waitFor(() => viewport.querySelector('svg') !== svg, `${type} navigation redraw`);
+            assertEqual(group(storyId).classList.contains('is-selected'), true, `${type} selection survives navigation`);
+            assertEqual(document.querySelectorAll('.task-dependency.is-emphasized').length, 2, `${type} direct edges survive navigation`);
+        }
+        await clearTaskSelection();
+        assertEqual(document.querySelectorAll('.task-dependency').length, 0, `${type} clearing restores zoom threshold`);
+        assertEqual(document.querySelectorAll('.gantt-task.is-muted').length, 0, `${type} clearing restores task opacity`);
+        await selectTask(milestoneId, ' ');
+        assertEqual(field('Type'), 'Milestone', `${type} milestone inspection`);
+        await selectTask(taskId, 'Enter', group(taskId).querySelector('text'));
+        assertEqual(field('Type'), 'Task', `${type} task label inspection`);
+        await selectTask(isolatedId);
+        assertEqual(field('Progress'), '0%', `${type} zero progress displayed`);
+        assertEqual(details().querySelectorAll('li').length, 0, `${type} isolated task has no predecessors`);
+
+        if (type === 'combined') {
+            const viewport = document.querySelector('.gantt-inspection-viewport');
+            const hitTarget = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            hitTarget.setAttribute('data-tooltip-html', '<b>Existing burndown tooltip</b>');
+            viewport.querySelector('svg').appendChild(hitTarget);
+            const rect = viewport.getBoundingClientRect();
+            hitTarget.dispatchEvent(new MouseEvent('mousemove', {
+                bubbles: true,
+                clientX: rect.left + 50,
+                clientY: rect.top + 50
+            }));
+            const tooltip = viewport.querySelector('.gantt-burndown-tooltip');
+            assertEqual(tooltip.style.display, 'block', `${type} existing tooltip still visible`);
+            assertEqual(tooltip.textContent, 'Existing burndown tooltip', `${type} existing tooltip content`);
+            viewport.dispatchEvent(new MouseEvent('mouseleave'));
+            assertEqual(tooltip.style.display, 'none', `${type} tooltip dismissed`);
+            hitTarget.remove();
+        }
+
+        task.predecessors = [relation(storyId)];
+        render({...settings(0), renderDependenciesAtDayWidth: 1000});
+        assertEqual(details().hidden, true, `${type} remount starts unselected`);
+        await selectTask(storyId);
+        assertEqual(document.querySelectorAll('.task-dependency.is-emphasized').length, 2, `${type} cycle does not add indirect edges`);
+        assertEqual(details().querySelector(`[data-predecessor-id="${taskId}"]`), null, `${type} cycle does not add indirect tasks`);
+        assertEqual(group(storyId).classList.contains('is-selected'), true, `${type} cycle preserves selected task`);
+        assertEqual(document.querySelectorAll('.gantt-task-details').length, 1, `${type} remount cleans up inspector`);
+        const theme = data.meta.theme;
+        try {
+            data.meta.theme = {...theme, themeVariance: 'dark'};
+            render(settings(0));
+            await selectTask(isolatedId);
+            assertEqual(getComputedStyle(details()).backgroundColor, 'rgb(30, 41, 59)', `${type} dark inspector background`);
+            assertEqual(getComputedStyle(details()).color, 'rgb(241, 245, 249)', `${type} dark inspector text`);
+        } finally {
+            data.meta.theme = theme;
+        }
+    } finally {
+        data.tasks = originalTasks;
+        host.style.width = originalWidth;
+        render(settings(0));
+    }
+}
+
+/** Mounts a known chart for real WebDriver pointer and keyboard gestures. */
+export async function mountGanttPointerInspection(type, gantt, combined) {
+    const source = structuredClone(type === 'gantt' ? gantt : combined);
+    const bundleUrl = type === 'gantt' ? '/js/generated/gantt/gantt-bundle.js' : '/js/generated/burndown/gantt-burndown-bundle.js';
+    const mountName = type === 'gantt' ? 'mountGanttChart' : 'mountGanttBurndownChart';
+    await import(bundleUrl);
+    state(40);
+    source.meta.ganttZoom = settings(0);
+    document.getElementById('chart').style.width = '1600px';
+    window[mountName]('chart', source, 'Pointer inspection test');
+    await waitFor(() => document.querySelector('.task-body') && document.querySelector('svg').getAttribute('width') === '1600',
+        `${type} pointer fixture`);
+    await delay(200);
 }
 
 /**
@@ -349,7 +552,7 @@ export async function verifyGanttZoom(gantt, combined) {
             `${type} task labels`, 'includes "Alice" and a label containing "Alpha"', taskLabels);
         const storyLabels = labels(storyId);
         assertCondition(storyLabels.includes('Story'), `${type} story label`, 'includes "Story"', storyLabels);
-        assertPresent(group(storyId).querySelector('.task-dependency'), `${type} story dependency connector`);
+        assertPresent(dependency(milestoneId, storyId), `${type} story dependency connector`);
         assertEqual(document.querySelector('#chart svg').getAttribute('height'), chartHeight,
             `${type} chart height after task rendering`);
 
@@ -366,19 +569,19 @@ export async function verifyGanttZoom(gantt, combined) {
         assertCondition(shortTaskBodyWidth > 0, `${type} short task body width`, 'greater than 0', shortTaskBodyWidth);
         assertEqual(Number(shortTaskBody.getAttribute('height')), 16, `${type} short task-body height`);
         render({...settings(0), renderDependenciesAtDayWidth: 30});
-        assertAbsent(group(storyId).querySelector('.task-dependency'), `${type} hidden story dependency`);
+        assertEqual(incomingDependencies(storyId).length, 0, `${type} hidden story dependency`);
 
         verifyRelations(type, data, render);
 
         render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
         assertEqual(features.renderTaskProgressBarAtDayWidth(), false, `${type} progress bar visibility at initial zoom`);
-        document.getElementById('chart').dispatchEvent(new WheelEvent('wheel', {
+        document.querySelector('.gantt-inspection-viewport').dispatchEvent(new WheelEvent('wheel', {
             bubbles: true, cancelable: true, altKey: true, deltaY: -1, clientX: 400,
         }));
         await waitFor(features.renderTaskProgressBarAtDayWidth, `${type}: full-chart zoom`);
 
         render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
-        document.getElementById('chart').dispatchEvent(new WheelEvent('wheel', {
+        document.querySelector('.gantt-inspection-viewport').dispatchEvent(new WheelEvent('wheel', {
             bubbles: true, cancelable: true, shiftKey: true, deltaY: -1, clientX: 400,
         }));
         await waitFor(features.renderTaskProgressBarAtDayWidth, `${type}: day-width zoom`);
@@ -395,12 +598,56 @@ export async function verifyGanttZoom(gantt, combined) {
             assertPresent(popup, `${type} detached-chart popup`);
             await waitFor(() => popup.document.querySelector('.task-body'), `${type}: detached chart did not render`);
             assertAbsent(popup.document.querySelector('.task-progress-bar'), `${type} detached-chart progress bar before zoom`);
-            popup.document.getElementById('chart').dispatchEvent(new popup.WheelEvent('wheel', {
+            popup.document.querySelector('.gantt-inspection-viewport').dispatchEvent(new popup.WheelEvent('wheel', {
                 bubbles: true, cancelable: true, altKey: true, deltaY: -1, clientX: 400,
             }));
             await waitFor(() => popup.document.querySelector('.task-progress-bar'), `${type}: detached zoom`);
         } finally {
             window.open = open;
+            window.disposeKassandraChart('chart');
+        }
+    }
+}
+
+/** Verifies read-only task inspection without assumptions about progress-bar rendering. */
+export async function verifyGanttInspection(gantt, combined) {
+    await document.fonts.ready;
+    for (const [type, source, bundleUrl, mountName] of [
+        ['gantt', gantt, '/js/generated/gantt/gantt-bundle.js', 'mountGanttChart'],
+        ['combined', combined, '/js/generated/burndown/gantt-burndown-bundle.js', 'mountGanttBurndownChart'],
+    ]) {
+        await import(bundleUrl);
+        const data = structuredClone(source);
+        const render = (thresholds, dayWidth = 20, visualScale = 1) => {
+            data.meta.ganttZoom = thresholds;
+            state(dayWidth, visualScale);
+            window[mountName]('chart', data, 'Task inspection test');
+        };
+        try {
+            await verifyTaskInspection(type, data, render);
+            const open = window.open;
+            let popup = null;
+            window.open = function (...args) {
+                popup = open.apply(window, args);
+                return popup;
+            };
+            try {
+                window.detachKassandraChart('chart');
+                await waitFor(() => popup?.document.querySelector('.task-body'), `${type} detached inspection`);
+                const task = popup.document.querySelector(`[data-task-id="${storyId}"]`);
+                task.focus();
+                task.dispatchEvent(new popup.KeyboardEvent('keydown', {key: 'Enter', bubbles: true, cancelable: true}));
+                await waitFor(() => popup.document.querySelector('.gantt-task.is-selected'), `${type} detached task selected`);
+                assertEqual(popup.document.querySelector('.gantt-task-details').hidden, false, `${type} detached inspector visible`);
+                assertEqual(popup.document.querySelectorAll('.task-dependency.is-emphasized').length, 1, `${type} detached direct relation`);
+                popup.document.getElementById('return-chart').click();
+                await waitFor(() => document.querySelector('.task-body'), `${type} return to embedded chart`);
+                assertEqual(document.querySelector('.gantt-task-details').hidden, true, `${type} returned instance starts unselected`);
+                await selectTask(milestoneId);
+            } finally {
+                window.open = open;
+            }
+        } finally {
             window.disposeKassandraChart('chart');
         }
     }

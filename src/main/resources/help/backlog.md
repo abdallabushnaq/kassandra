@@ -107,6 +107,14 @@ assignments and dependencies if dates are not what you expected.
 Zoom in to reveal additional task and milestone details and dependency lines;
 zooming out simplifies the task bars.
 
+Click a task, story or milestone to inspect its details and highlight its direct
+visible predecessor relations. Those relations stay visible at every zoom level;
+indirect and hidden resource dependencies are excluded from the inspection.
+Details appear on the right, or below the chart in narrow windows. Selection
+survives panning and zooming. Click the chart background, press **Escape**, or use
+**Close** to clear it. Keyboard users can focus a task and press **Enter** or
+**Space**. Inspection is read-only and also works in a separate chart window.
+
 ![Open chart separately](images/help/light/Backlog/open-gantt-chart-button.png)
 
 Open the chart in a separate window for more space. Allow the browser popup

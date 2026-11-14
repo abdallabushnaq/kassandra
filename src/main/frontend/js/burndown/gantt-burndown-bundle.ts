@@ -25,6 +25,7 @@ import {GanttRenderer} from '../gantt/GanttRenderer.js';
 import {BurndownRenderer} from './BurndownRenderer.js';
 import {GanttBurndownChart} from './GanttBurndownChart.js';
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
+import {GanttTaskInteraction} from '../gantt/GanttTaskInteraction.js';
 
 function createTooltipElement(container: HTMLElement): HTMLDivElement {
     const tooltip = document.createElement('div');
@@ -56,18 +57,20 @@ export function createGanttBurndownChart(
     const chart = new GanttBurndownChart(data, theme);
     const burndown = chart.renderers[0] as BurndownRenderer;
     const gantt = chart.renderers[1] as GanttRenderer;
+    const inspection = new GanttTaskInteraction(container, gantt, theme);
+    const viewport = inspection.viewport;
 
     function ensureTooltip(): HTMLDivElement {
-        let tooltip = container.querySelector<HTMLDivElement>('.gantt-burndown-tooltip');
+        let tooltip = viewport.querySelector<HTMLDivElement>('.gantt-burndown-tooltip');
         if (!tooltip) {
-            tooltip = createTooltipElement(container);
+            tooltip = createTooltipElement(viewport);
             tooltip.className = 'gantt-burndown-tooltip';
         }
         return tooltip;
     }
 
     function hideTooltip(): void {
-        const tooltip = container.querySelector<HTMLDivElement>('.gantt-burndown-tooltip');
+        const tooltip = viewport.querySelector<HTMLDivElement>('.gantt-burndown-tooltip');
         if (tooltip)
             tooltip.style.display = 'none';
     }
@@ -86,7 +89,7 @@ export function createGanttBurndownChart(
         }
         tooltip.innerHTML = html;
         tooltip.style.display = 'block';
-        const rect = container.getBoundingClientRect();
+        const rect = viewport.getBoundingClientRect();
         const tooltipRect = tooltip.getBoundingClientRect();
         let left = event.clientX - rect.left + 14;
         let top = event.clientY - rect.top + 14;
@@ -99,7 +102,7 @@ export function createGanttBurndownChart(
     }
 
     const interactiveChart = new InteractiveTimelineChart({
-        container,
+        container: viewport,
         containerId,
         chart,
         renderer: gantt,
@@ -108,10 +111,11 @@ export function createGanttBurndownChart(
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
         initialVisualScale: options.initialVisualScale,
-        beforeRender: () => {
-            container.style.position = 'relative';
+        onActivate: target => inspection.activate(target),
+        afterRender: () => {
+            ensureTooltip();
+            inspection.afterRender();
         },
-        afterRender: ensureTooltip,
         initialScrollOffset: (dayWidth, containerWidth) => {
             const referenceDate = gantt.currentDate || burndown.currentDate || new Date(data.meta.sprintStart);
             const todayIdx = DateUtils.calculateDayIndex(referenceDate, gantt.chartStart!);
@@ -121,9 +125,10 @@ export function createGanttBurndownChart(
     });
     interactiveChart.addEventListener('mousemove', handleMouseMove as EventListener);
     interactiveChart.addEventListener('mouseleave', hideTooltip as EventListener);
-    interactiveChart.render();
+    const handle = inspection.attach(interactiveChart);
+    handle.render();
     container.setAttribute(CHART_RENDERED_THEME_ATTRIBUTE, theme.themeVariance);
-    return interactiveChart;
+    return handle;
 }
 
 function mountGanttBurndownChart(

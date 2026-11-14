@@ -22,7 +22,7 @@ const RELATION_CORNER_LENGTH = 14;
 const RELATION_STROKE_WIDTH = 2;
 const RESOURCE_NAME_TO_TASK_GAP = 3;
 export const SECONDS_PER_DAY = 85 * 6 * 60; // 30600
-const TASK_BODY_MARGIN = 3;
+export const TASK_BODY_MARGIN = 3;
 // const TASK_PROGRESS_HEIGHT = 1;
 // const TASK_PROGRESS_BOTTOM_GAP = 1;
 const TASK_NAME_TO_TASK_GAP = 5 + 8;        // 13
@@ -302,6 +302,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         const arrowColor = (sourceTask.critical && targetTask.critical)
             ? ColorUtils.intToHex(this.theme.ganttTheme.criticalRelationColor, '#ff0000')
             : ColorUtils.intToHex(this.theme.ganttTheme.relationColor, '#3466ed');
+        g.style.setProperty('--dependency-color', arrowColor);
         const arrowLength = 5;
         const path = [
             `M ${x1} ${y1}`,
@@ -324,17 +325,24 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
         }));
     }
 
-    drawTaskRelations(g: SVGElement, task: TaskDto): void {
-        if (!task.start || !task.finish || !this.showDetail(this.ganttZoom.renderDependenciesAtDayWidth) || !task.predecessors?.length)
+    drawTaskRelations(g: SVGElement, task: TaskDto, emphasizedPredecessorIds?: ReadonlySet<string>): void {
+        if (!task.start || !task.finish || !task.predecessors?.length)
             return;
 
+        const showDependencies = this.showDetail(this.ganttZoom.renderDependenciesAtDayWidth);
         const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
         for (const rel of task.predecessors) {
             if (!rel.visible) continue;
+            const emphasized = emphasizedPredecessorIds?.has(String(rel.predecessorId));
+            if (!showDependencies && !emphasized) continue;
             const targetTask = this._taskById[String(rel.predecessorId)];
             if (!targetTask?.finish) continue;
             const y1 = this._calendarH + targetTask.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
-            const relation = SvgUtils.createGroup({class: 'task-dependency'});
+            const relation = SvgUtils.createGroup({
+                class: 'task-dependency' + (emphasized ? ' is-emphasized' : emphasizedPredecessorIds ? ' is-muted' : ''),
+                'data-predecessor-id': String(rel.predecessorId),
+                'data-successor-id': String(task.id),
+            });
             this.drawRelation(relation, task, y, targetTask, y1);
             g.appendChild(relation);
         }

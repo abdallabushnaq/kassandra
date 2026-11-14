@@ -12,6 +12,7 @@ import {DEFAULT_DW, MAX_DW, MIN_DW, ZOOM_STEP} from './AbstractGanttRenderer.js'
 import {GanttChart} from './GanttChart.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
 import {GanttRenderer} from './GanttRenderer.js';
+import {GanttTaskInteraction} from './GanttTaskInteraction.js';
 
 export function createGanttChart(
     container: HTMLElement,
@@ -22,8 +23,9 @@ export function createGanttChart(
     const theme = new Theme(data.meta.theme as Record<string, unknown>);
     const chart = new GanttChart(data, theme);
     const renderer = chart.renderers[0] as GanttRenderer;
+    const inspection = new GanttTaskInteraction(container, renderer, theme);
     const interactiveChart = new InteractiveTimelineChart({
-        container,
+        container: inspection.viewport,
         containerId,
         chart,
         renderer,
@@ -32,6 +34,8 @@ export function createGanttChart(
         maxDayWidth: MAX_DW,
         dayWidthZoomStep: ZOOM_STEP,
         initialVisualScale: options.initialVisualScale,
+        onActivate: target => inspection.activate(target),
+        afterRender: () => inspection.afterRender(),
         getContainerHeight: () => {
             const naturalHeight = Number.isFinite(chart.chartHeight) ? chart.chartHeight : 0;
             return Math.max(200, naturalHeight || container.clientHeight || 600);
@@ -42,8 +46,9 @@ export function createGanttChart(
             return Math.max(0, Math.min(renderer.days - visibleDays, todayIdx - visibleDays * 0.2));
         },
     });
-    interactiveChart.render();
-    return interactiveChart;
+    const handle = inspection.attach(interactiveChart);
+    handle.render();
+    return handle;
 }
 
 // ── Public mount API (called by Backlog.java via Vaadin executeJs) ───────────

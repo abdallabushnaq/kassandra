@@ -41,6 +41,14 @@ guarantee of delivery dates.
 Zoom in to reveal additional Gantt task and milestone details and dependency
 lines; zooming out simplifies the task bars.
 
+Select a task, story or milestone to show its details and highlight its direct
+visible predecessor relations. Indirect and hidden resource dependencies are
+excluded from the inspection; direct arrows remain visible even when zoomed out.
+The details panel appears on the right, or below the chart in narrow windows. Panning and zooming preserve
+selection. Clear it with **Close**, **Escape**, or a click on the chart background.
+Keyboard users can focus a task and press **Enter** or **Space**. This read-only
+inspection is also available in a separate chart window.
+
 ![Separate chart window](images/help/light/QualityBoard/open-gantt-burndown-chart-button.png)
 
 Open the chart in another window for a larger view. If no window appears,

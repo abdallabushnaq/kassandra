@@ -71,6 +71,14 @@ Missing assignments, estimates or worklogs can affect the displayed forecast.
 Zoom in to reveal additional Gantt task and milestone details and dependency
 lines; zooming out simplifies the task bars.
 
+Click a task, story or milestone to inspect its details and highlight its direct
+visible predecessor relations. These remain visible when zoomed out; indirect
+and hidden resource dependencies are excluded from the inspection. Details dock
+on the right and move below the chart in narrow windows. Panning and zooming retain the
+selection. Click the chart background, press **Escape**, or use **Close** to clear
+it. You can also focus a task and press **Enter** or **Space**. Inspection does not
+change planning data and works in a separate chart window too.
+
 ![Open chart separately](images/help/light/ActiveSprints/open-active-sprints-gantt-burndown-chart-button.png)
 
 The chart button opens a separate browser window. Allow popups if the window

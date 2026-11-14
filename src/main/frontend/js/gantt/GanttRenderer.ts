@@ -7,7 +7,7 @@ import {ColorUtils} from '../ColorUtils.js';
 import {SvgUtils} from '../SvgUtils.js';
 import {DateUtils} from '../DateUtils.js';
 import {getCalendarException} from './date-helpers.js';
-import {AbstractGanttRenderer} from './AbstractGanttRenderer.js';
+import {AbstractGanttRenderer, SECONDS_PER_DAY, TASK_BODY_MARGIN} from './AbstractGanttRenderer.js';
 import {CalendarSize} from "../CalendarSize.js";
 import {TaskDto} from './dto/TaskDto.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
@@ -15,6 +15,11 @@ import {AbstractChart} from '../AbstractChart.js';
 import {GanttChartMeta} from "./dto/GanttChartMeta.js";
 import {FontSpec} from "../FontSpec.js";
 import {RenderLayer} from '../RenderLayer.js';
+
+export interface GanttTaskSelection {
+    taskId: string;
+    predecessorIds: ReadonlySet<string>;
+}
 
 /**
  * convert string date representative to Date
@@ -34,6 +39,8 @@ export class GanttRenderer extends AbstractGanttRenderer {
     private static readonly noneWorkingDayFont: FontSpec = new FontSpec(FontSpec.SANS_SERIF, 22, FontSpec.BOLD);
     calendarSize: CalendarSize;
     data: GanttChartDto;
+    private taskSelection: GanttTaskSelection | null = null;
+    private readonly emptyPredecessorIds: ReadonlySet<string> = new Set<string>();
 
     constructor(chart: AbstractChart, data: GanttChartDto, preRun: number, postRun: number) {
         const chartStart = DateUtils.getDayMidnight(new Date(data.meta.chartStart));
@@ -145,17 +152,70 @@ export class GanttRenderer extends AbstractGanttRenderer {
         }
     }
 
+    setTaskSelection(selection: GanttTaskSelection | null): void {
+        this.taskSelection = selection;
+    }
+
     drawGanttChart(g: SVGElement): void {
+        const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        style.textContent = `
+            .gantt-task { cursor: pointer; outline: none; }
+            .gantt-task-outline { opacity: 0; pointer-events: none; }
+            .gantt-task:hover .gantt-task-outline { opacity: .5; }
+            .gantt-task.is-selected .gantt-task-outline,
+            .gantt-task:focus-visible .gantt-task-outline { opacity: 1; stroke-width: 2; }
+            .task-dependency.is-muted { opacity: .45; }
+            .task-dependency.is-emphasized > path,
+            .task-dependency.is-emphasized > line { stroke-width: 3; }
+            .task-dependency.is-emphasized > polygon { stroke: var(--dependency-color); stroke-width: 1; }
+        `;
+        g.appendChild(style);
         const relationGroup = SvgUtils.createGroup({class: 'task-relations'});
         for (const task of this.tasks) {
-            this.drawTaskRelations(relationGroup, task);
+            const emphasized = this.taskSelection
+                ? (this.taskSelection.taskId === String(task.id) ? this.taskSelection.predecessorIds : this.emptyPredecessorIds)
+                : undefined;
+            this.drawTaskRelations(relationGroup, task, emphasized);
         }
         g.appendChild(relationGroup);
 
         for (const task of this.tasks) {
-            const taskGroup = SvgUtils.createGroup({'data-task-id': String(task.id)});
+            const id = String(task.id);
+            const selected = this.taskSelection?.taskId === id;
+            const taskGroup = SvgUtils.createGroup({
+                class: 'gantt-task' + (selected ? ' is-selected' : ''),
+                'data-task-id': id,
+                tabindex: '0',
+                role: 'button',
+                'aria-label': [task.key, task.name].filter(Boolean).join(' ') || 'Task',
+                'aria-pressed': String(selected),
+            });
             this.drawTask(taskGroup, 0, task, true, false, false, null, null, true);
+            this.drawInspectionOutline(taskGroup, task);
             g.appendChild(taskGroup);
+        }
+    }
+
+    private drawInspectionOutline(g: SVGGElement, task: TaskDto): void {
+        if (!task.start || !task.finish)
+            return;
+        const x1 = this.calculateX(task.start, DateUtils.withTime(task.start, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        const x2 = this.calculateX(task.finish, DateUtils.withTime(task.finish, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        const height = this.getTaskHeight() - TASK_BODY_MARGIN * 2;
+        const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
+        const attrs = {
+            class: 'gantt-task-outline',
+            fill: 'none',
+            stroke: this.theme.themeVariance === 'dark' ? '#93c5fd' : '#2563eb',
+            'vector-effect': 'non-scaling-stroke',
+        };
+        if (task.milestone && !task.story) {
+            const half = height / 2;
+            g.appendChild(SvgUtils.createPolygon({...attrs, points: `${x1},${y - half} ${x1 + half},${y} ${x1},${y + half} ${x1 - half},${y}`}));
+        } else if (task.story && x2 > x1) {
+            g.appendChild(SvgUtils.createPath({...attrs, d: `M ${x1} ${y + height / 2} V ${y - height / 2} H ${x2} V ${y + height / 2}`}));
+        } else if (x2 > x1) {
+            g.appendChild(SvgUtils.createRect(x1, y - height / 2, x2 - x1, height, attrs));
         }
     }
 
