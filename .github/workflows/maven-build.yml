@@ -138,12 +138,13 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
 
-      - name: Publish JaCoCo coverage to pull request
-        if: ${{ always() && github.event_name == 'pull_request' && steps.coverage.outcome == 'success' }}
+      - name: Publish JaCoCo coverage
+        if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'push') && steps.coverage.outcome == 'success' }}
         uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
+          comment-type: ${{ github.event_name == 'push' && 'summary' || 'pr_comment' }}
           min-coverage-overall: 40
           min-coverage-changed-files: 60
           title: JaCoCo Coverage Report
