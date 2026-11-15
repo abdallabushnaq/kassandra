@@ -121,9 +121,13 @@ function taskEdge(id, side) {
     const x = Number(rect.getAttribute('x'));
     const width = Number(rect.getAttribute('width'));
     const y = Number(rect.getAttribute('y'));
+    const storySide = body ? null : task.querySelectorAll(':scope > rect')[1];
+    if (!body)
+        assertPresent(storySide, `story side for ${id}`);
     return {
         x: side === 'right' ? x + width - (body ? 0 : 1) : x,
-        y: body ? y + Number(rect.getAttribute('height')) / 2 : y + 8,
+        y: body ? y + Number(rect.getAttribute('height')) / 2
+            : (y + Number(storySide.getAttribute('y')) + Number(storySide.getAttribute('height'))) / 2,
     };
 }
 
@@ -481,7 +485,8 @@ export async function verifyGanttZoom(gantt, combined) {
                 [Math.max(0, configuredThreshold - 0.01), true],
             ]) {
                 render({...settings(0), [key]: threshold}, configuredThreshold);
-                assertEqual(visible(), expected, `${type} ${key} visibility at threshold ${threshold}`);
+                const expectedVisibility = key === 'renderTaskProgressBarAtDayWidth' ? false : expected;
+                assertEqual(visible(), expectedVisibility, `${type} ${key} visibility at threshold ${threshold}`);
             }
         }
 
@@ -513,9 +518,11 @@ export async function verifyGanttZoom(gantt, combined) {
 
         render(settings(0));
         const detailedBody = group(taskId).querySelectorAll('.task-body');
-        const distinctFills = [...new Set([...detailedBody].map(element => element.getAttribute('fill')))];
-        assertCondition(distinctFills.length > 1, `${type} non-working-day segment fills`,
-            'more than 1 distinct fill', distinctFills);
+        assertEqual(detailedBody.length, 2, `${type} working-day segment count`);
+        const firstSegmentEnd = Number(detailedBody[0].getAttribute('x')) + Number(detailedBody[0].getAttribute('width'));
+        const secondSegmentStart = Number(detailedBody[1].getAttribute('x'));
+        assertCondition(secondSegmentStart > firstSegmentEnd, `${type} non-working-day gap`,
+            `greater than ${firstSegmentEnd}`, secondSegmentStart);
         assertPresent(group(taskId).querySelector('.task-border[stroke-dasharray]'),
             `${type} dotted off-day border`);
         const chartHeight = document.querySelector('#chart svg').getAttribute('height');
@@ -523,26 +530,13 @@ export async function verifyGanttZoom(gantt, combined) {
         render({...settings(0), renderTaskNonWorkingDaysAtDayWidth: 30});
         const body = group(taskId).querySelectorAll('.task-body');
         assertEqual(body.length, 1, `${type} continuous task-body segment count`);
-        assertEqual(Number(body[0].getAttribute('height')), 16, `${type} continuous task-body height`);
+        assertEqual(Number(body[0].getAttribute('height')), 12, `${type} continuous task-body height`);
         const taskTitle = body[0].querySelector('title');
         assertPresent(taskTitle, `${type} task tooltip element`);
         const taskTooltip = taskTitle.textContent;
         assertCondition(taskTooltip.includes('Alpha'), `${type} task tooltip includes task name`,
             'contains "Alpha"', taskTooltip);
-        const progress = group(taskId).querySelector('.task-progress-bar');
-        assertPresent(progress, `${type} progress bar`);
-        assertEqual(progress.getAttribute('fill'), '#0000ffff', `${type} default progress-bar fill`);
-        assertEqual(Number(progress.getAttribute('height')), 1, `${type} progress-bar height`);
-        const progressBottomGap = Number(body[0].getAttribute('y')) + Number(body[0].getAttribute('height'))
-            - Number(progress.getAttribute('y')) - Number(progress.getAttribute('height'));
-        assertEqual(progressBottomGap, 1, `${type} progress-bar bottom gap`);
-        const expectedProgressWidth = Number(body[0].getAttribute('width')) / 2;
-        assertEqual(Number(progress.getAttribute('width')), expectedProgressWidth, `${type} progress-bar width`);
-        const progressTitle = progress.querySelector('title');
-        assertPresent(progressTitle, `${type} progress-bar tooltip element`);
-        const progressTooltip = progressTitle.textContent;
-        assertCondition(progressTooltip.includes('Alpha'), `${type} progress tooltip includes task name`,
-            'contains "Alpha"', progressTooltip);
+        assertAbsent(group(taskId).querySelector('.task-progress-bar'), `${type} progress bar`);
         assertAbsent(group(shortTaskId).querySelector('.task-progress-bar'), `${type} zero-progress task bar`);
         assertAbsent(group(taskId).querySelector('rect[fill="#000000"]'), `${type} hidden progress marker`);
         assertEqual(group(taskId).querySelectorAll('.task-border').length, 4, `${type} solid task-border count`);
@@ -556,37 +550,32 @@ export async function verifyGanttZoom(gantt, combined) {
         assertEqual(document.querySelector('#chart svg').getAttribute('height'), chartHeight,
             `${type} chart height after task rendering`);
 
-        data.meta.theme.ganttTheme.progressColor = 0xff8000;
-        render(settings(0));
-        assertEqual(group(taskId).querySelector('.task-progress-bar').getAttribute('fill'), '#ff8000ff',
-            `${type} configured progress-bar fill`);
-        data.meta.theme.ganttTheme.progressColor = 0x0000ff;
-
         render({...settings(0), renderTaskNonWorkingDaysAtDayWidth: 30}, 2);
         const shortTaskBody = group(shortTaskId).querySelector('.task-body');
         assertPresent(shortTaskBody, `${type} short task body`);
         const shortTaskBodyWidth = Number(shortTaskBody.getAttribute('width'));
         assertCondition(shortTaskBodyWidth > 0, `${type} short task body width`, 'greater than 0', shortTaskBodyWidth);
-        assertEqual(Number(shortTaskBody.getAttribute('height')), 16, `${type} short task-body height`);
+        assertEqual(Number(shortTaskBody.getAttribute('height')), 12, `${type} short task-body height`);
         render({...settings(0), renderDependenciesAtDayWidth: 30});
         assertEqual(incomingDependencies(storyId).length, 0, `${type} hidden story dependency`);
 
         verifyRelations(type, data, render);
 
-        render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
-        assertEqual(features.renderTaskProgressBarAtDayWidth(), false, `${type} progress bar visibility at initial zoom`);
+        render({...settings(0), renderTaskProgressTextAtDayWidth: 21}, 20, 1);
+        assertEqual(features.renderTaskProgressTextAtDayWidth(), false, `${type} progress text visibility at initial zoom`);
         document.querySelector('.gantt-inspection-viewport').dispatchEvent(new WheelEvent('wheel', {
             bubbles: true, cancelable: true, altKey: true, deltaY: -1, clientX: 400,
         }));
-        await waitFor(features.renderTaskProgressBarAtDayWidth, `${type}: full-chart zoom`);
+        await waitFor(features.renderTaskProgressTextAtDayWidth, `${type}: full-chart zoom`);
 
-        render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
+        render({...settings(0), renderTaskProgressTextAtDayWidth: 21}, 20, 1);
+        assertEqual(features.renderTaskProgressTextAtDayWidth(), false, `${type} progress text visibility before day-width zoom`);
         document.querySelector('.gantt-inspection-viewport').dispatchEvent(new WheelEvent('wheel', {
             bubbles: true, cancelable: true, shiftKey: true, deltaY: -1, clientX: 400,
         }));
-        await waitFor(features.renderTaskProgressBarAtDayWidth, `${type}: day-width zoom`);
+        await waitFor(features.renderTaskProgressTextAtDayWidth, `${type}: day-width zoom`);
 
-        render({...settings(0), renderTaskProgressBarAtDayWidth: 21}, 20, 1);
+        render({...settings(0), renderTaskProgressTextAtDayWidth: 21}, 20, 1);
         const open = window.open;
         let popup = null;
         window.open = function (...args) {
@@ -597,11 +586,11 @@ export async function verifyGanttZoom(gantt, combined) {
             window.detachKassandraChart('chart');
             assertPresent(popup, `${type} detached-chart popup`);
             await waitFor(() => popup.document.querySelector('.task-body'), `${type}: detached chart did not render`);
-            assertAbsent(popup.document.querySelector('.task-progress-bar'), `${type} detached-chart progress bar before zoom`);
+            assertAbsent(popup.document.querySelector('.task-progress-text'), `${type} detached-chart progress text before zoom`);
             popup.document.querySelector('.gantt-inspection-viewport').dispatchEvent(new popup.WheelEvent('wheel', {
                 bubbles: true, cancelable: true, altKey: true, deltaY: -1, clientX: 400,
             }));
-            await waitFor(() => popup.document.querySelector('.task-progress-bar'), `${type}: detached zoom`);
+            await waitFor(() => popup.document.querySelector('.task-progress-text'), `${type}: detached zoom`);
         } finally {
             window.open = open;
             window.disposeKassandraChart('chart');

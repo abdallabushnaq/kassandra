@@ -32,6 +32,7 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -241,6 +242,7 @@ public class GanttZoomTest extends AbstractTestUtil {
                     """, type, gantt, combined);
             assertEquals("ok", result, type + " pointer fixture");
             WebDriverWait wait      = new WebDriverWait(driver, Duration.ofSeconds(10));
+            wait.ignoring(StaleElementReferenceException.class);
             By            selected  = By.cssSelector(".gantt-task.is-selected");
             By            body      = By.cssSelector("[data-task-id='" + taskId + "'] .task-body");
             By            milestone = By.cssSelector("[data-task-id='" + milestoneId + "'] .milestone-body");
