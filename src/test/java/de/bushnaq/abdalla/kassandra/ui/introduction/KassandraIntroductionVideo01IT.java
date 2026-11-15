@@ -26,7 +26,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
@@ -259,7 +259,7 @@ public class KassandraIntroductionVideo01IT extends AbstractIntroductionVideo {
         //---------------------------------------------------------------------------------------
         paul.narrateAsync(NORMAL, "Now for the heart of project planning: the Backlog page.");
         seleniumHandler.click(Backlog.MENU_ITEM_ID);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
 
         paul.narrate(NORMAL, "Sprint planning is done here in the Backlog page. This is where you define and estimate all the work for a sprint.").pause();
         paul.narrate(NORMAL, "Every unit of work is a Task. For each task you provide two effort estimates: a minimum — the optimistic case where everything goes smoothly — and a maximum, which accounts for every risk, uncertainty, and unexpected complication that might arise.").pause();
@@ -292,7 +292,7 @@ public class KassandraIntroductionVideo01IT extends AbstractIntroductionVideo {
         //---------------------------------------------------------------------------------------
         paul.narrateAsync(NORMAL, "The Sprint Quality Board is where managers and product owners monitor the health of a sprint in real time.");
         seleniumHandler.click(QualityBoard.MENU_ITEM_ID);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
         seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, "London");
 
         paul.narrate(NORMAL, "At the top, you see key sprint statistics — total effort, elapsed time, and completion percentage.").pause();

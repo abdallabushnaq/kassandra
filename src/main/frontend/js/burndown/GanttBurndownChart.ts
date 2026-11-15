@@ -24,9 +24,12 @@ import {GanttChartDto} from '../gantt/dto/GanttChartDto.js';
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
 
 export class GanttBurndownChart extends AbstractChart {
+    static readonly CHART_ID = 'gantt-burndown-chart';
+    static readonly BURNDOWN_CHART_ID = 'burndown-chart';
+
     constructor(data: GanttBurndownChartDto, theme: Theme) {
         super('Gantt Burndown Chart', AbstractChart.TIMELINE_CONTROLS_HINT + ';Click task: inspect, Esc: clear',
-            data.meta.copyright, data.meta.sprintName || '', '', '', 'gantt-burndown-chart', theme);
+            data.meta.copyright, data.meta.sprintName || '', '', '', GanttBurndownChart.CHART_ID, theme);
         this.addRenderer(new BurndownRenderer(this, data));
         const ganttData: GanttChartDto = {
             calendars: data.calendars || [],

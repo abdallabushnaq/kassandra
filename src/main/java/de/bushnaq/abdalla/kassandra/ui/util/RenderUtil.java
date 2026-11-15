@@ -46,11 +46,28 @@ import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendere
 
 @Slf4j
 @Service
+@Deprecated
 public class RenderUtil {
-    public static final String                    BURNDOWN_CHART         = "burndown-chart";
-    public static final String                    GANTT_BURNDOWN_CHART   = "gantt-burndown-chart";
-    public static final String                    GANTT_CHART            = "gantt-chart";
-    public static final String                    SPRINTS_OVERVIEW_CHART = "sprints-overview-chart";
+    /**
+     * @deprecated Use {@link ChartIds#BURNDOWN_CHART}.
+     */
+    @Deprecated
+    public static final String                    BURNDOWN_CHART         = ChartIds.BURNDOWN_CHART;
+    /**
+     * @deprecated Use {@link ChartIds#GANTT_BURNDOWN_CHART}.
+     */
+    @Deprecated
+    public static final String                    GANTT_BURNDOWN_CHART   = ChartIds.GANTT_BURNDOWN_CHART;
+    /**
+     * @deprecated Use {@link ChartIds#GANTT_CHART}.
+     */
+    @Deprecated
+    public static final String                    GANTT_CHART            = ChartIds.GANTT_CHART;
+    /**
+     * @deprecated Use {@link ChartIds#SPRINTS_OVERVIEW_CHART}.
+     */
+    @Deprecated
+    public static final String                    SPRINTS_OVERVIEW_CHART = ChartIds.SPRINTS_OVERVIEW_CHART;
     final static        Logger                    logger                 = LoggerFactory.getLogger(RenderUtil.class);
     @Autowired
     private             GanttBurndownChartService service;

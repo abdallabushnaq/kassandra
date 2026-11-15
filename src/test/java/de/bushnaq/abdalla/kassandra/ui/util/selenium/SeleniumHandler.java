@@ -1604,7 +1604,7 @@ class SeleniumHandler {
     /**
      * Waits until a client-rendered chart has appended its SVG and published its readiness marker.
      *
-     * @param chartId the chart identifier from {@code RenderUtil}
+     * @param chartId the chart identifier from {@code ChartIds}
      */
     public void waitForChartRendered(String chartId) {
         if (!isEnabled())
@@ -1618,7 +1618,7 @@ class SeleniumHandler {
     /**
      * Waits for a visible chart rendered with the expected theme.
      *
-     * @param chartId the chart identifier from {@code RenderUtil}
+     * @param chartId the chart identifier from {@code ChartIds}
      * @param theme the expected chart theme
      */
     public void waitForChartRendered(String chartId, ETheme theme) {

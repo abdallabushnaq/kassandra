@@ -69,7 +69,7 @@ function mountGanttChart(
             {
                 bundleUrl: '/js/generated/gantt/gantt-bundle.js',
                 containerId: elementId,
-                chartIds: ['gantt-chart'],
+                chartIds: [GanttChart.CHART_ID],
                 factoryExportName: 'createGanttChart',
                 factory: createGanttChart,
                 title: 'Gantt chart',

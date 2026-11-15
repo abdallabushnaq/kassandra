@@ -31,7 +31,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryOperationDetails;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.*;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
@@ -480,7 +480,7 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
         peg.sprintApi.update(sprint);
         for (ETheme theme : List.of(ETheme.light, ETheme.dark)) {
             navigateTo(ActiveSprints.ROUTE + "?sprints=" + sprint.getId());
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+            seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
             seleniumHandler.setHelpScreenshotTheme(theme);
             seleniumHandler.click(TaskCard.TASK_CARD_TITLE_ID_PREFIX + task.getKey());
             seleniumHandler.setTextField(TaskDialog.NAME_FIELD_ID, "Unsaved task help input");
@@ -494,9 +494,9 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
             closeOwnerWithHelp(TaskDialog.HELP_BUTTON_ID, TaskDialog.TASK_DIALOG, TaskDialog.CANCEL_BUTTON);
 
             navigateTo(Backlog.ROUTE + "?sprints=" + sprint.getId());
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+            seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
             seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+            seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
             seleniumHandler.click(TaskGrid.TASK_GRID_DEPENDENCY_PREFIX + task.getName());
             verifyDialogHelp(DependencyDialog.HELP_BUTTON_ID, DependencyDialog.DEPENDENCY_DIALOG);
             closeOwnerWithHelp(DependencyDialog.HELP_BUTTON_ID, DependencyDialog.DEPENDENCY_DIALOG, DependencyDialog.CANCEL_BUTTON);

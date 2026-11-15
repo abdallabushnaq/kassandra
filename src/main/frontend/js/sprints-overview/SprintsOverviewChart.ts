@@ -10,6 +10,8 @@ import {SprintsOverviewRenderer} from './SprintsOverviewRenderer.js';
 import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
 
 export class SprintsOverviewChart extends AbstractChart {
+    static readonly CHART_ID = 'sprints-overview-chart';
+
     constructor(data: SprintOverviewDto, theme: Theme) {
         super(
             'Project Overview Chart',
@@ -18,7 +20,7 @@ export class SprintsOverviewChart extends AbstractChart {
             '',
             '',
             '',
-            'sprints-overview-chart',
+            SprintsOverviewChart.CHART_ID,
             theme,
         );
         this.addRenderer(new SprintsOverviewRenderer(this, data, 5, 5));

@@ -78,7 +78,7 @@ function mountSprintsOverviewChart(
 
     if (injectedData) {
         currentChartInstance = createChart(containerElement, injectedData, {containerId: elementId, initialVisualScale});
-        markChartRendered(containerElement, ['sprints-overview-chart']);
+        markChartRendered(containerElement, [SprintsOverviewChart.CHART_ID]);
     } else {
         containerElement.innerHTML = '<div style="padding:16px;color:red;font-family:sans-serif;">No chart data provided.</div>';
     }

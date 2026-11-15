@@ -40,9 +40,8 @@ still has a pre-existing local reference comparison failure described below.
 - `GanttGenerator.generateBurndownChart()` currently renders the combined
   Gantt/burndown chart. Replacing a standalone legacy burndown artifact with it is
   an intentional evidence-layout change, not a byte-compatible replacement.
-- Test references to `RenderUtil` outside the shared chart helper are currently
-  chart-ID constants used by UI tests. They do not themselves invoke legacy
-  rendering and do not require replacement for this migration.
+- The original test references to `RenderUtil` outside the shared chart helper
+  were chart-ID constants used by UI tests, not legacy rendering calls.
 
 ## Original pilot design
 
@@ -219,7 +218,7 @@ It does not prove multi-sprint overview equivalence.
   and combined burndown SVG/PNG files; representative light-theme images were
   inspected.
 - `DynamicGanttTest`, `DynamicGanttBurndownTest`, `OverviewChartTest`, and
-  `MPXJReader` already use `GanttGenerator`. Remaining test references to
-  `RenderUtil` outside calendar coverage are UI chart identifiers, not legacy
-  chart rendering. Calendar tests, legacy production classes, and legacy UI
-  callers remain untouched.
+  `MPXJReader` already use `GanttGenerator`. UI chart identifiers now live on
+  the TypeScript chart classes and are mirrored in Java `ChartIds` for browser
+  automation; `RenderUtil` retains deprecated compatibility aliases. Calendar
+  tests, legacy production charts, and legacy UI callers remain untouched.

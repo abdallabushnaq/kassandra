@@ -36,6 +36,7 @@ import de.bushnaq.abdalla.kassandra.rest.JacksonConfig;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -145,7 +146,7 @@ public class GanttGenerator extends EntityGenerator {
         GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme, new KassandraProperties());
         GanttBurndownChartService chartService = new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
         String                    json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart", json, name, "gantt-burndown-chart", visualScale, fitTimeline);
+        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart", json, name, ChartIds.GANTT_BURNDOWN_CHART, visualScale, fitTimeline);
     }
 
     private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected, double visualScale, boolean fitTimeline) throws IOException {
@@ -162,7 +163,7 @@ public class GanttGenerator extends EntityGenerator {
                 driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
                 driver.get("http://127.0.0.1:" + server.getAddress().getPort() + "/");
                 Object result = driver.executeAsyncScript("""
-                        const [url, mount, json, expected, visualScale, fitTimeline, done] = arguments;
+                        const [url, mount, json, expected, visualScale, fitTimeline, combinedId, burndownId, done] = arguments;
                         import(url).then(async () => {
                             localStorage.clear();
                             const data = JSON.parse(json);
@@ -186,11 +187,12 @@ public class GanttGenerator extends EntityGenerator {
                             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                             const container = document.getElementById('chart');
                             const svg = container.querySelector('svg');
-                            if (!svg || !container.getAttribute('data-chart-rendered')?.split(' ').includes(expected))
+                            const chartIds = container.getAttribute('data-chart-rendered')?.split(' ') || [];
+                            if (!svg || !chartIds.includes(expected) || (expected === combinedId && !chartIds.includes(burndownId)))
                                 throw new Error('Expected chart did not render an SVG: ' + expected);
                             done({svg: new XMLSerializer().serializeToString(svg)});
                         }).catch(error => done({error: String(error.stack || error)}));
-                        """, module, mount, json, expected, visualScale, fitTimeline);
+                        """, module, mount, json, expected, visualScale, fitTimeline, ChartIds.GANTT_BURNDOWN_CHART, ChartIds.BURNDOWN_CHART);
                 if (!(result instanceof Map<?, ?> response) || !(response.get("svg") instanceof String svg)) {
                     throw new IllegalStateException("Failed to render " + name + " chart: " + result);
                 }
@@ -341,7 +343,7 @@ public class GanttGenerator extends EntityGenerator {
         StableDiffusionConfig config       = new StableDiffusionConfig();
         GanttChartService     chartService = new GanttChartService(new LightTheme(config), new DarkTheme(config), new KassandraProperties());
         String                json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart", json, name, "gantt-chart", visualScale, fitTimeline);
+        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart", json, name, ChartIds.GANTT_CHART, visualScale, fitTimeline);
     }
 
     /**
@@ -381,7 +383,7 @@ public class GanttGenerator extends EntityGenerator {
         SprintsOverviewService overviewService = new SprintsOverviewService(repository, new LightTheme(config), new DarkTheme(config));
         String json = new JacksonConfig().jsonMapper().writeValueAsString(
                 overviewService.getOverview(ParameterOptions.getLocalNow(), null, testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart", json, chartName(testInfo) + "-overview-chart-projectOverviewChart", "sprints-overview-chart", visualScale, false);
+        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart", json, chartName(testInfo) + "-overview-chart-projectOverviewChart", ChartIds.SPRINTS_OVERVIEW_CHART, visualScale, false);
     }
 
     /**

@@ -33,7 +33,7 @@ import de.bushnaq.abdalla.kassandra.ui.component.*;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.ScreenshotComparisonReport;
 import de.bushnaq.abdalla.kassandra.ui.view.*;
@@ -199,13 +199,13 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
 
     private void ensureActiveSprintsChartTheme(ETheme theme) {
         seleniumHandler.setHelpScreenshotTheme(theme);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
         WebElement chartContainer = seleniumHandler.findElement(By.id(ActiveSprints.GANTT_BURNDOWN_CONTAINER_ID));
         if (!theme.name().equals(chartContainer.getDomAttribute("data-chart-rendered-theme"))) {
             selectActiveSprintsGrouping(GroupingMode.STORIES, theme);
             selectActiveSprintsGrouping(GroupingMode.FEATURES, theme);
         }
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART, theme);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART, theme);
     }
 
     @AfterAll
@@ -285,7 +285,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
                 By.cssSelector("#" + ActiveSprints.ID_GROUPING_MODE_SELECTOR + " input"),
                 "value", mode.getDisplayName()));
         seleniumHandler.waitUntil(ExpectedConditions.attributeToBe(By.id(ActiveSprints.BOARD_ID), "data-grouping-mode", mode.name()));
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART, theme);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART, theme);
     }
 
     private void takeActiveSprintsBoardScreenshot(String folder, GroupingMode mode, ETheme theme) {
@@ -562,7 +562,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
             seleniumHandler.takeHelpRowActionScreenshot(Backlog.class, TaskGrid.TASK_GRID_DEPENDENCY_PREFIX);
         } finally {
             seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
-            seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+            seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
             seleniumHandler.prepareHelpScreenshots(Backlog.BACKLOG_PAGE_TITLE_ID);
         }
         takePageHelpScreenshot(Backlog.class, Backlog.HELP_BUTTON_ID);
@@ -593,7 +593,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         // Switch to edit mode
         seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
         seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
         seleniumHandler.takeScreenShot(folder + "/backlog-edit-mode.png");
 
         // Click the dependency cell for the leaf task to open DependencyDialog
@@ -610,7 +610,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.click(DependencyDialog.CANCEL_BUTTON);
         seleniumHandler.waitForElementToBeClickable(Backlog.CANCEL_BUTTON_ID);
         seleniumHandler.click(Backlog.CANCEL_BUTTON_ID);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
     }
 
     private void takeDialogHelpElements(Class<?> dialog, String helpButtonId, String... elementIds) throws IOException {
@@ -1078,20 +1078,20 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         //SprintListView
         //-----------------
-        seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.SPRINTS_OVERVIEW_CHART);
         takeSprintElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/sprint-list-view.png");
         takeSprintDialogScreenshots(folder);
         // Clear the feature selector in SprintOverview before capturing the backlog sprint.
         seleniumHandler.clearMultiSelectComboBoxValue(SprintListView.FEATURE_SELECTOR);
-        seleniumHandler.waitForChartRendered(RenderUtil.SPRINTS_OVERVIEW_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.SPRINTS_OVERVIEW_CHART);
         sprintListViewTester.selectSprint(QUALITY_BOARD_SPRINT_NAME_DELAYED);
 
 
         //-----------------
         //QualityBoard
         //-----------------
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
         takeHelpElements(QualityBoard.class, "page-header", eTheme,
                 QualityBoard.SPRINT_SELECTOR_ID, QualityBoard.EXPORT_JSON_BUTTON_ID, QualityBoard.EXPORT_XML_BUTTON_ID,
                 QualityBoard.EXPORT_XLSX_BUTTON_ID, QualityBoard.OPEN_GANTT_BURNDOWN_CHART_BUTTON_ID,
@@ -1099,7 +1099,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         takePageHelpScreenshot(QualityBoard.class, QualityBoard.HELP_BUTTON_ID);
         seleniumHandler.takeScreenShot(folder + "/quality-board-delayed.png");
         seleniumHandler.setComboBoxValue(QualityBoard.SPRINT_SELECTOR_ID, QUALITY_BOARD_SPRINT_NAME_IN_TIME);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
         seleniumHandler.takeScreenShot(folder + "/quality-board-in-time.png");
 
         //-----------------
@@ -1123,7 +1123,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         //-----------------
         backlogTester.switchToBacklog();
         seleniumHandler.setComboBoxValue(Backlog.SPRINT_SELECTOR_ID, BACKLOG_SPRINT_NAME);
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
         takeBacklogElementScreenshots(eTheme);
         seleniumHandler.takeScreenShot(folder + "/backlog.png");
         takeDependencyDialogScreenshots(folder);
@@ -1134,7 +1134,7 @@ public class GenerateScreenshotsIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.clearMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR);
         seleniumHandler.waitForPageLoaded(200);
         seleniumHandler.setMultiSelectComboBoxValue(ActiveSprints.ID_SPRINT_SELECTOR, new String[]{ACTIVE_SPRINT_NAME});
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
         takeActiveSprintsElementScreenshots(eTheme);
         aboutViewTester.login(ACTIVE_SPRINT_USER_NAME, "password", null, testInfo.getTestClass().get().getSimpleName(), generateTestCaseName(testInfo));
         navigateTo(ActiveSprints.ROUTE);

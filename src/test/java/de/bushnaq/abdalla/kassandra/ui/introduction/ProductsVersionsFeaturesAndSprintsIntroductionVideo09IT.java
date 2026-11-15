@@ -23,7 +23,7 @@ import de.bushnaq.abdalla.kassandra.ai.tts.narrator.NarratorAttribute;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import de.bushnaq.abdalla.kassandra.ui.dialog.*;
 import de.bushnaq.abdalla.kassandra.ui.introduction.util.InstructionVideo;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.FeatureListView;
 import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
@@ -367,7 +367,7 @@ public class ProductsVersionsFeaturesAndSprintsIntroductionVideo09IT extends Abs
         logHeader(" Tasks Page");
         //---------------------------------------------------------------------------------------
         paul.narrate(NORMAL, "This is the page where you plan your sprint including the gantt chart.").pause();
-        seleniumHandler.waitForChartRendered(RenderUtil.GANTT_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
 
         paul.pauseIfDisabled(5000);
         seleniumHandler.showOverlay(video.getTitle(), InstructionVideo.COPYLEFT_SUBTITLE);
