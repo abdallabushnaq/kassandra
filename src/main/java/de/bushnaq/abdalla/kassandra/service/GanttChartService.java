@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.service;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -48,7 +49,7 @@ import java.util.UUID;
  * the client-side Gantt chart bundle can render an interactive, zoomable
  * Gantt chart without any further server calls.
  *
- * <p>Colour computation mirrors {@code LegacyLegacyAbstractGanttRenderer.drawTask()} and
+ * <p>Colour computation mirrors {@code LegacyAbstractGanttRenderer.drawTask()} and
  * related methods. Calendar exceptions are extracted once from each assigned
  * user's effective calendar so the browser can determine working vs.
  * non-working days per row without duplicating holiday data.
@@ -130,7 +131,7 @@ public class GanttChartService {
      * Builds the complete DTO for the given sprint.
      *
      * <p>The {@code preRun} and {@code postRun} values mirror the same-named fields in
-     * {@link de.bushnaq.abdalla.kassandra.report.burndown.RenderDao}: the chart window
+     * {@link LegacyRenderDao}: the chart window
      * is extended by {@code preRun} days before the earliest task start and {@code postRun}
      * days after the latest task finish.  This leaves space for user names (left margin) and
      * task names that overflow the right edge of a bar.
@@ -225,7 +226,7 @@ public class GanttChartService {
             }
         }
 
-        // ── Colour computation (mirrors LegacyLegacyAbstractGanttRenderer.drawTask) ──
+        // ── Colour computation (mirrors LegacyAbstractGanttRenderer.drawTask) ──
         dto.textColor   = colorToHex(theme.ganttTheme.taskTextColor);
         dto.borderColor = task.isCritical()
                 ? colorToHex(theme.ganttTheme.criticalTaskBorderColor)

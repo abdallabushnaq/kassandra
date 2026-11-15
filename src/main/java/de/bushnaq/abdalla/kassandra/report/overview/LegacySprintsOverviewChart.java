@@ -4,7 +4,7 @@ import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.report.LegacyAbstractChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 
@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Deprecated
-public class LegacySprintsOverviewChartLegacy extends LegacyAbstractChart {
+public class LegacySprintsOverviewChart extends LegacyAbstractChart {
 
-    public LegacySprintsOverviewChartLegacy(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,
-                                            List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
+    public LegacySprintsOverviewChart(Context context, String relateCssPath, String column, String sprintName, Integer limit, LocalDateTime now,
+                                      List<Sprint> sprintList, int chartWidth, int chartHeight, String cssClass, Theme graphicsTheme) throws Exception {
         super("Project Overview Chart", "", relateCssPath, column, sprintName + "-projectOverviewChart", "project_overview_map", null, graphicsTheme);
-        RenderDao dao = RenderUtil.createOverviewRenderDao(context, sprintList, "overview", ParameterOptions.getLocalNow(), 3, chartWidth, chartHeight, 0);
-        getRenderers().add(new LegacySprintsOverviewRendererLegacy(dao));
+        LegacyRenderDao dao = RenderUtil.createOverviewRenderDao(context, sprintList, "overview", ParameterOptions.getLocalNow(), 3, chartWidth, chartHeight, 0);
+        getRenderers().add(new LegacySprintsOverviewRenderer(dao));
         this.setChartWidth(getRenderers().get(0).chartWidth);
         this.setChartHeight(getRenderers().get(0).chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = chartWidth;

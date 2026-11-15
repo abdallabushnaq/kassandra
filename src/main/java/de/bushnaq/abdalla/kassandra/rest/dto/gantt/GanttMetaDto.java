@@ -27,17 +27,17 @@ import java.time.LocalDateTime;
  * Chart metadata: date range, sprint info, and theme colors.
  */
 public class GanttMetaDto {
-    public CalendarSize  calendarSize;
+    public CalendarSize              calendarSize;
     /**
      * Last visible day of the chart (UTC midnight).
      */
-    public LocalDateTime chartEnd;
+    public LocalDateTime             chartEnd;
     /**
      * First visible day of the chart (UTC midnight).
      */
-    public LocalDateTime chartStart;
-    public String        copyright;
-    public int           firstDayX;
+    public LocalDateTime             chartStart;
+    public String                    copyright;
+    public int                       firstDayX;
     /**
      * Effective-day-width thresholds for optional Gantt details.
      */
@@ -45,38 +45,38 @@ public class GanttMetaDto {
     /**
      * Current date/time (for the "now" marker line).
      */
-    public LocalDateTime now;
+    public LocalDateTime             now;
     /**
      * Number of extra days rendered after the latest task finish.
-     * Mirrors {@code RenderDao.postRun}; used to leave room for task-name labels
+     * Mirrors {@code LegacyRenderDao.postRun}; used to leave room for task-name labels
      * that extend beyond the right edge of the bar.
      */
-    public int           postRun;
+    public int                       postRun;
     /**
      * Number of extra days rendered before the earliest task start.
-     * Mirrors {@code RenderDao.preRun}; used to leave room for user-name labels.
+     * Mirrors {@code LegacyRenderDao.preRun}; used to leave room for user-name labels.
      */
-    public int           preRun;
+    public int                       preRun;
     /**
      * Latest finish date of any task in the sprint (used for milestone "E").
      */
-    public LocalDateTime sprintEnd;
+    public LocalDateTime             sprintEnd;
     /**
      * Name of the sprint being rendered.
      */
-    public String        sprintName;
+    public String                    sprintName;
     /**
      * Earliest start date of any task in the sprint (used for milestone "S").
      */
-    public LocalDateTime sprintStart;
+    public LocalDateTime             sprintStart;
     /**
      * Sprint status: ACTIVE, CLOSED, or PLANNING (used to determine if "N" milestone should be shown).
      */
-    public String        sprintStatus;
+    public String                    sprintStatus;
     /**
      * Theme colors as a nested class-structured object mirroring Java's {@code Theme} hierarchy.
      * Each sub-theme (chartTheme, ganttTheme, xAxesTheme, ...) contains typed color fields
      * as 0xRRGGBB integers. Mirrors Java: {@code Theme → ChartTheme / GanttTheme / ...}
      */
-    public ThemeDto      theme = new ThemeDto();
+    public ThemeDto                  theme = new ThemeDto();
 }

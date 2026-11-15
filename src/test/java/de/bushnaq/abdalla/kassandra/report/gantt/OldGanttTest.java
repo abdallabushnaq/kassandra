@@ -23,10 +23,13 @@ import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.dao.ETheme;
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.util.AbstractGanttTestUtil;
 import de.bushnaq.abdalla.kassandra.util.BurnDownUtil;
+import de.bushnaq.abdalla.kassandra.util.GanttGenerator;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -46,6 +49,27 @@ import java.util.Comparator;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class OldGanttTest extends AbstractGanttTestUtil {
+    private static final ETheme TEST_THEME = ETheme.light;
+    private static final double CHART_VISUAL_SCALE = 2.0;
+    @Autowired
+    private GanttBurndownChartService chartService;
+
+    @Override
+    protected void renderGanttChart(TestInfo testInfo, Sprint sprint) throws Exception {
+        GanttGenerator generator = new GanttGenerator(chartService);
+        generator.testTheme = TEST_THEME;
+        generator.generateGanttChart(sprint, testResultFolder, TestInfoUtil.getTestMethodName(testInfo) + "-gantt", CHART_VISUAL_SCALE);
+    }
+
+    @Override
+    protected void renderBurndownChart(TestInfo testInfo, Sprint sprint, int width, int height) throws Exception {
+        if (width != 0 || height != 36 * 20) {
+            throw new IllegalArgumentException("The pilot does not support custom burndown chart dimensions");
+        }
+        GanttGenerator generator = new GanttGenerator(chartService);
+        generator.testTheme = TEST_THEME;
+        generator.generateGanttBurndownChart(sprint, testResultFolder, TestInfoUtil.getTestMethodName(testInfo) + "-burndown", CHART_VISUAL_SCALE);
+    }
 
     /**
      * test dependency between two tasks
@@ -53,7 +77,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_01(TestInfo testInfo) throws Exception {
-        context.parameters.setTheme(ETheme.light);
+        context.parameters.setTheme(TEST_THEME);
 //        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
 //        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
 //        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -71,7 +95,10 @@ public class OldGanttTest extends AbstractGanttTestUtil {
         initializeInstances();
 
         //create tasks
-        Sprint sprint         = peg.sprintApi.getAll().getFirst();
+        Sprint sprint         = peg.sprintApi.getAll().stream()
+                .filter(candidate -> candidate.getName().equals(generateTestCaseName(testInfo)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Test sprint not found: " + generateTestCaseName(testInfo)));
         User   resource1      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().getFirst();
         User   resource2      = peg.getUsers().stream().sorted(Comparator.comparing(User::getName)).toList().get(1);
         Task   startMilestone = peg.addTask(sprint, null, "Start", LocalDateTime.parse(TestInfoUtil.getTestStart(testInfo)), null, Duration.ZERO, null, null, TaskMode.MANUALLY_SCHEDULED, true);
@@ -94,7 +121,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_02(TestInfo testInfo) throws Exception {
-        context.parameters.setTheme(ETheme.light);
+        context.parameters.setTheme(TEST_THEME);
 //        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
 //        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
 //        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
@@ -140,7 +167,7 @@ public class OldGanttTest extends AbstractGanttTestUtil {
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void gantt_03(TestInfo testInfo) throws Exception {
-        context.parameters.setTheme(ETheme.light);
+        context.parameters.setTheme(TEST_THEME);
 //        TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
 //        TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
 //        setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());

@@ -1,40 +1,36 @@
 # AI Questions
 
-# Coverage to GitHub
+# Deprecating Legacy Classes
 
-GitHub has the capability to show JaCoCo reporting result in a small table. To enable that, we need to publish the
-JaCoCo report in the GitHub Action.
-Example from the web:
-jobs:
-build:
-runs-on: ubuntu-latest
-permissions:
-pull-requests: write
-steps:
+Some of our Legacy Classes are still used in some tests.
+We are mainly talking about:
 
-- uses: actions/checkout@v4
-- name: Set up JDK 17
-  uses: actions/setup-java@v4
-  with:
-  distribution: temurin
-  java-version: 17
-- name: Run Coverage
-  run: |
-  chmod +x gradlew
-  ./gradlew testCoverage
+1. LegacyBurnDownChart
+2. LegacyBurnDownRenderer
+3. LegacyRenderDao
+4. LegacyCalendarChart
+5. LegacyCalendarRenderer
+6. LegacyAbstractGanttRenderer
+7. LegacyGanttChart
+8. LegacyGanttRenderer
+9. LegacyGanttBurndownChart
+10. LegacySprintsOverviewChart
+11. LegacySprintsOverviewRenderer
+12. AbstractCanvas
+13. LegacyAbstractChart
+14. LegacyAbstractRenderer
 
-      - name: Add coverage to PR
-        id: jacoco
-        uses: madrapps/jacoco-report@v1.8.0
-        with:
-          paths: |
-            ${{ github.workspace }}/**/build/reports/jacoco/prodNormalDebugCoverage/prodNormalDebugCoverage.xml,
-            ${{ github.workspace }}/**/build/reports/jacoco/**/debugCoverage.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 40
-          min-coverage-changed-lines: 60
+most new tests use GanttGenerator to generate Charts as evidence and debugging purposes.
+But some older tests and AbstractGanttTestUtil still rely on RenderUtil, which still relies on the Legacy classes.
+The reason we have not replaced them already is that it is not a pure replacement.
+The parameters are different.
+The legacy code take a sprint as a parameter while the new code takes a sprint-id.
 
-Please add a JaCoCo report to our GitHub Action.
+Create a plan that describes how to replace the legacy classes with the new classes in our tests.
+This plan should then be tested on one of the test classes to proof that this plan works, before we start replacing the
+code in all the places.
+
+Remark: we are still not ready to remove the legacy code.
 
 # Raise coverage to 80%
 
@@ -47,18 +43,6 @@ We then can use this report as a baseline to add more tests and raise the covera
 Example: We do have several integration tests that cover the UI, but not the Backlog view. We need to add a
 BacklogViewIT test to cover that view.
 
-# Add Special Color to Theme for the Gantt-Delivery-Buffer
-
-The Gantt-Delivery-Buffer is a very special task in our Gantt.
-It holds all the bugger we calculate between the min/max estimations of all teh tasks that are ont he critical path.
-All tasks use the user color of their resource in GanttChartService.buildTaskDto, but for tasks that do not have a user
-resource, we use theme.burndownTheme.getAuthorColor (28).
-As we have changed the color pallet, 28 is no longer the correct color.
-We also do not want this color to be used by any other user.
-So, we want to introduce a new color in GanttTheme called deliveryBufferBgColor.
-Define that and pick a gray color for light/dark theme.
-Make sure we use this color in GanttChartService.buildTaskDto for the Gantt-Delivery-Buffer task.
-
 # Add TypeScript coverage
 
 We currently use JaCoCo to add coverage for our java code to GitHub and CodeCov.
@@ -67,6 +51,13 @@ Our TypeScript runs mostly in our integration tests in the client.
 Example: The GanttChart running in the Backlog vaadin view.
 
 Create a plan (docs/plan/typescript-coverage.md) how to reach this goal.
+
+# Raise coverage to 80%
+
+The overall target is to raise the test coverage to 80%.
+Take a look at focs/plan/test-coverage.md and pick one of the *.ui.view.* classes that currently has 0%.
+
+Lets take a look at all
 
 # Server Settings Design
 

@@ -124,18 +124,31 @@ public class GanttGenerator extends EntityGenerator {
         return true;
     }
 
-    private void captureGanttBurndownChart(UUID sprintId, String testFolder, String name, double visualScale) throws Exception {
-        Sprint                    sprint       = prepareChartSprint(sprintId);
+    /**
+     * Generates a combined Gantt and burndown chart from a prepared sprint.
+     * The sprint's users, tasks, worklogs, calendars, and calculated state must already be initialized.
+     *
+     * @param sprint      prepared sprint to render
+     * @param testFolder  output directory for the chart
+     * @param name        output filename stem without an extension
+     * @param visualScale initial visual scale for the chart
+     * @throws Exception if chart data, browser rendering, or file output fails
+     */
+    public void generateGanttBurndownChart(Sprint sprint, String testFolder, String name, double visualScale) throws Exception {
+        captureGanttBurndownChart(sprint, testFolder, name, visualScale, true);
+    }
+
+    private void captureGanttBurndownChart(Sprint sprint, String testFolder, String name, double visualScale, boolean fitTimeline) throws Exception {
         StableDiffusionConfig     config       = new StableDiffusionConfig();
         LightTheme                lightTheme   = new LightTheme(config);
         DarkTheme                 darkTheme    = new DarkTheme(config);
         GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme, new KassandraProperties());
         GanttBurndownChartService chartService = new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
         String                    json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart", json, name, "gantt-burndown-chart", visualScale);
+        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart", json, name, "gantt-burndown-chart", visualScale, fitTimeline);
     }
 
-    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected, double visualScale) throws IOException {
+    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected, double visualScale, boolean fitTimeline) throws IOException {
         Files.createDirectories(outputDirectory);
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", GanttGenerator::serveChartResource);
@@ -149,10 +162,26 @@ public class GanttGenerator extends EntityGenerator {
                 driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(30));
                 driver.get("http://127.0.0.1:" + server.getAddress().getPort() + "/");
                 Object result = driver.executeAsyncScript("""
-                        const [url, mount, json, expected, visualScale, done] = arguments;
+                        const [url, mount, json, expected, visualScale, fitTimeline, done] = arguments;
                         import(url).then(async () => {
                             localStorage.clear();
-                            window[mount]('chart', JSON.parse(json), 'Test chart', visualScale);
+                            const data = JSON.parse(json);
+                            if (fitTimeline) {
+                                if (!Number.isFinite(visualScale) || visualScale <= 0)
+                                    throw new Error('Visual scale must be a positive finite number');
+                                const {DEFAULT_DW} = await import('/js/generated/gantt/AbstractGanttRenderer.js');
+                                const dates = [data.meta.chartStart, data.meta.chartEnd, data.meta.sprintStart,
+                                    data.meta.sprintEnd, data.meta.now, data.meta.releaseDate,
+                                    data.meta.firstWorklogDate, data.meta.lastWorklogDate]
+                                    .filter(Boolean).map(date => Date.parse(date.slice(0, 10) + 'T00:00:00Z'));
+                                if (dates.length === 0 || dates.some(date => !Number.isFinite(date)))
+                                    throw new Error('Cannot determine chart timeline extent');
+                                const days = Math.ceil((Math.max(...dates) - Math.min(...dates)) / 86400000)
+                                    + 1 + (data.meta.preRun || 0) + (data.meta.postRun || 0);
+                                const width = Math.ceil((days * DEFAULT_DW + (data.meta.firstDayX || 0) + 250) * Math.max(1, visualScale));
+                                document.getElementById('chart').style.width = `${Math.max(2400, width)}px`;
+                            }
+                            window[mount]('chart', data, 'Test chart', visualScale);
                             await document.fonts.ready;
                             await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                             const container = document.getElementById('chart');
@@ -161,7 +190,7 @@ public class GanttGenerator extends EntityGenerator {
                                 throw new Error('Expected chart did not render an SVG: ' + expected);
                             done({svg: new XMLSerializer().serializeToString(svg)});
                         }).catch(error => done({error: String(error.stack || error)}));
-                        """, module, mount, json, expected, visualScale);
+                        """, module, mount, json, expected, visualScale, fitTimeline);
                 if (!(result instanceof Map<?, ?> response) || !(response.get("svg") instanceof String svg)) {
                     throw new IllegalStateException("Failed to render " + name + " chart: " + result);
                 }
@@ -237,7 +266,7 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
-        captureGanttBurndownChart(sprintId, testFolder, chartName(testInfo), visualScale);
+        captureGanttBurndownChart(prepareChartSprint(sprintId), testFolder, chartName(testInfo), visualScale, false);
     }
 
     /**
@@ -264,7 +293,7 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateGanttBurndownChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
-        captureGanttBurndownChart(sprintId, testFolder, chartName(testInfo) + "-gannt-burn-down", visualScale);
+        captureGanttBurndownChart(prepareChartSprint(sprintId), testFolder, chartName(testInfo) + "-gannt-burn-down", visualScale, false);
     }
 
     /**
@@ -291,11 +320,28 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if the sprint, browser rendering, or file output fails
      */
     public void generateGanttChart(TestInfo testInfo, UUID sprintId, String testFolder, double visualScale) throws Exception {
-        Sprint                sprint       = prepareChartSprint(sprintId);
+        captureGanttChart(prepareChartSprint(sprintId), testFolder, chartName(testInfo) + "-gant-chart", visualScale, false);
+    }
+
+    /**
+     * Generates a Gantt chart from a prepared sprint.
+     * The sprint's users, tasks, worklogs, calendars, and calculated state must already be initialized.
+     *
+     * @param sprint      prepared sprint to render
+     * @param testFolder  output directory for the chart
+     * @param name        output filename stem without an extension
+     * @param visualScale initial visual scale for the chart
+     * @throws Exception if chart data, browser rendering, or file output fails
+     */
+    public void generateGanttChart(Sprint sprint, String testFolder, String name, double visualScale) throws Exception {
+        captureGanttChart(sprint, testFolder, name, visualScale, true);
+    }
+
+    private void captureGanttChart(Sprint sprint, String testFolder, String name, double visualScale, boolean fitTimeline) throws Exception {
         StableDiffusionConfig config       = new StableDiffusionConfig();
         GanttChartService     chartService = new GanttChartService(new LightTheme(config), new DarkTheme(config), new KassandraProperties());
         String                json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart", json, chartName(testInfo) + "-gant-chart", "gantt-chart", visualScale);
+        captureJsChart(Path.of(testFolder), "/js/generated/gantt/gantt-bundle.js", "mountGanttChart", json, name, "gantt-chart", visualScale, fitTimeline);
     }
 
     /**
@@ -335,7 +381,7 @@ public class GanttGenerator extends EntityGenerator {
         SprintsOverviewService overviewService = new SprintsOverviewService(repository, new LightTheme(config), new DarkTheme(config));
         String json = new JacksonConfig().jsonMapper().writeValueAsString(
                 overviewService.getOverview(ParameterOptions.getLocalNow(), null, testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart", json, chartName(testInfo) + "-overview-chart-projectOverviewChart", "sprints-overview-chart", visualScale);
+        captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart", json, chartName(testInfo) + "-overview-chart-projectOverviewChart", "sprints-overview-chart", visualScale, false);
     }
 
     /**

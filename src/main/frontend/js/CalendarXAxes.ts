@@ -103,7 +103,7 @@ export class CalendarXAxes {
     }
 
     /**
-     * Compatibility wrapper called by LegacyGanttRendererLegacyLegacy.draw().
+     * Compatibility wrapper called by LegacyGanttRenderer.draw().
      * Mirrors the 7-argument signature used there.
      */
     // draw(

@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Deprecated
-public class RenderDao {
+public class LegacyRenderDao {
     public CalendarSize           calendarSize = CalendarSize.YEARS;
     public int                    chartHeight;
     public int                    chartWidth;//if 0, day width is set to MAX_DAY_WIDTH and cartWidth is calculated from maxDays and dayWidth.

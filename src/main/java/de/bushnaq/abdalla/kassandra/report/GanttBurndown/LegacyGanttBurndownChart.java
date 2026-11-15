@@ -18,23 +18,23 @@
 package de.bushnaq.abdalla.kassandra.report.GanttBurndown;
 
 import de.bushnaq.abdalla.kassandra.report.LegacyAbstractChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRendererLegacy;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
-import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttRendererLegacyLegacy;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
+import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttRenderer;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 
 
 @Deprecated
-public class LegacyGanttBurndownChartLegacy extends LegacyAbstractChart {
-    private final LegacyBurnDownRendererLegacy    bdr;
-    private final LegacyGanttRendererLegacyLegacy gr;
+public class LegacyGanttBurndownChart extends LegacyAbstractChart {
+    private final LegacyBurnDownRenderer bdr;
+    private final LegacyGanttRenderer    gr;
 
-    public LegacyGanttBurndownChartLegacy(GanttBurndownChartService service, String relativeCssPath, RenderDao burndownDao, RenderDao ganttDao) throws Exception {
+    public LegacyGanttBurndownChart(GanttBurndownChartService service, String relativeCssPath, LegacyRenderDao burndownDao, LegacyRenderDao ganttDao) throws Exception {
         super("Gantt Burndown Chart", ganttDao.sprint.getName(), relativeCssPath, ganttDao.name, ganttDao.name, null, ganttDao.cssClass, ganttDao.kassandraTheme);
         burndownDao.preRun  = Math.max(burndownDao.preRun, ganttDao.preRun);
         burndownDao.postRun = Math.max(burndownDao.postRun, ganttDao.postRun);
-        bdr                 = new LegacyBurnDownRendererLegacy(service, burndownDao);
-        gr                  = new LegacyGanttRendererLegacyLegacy(ganttDao);
+        bdr                 = new LegacyBurnDownRenderer(service, burndownDao);
+        gr                  = new LegacyGanttRenderer(ganttDao);
         getRenderers().add(bdr);
         getRenderers().add(gr);
         bdr.setDayWidth(gr.getDayWidth());

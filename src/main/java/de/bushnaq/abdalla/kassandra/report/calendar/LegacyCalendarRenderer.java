@@ -42,7 +42,8 @@ import java.util.Map;
  *
  * @author abdalla.bushnaq
  */
-public class LegacyCalendarRendererLegacy extends LegacyAbstractRenderer {
+@Deprecated
+public class LegacyCalendarRenderer extends LegacyAbstractRenderer {
     private final int           DAY_SIZE              = 24;
     private final int           HEADER_HEIGHT         = 25;
     private final int           LEGEND_HEIGHT         = 24 * 2;
@@ -64,7 +65,7 @@ public class LegacyCalendarRendererLegacy extends LegacyAbstractRenderer {
     private final User          user;
     private       int           vacationDays          = 0;
 
-    public LegacyCalendarRendererLegacy(Context context, User user, LocalDateTime now, String cssClass, Theme kassandraTheme) throws Exception {
+    public LegacyCalendarRenderer(Context context, User user, LocalDateTime now, String cssClass, Theme kassandraTheme) throws Exception {
         this.user           = user;
         this.now            = now;
         this.kassandraTheme = kassandraTheme;

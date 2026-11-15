@@ -25,12 +25,12 @@ import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import java.time.LocalDateTime;
 
 @Deprecated
-public class LegacyCalendarChartLegacy extends LegacyAbstractChart {
+public class LegacyCalendarChart extends LegacyAbstractChart {
 
-    public LegacyCalendarChartLegacy(Context context, LocalDateTime now, User user, String cssClass,
-                                     Theme kassandraTheme) throws Exception {
+    public LegacyCalendarChart(Context context, LocalDateTime now, User user, String cssClass,
+                               Theme kassandraTheme) throws Exception {
         super(createCaption(user), "", "", "", user.getName() + "." + user.getLocations().getLast().getCountry() + "." + user.getLocations().getLast().getState(), null, cssClass, kassandraTheme);
-        getRenderers().add(new LegacyCalendarRendererLegacy(context, user, now, cssClass, kassandraTheme));
+        getRenderers().add(new LegacyCalendarRenderer(context, user, now, cssClass, kassandraTheme));
         this.setChartWidth(getRenderers().get(0).chartWidth);
         this.setChartHeight(getRenderers().get(0).chartHeight + captionElement.height + footerElement.height - 1);
         captionElement.width = 100;

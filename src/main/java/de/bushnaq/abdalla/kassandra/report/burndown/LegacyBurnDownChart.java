@@ -15,21 +15,21 @@
  *
  */
 
-package de.bushnaq.abdalla.kassandra.report.gantt;
+package de.bushnaq.abdalla.kassandra.report.burndown;
+
 
 import de.bushnaq.abdalla.kassandra.report.LegacyAbstractChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
-
+import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 
 @Deprecated
-public class LegacyGanttChartLegacy extends LegacyAbstractChart {
+public class LegacyBurnDownChart extends LegacyAbstractChart {
 
-    public LegacyGanttChartLegacy(String relativeCssPath, RenderDao dao) throws Exception {
-        super("Gantt Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, null, dao.cssClass, dao.kassandraTheme);
-        getRenderers().add(new LegacyGanttRendererLegacyLegacy(dao));
+    public LegacyBurnDownChart(GanttBurndownChartService service, String relativeCssPath, LegacyRenderDao dao) throws Exception {
+        super("Work Burn Down Chart", dao.sprint.getName(), relativeCssPath, dao.name, dao.name, dao.link, dao.cssClass, dao.kassandraTheme);
+        getRenderers().add(new LegacyBurnDownRenderer(service, dao));
         this.setChartWidth(getRenderers().getFirst().chartWidth);
         this.setChartHeight(getRenderers().getFirst().chartHeight + captionElement.height + footerElement.height - 1);
-        captionElement.width = getChartWidth();
+        captionElement.width = dao.chartWidth;
         footerElement.y      = getRenderers().getFirst().chartHeight + captionElement.height;
     }
 

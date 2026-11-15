@@ -23,7 +23,7 @@ import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.TaskMode;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
 import de.bushnaq.abdalla.svg.util.RectangleWithToolTip;
@@ -52,7 +52,7 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public abstract class LegacyLegacyAbstractGanttRenderer extends LegacyAbstractRenderer {
+public abstract class LegacyAbstractGanttRenderer extends LegacyAbstractRenderer {
     private static final   float                FINE_LINE_STROKE_WIDTH     = 1.0f;
     private static final   int                  LINE_HEIGHT                = 18;
     private static final   int                  RELATION_CORNER_LENGTH     = 14;
@@ -80,7 +80,7 @@ public abstract class LegacyLegacyAbstractGanttRenderer extends LegacyAbstractRe
     protected              ResourcesUtilization resourcesUtilization       = new ResourcesUtilization();// only used for out of office
     protected              Map<String, Integer> taskHeight                 = new HashMap<>();
 
-    public LegacyLegacyAbstractGanttRenderer(RenderDao dao) throws IOException {
+    public LegacyAbstractGanttRenderer(LegacyRenderDao dao) throws IOException {
         super(dao);
         this.context              = dao.context;
         this.numberOfLinesPerTask = 1;//TODO do we need to keep this flexible in the dao?

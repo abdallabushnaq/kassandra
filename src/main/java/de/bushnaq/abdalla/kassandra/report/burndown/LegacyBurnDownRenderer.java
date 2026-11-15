@@ -50,7 +50,7 @@ import java.util.Map;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class LegacyBurnDownRendererLegacy extends LegacyAbstractRenderer {
+public class LegacyBurnDownRenderer extends LegacyAbstractRenderer {
 
     private static final int                       ONE_WEEK                                      = 7;
     private static final long                      ONE_WORK_MONTH                                = 20L * 75L * 60L * 6L;
@@ -81,7 +81,7 @@ public class LegacyBurnDownRendererLegacy extends LegacyAbstractRenderer {
     private              List<WorklogRemaining>    worklogsRemaining;
     private              GraphSquare               yAxis;
 
-    public LegacyBurnDownRendererLegacy(GanttBurndownChartService service, RenderDao dao) throws Exception {
+    public LegacyBurnDownRenderer(GanttBurndownChartService service, LegacyRenderDao dao) throws Exception {
         super(dao);
         this.service = service;
         this.sprint  = dao.sprint;
@@ -636,7 +636,7 @@ public class LegacyBurnDownRendererLegacy extends LegacyAbstractRenderer {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), 128);
     }
 
-    public void init(RenderDao dao) throws IOException {
+    public void init(LegacyRenderDao dao) throws IOException {
         initSize(dao.firstDayX, true, dao.calendarSize);
         if (milestones.get("R") != null && milestones.get("R").time.isAfter(milestones.get("E").time)) {
             extrapolationColor = kassandraTheme.burndownTheme.delayEventColor;
@@ -767,7 +767,7 @@ public class LegacyBurnDownRendererLegacy extends LegacyAbstractRenderer {
 //        return true;
 //    }
 
-    private void processingInit(RenderDao dao) throws IOException {
+    private void processingInit(LegacyRenderDao dao) throws IOException {
         this.context           = dao.context;
         this.worklogs          = dao.worklog;
         this.lastWorklog       = dao.lastWorklog;

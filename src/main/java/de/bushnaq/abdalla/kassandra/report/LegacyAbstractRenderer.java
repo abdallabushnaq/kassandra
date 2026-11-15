@@ -18,7 +18,7 @@
 package de.bushnaq.abdalla.kassandra.report;
 
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
@@ -61,7 +61,7 @@ public abstract class LegacyAbstractRenderer {
 
     }
 
-    public LegacyAbstractRenderer(RenderDao dao) throws IOException {
+    public LegacyAbstractRenderer(LegacyRenderDao dao) throws IOException {
         this.theme       = dao.kassandraTheme;
         this.chartWidth  = dao.chartWidth;
         this.chartHeight = dao.chartHeight;

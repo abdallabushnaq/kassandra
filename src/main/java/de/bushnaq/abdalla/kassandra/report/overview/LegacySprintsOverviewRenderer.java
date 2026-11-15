@@ -6,7 +6,7 @@ import de.bushnaq.abdalla.kassandra.dao.WarnException;
 import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.LegacyAbstractRenderer;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
 import de.bushnaq.abdalla.svg.util.ExtendedRectangle;
 import de.bushnaq.abdalla.util.StringUtils;
@@ -26,7 +26,7 @@ import java.util.List;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class LegacySprintsOverviewRendererLegacy extends LegacyAbstractRenderer {
+public class LegacySprintsOverviewRenderer extends LegacyAbstractRenderer {
     private static final Color CLOSING_COLOR            = new Color(0x0, 0x0, 0x0, 0x20);
     private static final Color CREATING_QUOTATION_COLOR = new Color(0xff, 0x0, 0x0, 0x50);
     private static final Color DEFAULT_COLOR            = new Color(0x0, 0x0, 0x0, 0xa0);
@@ -54,11 +54,11 @@ public class LegacySprintsOverviewRendererLegacy extends LegacyAbstractRenderer 
     //    private BufferedImage qcdRed = null;
     private       List<Sprint>               sprintList;
 
-    public LegacySprintsOverviewRendererLegacy() {
+    public LegacySprintsOverviewRenderer() {
 
     }
 
-    public LegacySprintsOverviewRendererLegacy(RenderDao dao) throws Exception {
+    public LegacySprintsOverviewRenderer(LegacyRenderDao dao) throws Exception {
         super(dao);
         //        this.context = context;
         this.numberOfLines = dao.numberOfLines;
@@ -434,7 +434,7 @@ public class LegacySprintsOverviewRendererLegacy extends LegacyAbstractRenderer 
         return false;
     }
 
-    public void init(RenderDao dao) throws Exception {
+    public void init(LegacyRenderDao dao) throws Exception {
         for (Sprint sprint : sprintList) {
             if ((sprint.hasValidGanttChart() || sprint.hasValidGanttChart())) {
                 if (isVisible(sprint)) {

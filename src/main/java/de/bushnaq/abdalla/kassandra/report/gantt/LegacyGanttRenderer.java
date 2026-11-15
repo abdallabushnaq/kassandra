@@ -21,7 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.Sprint;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
-import de.bushnaq.abdalla.kassandra.report.burndown.RenderDao;
+import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.AuthorContribution;
 import de.bushnaq.abdalla.kassandra.report.dao.GraphColorUtil;
 import de.bushnaq.abdalla.svg.util.ExtendedGraphics2D;
@@ -44,7 +44,7 @@ import java.time.format.DateTimeFormatter;
  * @author abdalla.bushnaq
  */
 @Deprecated
-public class LegacyGanttRendererLegacyLegacy extends LegacyLegacyAbstractGanttRenderer {
+public class LegacyGanttRenderer extends LegacyAbstractGanttRenderer {
 
     private static final int               GANTT_TASK_POST_SPACE = 0;
     private static final int               GANTT_TASK_PRI_SPACE  = 0;
@@ -54,7 +54,7 @@ public class LegacyGanttRendererLegacyLegacy extends LegacyLegacyAbstractGanttRe
     private final        Logger            logger                = LoggerFactory.getLogger(this.getClass());
     private final        Sprint            sprint;
 
-    public LegacyGanttRendererLegacyLegacy(RenderDao dao) throws Exception {
+    public LegacyGanttRenderer(LegacyRenderDao dao) throws Exception {
         super(dao);
         this.sprint = dao.sprint;
         this.theme  = dao.kassandraTheme;
@@ -173,7 +173,7 @@ public class LegacyGanttRendererLegacyLegacy extends LegacyLegacyAbstractGanttRe
         }
     }
 
-    private void processInit(RenderDao dao, String ganttFileName) throws Exception {
+    private void processInit(LegacyRenderDao dao, String ganttFileName) throws Exception {
         initSize(dao.firstDayX, false, dao.calendarSize);
         for (Task task : sprint.getTasks()) {
             if (GanttUtil.isValidTask(task)) {

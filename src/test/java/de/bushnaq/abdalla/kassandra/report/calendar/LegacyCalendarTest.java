@@ -76,7 +76,7 @@ public class LegacyCalendarTest extends AbstractGanttTestUtil {
         gc.initialize();
 
         for (User user : gc.allUsers) {
-            LegacyCalendarChartLegacy chart = new LegacyCalendarChartLegacy(context, ParameterOptions.getLocalNow(), user, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
+            LegacyCalendarChart chart = new LegacyCalendarChart(context, ParameterOptions.getLocalNow(), user, "scheduleWithMargin", context.parameters.getActiveGraphicsTheme());
             chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), "", testResultFolder);
         }
     }

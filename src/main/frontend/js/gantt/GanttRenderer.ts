@@ -1,5 +1,5 @@
 // gantt/gantt-renderer.ts
-// Mirrors Java: LegacyGanttRendererLegacyLegacy extends LegacyLegacyAbstractGanttRenderer
+// Mirrors Java: LegacyGanttRenderer extends LegacyAbstractGanttRenderer
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 
@@ -196,27 +196,32 @@ export class GanttRenderer extends AbstractGanttRenderer {
         }
     }
 
-    private drawInspectionOutline(g: SVGGElement, task: TaskDto): void {
-        if (!task.start || !task.finish)
-            return;
-        const x1 = this.calculateX(task.start, DateUtils.withTime(task.start, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-        const x2 = this.calculateX(task.finish, DateUtils.withTime(task.finish, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
-        const height = this.getTaskHeight() - TASK_BODY_MARGIN * 2;
-        const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
-        const attrs = {
-            class: 'gantt-task-outline',
-            fill: 'none',
-            stroke: this.theme.themeVariance === 'dark' ? '#93c5fd' : '#2563eb',
-            'vector-effect': 'non-scaling-stroke',
-        };
-        if (task.milestone && !task.story) {
-            const half = height / 2;
-            g.appendChild(SvgUtils.createPolygon({...attrs, points: `${x1},${y - half} ${x1 + half},${y} ${x1},${y + half} ${x1 - half},${y}`}));
-        } else if (task.story && x2 > x1) {
-            g.appendChild(SvgUtils.createPath({...attrs, d: `M ${x1} ${y + height / 2} V ${y - height / 2} H ${x2} V ${y + height / 2}`}));
-        } else if (x2 > x1) {
-            g.appendChild(SvgUtils.createRect(x1, y - height / 2, x2 - x1, height, attrs));
-        }
+    override draw(svg: SVGElement, x: number, y: number): void {
+        const calendarH = this.calendarXAxes.getHeight();
+        const taskAreaH = this.tasks.length * (this.getTaskHeight() + 1);
+        const totalH = calendarH + taskAreaH;
+        this._calendarH = y + calendarH;
+
+        // const gDayBars = SvgUtils.createGroup({class: 'day-bars'});
+        const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
+        const lastDay = Math.min(this.days - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
+        // for (let d = firstDay; d <= lastDay; d++) {
+        //     const dayDate = new Date(this.chartStart!.getTime() + d * DateUtils.MS);
+        //     this.drawDayBars(gDayBars, dayDate, this._calendarH);
+        // }
+        // svg.appendChild(gDayBars);
+
+        this.initPosition(this.firstDayX + x, y);
+        // this.legacyCalendarXAxes.initPosition(this.firstDayX + x, y);
+        this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
+        this.calendarXAxes.drawCalendar(svg, true, this.containerWidth);
+        this.calendarXAxes.drawMilestones(svg);
+
+        const gTasks = SvgUtils.createGroup({class: 'tasks'});
+        this.drawGanttChart(gTasks);
+        svg.appendChild(gTasks);
+
+        // svg.appendChild(this.renderNowLine(y + totalH));
     }
 
 //     @Override
@@ -260,32 +265,33 @@ export class GanttRenderer extends AbstractGanttRenderer {
 // }
 // }
 
-    override draw(svg: SVGElement, x: number, y: number): void {
-        const calendarH = this.calendarXAxes.getHeight();
-        const taskAreaH = this.tasks.length * (this.getTaskHeight() + 1);
-        const totalH = calendarH + taskAreaH;
-        this._calendarH = y + calendarH;
-
-        // const gDayBars = SvgUtils.createGroup({class: 'day-bars'});
-        const firstDay = Math.max(0, Math.floor(this.scrollOffset) - 1);
-        const lastDay = Math.min(this.days - 1, firstDay + Math.ceil(this.containerWidth / this.dayWidth) + 2);
-        // for (let d = firstDay; d <= lastDay; d++) {
-        //     const dayDate = new Date(this.chartStart!.getTime() + d * DateUtils.MS);
-        //     this.drawDayBars(gDayBars, dayDate, this._calendarH);
-        // }
-        // svg.appendChild(gDayBars);
-
-        this.initPosition(this.firstDayX + x, y);
-        // this.legacyCalendarXAxes.initPosition(this.firstDayX + x, y);
-        this.calendarXAxes.initSize(this.containerWidth, this.dayWidth, this.calendarAtBottom, this.calendarSize);
-        this.calendarXAxes.drawCalendar(svg, true, this.containerWidth);
-        this.calendarXAxes.drawMilestones(svg);
-
-        const gTasks = SvgUtils.createGroup({class: 'tasks'});
-        this.drawGanttChart(gTasks);
-        svg.appendChild(gTasks);
-
-        // svg.appendChild(this.renderNowLine(y + totalH));
+    private drawInspectionOutline(g: SVGGElement, task: TaskDto): void {
+        if (!task.start || !task.finish)
+            return;
+        const x1 = this.calculateX(task.start, DateUtils.withTime(task.start, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        const x2 = this.calculateX(task.finish, DateUtils.withTime(task.finish, 8, 0)!, SECONDS_PER_DAY) - this.calendarXAxes.dayOfWeek.getWidth() / 2;
+        const height = this.getTaskHeight() - TASK_BODY_MARGIN * 2;
+        const y = this._calendarH + task.rowIndex * (this.getTaskHeight() + 1) + this.getTaskHeight() / 2;
+        const attrs = {
+            class: 'gantt-task-outline',
+            fill: 'none',
+            stroke: this.theme.themeVariance === 'dark' ? '#93c5fd' : '#2563eb',
+            'vector-effect': 'non-scaling-stroke',
+        };
+        if (task.milestone && !task.story) {
+            const half = height / 2;
+            g.appendChild(SvgUtils.createPolygon({
+                ...attrs,
+                points: `${x1},${y - half} ${x1 + half},${y} ${x1},${y + half} ${x1 - half},${y}`
+            }));
+        } else if (task.story && x2 > x1) {
+            g.appendChild(SvgUtils.createPath({
+                ...attrs,
+                d: `M ${x1} ${y + height / 2} V ${y - height / 2} H ${x2} V ${y + height / 2}`
+            }));
+        } else if (x2 > x1) {
+            g.appendChild(SvgUtils.createRect(x1, y - height / 2, x2 - x1, height, attrs));
+        }
     }
 
     // renderNowLine(totalHeight: number): SVGGElement {
