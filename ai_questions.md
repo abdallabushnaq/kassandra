@@ -1,5 +1,49 @@
 # AI Questions
 
+# Coverage to GitHub
+
+GitHub has the capability to show JaCoCo reporting result in a small table. To enable that, we need to publish the
+JaCoCo report in the GitHub Action.
+Example from the web:
+jobs:
+build:
+runs-on: ubuntu-latest
+permissions:
+pull-requests: write
+steps:
+
+- uses: actions/checkout@v4
+- name: Set up JDK 17
+  uses: actions/setup-java@v4
+  with:
+  distribution: temurin
+  java-version: 17
+- name: Run Coverage
+  run: |
+  chmod +x gradlew
+  ./gradlew testCoverage
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.8.0
+        with:
+          paths: |
+            ${{ github.workspace }}/**/build/reports/jacoco/prodNormalDebugCoverage/prodNormalDebugCoverage.xml,
+            ${{ github.workspace }}/**/build/reports/jacoco/**/debugCoverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 40
+          min-coverage-changed-lines: 60
+
+Please add a JaCoCo report to our GitHub Action.
+
+# Raise coverage to 80%
+
+To raise our coverage to 80%, we need to add a lot more tests.
+Let's run the same test as in the github Action and then check the coverage report to see which classes are not covered.
+From that we should create a plan to add tests for those classes.
+Example: We do have several integration tests that cover the UI, but not the Backlog view. We need to add a
+BacklogViewIT test to cover that view.
+
 # Server Settings Design
 
 1. create a markdown file docs/design/server-settings-design.md explaining how server settings work.
@@ -133,16 +177,6 @@ We want to be able to disable video recording for tests.
 Let's add a boolean value in VideoRecorder.
 Let's allow setting that to false in SeleniumHandler.
 
-# Stable Diffusion Cache for our Tests
-
-Let's introduce a file based cache for our Stable Diffusion generateds images.
-If an image has same size, diffusion parameters including prompt and negative prompt, we should reuse the image from the
-cache instead of generating it again.
-This will be only used by our test code.
-Let's add a new class CacheAwareAvatarService extending AvatarService to check if an image has already been generated
-and stored in the cache.
-We will use this in our tests whenever we need to generate an image e.g. PersistingEntityGenerator.
-
 # Redesign Undo/Redo
 
 Currently, we implemented a undo/redo architecture per project. See ..\kassandra.wiki\undo-redo-design.md.
@@ -159,4 +193,14 @@ time. E.g. adding a task with a manual date might change the sprint start time. 
 sprint end time. But all these changes are calculated every time we draw the sprint. They are not destructive.
 
 Can you suggest a better design for our undo/redo architecture that is more practical for our users?
+
+# Stable Diffusion Cache for our Tests
+
+Let's introduce a file based cache for our Stable Diffusion generateds images.
+If an image has same size, diffusion parameters including prompt and negative prompt, we should reuse the image from the
+cache instead of generating it again.
+This will be only used by our test code.
+Let's add a new class CacheAwareAvatarService extending AvatarService to check if an image has already been generated
+and stored in the cache.
+We will use this in our tests whenever we need to generate an image e.g. PersistingEntityGenerator.
 
