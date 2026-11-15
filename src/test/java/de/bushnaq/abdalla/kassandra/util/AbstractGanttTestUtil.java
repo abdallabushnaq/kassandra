@@ -20,19 +20,13 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.Context;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownChart;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
-import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.Theme;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttContext;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
-import de.bushnaq.abdalla.kassandra.report.gantt.LegacyGanttChart;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
-import de.bushnaq.abdalla.kassandra.ui.util.RenderUtil;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
-import de.bushnaq.abdalla.util.Util;
 import de.bushnaq.abdalla.util.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
@@ -57,7 +51,6 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.Y_AXIS_WIDTH;
 import static de.bushnaq.abdalla.util.AnsiColorConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -66,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @Slf4j
 public class AbstractGanttTestUtil extends AbstractTestUtil {
+    private static final double                    CHART_VISUAL_SCALE        = 2.0;
     private static final float                     MAX_DELAY_FACTOR          = 0.3f;
     @Autowired
     protected            Context                   context;
@@ -212,23 +206,14 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     }
 
     protected void generateBurndownChart(TestInfo testInfo, UUID sprintId) throws Exception {
-        generateBurndownChart(testInfo, sprintId, 0, 36 * 20);
-    }
-
-    protected void generateBurndownChart(TestInfo testInfo, UUID sprintId, int width, int height) throws Exception {
         Sprint sprint = peg.sprintApi.getById(sprintId);
         sprint.initialize();
         sprint.initUserMap(peg.userApi.getAll(sprintId));
         sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        renderBurndownChart(testInfo, sprint, width, height);
-    }
-
-    protected void renderBurndownChart(TestInfo testInfo, Sprint sprint, int width, int height) throws Exception {
-        LegacyRenderDao     dao         = RenderUtil.createBurndownRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-burndown", ParameterOptions.getLocalNow(), width, height,  /*urlPrefix +*/ "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        LegacyBurnDownChart chart       = new LegacyBurnDownChart(service, "/", dao);
-        String              description = testInfo.getDisplayName().replace("_", "-");
-        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
+        GanttGenerator generator = new GanttGenerator(service);
+        generator.testTheme = context.parameters.getActiveGraphicsTheme().themeVariance;
+        generator.generateGanttBurndownChart(sprint, testResultFolder, TestInfoUtil.getTestMethodName(testInfo) + "-burndown", CHART_VISUAL_SCALE);
     }
 
     protected void generateGanttChart(TestInfo testInfo, UUID sprintId, ProjectFile projectFile) throws Exception {
@@ -237,19 +222,14 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         sprint.initUserMap(peg.userApi.getAll(sprintId));
         sprint.initTaskMap(peg.taskApi.getAll(sprintId), peg.worklogApi.getAll(sprintId));
         sprint.recalculate(ParameterOptions.getLocalNow());
-        renderGanttChart(testInfo, sprint);
+        GanttGenerator generator = new GanttGenerator(service);
+        generator.testTheme = context.parameters.getActiveGraphicsTheme().themeVariance;
+        generator.generateGanttChart(sprint, testResultFolder, TestInfoUtil.getTestMethodName(testInfo) + "-gantt", CHART_VISUAL_SCALE);
         // Fixture generation also levels sprints, so capture the reference only at comparison time.
         if (projectFile == null) {
             storeResult(testInfo);
         }
         compareResults(projectFile, testInfo);
-    }
-
-    protected void renderGanttChart(TestInfo testInfo, Sprint sprint) throws Exception {
-        LegacyRenderDao  dao         = RenderUtil.createGanttRenderDao(context, sprint, TestInfoUtil.getTestMethodName(testInfo) + "-gantt", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", 0, CalendarSize.YEARS);
-        LegacyGanttChart chart       = new LegacyGanttChart("/", dao);
-        String           description = TestInfoUtil.getTestMethodName(testInfo);
-        chart.render(Util.generateCopyrightString(ParameterOptions.getLocalNow()), description, testResultFolder);
     }
 
     protected void generateOneProduct(TestInfo testInfo) throws Exception {

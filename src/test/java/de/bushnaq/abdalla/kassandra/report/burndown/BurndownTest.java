@@ -61,7 +61,11 @@ public class BurndownTest extends AbstractGanttTestUtil {
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        Sprint savedSprint = peg.sprintApi.getAll().getFirst();
+        String sprintName = peg.nameGenerator.generateSprintName(0);
+        Sprint savedSprint = peg.sprintApi.getAll().stream()
+                .filter(sprint -> sprint.getName().equals(sprintName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Test sprint not found: " + sprintName));
         savedSprint.initialize();
         savedSprint.initUserMap(peg.userApi.getAll(savedSprint.getId()));
         savedSprint.initTaskMap(peg.taskApi.getAll(savedSprint.getId()), peg.worklogApi.getAll(savedSprint.getId()));

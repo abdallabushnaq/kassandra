@@ -10,8 +10,9 @@ the pilot is accepted.
 Calendar migration is explicitly out of scope: its UI has already been replaced
 with a Vaadin component.
 
-Status: the `OldGanttTest` pilot is implemented and validated locally. Rollout
-to other classes remains pending.
+Status: the Gantt and burndown evidence callers using
+`AbstractGanttTestUtil` now share the modern rendering path. `BurndownTest`
+still has a pre-existing local reference comparison failure described below.
 
 ## Findings
 
@@ -43,7 +44,7 @@ to other classes remains pending.
   chart-ID constants used by UI tests. They do not themselves invoke legacy
   rendering and do not require replacement for this migration.
 
-## Proposed implementation
+## Original pilot design
 
 ### 1. Add a prepared-sprint entry point to `GanttGenerator`
 
@@ -184,26 +185,41 @@ It does not prove multi-sprint overview equivalence.
   can produce wide images; browser screenshot limits remain a consideration for
   larger future fixtures.
 
-## Rollout after pilot acceptance
+### `BurndownTest` migration result
 
-1. Migrate `BurndownTest` and `BurnDownUtilTest` through the same prepared-sprint
-   entry points. Preserve their parameterized case names, assertions, dates,
-   theme, and reference comparisons. Check sizing requirements before changing
-   any custom-size caller.
-2. After those consumers are accepted, make modern rendering the default in
-   `AbstractGanttTestUtil`, remove the pilot-only overrides, and remove unused
-   legacy imports and rendering hooks from that test utility. Keep the fixture
-   loading and comparison lifecycle intact.
-3. Existing `DynamicGanttTest`, `DynamicGanttBurndownTest`, `OverviewChartTest`,
-   and `MPXJReader` already use `GanttGenerator`; retain their fixture semantics.
-   A future migration of a multi-sprint overview caller needs a collection-based
-   overview entry point, because the current generator helper creates an
-   overview containing only one sprint.
-4. Recheck direct references and inherited helper calls, excluding the calendar
-   classes and tests. The renderer/support
-   classes (`Legacy*Renderer`, `LegacyAbstractChart`, `LegacyAbstractRenderer`,
-   and `AbstractCanvas`) cease to be test evidence dependencies through their
-   owning chart paths, not through mechanical one-for-one substitutions.
-5. Leave all legacy production classes, legacy UI callers, and any intentional
-   legacy regression coverage in place. Removing legacy code is a later,
-   separately approved task.
+- Both rendering hooks now use prepared sprints and propagate the active
+  graphics theme. The former standalone burndown evidence is a combined chart.
+  The test selects its generated sprint by name rather than relying on database
+  ordering; both existing local references identify that sprint as `Tokyo`.
+- The baseline and migrated `mvn -q test -Dtest="BurndownTest"` runs each
+  passed case 1 and failed case 2 at the same existing JSON comparison:
+  Kristen Hubbell's created timestamp was expected to be
+  `2023-05-05T08:00:02+02:00`, but the loaded fixture contained
+  `2023-05-05T08:00:08+02:00`. The local reference files were not overwritten.
+  Consequently, case 2's remaining comparisons have not been verified.
+- Both cases produced case-indexed Gantt and combined burndown SVG/PNG files in
+  `test-results\de.bushnaq.abdalla.kassandra.report.burndown.BurndownTest`.
+  The images used the dark theme and included their fixture task labels; the
+  combined images were visually inspected. PNG capture validates that the
+  image covers the SVG element. Custom legacy burndown dimensions remain
+  unsupported by this class.
+
+## Shared renderer rollout
+
+- `AbstractGanttTestUtil` now renders prepared sprints directly with
+  `GanttGenerator`, using the active theme and preserving the existing names,
+  fixture preparation, and JSON comparisons. The temporary overrides in
+  `OldGanttTest` and `BurndownTest` and the unused legacy custom-dimensions
+  overload are removed. `BurnDownUtilTest` now uses the same path.
+- The legacy `BurnDownUtilTest` baseline passed all seven tests. After the
+  rollout, `mvn -q test -Dtest="BurnDownUtilTest,BurndownTest,OldGanttTest,DynamicGanttTest"`
+  passed 14 of 15 tests; the only failure was the previously documented
+  `BurndownTest` case 2 timestamp mismatch. Its references were not changed.
+  The three evidence-generating `BurnDownUtilTest` cases each produced Gantt
+  and combined burndown SVG/PNG files; representative light-theme images were
+  inspected.
+- `DynamicGanttTest`, `DynamicGanttBurndownTest`, `OverviewChartTest`, and
+  `MPXJReader` already use `GanttGenerator`. Remaining test references to
+  `RenderUtil` outside calendar coverage are UI chart identifiers, not legacy
+  chart rendering. Calendar tests, legacy production classes, and legacy UI
+  callers remain untouched.
