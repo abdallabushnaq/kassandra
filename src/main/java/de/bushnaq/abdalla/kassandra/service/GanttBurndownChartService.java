@@ -384,6 +384,7 @@ public class GanttBurndownChartService {
      * Mirrors Java: {@code LegacyBurnDownRendererLegacy.initGanttGuide()} +
      * {@code BurnDownGuide.convertToAccumulatedValues()}.
      */
+    @Deprecated
     private void buildGanttGuides(Sprint sprint, LocalDateTime chartStart,
                                   int totalDays, GanttBurndownChartDto dto) {
         if (sprint.getStart() == null || sprint.getEnd() == null) return;
@@ -433,6 +434,7 @@ public class GanttBurndownChartService {
      * Builds tooltip HTML from raw tab-delimited worklog entries.
      * Mirrors Java: {@code DayWork.transactionsToTooltips()}.
      */
+    @Deprecated
     private static String buildTooltip(String rawEntries, String authorName) {
         if (rawEntries == null || rawEntries.isBlank()) return null;
         StringBuilder sb = new StringBuilder();
@@ -782,6 +784,7 @@ public class GanttBurndownChartService {
      * Formats a Duration as "Xh Ym".
      * Mirrors Java: {@code DateUtil.create24hDurationString(duration, false, true, false)}.
      */
+    @Deprecated
     private static String formatDuration(Duration d) {
         long totalSecs = d.getSeconds();
         long hours     = totalSecs / 3600;

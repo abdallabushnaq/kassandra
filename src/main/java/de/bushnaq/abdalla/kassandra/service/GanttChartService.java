@@ -232,7 +232,9 @@ public class GanttChartService {
                 : colorToHex(theme.ganttTheme.taskBorderColor);
 
         Color fillColor;
-        if (dto.milestone) {
+        if (task.isDeliveryBufferTask()) {
+            fillColor = theme.ganttTheme.deliveryBufferBgColor;
+        } else if (dto.milestone) {
             fillColor     = theme.ganttTheme.milestoneBgColor;
             dto.textColor = colorToHex(theme.ganttTheme.milestoneTextColor);
         } else if (dto.story) {
@@ -248,7 +250,7 @@ public class GanttChartService {
             Color progressBase = ColorUtil.lightenColor(userColor, 0.6f);
             dto.progressColor = colorToHexWithAlpha(progressBase, 255);
         } else {
-            fillColor = theme.burndownTheme.getAuthorColor(28);
+            fillColor = theme.ganttTheme.deliveryBufferBgColor;
         }
         dto.fillColor = colorToHexWithAlpha(fillColor, fillColor.getAlpha());
 

@@ -6,6 +6,7 @@
 export class GanttTheme {
     readonly criticalRelationColor:   number | null;
     readonly criticalTaskBorderColor: number | null;
+    readonly deliveryBufferBgColor:   number | null;
     readonly gridColor:               number | null;
     readonly holidayBgColor:          number | null;
     readonly idBgColor:               number | null;
@@ -33,6 +34,7 @@ export class GanttTheme {
     constructor(data: Record<string, number | null> = {}) {
         this.criticalRelationColor   = data['criticalRelationColor']   ?? null;
         this.criticalTaskBorderColor = data['criticalTaskBorderColor'] ?? null;
+        this.deliveryBufferBgColor   = data['deliveryBufferBgColor']   ?? null;
         this.gridColor               = data['gridColor']               ?? null;
         this.holidayBgColor          = data['holidayBgColor']          ?? null;
         this.idBgColor               = data['idBgColor']               ?? null;

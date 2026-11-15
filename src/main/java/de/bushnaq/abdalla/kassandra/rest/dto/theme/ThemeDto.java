@@ -74,6 +74,7 @@ public class ThemeDto {
         // ── GanttTheme ─────────────────────────────────────────────────────────
         dto.ganttTheme.criticalRelationColor   = rgb(theme.ganttTheme.criticalRelationColor);
         dto.ganttTheme.criticalTaskBorderColor = rgb(theme.ganttTheme.criticalTaskBorderColor);
+        dto.ganttTheme.deliveryBufferBgColor   = rgb(theme.ganttTheme.deliveryBufferBgColor);
         dto.ganttTheme.gridColor               = rgb(theme.ganttTheme.gridColor);
         dto.ganttTheme.holidayBgColor          = rgb(theme.ganttTheme.holidayBgColor);
         dto.ganttTheme.idBgColor               = rgb(theme.ganttTheme.idBgColor);

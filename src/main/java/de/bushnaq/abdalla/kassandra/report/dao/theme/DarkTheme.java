@@ -108,6 +108,7 @@ public class DarkTheme extends Theme {
         //---------------------------------------------------------------------
         ganttTheme.relationColor           = new Color(0x34, 0x66, 0xed);
         ganttTheme.criticalRelationColor   = new Color(0xff, 0, 0);
+        ganttTheme.deliveryBufferBgColor   = new Color(0x60, 0x60, 0x60);
         ganttTheme.milestoneBgColor        = new Color(0x4f, 0xbb, 0xc2);
         ganttTheme.milestoneTextColor      = new Color(0x50, 0x50, 0x50);
         ganttTheme.storyColor              = Color.lightGray;

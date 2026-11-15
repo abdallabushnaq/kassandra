@@ -11,6 +11,7 @@ export const ThemeColorKeys = {
     GANTT_GRID_COLOR:                 'ganttTheme.gridColor',
     GANTT_CRITICAL_RELATION_COLOR:    'ganttTheme.criticalRelationColor',
     GANTT_CRITICAL_TASK_BORDER_COLOR: 'ganttTheme.criticalTaskBorderColor',
+    GANTT_DELIVERY_BUFFER_BG_COLOR:   'ganttTheme.deliveryBufferBgColor',
     GANTT_HOLIDAY_BG_COLOR:           'ganttTheme.holidayBgColor',
     GANTT_ID_BG_COLOR:                'ganttTheme.idBgColor',
     GANTT_ID_TEXT_COLOR:              'ganttTheme.idTextColor',
@@ -106,4 +107,3 @@ export const ThemeColorKeys = {
 } as const;
 
 export type ThemeColorKey = typeof ThemeColorKeys[keyof typeof ThemeColorKeys];
-

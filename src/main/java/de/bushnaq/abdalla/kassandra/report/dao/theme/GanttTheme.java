@@ -22,6 +22,7 @@ import java.awt.*;
 public class GanttTheme {
     public Color criticalRelationColor;
     public Color criticalTaskBorderColor;
+    public Color deliveryBufferBgColor;
     public Color gridColor;
     public Color holidayBgColor;
     public Color idBgColor;

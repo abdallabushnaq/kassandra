@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class GanttThemeDto {
     public Integer criticalRelationColor;
     public Integer criticalTaskBorderColor;
+    public Integer deliveryBufferBgColor;
     public Integer gridColor;
     public Integer holidayBgColor;
     public Integer idBgColor;

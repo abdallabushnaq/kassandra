@@ -39,10 +39,34 @@ Please add a JaCoCo report to our GitHub Action.
 # Raise coverage to 80%
 
 To raise our coverage to 80%, we need to add a lot more tests.
-Let's run the same test as in the github Action and then check the coverage report to see which classes are not covered.
-From that we should create a plan to add tests for those classes.
+Let's run the same test as in the GitHub Action and then check the coverage report to see which classes have how much
+coverage. From that we should create a plan (docs/plan/test-coverage.md) to add tests for those classes.
+This plan should include a table with classes with fully qualified name and their current coverage. This plan should
+also include the overall coverage.
+We then can use this report as a baseline to add more tests and raise the coverage to 80%.
 Example: We do have several integration tests that cover the UI, but not the Backlog view. We need to add a
 BacklogViewIT test to cover that view.
+
+# Add Special Color to Theme for the Gantt-Delivery-Buffer
+
+The Gantt-Delivery-Buffer is a very special task in our Gantt.
+It holds all the bugger we calculate between the min/max estimations of all teh tasks that are ont he critical path.
+All tasks use the user color of their resource in GanttChartService.buildTaskDto, but for tasks that do not have a user
+resource, we use theme.burndownTheme.getAuthorColor (28).
+As we have changed the color pallet, 28 is no longer the correct color.
+We also do not want this color to be used by any other user.
+So, we want to introduce a new color in GanttTheme called deliveryBufferBgColor.
+Define that and pick a gray color for light/dark theme.
+Make sure we use this color in GanttChartService.buildTaskDto for the Gantt-Delivery-Buffer task.
+
+# Add TypeScript coverage
+
+We currently use JaCoCo to add coverage for our java code to GitHub and CodeCov.
+What do we need to do to also capture TypeScript coverage?
+Our TypeScript runs mostly in our integration tests in the client.
+Example: The GanttChart running in the Backlog vaadin view.
+
+Create a plan (docs/plan/typescript-coverage.md) how to reach this goal.
 
 # Server Settings Design
 
