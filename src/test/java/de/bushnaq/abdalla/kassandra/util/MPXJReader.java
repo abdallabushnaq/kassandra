@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
@@ -40,9 +41,8 @@ import static de.bushnaq.abdalla.kassandra.util.NameGenerator.PROJECT_HUB_ORG;
 public class MPXJReader extends GanttGenerator {
     public static final String                                             ANONYMOUS   = "anonymous";
     private final       boolean                                            includeLevelingInfo;//leveling info like task start/finish and duration time
-    protected           Map<String, Task>                                  mpxjTaskMap = new HashMap<>();
     protected           Map<String, net.sf.mpxj.Resource>                  resourceMap = new HashMap<>();
-    protected           Map<String, de.bushnaq.abdalla.kassandra.dto.Task> taskMap     = new HashMap<>();
+    protected           Map<Integer, de.bushnaq.abdalla.kassandra.dto.Task> taskMap     = new HashMap<>();
     protected           String                                             testFolder;
     protected           Map<String, User>                                  userMap     = new HashMap<>();
 
@@ -68,11 +68,11 @@ public class MPXJReader extends GanttGenerator {
             ProjectFile            projectFile = reader.read(inputStream);
             LocalDateTime          date        = projectFile.getProjectProperties().getStartDate();//ensure start date matches
             ParameterOptions.setNow(DateUtil.localDateTimeToOffsetDateTime(date));
-            //populate mpxjTaskMap and resourceMap
-            int anonymousUserIndex = 1;
+            //populate resources
+            int                 anonymousUserIndex = 1;
+            Map<Resource, User> resourceUsers      = new IdentityHashMap<>();
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask, ignoreId1)) {
-                    mpxjTaskMap.put(mpxjTask.getName(), mpxjTask);//store tasks
                     if (!mpxjTask.getResourceAssignments().isEmpty()) {
                         ResourceAssignment resourceAssignment = mpxjTask.getResourceAssignments().get(0);
                         Resource           resource           = resourceAssignment.getResource();
@@ -81,7 +81,7 @@ public class MPXJReader extends GanttGenerator {
                             if (resourceMap.get(resourceName) != null) {
                                 resourceMap.put(resourceName, resource);//store resources
                             }
-                            if (userMap.get(resourceName) == null) {
+                            if (!resourceUsers.containsKey(resource)) {
                                 Number   units = resourceAssignment.getUnits();
                                 Duration work  = resourceAssignment.getWork();
 //                                TimeUnit units1       = work.getUnits();
@@ -98,6 +98,7 @@ public class MPXJReader extends GanttGenerator {
                                 System.out.printf("Resource ID: %s, resource Name: %s%n", user.getId(), user.getName());
 
                                 userMap.put(resourceName, user);//store users
+                                resourceUsers.put(resource, user);
 //                                } else {
 //                                    System.out.printf("Resource ID: %s, resource Name is null%n", resource.getID());
 //                                }
@@ -130,7 +131,6 @@ public class MPXJReader extends GanttGenerator {
                         //user assigned to this task
                         ResourceAssignment resourceAssignment = mpxjTask.getResourceAssignments().get(0);
                         Resource           resource           = resourceAssignment.getResource();
-                        String             resourceName       = resource.getName();
                         Duration           work               = resourceAssignment.getWork();
                         if (work.getDuration() == 0) {
                             java.time.Duration d = java.time.Duration.between(resourceAssignment.getStart(), resourceAssignment.getFinish());
@@ -138,13 +138,12 @@ public class MPXJReader extends GanttGenerator {
                             work = MpxjUtil.toMpjxDuration(w);
                         }
 
-                        net.sf.mpxj.Task                      parent = mpxjTaskMap.get(mpxjTask.getParentTask().getName());
-                        User                                  user   = userMap.get(resourceName);
+                        User                                  user   = resourceUsers.get(resource);
                         de.bushnaq.abdalla.kassandra.dto.Task task   = addTask(sprint, null, mpxjTask.getName(), start, MpxjUtil.toJavaDuration(work), null, user, null, taskMode, mpxjTask.getMilestone());
                         task.setFinish(finish);
                         task.setDuration(duration);
                         task.setCritical(critical);
-                        taskMap.put(task.getName(), task);
+                        taskMap.put(mpxjTask.getUniqueID(), task);
                     } else if (!mpxjTask.hasChildTasks()) {
                         //no user assigned to this task
                         Duration work         = mpxjTask.getDuration();
@@ -160,7 +159,7 @@ public class MPXJReader extends GanttGenerator {
                         task.setFinish(finish);
                         task.setDuration(duration);
                         task.setCritical(critical);
-                        taskMap.put(task.getName(), task);
+                        taskMap.put(mpxjTask.getUniqueID(), task);
                     } else {
                         //story
                         String resourceName = ANONYMOUS + "-" + anonymousUserIndex;
@@ -175,22 +174,19 @@ public class MPXJReader extends GanttGenerator {
                         task.setFinish(finish);
                         task.setDuration(duration);
                         task.setCritical(critical);
-                        taskMap.put(task.getName(), task);
+                        taskMap.put(mpxjTask.getUniqueID(), task);
                     }
                 }
             }
             //add parents and relations
             for (net.sf.mpxj.Task mpxjTask : projectFile.getTasks()) {
                 if (isValidTask(mpxjTask, ignoreId1)) {
-                    String                                name = mpxjTask.getName();
-                    de.bushnaq.abdalla.kassandra.dto.Task task = taskMap.get(name);
+                    de.bushnaq.abdalla.kassandra.dto.Task task = taskMap.get(mpxjTask.getUniqueID());
                     //set parent
                     if (mpxjTask.getParentTask() != null) {
-                        String           parentTaskName = mpxjTask.getParentTask().getName();
-                        net.sf.mpxj.Task mpxjParent     = mpxjTaskMap.get(mpxjTask.getParentTask().getName());
-                        if (mpxjParent != null) {
+                        de.bushnaq.abdalla.kassandra.dto.Task parent = taskMap.get(mpxjTask.getParentTask().getUniqueID());
+                        if (parent != null) {
                             //probably not valid task
-                            de.bushnaq.abdalla.kassandra.dto.Task parent = taskMap.get(mpxjParent.getName());
                             task.setParentTaskId(parent.getId());
                             parent.addChildTask(task);
                         }
@@ -199,7 +195,7 @@ public class MPXJReader extends GanttGenerator {
                     for (Relation relation : mpxjTask.getPredecessors()) {
                         if (!relation.getLag().equals(Duration.getInstance(0, TimeUnit.MINUTES))) {
                             net.sf.mpxj.Task                      mpxjPredecessor = relation.getPredecessorTask();
-                            de.bushnaq.abdalla.kassandra.dto.Task predecessor     = taskMap.get(mpxjPredecessor.getName());
+                            de.bushnaq.abdalla.kassandra.dto.Task predecessor     = taskMap.get(mpxjPredecessor.getUniqueID());
                             task.addPredecessor(predecessor, true);
                         }
                     }
