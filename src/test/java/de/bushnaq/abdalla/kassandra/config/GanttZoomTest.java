@@ -37,6 +37,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
@@ -284,10 +285,15 @@ public class GanttZoomTest extends AbstractTestUtil {
                 wait.until(ignored -> driver.findElement(selected).getAttribute("data-task-id").equals(storyId));
                 assertEquals(1, driver.findElements(By.cssSelector(".task-dependency.is-emphasized")).size(),
                         type + " real label selection highlights direct relation");
+                WebElement selectedSvg = driver.findElement(By.cssSelector("#chart svg"));
                 driver.findElement(By.cssSelector(".gantt-task-details button")).click();
+                wait.until(ExpectedConditions.stalenessOf(selectedSvg));
                 wait.until(ignored -> driver.findElements(selected).isEmpty());
-                new Actions(driver).moveToElement(driver.findElement(body)).click().perform();
-                wait.until(ignored -> !driver.findElements(selected).isEmpty());
+                wait.until(ignored -> {
+                    new Actions(driver).moveToElement(driver.findElement(body)).click().perform();
+                    return true;
+                });
+                wait.until(ignored -> driver.findElement(selected).getAttribute("data-task-id").equals(taskId));
                 WebElement chartViewport = driver.findElement(viewport);
                 new Actions(driver).moveToElement(chartViewport, chartViewport.getSize().getWidth() / 2 - 15, 0).click().perform();
                 wait.until(ignored -> driver.findElements(selected).isEmpty());
