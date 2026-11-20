@@ -92,9 +92,9 @@ public class SprintStatistics {
         this.delayFraction        = ReportUtil.calcualteDelayFraction(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), effortEstimate);
         this.currentScheduleDelay = DateUtil.createDurationString(ReportUtil.calcualteWorkDaysMiliseconsDelay(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getOriginalEstimation(), effortEstimate, sprint.getRemaining()), false, true, false);
 
-        this.extrapolatedDelayFraction = ReportUtil.calculateExtrapolatedScheduleDelayFraction(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), effortEstimate);
+        this.extrapolatedDelayFraction = ReportUtil.calculateExtrapolatedScheduleDelayFraction(sprint.getStart(), sprint.getEnd(), sprint.getReleaseDate());
         if (extrapolatedDelayFraction != null)
-            this.extrapolatedScheduleDelay = ReportUtil.calculateExtrapolatedScheduleDelayString(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), effortEstimate);
+            this.extrapolatedScheduleDelay = ReportUtil.calculateExtrapolatedScheduleDelayString(sprint.getStart(), sprint.getEnd(), sprint.getReleaseDate());
         else
             this.extrapolatedScheduleDelay = "NA";
         // Efficiency calculations

@@ -218,34 +218,79 @@ public class ReportUtil {
         return null;
     }
 
+    /**
+     * Calculates the forecast delay as a fraction of the scheduled working days.
+     *
+     * @param start sprint start
+     * @param now observation time
+     * @param end planned sprint end
+     * @param worked effort already spent
+     * @param estimated total estimated effort
+     * @return delay fraction, or {@code null} if a forecast cannot be calculated
+     */
     public static Double calculateExtrapolatedScheduleDelayFraction(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked,
                                                                     Duration estimated) {
-        Duration duration = Duration.between(start, end);
-        if (!duration.isZero() && estimated != null) {
-            LocalDateTime releaseDate = calculateReleaseDate(start, now, worked, estimated);
-            //            String debug1 = DateUtil.createDateString(releaseDate);
-            if (releaseDate == null) {
-                return null;
-            }
-            int scheduledWorkingDays = DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate());
-            int workingDays          = DateUtil.calculateWorkingDaysIncluding(end.toLocalDate(), releaseDate.toLocalDate());
-            return (double) workingDays / (double) scheduledWorkingDays;
+        if (Duration.between(start, end).isZero() || estimated == null) {
+            return null;
         }
-        return null;
+        return calculateExtrapolatedScheduleDelayFraction(start, end, calculateReleaseDate(start, now, worked, estimated));
     }
 
-    public static String calculateExtrapolatedScheduleDelayString(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked, Duration estimated) {
-        Duration duration = Duration.between(start, end);
-        if (!duration.isZero() && estimated != null) {
-            LocalDateTime releaseDate = calculateReleaseDate(start, now, worked, estimated);
-            if (releaseDate == null) {
-                return null;
-            }
-            int    workingDays = DateUtil.calculateWorkingDaysIncluding(end.toLocalDate(), releaseDate.toLocalDate());
-            String delay       = DateUtil.createWorkDayDurationString(Duration.ofMinutes(workingDays * ONE_WORKING_DAY_MINUTES), false, true, false);
-            return delay;
+    /**
+     * Calculates the delay of an actual or forecast release as a fraction of the scheduled working days.
+     *
+     * @param start sprint start
+     * @param end planned sprint end
+     * @param releaseDate actual or forecast release date
+     * @return delay fraction, or {@code null} if the release date or scheduled working days are unavailable
+     */
+    public static Double calculateExtrapolatedScheduleDelayFraction(LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate) {
+        Integer delayDays = calculateScheduleDelayDays(start, end, releaseDate);
+        if (delayDays == null) {
+            return null;
         }
-        return null;
+        int scheduledWorkingDays = DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate());
+        return (double) delayDays / scheduledWorkingDays;
+    }
+
+    /**
+     * Formats the forecast delay in working time.
+     *
+     * @param start sprint start
+     * @param now observation time
+     * @param end planned sprint end
+     * @param worked effort already spent
+     * @param estimated total estimated effort
+     * @return formatted delay, or {@code null} if a forecast cannot be calculated
+     */
+    public static String calculateExtrapolatedScheduleDelayString(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked, Duration estimated) {
+        if (Duration.between(start, end).isZero() || estimated == null) {
+            return null;
+        }
+        return calculateExtrapolatedScheduleDelayString(start, end, calculateReleaseDate(start, now, worked, estimated));
+    }
+
+    /**
+     * Formats the delay of an actual or forecast release in working time.
+     *
+     * @param start sprint start
+     * @param end planned sprint end
+     * @param releaseDate actual or forecast release date
+     * @return formatted delay, or {@code null} if the release date or scheduled working days are unavailable
+     */
+    public static String calculateExtrapolatedScheduleDelayString(LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate) {
+        Integer delayDays = calculateScheduleDelayDays(start, end, releaseDate);
+        if (delayDays == null) {
+            return null;
+        }
+        return DateUtil.createWorkDayDurationString(Duration.ofMinutes(delayDays * ONE_WORKING_DAY_MINUTES), false, true, false);
+    }
+
+    private static Integer calculateScheduleDelayDays(LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate) {
+        if (releaseDate == null || DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) == 0) {
+            return null;
+        }
+        return DateUtil.calculateWorkingDaysIncluding(end.toLocalDate().plusDays(1), releaseDate.toLocalDate());
     }
 
     public static Duration calculateExtrapolatedTimeSpent(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration spent, Duration planned) {

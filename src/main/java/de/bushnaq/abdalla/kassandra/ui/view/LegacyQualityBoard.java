@@ -380,9 +380,9 @@ public class LegacyQualityBoard extends Main implements AfterNavigationObserver 
         String   manDelayString                  = ReportUtil.calcualteManDelayString(sprint.getStart(), now, sprint.getEnd(), sprint.getWorked(), DateUtil.add(sprint.getWorked(), sprint.getRemaining()));
         double   delayFraction                   = ReportUtil.calcualteDelayFraction(sprint.getStart(), now, sprint.getEnd(), sprint.getWorked(), DateUtil.add(sprint.getWorked(), sprint.getRemaining()));
         String   status                          = HtmlColor.calculateStatusColor(delayFraction);
-        Double   extrapolatedDelayFraction       = ReportUtil.calculateExtrapolatedScheduleDelayFraction(sprint.getStart(), now, sprint.getEnd(), sprint.getWorked(), DateUtil.add(sprint.getWorked(), sprint.getRemaining()));
+        Double   extrapolatedDelayFraction       = ReportUtil.calculateExtrapolatedScheduleDelayFraction(sprint.getStart(), sprint.getEnd(), sprint.getReleaseDate());
         String   extrapolatedStatus              = HtmlColor.calculateStatusColor(extrapolatedDelayFraction);
-        String   extrapolatedScheduleDelayString = ReportUtil.calculateExtrapolatedScheduleDelayString(sprint.getStart(), now, sprint.getEnd(), sprint.getWorked(), DateUtil.add(sprint.getWorked(), sprint.getRemaining()));// Delay
+        String   extrapolatedScheduleDelayString = ReportUtil.calculateExtrapolatedScheduleDelayString(sprint.getStart(), sprint.getEnd(), sprint.getReleaseDate());// Delay
 
         // First row
         gridContainer.add(createFieldDisplay("Sprint Name", sprint.getName()));//column 1

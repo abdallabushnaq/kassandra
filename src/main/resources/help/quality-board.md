@@ -31,6 +31,11 @@ Inspect the displayed sprint information alongside the chart. A missing start
 date produces **No Sprint Data to Show**; an empty selection cannot produce a
 schedule. Set up the sprint and its work before interpreting a missing forecast.
 
+**Extrapolated Schedule Delay** compares the release date with the planned end,
+counting working days after the end date. For a completed sprint it uses the
+actual release date; otherwise it uses the forecast. It shows **NA** when no
+release date or scheduled working days are available.
+
 ## Read the schedule and progress chart
 
 ![Combined chart](images/help/light/QualityBoard/quality-board-gantt-burndown-container.png)

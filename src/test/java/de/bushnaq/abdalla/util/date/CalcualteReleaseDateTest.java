@@ -17,6 +17,8 @@
 
 package de.bushnaq.abdalla.util.date;
 
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.ui.view.SprintStatistics;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Tag("UnitTest")
 public class CalcualteReleaseDateTest {
@@ -114,6 +117,70 @@ public class CalcualteReleaseDateTest {
         LocalDateTime expectedResult = LocalDateTime.parse("2018-03-28 08:00", formatter);
         //        Calendar expectedResult = new GregorianCalendar(2018, Calendar.MARCH, 28, 8, 0);
         assertEquals(expectedResult.format(formatter), release.format(formatter));
+    }
+
+    @Test
+    void releaseDelayCountsOnlyWorkingDaysAfterTheEnd() {
+        LocalDateTime start = LocalDateTime.parse("2026-02-02T08:00");
+        LocalDateTime end   = LocalDateTime.parse("2026-02-24T10:13:54");
+
+        assertEquals(0.0, ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, end, end.minusDays(1)));
+        assertEquals(0.0, ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, end, end.withHour(18)));
+        assertEquals("0m", ReportUtil.calculateExtrapolatedScheduleDelayString(start, end, end.withHour(18)));
+        assertEquals(1.0 / 17, ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, end, end.plusDays(1)));
+        assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(ReportUtil.ONE_WORKING_DAY_MINUTES), false, true, false),
+                ReportUtil.calculateExtrapolatedScheduleDelayString(start, end, end.plusDays(1)));
+        assertEquals(4.0 / 17, ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, end, end.plusDays(6)));
+        assertEquals(19.0 / 17, ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, end, LocalDateTime.parse("2026-03-23T08:00")));
+        assertNull(ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, end, null));
+        assertNull(ReportUtil.calculateExtrapolatedScheduleDelayString(start, end, null));
+        assertNull(ReportUtil.calculateExtrapolatedScheduleDelayFraction(end.plusDays(4), end.plusDays(5), end.plusDays(6)));
+    }
+
+    @Test
+    void forecastDelayUsesTheSameWorkingDayCalculation() {
+        LocalDateTime start     = LocalDateTime.parse("2018-03-12T08:00");
+        LocalDateTime now       = LocalDateTime.parse("2018-03-16T08:00");
+        LocalDateTime end       = LocalDateTime.parse("2018-03-23T08:00");
+        Duration      worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES + 5);
+        Duration      estimated = worked.plus(Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES));
+
+        assertEquals(0.0, ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, now, end, worked, estimated));
+        assertEquals("0m", ReportUtil.calculateExtrapolatedScheduleDelayString(start, now, end, worked, estimated));
+        assertNull(ReportUtil.calculateExtrapolatedScheduleDelayFraction(start, now, end, Duration.ZERO, estimated));
+        assertNull(ReportUtil.calculateExtrapolatedScheduleDelayString(start, now, end, Duration.ZERO, estimated));
+    }
+
+    @Test
+    void sprintStatisticsUseActualOrForecastReleaseDate() {
+        Sprint sprint = new Sprint();
+        sprint.setName("Berlin");
+        sprint.setStart(LocalDateTime.parse("2026-02-02T08:00"));
+        sprint.setEnd(LocalDateTime.parse("2026-02-24T10:13:54"));
+        sprint.setWorked(Duration.ofHours(74));
+        sprint.setRemaining(Duration.ZERO);
+        sprint.setOriginalEstimation(Duration.ofHours(74));
+        sprint.setReleaseDate(LocalDateTime.parse("2026-02-24T08:00"));
+
+        SprintStatistics completed = new SprintStatistics(sprint, LocalDateTime.parse("2026-03-23T08:00"));
+        assertEquals("0m (0%)", completed.getExtrapolatedScheduleDelayDisplay());
+        assertEquals("GOOD", completed.getExtrapolatedStatus());
+        assertEquals("2026.02.24", completed.getExtrapolatedReleaseDate());
+
+        sprint.setReleaseDate(LocalDateTime.parse("2026-02-25T08:00"));
+        SprintStatistics completedLate = new SprintStatistics(sprint, LocalDateTime.parse("2026-03-23T08:00"));
+        assertEquals(1.0 / 17, completedLate.getExtrapolatedDelayFraction());
+        assertEquals("2026.02.25", completedLate.getExtrapolatedReleaseDate());
+
+        sprint.setRemaining(Duration.ofHours(10));
+        sprint.setReleaseDate(LocalDateTime.parse("2026-03-02T08:00"));
+        SprintStatistics active = new SprintStatistics(sprint, LocalDateTime.parse("2026-02-20T08:00"));
+        assertEquals(4.0 / 17, active.getExtrapolatedDelayFraction());
+        assertEquals("CRITICAL", active.getExtrapolatedStatus());
+
+        sprint.setReleaseDate(null);
+        SprintStatistics unavailable = new SprintStatistics(sprint, LocalDateTime.parse("2026-02-20T08:00"));
+        assertEquals("NA", unavailable.getExtrapolatedScheduleDelayDisplay());
     }
 
 }
