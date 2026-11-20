@@ -551,6 +551,7 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
             selectedUsers.clear();
             searchText = "";
             applyFilters();
+            updateUrlParameters();
         });
 
         // 5. Expand/Collapse toggle with checkbox styled as iOS toggle
@@ -1397,14 +1398,14 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
 
         // Update sprint grid
         if (sprint != null) {
-            grid.updateData(sprint, new ArrayList<>(sprint.getTasks()), users);
+            grid.updateData(sprint, filterTasks(sprint.getTasks()), users);
         } else {
             log.warn("Cannot refresh sprint grid - sprint is null");
         }
 
         // Update backlog grid
         if (backlogSprint != null) {
-            backlogGrid.updateData(backlogSprint, new ArrayList<>(backlogSprint.getTasks()), users);
+            backlogGrid.updateData(backlogSprint, filterTasks(backlogSprint.getTasks()), users);
             backlogGridPanel.setVisible(true);
         } else {
             // Hide backlog panel if no backlog sprint exists
