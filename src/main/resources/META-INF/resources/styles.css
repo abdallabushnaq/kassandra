@@ -38,24 +38,11 @@ body {
 }
 
 
-.navbar-custom {
-    background-color: rgba(255, 255, 255, 0.4);
-}
-
-#main-layout-breadcrumbs {
-    background-color: rgba(255, 255, 255, 0.4);
+#main-layout-user-menu.header-without-image vaadin-menu-bar-button {
+    background-color: transparent;
 }
 
 /* Dark theme specific styles */
-[theme~="dark"] .navbar-custom {
-    background-color: rgba(255, 255, 255, 0.2);
-
-}
-
-[theme~="dark"] #main-layout-breadcrumbs {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
 [theme~="dark"] .navbar-custom vaadin-tab[selected] {
     color: var(--lumo-primary-text-color);
 }

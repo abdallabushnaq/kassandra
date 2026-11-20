@@ -1582,10 +1582,14 @@ public class Backlog extends Main implements AfterNavigationObserver, BeforeEnte
         if (sprint != null) {
             pageTitle.setText(sprint.getName());
             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            String lightHeaderUrl = sprint.getLightHeaderHash() == null || sprint.getLightHeaderHash().isEmpty()
+                    ? null : sprint.getHeaderUrl(false);
+            String darkHeaderUrl = sprint.getDarkHeaderHash() == null || sprint.getDarkHeaderHash().isEmpty()
+                    ? lightHeaderUrl : sprint.getHeaderUrl(true);
             MainLayout.findParent(this)
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
-                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(sprint.getHeaderUrl(false), sprint.getHeaderUrl(true)));
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(lightHeaderUrl, darkHeaderUrl));
             if (sprint.getLightAvatarHash() != null && !sprint.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(sprint.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);

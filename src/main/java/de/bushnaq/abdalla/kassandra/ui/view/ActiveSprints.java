@@ -771,10 +771,14 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
             Sprint single = selectedSprints.iterator().next();
             pageTitle.setText(single.getName());
             boolean isDark = UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+            String lightHeaderUrl = single.getLightHeaderHash() == null || single.getLightHeaderHash().isEmpty()
+                    ? null : single.getHeaderUrl(false);
+            String darkHeaderUrl = single.getDarkHeaderHash() == null || single.getDarkHeaderHash().isEmpty()
+                    ? lightHeaderUrl : single.getHeaderUrl(true);
             MainLayout.findParent(this)
                     .filter(MainLayout.class::isInstance)
                     .map(MainLayout.class::cast)
-                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(single.getHeaderUrl(false), single.getHeaderUrl(true)));
+                    .ifPresent(mainLayout -> mainLayout.setHeaderBackgroundUrls(lightHeaderUrl, darkHeaderUrl));
             if (single.getLightAvatarHash() != null && !single.getLightAvatarHash().isEmpty()) {
                 headerAvatar.setSrc(single.getAvatarUrl(isDark));
                 headerAvatar.setVisible(true);

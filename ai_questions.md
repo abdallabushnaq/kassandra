@@ -1,5 +1,19 @@
 # AI Questions
 
+# Include Integration tests for code coverage
+
+github does nto show integration tests in the list of tests is executed.
+It should be possible to run those tests and include them in the code coverage report.
+Some tests are excluded in the pom, but should actually be included in the code coverage report.
+
+1. TaskListViewIT
+2. QualityBoardIT
+3. ErDiagramTest
+4. ActiveSprintsIT
+   Figure out why they were excluded and fix it.
+   Remark: ErDiagramTest generates an ER diagram (..\kassandra.wiki\entity-relationship-diagram.svg.), lets include that
+   in the artifacts to be downloaded when needed.
+
 # Fix Page Header Background
 
 MainLayout.updateHeaderTextColorFromImage tries to estimate the background image color and then sets the header text

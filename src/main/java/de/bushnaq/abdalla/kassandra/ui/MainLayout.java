@@ -17,8 +17,11 @@
 
 package de.bushnaq.abdalla.kassandra.ui;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.ComponentUtil;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
@@ -45,6 +48,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.server.menu.MenuEntry;
+import com.vaadin.flow.shared.Registration;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import com.vaadin.flow.theme.lumo.Lumo;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
@@ -57,6 +61,7 @@ import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.component.Breadcrumbs;
+import de.bushnaq.abdalla.kassandra.ui.component.ThemeChangedEvent;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeSessionState;
 import de.bushnaq.abdalla.kassandra.ui.component.ThemeToggle;
 import de.bushnaq.abdalla.kassandra.ui.component.UndoHistoryPanel;
@@ -120,7 +125,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Breadcrumbs                 breadcrumbs               = new Breadcrumbs();
     private       SplitLayout                 contentSplit;
     private       String                      darkHeaderBackgroundUrl;
-    private       String                      headerImageContrastTheme;
     private       Button                      historyButton;
     private final Div                         historyPane;
     private       boolean                     historyPaneOpen;
@@ -134,6 +138,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final Map<Tab, String>            tabToPathMap              = new HashMap<>();
     private       Tabs                        tabs;
     private final ThemeSessionState           themeSessionState;
+    private       Registration                themeChangedRegistration;
     private       ThemeToggle                 themeToggle;
     private final UndoHistoryPanel            undoHistoryPanel;
     private       boolean                     updatingTabFromNavigation = false;
@@ -183,8 +188,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("left", "0")
                 .set("top", "0")
                 .set("right", "0")
+                .set("bottom", "0")
                 .set("width", "100%")
-                .set("filter", "brightness(0.7) saturate(0.2)")
                 .set("pointer-events", "none")
                 .set("border-radius", "0");
 
@@ -209,23 +214,21 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
         boolean dark          = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
         String  backgroundUrl = dark ? darkHeaderBackgroundUrl : lightHeaderBackgroundUrl;
-        headerImageContrastTheme = null;
         log.info("Applying header background: theme={}, backgroundUrl={}, darkHeaderBackgroundUrl={}, lightHeaderBackgroundUrl={}",
                 dark ? "dark" : "light", backgroundUrl, darkHeaderBackgroundUrl, lightHeaderBackgroundUrl);
+        setHeaderTextColor(dark ? "dark" : "light");
         if (backgroundUrl == null || backgroundUrl.isBlank()) {
             pageHeaderBackground.setVisible(false);
             pageHeaderBackground.getStyle().remove("background-image");
-            setHeaderTextColor(dark ? "dark" : "light");
+            pageHeaderBackground.getStyle().remove("filter");
+            applyTopChromeAppearance();
             return;
         }
         pageHeaderBackground.setVisible(true);
-        pageHeaderBackground.getStyle().set("background-image", "url('" + backgroundUrl + "')");
-        if (dark) {
-            pageHeaderBackground.getStyle().set("filter", "brightness(0.3) saturate(0.5)");
-        } else {
-            pageHeaderBackground.getStyle().set("filter", "brightness(0.9) saturate(0.5)");
-        }
-        updateHeaderTextColorFromImage(backgroundUrl);
+        String overlay = dark ? "" : "linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)), ";
+        pageHeaderBackground.getStyle().set("background-image", overlay + "url('" + backgroundUrl + "')");
+        pageHeaderBackground.getStyle().set("filter", dark ? "brightness(0.3) saturate(0.2)" : "brightness(0.7) saturate(0.2)");
+        applyTopChromeAppearance();
     }
 
     private void applyTopChromeAppearance() {
@@ -233,24 +236,34 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             return;
         }
         boolean dark            = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
-        String  glassBackground = dark ? "rgba(0, 0, 0, 50%)" : "rgba(255, 255, 255, 50%)";
+        boolean hasImage        = pageHeaderBackground.isVisible();
+        String  glassColor      = dark ? "rgba(0, 0, 0, 50%)" : "rgba(255, 255, 255, 50%)";
+        String  glassBackground = hasImage ? "var(--header-glass-background, " + glassColor + ")" : "transparent";
+        String  chromeBackground = hasImage ? (dark ? "rgba(255, 255, 255, 0.2)" : "rgba(255, 255, 255, 0.4)") : "transparent";
         String  textColor       = dark ? "rgba(255, 255, 255, 0.96)" : "rgba(17, 17, 17, 0.92)";
 
         // apply background style to menu text
         for (int i = 0; i < tabs.getTabCount(); i++) {
             Tab tab = tabs.getTabAt(i);
             if (tab != null) {
-                tab.getElement().getChild(0).getStyle().set("background-color", "var(--header-glass-background, " + glassBackground + ")");
+                tab.getElement().getChild(0).getStyle().set("background-color", glassBackground);
             }
         }
-        themeToggle.getStyle().set("background-color", "var(--header-glass-background, " + glassBackground + ")");
-        historyButton.getStyle().set("background-color", "var(--header-glass-background, " + glassBackground + ")");
-        userMenu.getStyle().set("background-color", "var(--header-glass-background, " + glassBackground + ")");
-        breadcrumbs.setBackgroundColor("var(--header-glass-background, " + glassBackground + ")");
+        themeToggle.getStyle().set("background-color", glassBackground);
+        historyButton.getStyle().set("background-color", glassBackground);
+        userMenu.getStyle().set("background-color", glassBackground);
+        if (hasImage) {
+            userMenu.removeClassName("header-without-image");
+        } else {
+            userMenu.addClassName("header-without-image");
+        }
+        breadcrumbs.setBackgroundColor(glassBackground);
+        breadcrumbs.getStyle().set("background-color", chromeBackground);
 
         navbarLayout.getStyle()
                 .set("position", "relative")
                 .set("z-index", "2")
+                .set("background-color", chromeBackground)
 //                .set("background-color", "var(--header-glass-background, " + glassBackground + ")")
 //                .set("backdrop-filter", "blur(2px)")
                 .set("border-radius", "0")
@@ -351,15 +364,13 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         banner.setId("main-layout-header-background");
         banner.addClassNames(Width.FULL);
         banner.getStyle()
-                .set("height", "100%")
                 .set("background-repeat", "no-repeat")
                 .set("background-position", "center")
                 .set("background-size", "cover")
                 .set("border-radius", "0")
                 .set("overflow", "hidden")
                 .set("box-sizing", "border-box")
-                .set("display", "block")
-                .set("margin-bottom", "var(--lumo-space-xs)");
+                .set("display", "block");
         banner.setVisible(false);
         return banner;
     }
@@ -504,17 +515,6 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
                 .set("border-radius", "0")
                 .set("box-shadow", "none")
                 .set("backdrop-filter", "none");
-
-        // Add click listener to update logo, header background and user avatar when theme is toggled
-        themeToggle.addClickListener(event -> {
-            UI      ui          = UI.getCurrent();
-            boolean isDarkTheme = ui.getElement().getThemeList().contains(Lumo.DARK);
-            updateLogoBasedOnTheme(isDarkTheme);
-            updateUserAvatarBasedOnTheme(isDarkTheme);
-            applyHeaderBackground();
-            applyTopChromeAppearance();
-            undoHistoryPanel.refresh();
-        });
 
         return themeToggle;
     }
@@ -731,11 +731,27 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         undoHistoryPanel.refresh();
     }
 
-    private boolean resolveHeaderContrastTheme(boolean defaultIsDarkTheme) {
-        if (headerImageContrastTheme == null) {
-            return defaultIsDarkTheme;
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        themeChangedRegistration = ComponentUtil.addListener(attachEvent.getUI(), ThemeChangedEvent.class, event -> {
+            boolean dark = attachEvent.getUI().getElement().getThemeList().contains(Lumo.DARK);
+            updateLogoBasedOnTheme(dark);
+            updateUserAvatarBasedOnTheme(dark);
+            applyHeaderBackground();
+            if (historyPaneOpen) {
+                undoHistoryPanel.refresh();
+            }
+        });
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        if (themeChangedRegistration != null) {
+            themeChangedRegistration.remove();
+            themeChangedRegistration = null;
         }
-        return "dark".equalsIgnoreCase(headerImageContrastTheme);
+        super.onDetach(detachEvent);
     }
 
     private String resolveProductAvatarUrl(UUID productId) {
@@ -808,35 +824,27 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     /**
-     * Stores the computed contrast theme for the current header image so the logo and user avatar can
-     * follow the same light/dark decision used for the header chrome.
+     * Updates the logo and avatar to match the legacy image-based contrast calculation.
      *
-     * @param contrastTheme the resolved header contrast theme, or {@code null} to clear the cached value
+     * @param contrastTheme the resolved header contrast theme
+     * @deprecated Header contrast now follows the active application theme.
      */
     @ClientCallable
+    @Deprecated
     public void setHeaderImageContrastTheme(String contrastTheme) {
-        headerImageContrastTheme = contrastTheme == null || contrastTheme.isBlank() ? null
-                : contrastTheme.trim().toLowerCase(Locale.ROOT);
-        boolean isDarkTheme = UI.getCurrent() != null && UI.getCurrent().getElement().getThemeList().contains(Lumo.DARK);
+        boolean isDarkTheme = "dark".equalsIgnoreCase(contrastTheme);
         updateLogoBasedOnTheme(isDarkTheme);
         updateUserAvatarBasedOnTheme(isDarkTheme);
     }
 
     private void setHeaderTextColor(String themeName) {
-        if (navbarLayout != null) {
-            navbarLayout.getElement().setAttribute("theme", themeName);
-        }
-        if (breadcrumbContainer != null) {
-            breadcrumbContainer.getElement().setAttribute("theme", themeName);
-        }
-        if (themeToggle != null) {
-            themeToggle.getElement().setAttribute("theme", themeName);
-        }
-        if (historyButton != null) {
-            historyButton.getElement().setAttribute("theme", themeName);
-        }
-        if (userMenu != null) {
-            userMenu.getElement().setAttribute("theme", themeName);
+        for (Component component : Arrays.asList(navbarLayout, breadcrumbContainer, themeToggle, historyButton, userMenu)) {
+            if (component != null) {
+                var themes = component.getElement().getThemeList();
+                themes.remove("light");
+                themes.remove(Lumo.DARK);
+                themes.add(themeName);
+            }
         }
     }
 
@@ -888,6 +896,10 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
         }
     }
 
+    /**
+     * @deprecated Header contrast now follows the active application theme.
+     */
+    @Deprecated
     private void updateHeaderTextColorFromImage(String backgroundUrl) {
         if (getElement() == null || backgroundUrl == null || backgroundUrl.isBlank()) {
             return;
@@ -974,9 +986,8 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
      * @param isDarkTheme true if dark theme is active, false otherwise
      */
     private void updateLogoBasedOnTheme(boolean isDarkTheme) {
-        boolean effectiveDarkTheme = resolveHeaderContrastTheme(isDarkTheme);
         if (logoImage != null) {
-            if (effectiveDarkTheme) {
+            if (isDarkTheme) {
                 logoImage.setSrc("images/logo-dark.svg");
             } else {
                 logoImage.setSrc("images/logo.svg");
@@ -999,8 +1010,7 @@ public final class MainLayout extends AppLayout implements BeforeEnterObserver {
             return;
         }
         try {
-            final boolean effectiveDarkTheme = resolveHeaderContrastTheme(isDarkTheme);
-            userApi.getByEmail(userEmail).ifPresent(u -> userAvatarImage.setSrc(u.getAvatarUrl(effectiveDarkTheme)));
+            userApi.getByEmail(userEmail).ifPresent(u -> userAvatarImage.setSrc(u.getAvatarUrl(isDarkTheme)));
         } catch (Exception e) {
             log.debug("Could not refresh user avatar after theme toggle: {}", e.getMessage());
         }
