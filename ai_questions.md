@@ -1,5 +1,13 @@
 # AI Questions
 
+# Fix Extrapolated Schedule Delay
+
+QualityBoard calculates `Extrapolated Schedule Delay` wrong.
+Example: in GenerateScreenshotsIT when we take a screenshot of the Quality view, we use sprintBerlin, which has actually
+no delay.
+see ../kassandra.wiki/light-screenshots/quality-board-in-time.png
+can you figure out what we calculate wrong?
+
 # Deprecating Legacy Classes
 
 Some of our Legacy Classes are still used in some tests.

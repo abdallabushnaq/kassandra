@@ -25,10 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
@@ -42,10 +44,16 @@ import java.util.stream.Stream;
  * This ensures that leveling  resources matches what ms project does, and that the generated gantt chart matches what ms project generates.
  */
 @Tag("UnitTest")
+@EnabledIf(value = "hasMppFixtures", disabledReason = "Private MPP fixtures are not available")
 @Slf4j
 public class TestTest extends AbstractGanttTester {
 
     private static final String testFolder = "references/test";
+
+    private static boolean hasMppFixtures() throws Exception {
+        Path folder = Paths.get(testFolder);
+        return !Files.notExists(folder) && getMppFilesStream(folder).findAny().isPresent();
+    }
 
     @BeforeEach
     public void beforeEach() {

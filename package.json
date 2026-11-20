@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build:static": "esbuild \"src/main/frontend/js/**/*.ts\" --format=esm --target=es2020 --outdir=target/classes/META-INF/resources/js/generated",
+    "build:static:all": "npm run build:static && npm run build:static:prod",
     "build:static:watch": "esbuild \"src/main/frontend/js/**/*.ts\" --format=esm --target=es2020 --outdir=target/classes/META-INF/resources/js/generated --watch",
     "build:static:prod": "esbuild src/main/frontend/js/sprints-overview/sprints-overview-bundle.ts src/main/frontend/js/gantt/gantt-bundle.ts src/main/frontend/js/burndown/gantt-burndown-bundle.ts --bundle --format=iife --platform=browser --target=es2020 --outdir=target/classes/META-INF/resources/js/generated --minify",
     "typecheck:static": "tsc -p tsconfig.static.json"

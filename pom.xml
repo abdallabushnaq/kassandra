@@ -528,7 +528,7 @@
                             </environmentVariables>
                             <arguments>
                                 <argument>run</argument>
-                                <argument>build:static:prod</argument>
+                                <argument>build:static:all</argument>
                             </arguments>
                         </configuration>
                     </execution>

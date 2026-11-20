@@ -113,7 +113,6 @@ jobs:
           MAVEN_OPTS: "-Xmx2048m"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
-        continue-on-error: true  # Continue workflow even if tests fail to collect reports
 
       # Generate JaCoCo XML report
       - name: Generate coverage report
