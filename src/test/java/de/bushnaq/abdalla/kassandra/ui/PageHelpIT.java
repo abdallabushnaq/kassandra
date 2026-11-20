@@ -493,7 +493,7 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
             assertEquals("Unsaved task help input", seleniumHandler.findElement(By.id(TaskDialog.NAME_FIELD_ID)).getDomProperty("value"));
             closeOwnerWithHelp(TaskDialog.HELP_BUTTON_ID, TaskDialog.TASK_DIALOG, TaskDialog.CANCEL_BUTTON);
 
-            navigateTo(Backlog.ROUTE + "?sprints=" + sprint.getId());
+            navigateTo(Backlog.ROUTE + "?sprint=" + sprint.getId());
             seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
             seleniumHandler.click(Backlog.EDIT_BUTTON_ID);
             seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);

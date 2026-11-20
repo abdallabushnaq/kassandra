@@ -416,7 +416,7 @@ public class ProductListViewIT extends AbstractKeycloakUiTestUtil {
         // Remove ACL
         ProductListViewTester.editProductRemoveAcl(productName, users, groups);
         seleniumHandler.wait(200);
-        ProductListViewTester.verifyProductAclDisplay(productName, 1, -1);
+        ProductListViewTester.verifyProductAclDisplay(productName, 1, 0);
     }
 
     /**
@@ -457,7 +457,7 @@ public class ProductListViewIT extends AbstractKeycloakUiTestUtil {
         String previousDiagram = driver.findElement(diagram).getDomAttribute("id");
         assertEquals(Boolean.TRUE, javascript.executeScript(
                 "return [...document.querySelectorAll('.help-drawer img')]"
-                        + ".every(image => image.getBoundingClientRect().width <= image.naturalWidth)"));
+                        + ".every(image => image.clientWidth <= image.naturalWidth)"));
         javascript.executeScript("document.getElementById(arguments[0]).click()", MainLayout.ID_THEME_TOGGLE);
         wait.until(webDriver -> !previousDiagram.equals(driver.findElement(diagram).getDomAttribute("id")));
         wait.withMessage(() -> String.valueOf(javascript.executeScript(

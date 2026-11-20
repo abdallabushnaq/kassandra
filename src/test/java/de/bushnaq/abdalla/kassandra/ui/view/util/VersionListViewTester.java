@@ -101,7 +101,7 @@ public class VersionListViewTester extends AbstractViewTester {
     public void createVersionWithDuplicateName(String name) {
         seleniumHandler.click(VersionListView.CREATE_VERSION_BUTTON);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, name);
-        closeDialog(VersionDialog.CONFIRM_BUTTON);
+        seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(VersionDialog.VERSION_NAME_FIELD);
@@ -192,7 +192,7 @@ public class VersionListViewTester extends AbstractViewTester {
     public void editVersionWithDuplicateName(String originalName, String duplicateName) {
         seleniumHandler.click(VersionListView.VERSION_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(VersionDialog.VERSION_NAME_FIELD, duplicateName);
-        closeDialog(VersionDialog.CONFIRM_BUTTON);
+        seleniumHandler.click(VersionDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(VersionDialog.VERSION_NAME_FIELD);

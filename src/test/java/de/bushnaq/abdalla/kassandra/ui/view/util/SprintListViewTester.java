@@ -107,7 +107,7 @@ public class SprintListViewTester extends AbstractViewTester {
     public void createSprintWithDuplicateName(String name) {
         seleniumHandler.click(SprintListView.CREATE_SPRINT_BUTTON);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, name);
-        closeDialog(SprintDialog.CONFIRM_BUTTON);
+        seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(SprintDialog.SPRINT_NAME_FIELD);
@@ -196,7 +196,7 @@ public class SprintListViewTester extends AbstractViewTester {
     public void editSprintWithDuplicateName(String originalName, String duplicateName) {
         seleniumHandler.click(SprintListView.SPRINT_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(SprintDialog.SPRINT_NAME_FIELD, duplicateName);
-        closeDialog(SprintDialog.CONFIRM_BUTTON);
+        seleniumHandler.click(SprintDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(SprintDialog.SPRINT_NAME_FIELD);

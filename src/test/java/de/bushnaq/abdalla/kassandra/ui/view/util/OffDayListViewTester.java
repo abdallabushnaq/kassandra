@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test helper class for interacting with the Off Day UI components.
@@ -348,20 +349,22 @@ public class OffDayListViewTester extends AbstractViewTester {
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_START_DATE_FIELD, firstRecord2Day);
         seleniumHandler.setDatePickerValue(OffDayDialog.OFFDAY_END_DATE_FIELD, lastRecord2Day);
         seleniumHandler.setComboBoxValue(OffDayDialog.OFFDAY_TYPE_FIELD, type.name());
-        closeDialog(OffDayDialog.CONFIRM_BUTTON);
 
         if (shouldSucceed) {
+            closeDialog(OffDayDialog.CONFIRM_BUTTON);
             // Verify the second record was created
             verifyOffDayRecordExists(firstRecord2Day, lastRecord2Day, type);
         } else {
-            // Verify validation error occurs
-            seleniumHandler.waitForElementToBeVisible(By.cssSelector("vaadin-notification-card"));
+            seleniumHandler.click(OffDayDialog.CONFIRM_BUTTON);
+            assertTrue(seleniumHandler.getFieldErrorMessage(OffDayDialog.OFFDAY_START_DATE_FIELD).contains("overlaps"));
+            assertTrue(seleniumHandler.getFieldErrorMessage(OffDayDialog.OFFDAY_END_DATE_FIELD).contains("overlaps"));
 
             // Cancel the dialog
             closeDialog(OffDayDialog.CANCEL_BUTTON);
 
             // Verify the second record wasn't created
             verifyOffDayRecordNotExists(firstRecord2Day, lastRecord2Day, type);
+            verifyOffDayRecordExists(firstRecord1Day, lastRecord1Day, type);
         }
     }
 

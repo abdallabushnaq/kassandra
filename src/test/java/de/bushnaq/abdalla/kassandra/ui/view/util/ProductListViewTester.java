@@ -24,12 +24,17 @@ import de.bushnaq.abdalla.kassandra.ui.view.ProductListView;
 import de.bushnaq.abdalla.kassandra.ui.view.VersionListView;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+
 import static de.bushnaq.abdalla.kassandra.ui.view.ProductListView.PRODUCT_GRID_NAME_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -250,17 +255,29 @@ public class ProductListViewTester extends AbstractViewTester {
     public void editProductRemoveAcl(String name, String[] userNames, String[] groupNames) {
         seleniumHandler.click(ProductListView.PRODUCT_GRID_EDIT_BUTTON_PREFIX + name);
 
-        // Deselect users from ACL
         if (userNames != null) {
-            seleniumHandler.setMultiSelectComboBoxValue(ProductDialog.PRODUCT_ACL_USERS_FIELD, userNames);
+            removeAclChips(ProductDialog.PRODUCT_ACL_USERS_FIELD, userNames);
         }
 
-        // Deselect groups from ACL
         if (groupNames != null) {
-            seleniumHandler.setMultiSelectComboBoxValue(ProductDialog.PRODUCT_ACL_GROUPS_FIELD, groupNames);
+            removeAclChips(ProductDialog.PRODUCT_ACL_GROUPS_FIELD, groupNames);
         }
 
         closeDialog(ProductDialog.CONFIRM_BUTTON);
+    }
+
+    private void removeAclChips(String fieldId, String[] names) {
+        WebDriverWait wait = new WebDriverWait(seleniumHandler.getDriver(), Duration.ofSeconds(30));
+        wait.ignoring(StaleElementReferenceException.class);
+        By chips = By.cssSelector("vaadin-multi-select-combo-box-chip[slot='chip']");
+        for (String name : names) {
+            WebElement chip = wait.until(driver -> driver.findElement(By.id(fieldId)).findElements(chips).stream()
+                    .filter(item -> name.equals(item.getShadowRoot().findElement(By.cssSelector("[part='label']")).getText()))
+                    .findFirst().orElse(null));
+            chip.getShadowRoot().findElement(By.cssSelector("[part='remove-button']")).click();
+            wait.until(driver -> driver.findElement(By.id(fieldId)).findElements(chips).stream()
+                    .noneMatch(item -> name.equals(item.getShadowRoot().findElement(By.cssSelector("[part='label']")).getText())));
+        }
     }
 
     /**
@@ -333,7 +350,9 @@ public class ProductListViewTester extends AbstractViewTester {
             assertTrue(cellText.contains(userText),
                     "Expected '" + userText + "' but got: " + cellText);
         }
-        if (expectedGroupCount >= 0) {
+        if (expectedGroupCount == 0) {
+            assertFalse(cellText.contains("group"), "Expected no groups but got: " + cellText);
+        } else if (expectedGroupCount > 0) {
             String groupText = expectedGroupCount == 1 ? "1 group" : expectedGroupCount + " groups";
             assertTrue(cellText.contains(groupText),
                     "Expected '" + groupText + "' but got: " + cellText);

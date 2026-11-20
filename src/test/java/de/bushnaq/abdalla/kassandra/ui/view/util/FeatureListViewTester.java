@@ -102,7 +102,7 @@ public class FeatureListViewTester extends AbstractViewTester {
     public void createFeatureWithDuplicateName(String name) {
         seleniumHandler.click(FeatureListView.CREATE_FEATURE_BUTTON_ID);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, name);
-        closeDialog(FeatureDialog.CONFIRM_BUTTON);
+        seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(FeatureDialog.FEATURE_NAME_FIELD);
@@ -191,7 +191,7 @@ public class FeatureListViewTester extends AbstractViewTester {
     public void editFeatureWithDuplicateName(String originalName, String duplicateName) {
         seleniumHandler.click(FeatureListView.FEATURE_GRID_EDIT_BUTTON_PREFIX + originalName);
         seleniumHandler.setTextField(FeatureDialog.FEATURE_NAME_FIELD, duplicateName);
-        closeDialog(FeatureDialog.CONFIRM_BUTTON);
+        seleniumHandler.click(FeatureDialog.CONFIRM_BUTTON);
 
         // Check for field error message instead of notification
         String errorMessage = seleniumHandler.getFieldErrorMessage(FeatureDialog.FEATURE_NAME_FIELD);

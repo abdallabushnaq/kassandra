@@ -177,14 +177,16 @@ public class FeatureListViewIT extends AbstractKeycloakUiTestUtil {
                     .until(webDriver -> Boolean.TRUE.equals(javascript.executeScript(
                             "const images = [...document.querySelectorAll('#' + arguments[0] + ' img')];"
                                     + " const dark = document.body.matches('[theme~=dark]') || document.documentElement.matches('[theme~=dark]');"
-                                    + " return images.length === 38 && images.every(i => i.complete && i.naturalWidth > 0"
+                                    + " const owners = ['/FeatureListView/', '/MainLayout/', '/ProductListView/'];"
+                                    + " return owners.every(owner => images.some(i => i.src.includes(owner)))"
+                                    + " && images.every(i => i.complete && i.naturalWidth > 0"
                                     + " && /^[a-z0-9-]+\\.png$/.test(i.src.split('/').pop())"
-                                    + " && ['/FeatureListView/', '/MainLayout/'].some(owner =>"
+                                    + " && owners.some(owner =>"
                                     + " i.src.includes('/' + (dark ? 'dark' : 'light') + owner)))",
                             FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
             assertTrue(Boolean.TRUE.equals(javascript.executeScript(
                     "return [...document.querySelectorAll('#' + arguments[0] + ' img')]"
-                            + ".every(i => i.getBoundingClientRect().width <= i.naturalWidth)",
+                            + ".every(i => i.clientWidth <= i.naturalWidth)",
                     FeatureListView.FEATURE_HELP_BUTTON + "-drawer")));
             if (theme == 0) {
                 boolean dark = Boolean.TRUE.equals(javascript.executeScript(

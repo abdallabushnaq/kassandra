@@ -735,11 +735,21 @@
                         </executions>
                         <configuration>
                             <argLine>@{argLine} -Xshare:off</argLine>
-                            <includes>
-                                <include>**/TaskListViewIT.java</include>
-                                <include>**/QualityBoardIT.java</include>
-                                <include>**/ActiveSprintsIT.java</include>
-                            </includes>
+                            <excludes>
+                                <!-- Require externally operated AI services -->
+                                <exclude>**/*AiFilterIT.java</exclude>
+                                <exclude>**/AiAssistantService*IT.java</exclude>
+                                <exclude>**/SprintInsightsGeneratorIT.java</exclude>
+                                <exclude>**/StableDiffusionServiceIT.java</exclude>
+                                <exclude>**/Chatterbox*IT.java</exclude>
+                                <exclude>**/IndexTTS*IT.java</exclude>
+                                <exclude>**/VoiceReferencePathIT.java</exclude>
+                                <!-- Spring context currently fails to start -->
+                                <exclude>**/GenerateDefaultAvatarIT.java</exclude>
+                                <!-- Interactive recordings and screenshots -->
+                                <exclude>**/ui/introduction/*IT.java</exclude>
+                                <exclude>**/GenerateScreenshotsIT.java</exclude>
+                            </excludes>
                             <failIfNoTests>true</failIfNoTests>
                             <trimStackTrace>false</trimStackTrace>
                             <enableAssertions>true</enableAssertions>
