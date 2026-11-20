@@ -18,6 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.dto.Feature;
+import de.bushnaq.abdalla.kassandra.dto.Product;
+import de.bushnaq.abdalla.kassandra.dto.Task;
+import de.bushnaq.abdalla.kassandra.dto.Version;
+import de.bushnaq.abdalla.kassandra.ui.component.TaskGrid;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
@@ -37,7 +42,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -45,10 +49,9 @@ import java.util.List;
 
 /**
  * Integration test for the TaskListView UI component.
- * Tests create, edit, and delete operations for tasks in the UI.
+ * Tests task creation in the UI.
  * <p>
- * These tests use {@link TaskListViewTester} to interact with the UI elements
- * and verify the expected behavior. Each test requires a product, version, project,
+ * The test requires a product, version, feature,
  * and sprint to be created first, as tasks exist within the context of a sprint.
  */
 @Tag("IntegrationUiTest")
@@ -69,22 +72,15 @@ public class TaskListViewIT extends AbstractKeycloakUiTestUtil {
     AboutViewTester aboutViewTester;
     @Autowired
     private       FeatureListViewTester    featureListViewTester;
-    private final String                   featureName = peg.nameGenerator.generateFeatureName(0);
     //    private final String                newTaskName = "NewTask-3";
     @Autowired
     private       ProductListViewTester    productListViewTester;
-    private final String                   productName = peg.nameGenerator.generateProductName(0);
     @Autowired
     private       HumanizedSeleniumHandler seleniumHandler;
     @Autowired
     private       SprintListViewTester     sprintListViewTester;
-    private final String                   sprintName  = peg.nameGenerator.generateSprintName(0);
-    @Autowired
-    private       TaskListViewTester       TaskListViewTester;
-    private final String                   taskName0   = peg.nameGenerator.generateSprintName(0);
     @Autowired
     private       VersionListViewTester    versionListViewTester;
-    private final String                   versionName = peg.nameGenerator.generateVersionName(0);
 
     private static List<RandomCase> listRandomCases() {
         RandomCase[] randomCases = new RandomCase[]{//
@@ -105,11 +101,10 @@ public class TaskListViewIT extends AbstractKeycloakUiTestUtil {
     }
 
     /**
-     * Tests the behavior when creating a task but canceling the operation.
-     * <p>
-     * Verifies that when a user clicks the create task button, enters a name, and then
-     * cancels the operation, no task is created in the list.
+     * Verifies that creating a task adds it to the sprint and displays it in the backlog.
      *
+     * @param randomCase the fixture configuration
+     * @param testInfo the current test metadata
      * @throws Exception if any error occurs during the test
      */
     @ParameterizedTest
@@ -120,7 +115,11 @@ public class TaskListViewIT extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
-        generateProductsIfNeeded(testInfo, randomCase);
+        peg.addRandomUsers(1);
+        Product product = peg.addProduct(peg.nameGenerator.generateProductName(0));
+        Version version = peg.addVersion(product, peg.nameGenerator.generateVersionName(0));
+        Feature feature = peg.addFeature(version, peg.nameGenerator.generateFeatureName(0));
+        var sprint = peg.addSprint(feature, peg.nameGenerator.generateSprintName(0));
 
         aboutViewTester.login(
                 "christopher.paul@kassandra.org",
@@ -130,12 +129,17 @@ public class TaskListViewIT extends AbstractKeycloakUiTestUtil {
                 generateTestCaseName(testInfo)
         );
         productListViewTester.switchToProductListView();
-        productListViewTester.selectProduct(productName);
-        versionListViewTester.selectVersion(versionName);
-        featureListViewTester.selectFeature(featureName);
-        sprintListViewTester.configSprint(sprintName);
+        productListViewTester.selectProduct(peg.nameGenerator.generateProductName(0));
+        versionListViewTester.selectVersion(peg.nameGenerator.generateVersionName(0));
+        featureListViewTester.selectFeature(peg.nameGenerator.generateFeatureName(0));
+        sprintListViewTester.configSprint(peg.nameGenerator.generateSprintName(0));
 
-        TaskListViewTester.createTask(taskName0);
-        seleniumHandler.waitUntilBrowserClosed(5000);
+        var existingIds = peg.taskApi.getAll(sprint.getId()).stream().map(Task::getId).toList();
+        seleniumHandler.click(Backlog.CREATE_TASK_BUTTON_ID);
+        seleniumHandler.waitUntil(driver -> peg.taskApi.getAll(sprint.getId()).stream()
+                .anyMatch(task -> !existingIds.contains(task.getId())));
+        Task createdTask = peg.taskApi.getAll(sprint.getId()).stream()
+                .filter(task -> !existingIds.contains(task.getId())).findFirst().orElseThrow();
+        seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, createdTask.getName());
     }
 }

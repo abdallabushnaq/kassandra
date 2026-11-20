@@ -17,7 +17,6 @@
 
 package de.bushnaq.abdalla.kassandra.ui.view.util;
 
-import de.bushnaq.abdalla.kassandra.security.SecurityUtils;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.AboutView;
@@ -72,17 +71,20 @@ public class AboutViewTester extends AbstractViewTester {
             // Navigate to the application login page.
             // If a previous Keycloak session is still active, log out first so a different user can
             // actually complete a fresh OIDC login instead of silently re-authenticating.
-            final String userEmail = SecurityUtils.getUserEmail();
-            if (userEmail.equals(username)) {
-                //already logged in as the requested user, no need to log in again
-                log.trace("OIDC Login: Already logged in as the requested user: " + username);
-                return;
-            }
-            if (!SecurityUtils.isOidcLogin()) {
-                log.trace("OIDC Login: No user is currently logged in, proceeding with login for: " + username);
-            } else {
-                log.trace("OIDC Login: Currently logged in as: " + userEmail + ", logging out to switch to: " + username);
-                logout();
+            if (seleniumHandler.getCurrentUrl().startsWith("http://localhost:" + port + "/ui/")) {
+                seleniumHandler.pushImplicitWait(Duration.ofSeconds(1));
+                boolean userMenuPresent = seleniumHandler.isElementPresent(By.id(MainLayout.ID_USER_MENU));
+                seleniumHandler.popImplicitWait();
+                if (userMenuPresent) {
+                    String userEmail = seleniumHandler.findElement(By.id(MainLayout.ID_USER_MENU))
+                            .getText().lines().findFirst().orElseThrow();
+                    if (userEmail.equals(username)) {
+                        log.trace("OIDC Login: Already logged in as the requested user: {}", username);
+                        return;
+                    }
+                    log.trace("OIDC Login: Currently logged in as: {}, logging out to switch to: {}", userEmail, username);
+                    logout();
+                }
             }
             seleniumHandler.getAndCheck("http://localhost:" + port + "/ui/" + LoginView.ROUTE);
             if (!seleniumHandler.isRecording()) {

@@ -23,8 +23,8 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.boot.logging.LoggingSystem;
-import org.springframework.stereotype.Component;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
@@ -41,46 +41,42 @@ import java.util.function.Function;
 @Component
 public class ServerSettingsCatalogue {
 
-    private static final Duration TEST_TIMEOUT = Duration.ofSeconds(10);
-
     /**
      * Settings categories displayed by the administration UI.
      */
-    public static final Category                AI_MODELS        = new Category("ai-models", "AI / Models", "MAGIC", 2, false, true);
+    public static final  Category                AI_MODELS        = new Category("ai-models", "AI / Models", "MAGIC", 2, false, true);
     /**
      * Settings categories displayed by the administration UI.
      */
-    public static final Category                GENERAL          = new Category("general", "General", "COG", 0, false, true);
+    public static final  Category                GENERAL          = new Category("general", "General", "COG", 0, false, true);
     /**
      * Settings categories displayed by the administration UI.
      */
-    public static final Category                LM_STUDIO        = new Category("lm-studio", "AI / LM Studio", "CLOUD", 4, true, false);
+    public static final  Category                LM_STUDIO        = new Category("lm-studio", "AI / LM Studio", "CLOUD", 4, true, false);
     /**
      * Settings categories displayed by the administration UI.
      */
-    public static final Category                LOGGING          = new Category("logging", "Logging", "FILE_TEXT", 1, false, true);
+    public static final  Category                LOGGING          = new Category("logging", "Logging", "FILE_TEXT", 1, false, true);
     /**
      * Settings categories displayed by the administration UI.
      */
-    public static final Category                OPENAI           = new Category("openai", "AI / OpenAI", "CLOUD", 3, false, true);
+    public static final  Category                OPENAI           = new Category("openai", "AI / OpenAI", "CLOUD", 3, false, true);
     /**
      * Settings categories displayed by the administration UI.
      */
-    public static final Category                STABLE_DIFFUSION = new Category("stable-diffusion", "AI / Stable Diffusion", "PALETTE", 5, true, false);
+    public static final  Category                STABLE_DIFFUSION = new Category("stable-diffusion", "AI / Stable Diffusion", "PALETTE", 5, true, false);
+    private static final Duration                TEST_TIMEOUT     = Duration.ofSeconds(10);
+    private              Map<String, Definition> definitions;
     @Autowired
-    private             LoggingSystem           loggingSystem;
-    private             Map<String, Definition> definitions;
-
-    /**
-     * Initializes setting definitions after infrastructure required by setting callbacks is available.
-     */
-    @PostConstruct
-    public void initializeDefinitions() {
-        definitions = definitions();
-    }
+    private              LoggingSystem           loggingSystem;
 
     private static void add(Map<String, Definition> definitions, Definition definition) {
         definitions.put(definition.key(), definition);
+    }
+
+    private void applyLoggingLevel(String key, String value) {
+        String loggerName = key.substring("logging.level.".length());
+        loggingSystem.setLogLevel(loggerName, LogLevel.valueOf(value.toUpperCase(Locale.ROOT)));
     }
 
     private DefinitionBuilder bool(String key, Category category, String label, String description) {
@@ -120,15 +116,18 @@ public class ServerSettingsCatalogue {
 
         // Per-request AI model options.
         add(result, text(Keys.AI_INSIGHTS_MODEL, AI_MODELS, "Insights model", "Model identifier used to generate sprint insights.")
-                .defaultValue("qwen/qwen3.5-9b")
+//                .defaultValue("qwen/qwen3.5-9b")
+                .defaultValue("qwen/qwen3.8-27b")
                 .maximumLength(200)
                 .build());
         add(result, text(Keys.AI_FILTER_MODEL, AI_MODELS, "Filter model", "Model identifier used to generate AI filters.")
-                .defaultValue("qwen3.5-4b@q8_0")
+//                .defaultValue("qwen3.5-4b@q8_0")
+                .defaultValue("qwen/qwen3.8-27b")
                 .maximumLength(200)
                 .build());
         add(result, text(Keys.AI_MCP_MODEL, AI_MODELS, "Assistant model", "Model identifier used by the AI assistant.")
-                .defaultValue("ministral-3-8b-reasoning-2512")
+//                .defaultValue("ministral-3-8b-reasoning-2512")
+                .defaultValue("qwen/qwen3.8-27b")
                 .maximumLength(200)
                 .build());
         add(result, decimal(Keys.AI_TEMPERATURE, AI_MODELS, "Temperature", "Sampling temperature used by the configured AI model.")
@@ -277,11 +276,6 @@ public class ServerSettingsCatalogue {
                 .orElseThrow(() -> new IllegalArgumentException("Unsupported server settings category: " + key));
     }
 
-    private void applyLoggingLevel(String key, String value) {
-        String loggerName = key.substring("logging.level.".length());
-        loggingSystem.setLogLevel(loggerName, LogLevel.valueOf(value.toUpperCase(Locale.ROOT)));
-    }
-
     private ServerSettingTestResult httpGetTest(String baseUrl, String path) {
         try {
             HttpStatusCode status = WebClient.create(baseUrl).get().uri(path).exchangeToMono(response -> {
@@ -293,6 +287,14 @@ public class ServerSettingsCatalogue {
         } catch (Exception e) {
             return testResult(false, "Connection failed: " + e.getMessage());
         }
+    }
+
+    /**
+     * Initializes setting definitions after infrastructure required by setting callbacks is available.
+     */
+    @PostConstruct
+    public void initializeDefinitions() {
+        definitions = definitions();
     }
 
     private DefinitionBuilder integer(String key, Category category, String label, String description) {
@@ -308,11 +310,39 @@ public class ServerSettingsCatalogue {
         return List.copyOf(definitions.values());
     }
 
+    private DefinitionBuilder logLevel(String key, Category category, String label, String description) {
+        return new DefinitionBuilder(key, category, label, description, Type.LOG_LEVEL);
+    }
+
+    private void maximumLength(String label, Double maximum, String value) {
+        if (maximum != null && value.length() > maximum) {
+            throw new IllegalArgumentException(label + " is too long");
+        }
+    }
+
+    private DefinitionBuilder password(String key, Category category, String label, String description) {
+        return new DefinitionBuilder(key, category, label, description, Type.PASSWORD).secret();
+    }
+
+    private void range(String label, Double minimum, Double maximum, double value) {
+        if (!Double.isFinite(value) || minimum != null && value < minimum || maximum != null && value > maximum) {
+            throw new IllegalArgumentException(label + " is outside the allowed range");
+        }
+    }
+
     private ServerSettingTestResult testResult(boolean successful, String message) {
         ServerSettingTestResult result = new ServerSettingTestResult();
         result.setMessage(message);
         result.setSuccessful(successful);
         return result;
+    }
+
+    private DefinitionBuilder text(String key, Category category, String label, String description) {
+        return new DefinitionBuilder(key, category, label, description, Type.TEXT);
+    }
+
+    private DefinitionBuilder url(String key, Category category, String label, String description) {
+        return new DefinitionBuilder(key, category, label, description, Type.URL);
     }
 
     private void validate(Type type, String label, boolean secret, Double minimum, Double maximum, List<String> options,
@@ -352,34 +382,6 @@ public class ServerSettingsCatalogue {
         }
     }
 
-    private void maximumLength(String label, Double maximum, String value) {
-        if (maximum != null && value.length() > maximum) {
-            throw new IllegalArgumentException(label + " is too long");
-        }
-    }
-
-    private void range(String label, Double minimum, Double maximum, double value) {
-        if (!Double.isFinite(value) || minimum != null && value < minimum || maximum != null && value > maximum) {
-            throw new IllegalArgumentException(label + " is outside the allowed range");
-        }
-    }
-
-    private DefinitionBuilder logLevel(String key, Category category, String label, String description) {
-        return new DefinitionBuilder(key, category, label, description, Type.LOG_LEVEL);
-    }
-
-    private DefinitionBuilder password(String key, Category category, String label, String description) {
-        return new DefinitionBuilder(key, category, label, description, Type.PASSWORD).secret();
-    }
-
-    private DefinitionBuilder text(String key, Category category, String label, String description) {
-        return new DefinitionBuilder(key, category, label, description, Type.TEXT);
-    }
-
-    private DefinitionBuilder url(String key, Category category, String label, String description) {
-        return new DefinitionBuilder(key, category, label, description, Type.URL);
-    }
-
     /**
      * Defines the editor type used by the dynamic settings view.
      */
@@ -388,14 +390,169 @@ public class ServerSettingsCatalogue {
     }
 
     /**
+     * Defines one category shared by related server settings.
+     */
+    public record Category(String key, String label, String icon, int order, boolean allowDisable,
+                           boolean enabledByDefault) {
+    }
+
+    /**
+     * Defines the presentation and validation contract of one setting.
+     */
+    public record Definition(String key, Category category, String label, String description, Type type,
+                             String defaultValue, boolean secret, boolean restartRequired, Double minimum,
+                             Double maximum,
+                             List<String> options, Consumer<String> validator,
+                             Function<String, ServerSettingTestResult> tester,
+                             Consumer<String> updateHandler) {
+
+        /**
+         * Runs this definition's connectivity test.
+         *
+         * @param value validated value to test
+         * @return result reported by the setting-specific test
+         * @throws IllegalArgumentException when this setting does not support testing
+         */
+        public ServerSettingTestResult test(String value) {
+            if (tester == null) {
+                throw new IllegalArgumentException("This setting does not support a connection test");
+            }
+            return tester.apply(value);
+        }
+
+        /**
+         * Indicates whether this setting has a connection test.
+         *
+         * @return {@code true} when a connection test is available
+         */
+        public boolean testable() {
+            return tester != null;
+        }
+
+        /**
+         * Applies this definition's optional runtime update action.
+         *
+         * @param value persisted setting value
+         */
+        public void update(String value) {
+            if (updateHandler != null) {
+                updateHandler.accept(value);
+            }
+        }
+
+        /**
+         * Applies this definition's value validation.
+         *
+         * @param value proposed setting value
+         */
+        public void validate(String value) {
+            validator.accept(value);
+        }
+    }
+
+    /**
+     * Builds a readable declarative setting definition.
+     */
+    private final class DefinitionBuilder {
+
+        private final Category                                  category;
+        private       String                                    defaultValue;
+        private final String                                    description;
+        private final String                                    key;
+        private final String                                    label;
+        private       Double                                    maximum;
+        private       Double                                    minimum;
+        private       List<String>                              options = List.of();
+        private       boolean                                   restartRequired;
+        private       boolean                                   secret;
+        private       Function<String, ServerSettingTestResult> tester;
+        private final Type                                      type;
+        private       Consumer<String>                          updateHandler;
+
+        private DefinitionBuilder(String key, Category category, String label, String description, Type type) {
+            this.category    = category;
+            this.description = description;
+            this.key         = key;
+            this.label       = label;
+            this.type        = type;
+        }
+
+        private Definition build() {
+            return new Definition(key, category, label, description, type, defaultValue, secret, restartRequired,
+                    minimum, maximum, options, validator(), tester, updateHandler);
+        }
+
+        private DefinitionBuilder defaultValue(boolean defaultValue) {
+            this.defaultValue = Boolean.toString(defaultValue);
+            return this;
+        }
+
+        private DefinitionBuilder defaultValue(double defaultValue) {
+            this.defaultValue = Double.toString(defaultValue);
+            return this;
+        }
+
+        private DefinitionBuilder defaultValue(long defaultValue) {
+            this.defaultValue = Long.toString(defaultValue);
+            return this;
+        }
+
+        private DefinitionBuilder defaultValue(String defaultValue) {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
+        private DefinitionBuilder maximum(double maximum) {
+            this.maximum = maximum;
+            return this;
+        }
+
+        private DefinitionBuilder maximumLength(int maximumLength) {
+            this.maximum = (double) maximumLength;
+            return this;
+        }
+
+        private DefinitionBuilder minimum(double minimum) {
+            this.minimum = minimum;
+            return this;
+        }
+
+        private DefinitionBuilder onUpdate(Consumer<String> updateHandler) {
+            this.updateHandler = updateHandler;
+            return this;
+        }
+
+        private DefinitionBuilder options(String... options) {
+            this.options = List.of(options);
+            return this;
+        }
+
+        private DefinitionBuilder restartRequired() {
+            this.restartRequired = true;
+            return this;
+        }
+
+        private DefinitionBuilder secret() {
+            this.defaultValue = "";
+            this.secret       = true;
+            return this;
+        }
+
+        private DefinitionBuilder testWithGet(String path) {
+            tester = value -> httpGetTest(value, path);
+            return this;
+        }
+
+        private Consumer<String> validator() {
+            return value -> validate(type, label, secret, minimum, maximum, options, value);
+        }
+    }
+
+    /**
      * Stable keys for administrator-managed server settings.
      */
     public static final class Keys {
 
-        /**
-         * Assistant model identifier.
-         */
-        public static final String AI_MCP_MODEL                                   = "kassandra.ai.mcp-model";
         /**
          * Filter model identifier.
          */
@@ -408,6 +565,10 @@ public class ServerSettingsCatalogue {
          * AI request token limit.
          */
         public static final String AI_MAX_TOKENS                                  = "kassandra.ai.max-tokens";
+        /**
+         * Assistant model identifier.
+         */
+        public static final String AI_MCP_MODEL                                   = "kassandra.ai.mcp-model";
         /**
          * AI random seed.
          */
@@ -514,165 +675,6 @@ public class ServerSettingsCatalogue {
         public static final String UNDO_REDO_HISTORY_LIMIT                        = "kassandra.undo-redo.history-limit";
 
         private Keys() {
-        }
-    }
-
-    /**
-     * Defines one category shared by related server settings.
-     */
-    public record Category(String key, String label, String icon, int order, boolean allowDisable,
-                           boolean enabledByDefault) {
-    }
-
-    /**
-     * Defines the presentation and validation contract of one setting.
-     */
-    public record Definition(String key, Category category, String label, String description, Type type,
-                             String defaultValue, boolean secret, boolean restartRequired, Double minimum,
-                             Double maximum,
-                             List<String> options, Consumer<String> validator,
-                             Function<String, ServerSettingTestResult> tester,
-                             Consumer<String> updateHandler) {
-
-        /**
-         * Applies this definition's value validation.
-         *
-         * @param value proposed setting value
-         */
-        public void validate(String value) {
-            validator.accept(value);
-        }
-
-        /**
-         * Runs this definition's connectivity test.
-         *
-         * @param value validated value to test
-         * @return result reported by the setting-specific test
-         * @throws IllegalArgumentException when this setting does not support testing
-         */
-        public ServerSettingTestResult test(String value) {
-            if (tester == null) {
-                throw new IllegalArgumentException("This setting does not support a connection test");
-            }
-            return tester.apply(value);
-        }
-
-        /**
-         * Applies this definition's optional runtime update action.
-         *
-         * @param value persisted setting value
-         */
-        public void update(String value) {
-            if (updateHandler != null) {
-                updateHandler.accept(value);
-            }
-        }
-
-        /**
-         * Indicates whether this setting has a connection test.
-         *
-         * @return {@code true} when a connection test is available
-         */
-        public boolean testable() {
-            return tester != null;
-        }
-    }
-
-    /**
-     * Builds a readable declarative setting definition.
-     */
-    private final class DefinitionBuilder {
-
-        private final Category                                  category;
-        private       String                                    defaultValue;
-        private final String                                    description;
-        private final String                                    key;
-        private final String                                    label;
-        private       Double                                    maximum;
-        private       Double                                    minimum;
-        private       List<String>                              options = List.of();
-        private       boolean                                   restartRequired;
-        private       boolean                                   secret;
-        private       Function<String, ServerSettingTestResult> tester;
-        private final Type                                      type;
-        private       Consumer<String>                          updateHandler;
-
-        private DefinitionBuilder(String key, Category category, String label, String description, Type type) {
-            this.category    = category;
-            this.description = description;
-            this.key         = key;
-            this.label       = label;
-            this.type        = type;
-        }
-
-        private Definition build() {
-            return new Definition(key, category, label, description, type, defaultValue, secret, restartRequired,
-                    minimum, maximum, options, validator(), tester, updateHandler);
-        }
-
-        private DefinitionBuilder defaultValue(boolean defaultValue) {
-            this.defaultValue = Boolean.toString(defaultValue);
-            return this;
-        }
-
-        private DefinitionBuilder defaultValue(double defaultValue) {
-            this.defaultValue = Double.toString(defaultValue);
-            return this;
-        }
-
-        private DefinitionBuilder defaultValue(long defaultValue) {
-            this.defaultValue = Long.toString(defaultValue);
-            return this;
-        }
-
-        private DefinitionBuilder defaultValue(String defaultValue) {
-            this.defaultValue = defaultValue;
-            return this;
-        }
-
-        private DefinitionBuilder maximum(double maximum) {
-            this.maximum = maximum;
-            return this;
-        }
-
-        private DefinitionBuilder maximumLength(int maximumLength) {
-            this.maximum = (double) maximumLength;
-            return this;
-        }
-
-        private DefinitionBuilder minimum(double minimum) {
-            this.minimum = minimum;
-            return this;
-        }
-
-        private DefinitionBuilder options(String... options) {
-            this.options = List.of(options);
-            return this;
-        }
-
-        private DefinitionBuilder restartRequired() {
-            this.restartRequired = true;
-            return this;
-        }
-
-        private DefinitionBuilder secret() {
-            this.defaultValue = "";
-            this.secret       = true;
-            return this;
-        }
-
-        private DefinitionBuilder onUpdate(Consumer<String> updateHandler) {
-            this.updateHandler = updateHandler;
-            return this;
-        }
-
-        private DefinitionBuilder testWithGet(String path) {
-            tester = value -> httpGetTest(value, path);
-            return this;
-        }
-
-        private Consumer<String> validator() {
-            return value -> validate(type, label, secret, minimum, maximum, options, value);
         }
     }
 }

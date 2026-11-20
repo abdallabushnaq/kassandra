@@ -226,8 +226,10 @@ https://www.youtube.com/playlist?list=PL1FdjPuGzg7LDRGZeP6uQAPet1_fZePGs
 # What does this Project do a bit different?
 
 1. API first. Everything is based on an api. Even the Ui is just a client of the API.
-2. ErDiagramTest is an integration test that generates
-   an [Entity Relationship Diagram](https://github.com/kunterbunt2/project-hub/wiki/entity-relationship-diagram).
+2. `EntityRelationshipDiagramTest` generates an
+   [Entity Relationship Diagram](https://github.com/kunterbunt2/project-hub/wiki/entity-relationship-diagram).
+   It writes to the sibling wiki directory by default; set `-Der.diagram.output=<path>` to choose another output.
+   The CI-generated SVG is available in the `test-artifacts` workflow artifact.
 3. GenerateScreenshots is an integration test that takes screenshots of every screen and dialog both in light and dark
    mode. All screenshots are stored in github.wiki.
    Example: [active sprints](https://github.com/kunterbunt2/project-hub/wiki/active-sprints).

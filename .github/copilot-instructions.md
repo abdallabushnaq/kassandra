@@ -101,7 +101,7 @@ src/main/resources/
 src/test/java/de/bushnaq/abdalla/kassandra/
   rest/api/                               # REST API unit tests (ProductApiTest, SprintApiTest, …)
   report/gantt/ burndown/ calendar/       # Chart regression tests
-  ui/view/                                # Selenium UI tests (excluded from CI – see below)
+  ui/view/                                # Selenium UI tests (selected tests run in CI – see below)
   util/                                   # AbstractTestUtil, H2DatabaseStateManager, DTOAsserts
   ui/util/
     AbstractUiTestUtil.java               # Base class for all tests
@@ -148,11 +148,22 @@ mvn test
 - `*IT` classes are intentionally not discovered by Surefire's default test naming patterns. This keeps integration,
   AI, and introduction-video tests separate from unit-test execution.
 
+The ER diagram test writes to `../kassandra.wiki/entity-relationship-diagram.svg` by default. Override with
+`-Der.diagram.output=test-results/entity-relationship-diagram.svg` when the sibling wiki is not available.
+
 ### 4. Run a specific test class
 
 ```bash
 mvn test -Dtest="ProductApiTest,GanttTest"
 ```
+
+Run the selected headless UI integration tests, unit tests, and combined JaCoCo coverage with Docker and Chrome:
+
+```bash
+mvn verify -P integration-test -Dselenium.headless=true -Der.diagram.output=test-results/entity-relationship-diagram.svg
+```
+
+Failsafe runs `TaskListViewIT`, `QualityBoardIT`, and `ActiveSprintsIT`; other `*IT` classes remain opt-in.
 
 ### 5. Production build (Vaadin frontend bundled)
 
@@ -197,12 +208,11 @@ Steps (in order):
 3. Set up Chrome stable + note that WebDriverManager handles ChromeDriver.
 4. Configure Testcontainers (`testcontainers.reuse.enable=true`).
 5. **`mvn -B package --file pom.xml -DskipTests`** – build only.
-6. **`mvn test`** – run unit tests. Integration, AI, and introduction-video tests use the `*IT` naming convention and
-   are not discovered by Surefire's standard test patterns.
-7. `mvn jacoco:report site -DskipTests` – generate coverage.
+6. **`mvn verify -P integration-test`** – run unit tests and the selected headless UI tests with JaCoCo.
+7. `mvn jacoco:report site -DskipTests` – generate combined coverage.
 8. Upload coverage to Codecov.
-9. Publish JUnit XML reports (`**/target/surefire-reports/TEST-*.xml`).
-10. Upload test artifacts (recordings, screenshots, reports) with 7-day retention.
+9. Publish Surefire and Failsafe JUnit XML reports.
+10. Upload test artifacts (including the ER diagram), recordings, screenshots, and reports with 7-day retention.
 
 **Secrets required:** `PACKAGES_TOKEN` (GitHub Packages), `CODECOV_ORG_TOKEN`.
 
@@ -216,7 +226,7 @@ where.
 | Tag                 | Can run in CI | External dependency                       | Description                                                                                                                                                                                                                                                                           |
 |---------------------|:-------------:|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `UnitTest`          |    ✅ Yes     | None (in-memory H2, `@WithMockUser`)      | Self-contained tests. All `rest/api/*ApiTest` classes, SVG chart tests (`GanttTest`, `BurndownTest`, `LegacyCalendarTest`), date-util tests, profiler tests.                                                                                                                          |
-| `IntegrationUiTest` |     ❌ No     | Keycloak (auto-started via Testcontainer) | Full-stack Selenium UI tests against a live Spring Boot instance. They use the `*IT` naming convention and are not run by Surefire's standard `mvn test` invocation.                                                                                                                  |
+| `IntegrationUiTest` | Selected tests | Docker, Chrome, Keycloak Testcontainer | Full-stack Selenium UI tests. The `integration-test` profile runs the three selected CI tests; `mvn test` does not discover `*IT` classes. |
 | `AiUnitTest`        |     ❌ No     | LM Studio + AI containers (see below)     | Requires local AI services. Cannot run in GitHub Actions. All tests under `ai/` package, including `AiAssistantServiceBasicIT`, `AiAssistantServiceProductIT`, `AiAssistantServiceVersionIT`, `AiAssistantServiceFeatureIT`, `AiAssistantServiceUserIT`, `AiAssistantServiceMixedIT`. |
 | `IntroductionVideo` |     ❌ No     | Real desktop browser + TTS containers     | Records introduction videos. Requires a visible browser and running TTS services. All `ui/introduction/*IT` classes.                                                                                                                                                                  |
 
@@ -260,8 +270,6 @@ The following are explicitly excluded from Surefire in `pom.xml` and **must not*
 | `**/LegacyGanttTest.java`                                                                                            | Missing reference files not available in CI                |
 | `**/ai/**/Test*.java`, `**/ai/**/*Test.java`, `**/ai/**/*Tests.java`, `**/ai/**/*TestCase.java`, `**/ai/**/*IT.java` | Tagged `AiUnitTest` – requires LLM / GPU / AI containers   |
 | `**/introduction/*Video.java`, `**/introduction/*IT.java`                                                            | Tagged `IntroductionVideo` – requires real desktop browser |
-| `**/ui/view/TaskListViewIT.java`                                                                                     | Waits for user to close browser                            |
-| `**/ui/view/QualityBoardIT.java`                                                                                     | Waits for user to close browser                            |
 | `**/GenerateScreenshotsIT.java`                                                                                      | Records screenshots and waits for user interaction         |
 | `**/ui/Demo.java`                                                                                                    | Interactive demo                                           |
 

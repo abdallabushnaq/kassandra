@@ -39,6 +39,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -159,7 +161,7 @@ public class QualityBoardIT extends AbstractKeycloakUiTestUtil {
         versionListViewTester.selectVersion(peg.nameGenerator.generateVersionName(0));
         featureListViewTester.selectFeature(peg.nameGenerator.generateFeatureName(0));
         sprintListViewTester.selectSprint(peg.nameGenerator.generateSprintName(0));
-        seleniumHandler.waitUntilBrowserClosed(5000);
+        seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id(QualityBoard.GANTT_BURNDOWN_CONTAINER_ID)));
     }
 
 }

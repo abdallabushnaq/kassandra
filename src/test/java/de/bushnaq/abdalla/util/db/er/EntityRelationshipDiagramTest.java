@@ -19,7 +19,6 @@ package de.bushnaq.abdalla.util.db.er;
 
 import de.bushnaq.abdalla.kassandra.Application;
 import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
-import de.bushnaq.abdalla.kassandra.util.PersistingEntityGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -37,12 +36,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Generates an SVG ER diagram from the live in-memory H2 schema and writes it
- * to {@code test-results/er-diagram.svg}.
+ * to the wiki directory by default. The {@code er.diagram.output} system
+ * property overrides the output path.
  *
  * <p>The test is tagged {@code UnitTest} so it participates in the standard
- * fast-test suite.  It extends {@link PersistingEntityGenerator} so the full
- * entity hierarchy is seeded before the diagram is produced, giving a
- * representative view of the schema.
+ * fast-test suite and extracts the schema from the test application's H2 database.
  */
 @Tag("UnitTest")
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -53,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 public class EntityRelationshipDiagramTest extends AbstractTestUtil {
 
-    private static final String OUTPUT_PATH = "../kassandra.wiki/entity-relationship-diagram.svg";
+    private static final String OUTPUT_PATH = System.getProperty("er.diagram.output", "../kassandra.wiki/entity-relationship-diagram.svg");
 
     /**
      * Extracts the H2 schema and renders it as an SVG ER diagram.
@@ -78,4 +76,3 @@ public class EntityRelationshipDiagramTest extends AbstractTestUtil {
         log.info("ER diagram generated successfully: {} bytes", outputFile.length());
     }
 }
-

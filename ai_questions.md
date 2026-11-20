@@ -14,24 +14,6 @@ Some tests are excluded in the pom, but should actually be included in the code 
    Remark: ErDiagramTest generates an ER diagram (..\kassandra.wiki\entity-relationship-diagram.svg.), lets include that
    in the artifacts to be downloaded when needed.
 
-# Fix Page Header Background
-
-MainLayout.updateHeaderTextColorFromImage tries to estimate the background image color and then sets the header text
-color to either black or white depending on the background color.
-We want to keep the code but mark it as deprecated and instead use fixed text colors depending on the theme.
-pageHeaderBackground style is fixed to .set ("filter", "brightness (0.7) saturate (0.2)")
-
-1. that is good for light theme, but for dark we need to do the opposite and darken the background.
-2. that is not good if no image is present.
-
-# Fix Extrapolated Schedule Delay
-
-QualityBoard calculates `Extrapolated Schedule Delay` wrong.
-Example: in GenerateScreenshotsIT when we take a screenshot of the Quality view, we use sprintBerlin, which has actually
-no delay.
-see ../kassandra.wiki/light-screenshots/quality-board-in-time.png
-can you figure out what we calculate wrong?
-
 # Deprecating Legacy Classes
 
 Some of our Legacy Classes are still used in some tests.

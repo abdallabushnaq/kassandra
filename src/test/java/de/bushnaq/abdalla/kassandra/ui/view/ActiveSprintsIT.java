@@ -40,7 +40,7 @@ import java.time.LocalDateTime;
 /**
  * Test class for the ActiveSprints view.
  * <p>
- * Tests the Scrum board functionality including task status changes via drag and drop.
+ * Tests that the active sprints view opens with sprint data.
  * </p>
  *
  * @author Abdalla Bushnaq
@@ -157,7 +157,7 @@ public class ActiveSprintsIT extends AbstractKeycloakUiTestUtil {
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testActiveSprintsView() throws Exception {
         // Generate test data
-        Sprint sprint = generateData();
+        generateData();
         aboutViewTester.login("christopher.paul@kassandra.org", "password", null, null, null);
         productListViewTester.switchToProductListView();
         seleniumHandler.getAndCheck("http://localhost:" + productListViewTester.getPort() + "/ui/" + ActiveSprints.ROUTE);
@@ -172,8 +172,7 @@ public class ActiveSprintsIT extends AbstractKeycloakUiTestUtil {
         // Take screenshot
         // takeScreenshot("active_sprints_initial");
 
+        seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_SPRINT_SELECTOR);
         log.info("ActiveSprints view test completed successfully");
-        seleniumHandler.waitUntilBrowserClosed(5000);
     }
 }
-

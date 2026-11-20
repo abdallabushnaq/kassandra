@@ -419,13 +419,9 @@
                         <!-- Exclude all video/recording UI tests that require a real desktop/browser -->
                         <exclude>**/introduction/*Video.java</exclude>
                         <exclude>**/introduction/*IT.java</exclude>
-                        <!-- Exclude specific tests that wait forever until the user closes the browser-->
-                        <exclude>**/ui/view/TaskListViewIT.java</exclude>
-                        <exclude>**/ui/view/QualityBoardIT.java</exclude>
+                        <!-- Exclude interactive tests -->
                         <exclude>**/ui/Demo.java</exclude>
-                        <exclude>**/ErDiagramTest.java</exclude>
                         <exclude>**/GenerateScreenshotsIT.java</exclude>
-                        <exclude>**/testActiveSprintsView.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -480,6 +476,9 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.14</version>
+                <configuration>
+                    <append>true</append>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -725,6 +724,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.5.4</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -734,6 +734,13 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <argLine>@{argLine} -Xshare:off</argLine>
+                            <includes>
+                                <include>**/TaskListViewIT.java</include>
+                                <include>**/QualityBoardIT.java</include>
+                                <include>**/ActiveSprintsIT.java</include>
+                            </includes>
+                            <failIfNoTests>true</failIfNoTests>
                             <trimStackTrace>false</trimStackTrace>
                             <enableAssertions>true</enableAssertions>
                         </configuration>
@@ -779,6 +786,7 @@
                     -->
                     <reportsDirectories>
                         <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                        <reportsDirectory>${project.build.directory}/failsafe-reports</reportsDirectory>
                     </reportsDirectories>
                 </configuration>
                 <reportSets>
