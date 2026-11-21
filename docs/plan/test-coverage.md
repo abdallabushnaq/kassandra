@@ -38,8 +38,7 @@ counters.
 2. **Cover the untested Backlog UI.** Add a `BacklogViewIT` for
    `de.bushnaq.abdalla.kassandra.ui.view.Backlog` and exercise initial rendering,
    representative task/story interactions, and empty/non-empty data. It has
-   0% coverage (0/889 lines). `LegacyBacklog` is also at 0% (0/939 lines);
-   decide whether it remains supported before investing in a separate test.
+   0% coverage (0/889 lines).
 3. **Make CI collect the intended UI integration coverage.** The current workflow
    runs `mvn test`, while `pom.xml` puts Failsafe execution behind the
    `integration-test` profile. The existing `*IT` UI tests therefore do not run

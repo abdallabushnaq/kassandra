@@ -69,7 +69,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Sprints Overview combines the full LegacySprintListView UI (grid, filters, AI panel, dialogs)
+ * Sprints Overview combines the grid, filters, AI panel and dialogs
  * with a client-side virtual-canvas chart rendered by the generated frontend bundle.
  *
  * <p>Theme changes are handled by the server-side {@link ThemeChangedEvent}: when the user
@@ -613,7 +613,7 @@ public class SprintListView extends AbstractMainGrid<Sprint> implements AfterNav
      * and avoids an extra round-trip.
      * <p>
      * The minified script is loaded once via {@code /js/sprints-overview.min.js}, which combines
-     * LegacyCalendarXAxes.js and LegacySprintsOverviewChart.js and is generated during the Maven build.
+     * the chart modules and is generated during the Maven build.
      * The browser will serve it from cache on subsequent references.
      */
     private void refreshClientChart() {

@@ -459,7 +459,8 @@ public class ProductListViewIT extends AbstractKeycloakUiTestUtil {
                 "return [...document.querySelectorAll('.help-drawer img')]"
                         + ".every(image => image.clientWidth <= image.naturalWidth)"));
         javascript.executeScript("document.getElementById(arguments[0]).click()", MainLayout.ID_THEME_TOGGLE);
-        wait.until(webDriver -> !previousDiagram.equals(driver.findElement(diagram).getDomAttribute("id")));
+        new WebDriverWait(driver, Duration.ofSeconds(30)).ignoring(StaleElementReferenceException.class)
+                .until(webDriver -> !previousDiagram.equals(webDriver.findElement(diagram).getDomAttribute("id")));
         wait.withMessage(() -> String.valueOf(javascript.executeScript(
                         "return JSON.stringify({body: document.body.getAttribute('theme'), html: document.documentElement.getAttribute('theme'),"
                                 + " images: [...document.querySelectorAll('.help-drawer img')]"

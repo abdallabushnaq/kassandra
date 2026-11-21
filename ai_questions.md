@@ -1,79 +1,16 @@
 # AI Questions
 
-# Update dependencies to latest versions
+# Removed Deprecated Classes
 
-Let's update spring boot from 4.0.1 to 4.2.0 and make sure all tests are still running.
-While we do that, we should also update spring-ai.version from 2.0.0-M2 to 2.1.0. Ensure AI test are still running
-correctly locally.
-Let's update vaadin from 25.0.13 to 25.3.5 and make sure all tests are still running.
-While we are doing that we should also update selenium, lombok and any other library that is outdated.
-I advise doing this step by step.
+There are many deprecated classes being used from spring boot or vaadin, like:
+@AutoConfigureTestRestTemplate.
+let's replace them with new supported alternatives.
 
-# Include Integration tests for code coverage
+# Stable Diffusion Cache for our Tests
 
-github does not show integration tests in the list of tests is executed.
-It should be possible to run those tests and include them in the code coverage report.
-Some tests are excluded in the pom, but should actually be included in the code coverage report.
-
-1. TaskListViewIT
-2. QualityBoardIT
-3. ErDiagramTest
-4. ActiveSprintsIT
-   Figure out why they were excluded and fix it.
-   Remark: ErDiagramTest generates an ER diagram (..\kassandra.wiki\entity-relationship-diagram.svg.), lets include that
-   in the artifacts to be downloaded when needed.
-
-# Deprecating Legacy Classes
-
-Some of our Legacy Classes are still used in some tests.
-We are mainly talking about:
-
-1. LegacyBurnDownChart
-2. LegacyBurnDownRenderer
-3. LegacyRenderDao
-4. LegacyCalendarChart
-5. LegacyCalendarRenderer
-6. LegacyAbstractGanttRenderer
-7. LegacyGanttChart
-8. LegacyGanttRenderer
-9. LegacyGanttBurndownChart
-10. LegacySprintsOverviewChart
-11. LegacySprintsOverviewRenderer
-12. AbstractCanvas
-13. LegacyAbstractChart
-14. LegacyAbstractRenderer
-
-most new tests use GanttGenerator to generate Charts as evidence and debugging purposes.
-But some older tests and AbstractGanttTestUtil still rely on RenderUtil, which still relies on the Legacy classes.
-The reason we have not replaced them already is that it is not a pure replacement.
-The parameters are different.
-The legacy code take a sprint as a parameter while the new code takes a sprint-id.
-
-Create a plan that describes how to replace the legacy classes with the new classes in our tests.
-This plan should then be tested on one of the test classes to proof that this plan works, before we start replacing the
-code in all the places.
-
-Remark: we are still not ready to remove the legacy code.
-
-# Raise coverage to 80%
-
-To raise our coverage to 80%, we need to add a lot more tests.
-Let's run the same test as in the GitHub Action and then check the coverage report to see which classes have how much
-coverage. From that we should create a plan (docs/plan/test-coverage.md) to add tests for those classes.
-This plan should include a table with classes with fully qualified name and their current coverage. This plan should
-also include the overall coverage.
-We then can use this report as a baseline to add more tests and raise the coverage to 80%.
-Example: We do have several integration tests that cover the UI, but not the Backlog view. We need to add a
-BacklogViewIT test to cover that view.
-
-# Add TypeScript coverage
-
-We currently use JaCoCo to add coverage for our java code to GitHub and CodeCov.
-What do we need to do to also capture TypeScript coverage?
-Our TypeScript runs mostly in our integration tests in the client.
-Example: The GanttChart running in the Backlog vaadin view.
-
-Create a plan (docs/plan/typescript-coverage.md) how to reach this goal.
+Let's make CacheAwareAvatarService use different cache folders for different RandomCases.
+If test is run with randomCase 1 and then with RandomCase 2, 2 will overwrite the results of randomCase 1.
+To prevent that, it needs to switch the folder.
 
 # Raise coverage to 80%
 
@@ -232,13 +169,4 @@ sprint end time. But all these changes are calculated every time we draw the spr
 
 Can you suggest a better design for our undo/redo architecture that is more practical for our users?
 
-# Stable Diffusion Cache for our Tests
-
-Let's introduce a file based cache for our Stable Diffusion generateds images.
-If an image has same size, diffusion parameters including prompt and negative prompt, we should reuse the image from the
-cache instead of generating it again.
-This will be only used by our test code.
-Let's add a new class CacheAwareAvatarService extending AvatarService to check if an image has already been generated
-and stored in the cache.
-We will use this in our tests whenever we need to generate an image e.g. PersistingEntityGenerator.
 

@@ -1,5 +1,4 @@
 // sprints-overview/sprints-overview-chart.ts
-// Mirrors Java: LegacySprintsOverviewChart extends LegacyAbstractChart
 //
 // Copyright (C) 2025-2026 Abdalla Bushnaq – Apache License 2.0
 

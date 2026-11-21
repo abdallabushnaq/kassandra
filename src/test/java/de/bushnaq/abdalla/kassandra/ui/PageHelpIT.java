@@ -451,12 +451,14 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
                 + "&feature=" + feature.getId() + "&sprint=" + sprint.getId();
         seleniumHandler.getDriver().manage().window().setSize(new Dimension(1600, 1000));
         for (String route : List.of("", "product-list", "version-list", "feature-list", "sprint-list",
-                "legacy-sprint-list", "backlog", "legacy-backlog", "active-sprints", "quality-board",
-                "legacy-quality-board", "user-list", "user-group-list", "availability", "location",
+                "backlog", "active-sprints", "quality-board",
+                "user-list", "user-group-list", "availability", "location",
                 "offday", "work-week-list", "user-work-week", "profile", "server-settings",
                 "identity-providers", "audit", "kassandra", "insights")) {
             navigateTo(route + context);
-            seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".smart-header")));
+            new WebDriverWait(seleniumHandler.getDriver(), Duration.ofSeconds(30))
+                    .withMessage("Smart header not visible for route: " + route)
+                    .until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".smart-header")));
             assertEquals(1, seleniumHandler.getDriver().findElements(By.cssSelector(".smart-header")).size(), route);
             assertSmartHeaderGeometry(route);
             WebElement breadcrumbs = seleniumHandler.findElement(By.id(MainLayout.ID_BREADCRUMBS));
