@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
 import de.bushnaq.abdalla.kassandra.ui.view.util.ProductListViewTester;
@@ -173,6 +174,8 @@ public class ActiveSprintsIT extends AbstractKeycloakUiTestUtil {
         // takeScreenshot("active_sprints_initial");
 
         seleniumHandler.waitForElementToBeClickable(ActiveSprints.ID_SPRINT_SELECTOR);
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.BURNDOWN_CHART);
         log.info("ActiveSprints view test completed successfully");
     }
 }

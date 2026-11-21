@@ -181,6 +181,18 @@ mvn jacoco:report site -DskipTests
 
 Coverage report lands in `target/site/jacoco/jacoco.xml`.
 
+To collect TypeScript coverage from Chrome-based unit and integration tests as well:
+
+```bash
+mvn verify -P integration-test,frontend-coverage -Dfrontend.coverage=true -Dselenium.headless=true -Der.diagram.output=test-results/entity-relationship-diagram.svg
+npm run coverage:frontend
+```
+
+The coverage profile instruments the static frontend modules only for that build. The report includes unvisited
+executable TypeScript files, and is written to `target/frontend-coverage/report/` as LCOV and HTML. This profile
+should not be combined with the production profile; rebuild normally before running or packaging the application.
+The report command fails if no browser coverage was collected.
+
 ### 7. Code formatting check
 
 ```bash
@@ -210,9 +222,9 @@ Steps (in order):
 3. Set up Chrome stable + note that WebDriverManager handles ChromeDriver.
 4. Configure Testcontainers (`testcontainers.reuse.enable=true`).
 5. **`mvn -B package --file pom.xml -DskipTests`** – build only.
-6. **`mvn verify -P integration-test`** – run unit tests and discover eligible integration tests with JaCoCo.
-7. `mvn jacoco:report site -DskipTests` – generate combined coverage.
-8. Upload coverage to Codecov.
+6. **`mvn verify -P integration-test,frontend-coverage -Dfrontend.coverage=true`** – run tests with Java and browser TypeScript coverage.
+7. Generate the JaCoCo report and the TypeScript LCOV/HTML reports.
+8. Upload Java and TypeScript coverage separately to Codecov; publish TypeScript coverage in the GitHub job summary.
 9. Publish Surefire and Failsafe JUnit XML reports.
 10. Upload test artifacts (including the ER diagram), recordings, screenshots, and reports with 7-day retention.
 

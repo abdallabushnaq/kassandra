@@ -145,6 +145,10 @@ class BacklogIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.ensureIsNotInList(TaskGrid.TASK_GRID_NAME_PREFIX, "Other backlog task");
         seleniumHandler.getDriver().navigate().refresh();
         seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
+        if (Boolean.getBoolean("frontend.coverage")) {
+            assertNotNull(seleniumHandler.executeJavaScript("return localStorage.getItem('__kassandra_frontend_coverage__');"),
+                    "Coverage from the previous page must survive refresh");
+        }
         seleniumHandler.waitUntil(driver -> driver.getCurrentUrl().contains("users=" + user.getId()));
         seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, "Find this task");
         seleniumHandler.ensureIsNotInList(TaskGrid.TASK_GRID_NAME_PREFIX, "Other task");
@@ -166,15 +170,35 @@ class BacklogIT extends AbstractKeycloakUiTestUtil {
         seleniumHandler.ensureIsInList(TaskGrid.TASK_GRID_NAME_PREFIX, "Second sprint story");
 
         String mainWindow = seleniumHandler.getDriver().getWindowHandle();
+        long savedBeforePopup = Boolean.getBoolean("frontend.coverage") ? savedCoverageStatements() : 0;
         seleniumHandler.click(Backlog.OPEN_GANTT_CHART_BUTTON_ID);
         seleniumHandler.waitUntil(ExpectedConditions.numberOfWindowsToBe(2));
         String chartWindow = seleniumHandler.getDriver().getWindowHandles().stream()
                 .filter(handle -> !handle.equals(mainWindow)).findFirst().orElseThrow();
         seleniumHandler.getDriver().switchTo().window(chartWindow);
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("#chart svg")));
+        long popupStatements = Boolean.getBoolean("frontend.coverage")
+                ? ((Number) seleniumHandler.executeJavaScript("""
+                return Object.values(window.__coverage__ || {})
+                    .flatMap(file => Object.values(file.s))
+                    .reduce((sum, count) => sum + count, 0);
+                """)).longValue() : 0;
         seleniumHandler.getDriver().close();
         seleniumHandler.getDriver().switchTo().window(mainWindow);
+        if (Boolean.getBoolean("frontend.coverage")) {
+            assertTrue(popupStatements > 0, "The detached chart must execute instrumented code");
+            assertTrue(savedCoverageStatements() >= savedBeforePopup + popupStatements,
+                    "Coverage from the detached chart must survive closing its window");
+        }
         seleniumHandler.waitForChartRendered(ChartIds.GANTT_CHART);
+    }
+
+    private long savedCoverageStatements() {
+        return ((Number) seleniumHandler.executeJavaScript("""
+                return Object.values(JSON.parse(localStorage.getItem('__kassandra_frontend_coverage__') || '{}'))
+                    .flatMap(file => Object.values(file.s))
+                    .reduce((sum, count) => sum + count, 0);
+                """)).longValue();
     }
 
     @Test

@@ -20,6 +20,7 @@ package de.bushnaq.abdalla.kassandra.ui.view;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import de.bushnaq.abdalla.kassandra.util.BurnDownUtil;
@@ -162,6 +163,8 @@ public class QualityBoardIT extends AbstractKeycloakUiTestUtil {
         featureListViewTester.selectFeature(peg.nameGenerator.generateFeatureName(0));
         sprintListViewTester.selectSprint(peg.nameGenerator.generateSprintName(0));
         seleniumHandler.waitUntil(ExpectedConditions.visibilityOfElementLocated(By.id(QualityBoard.GANTT_BURNDOWN_CONTAINER_ID)));
+        seleniumHandler.waitForChartRendered(ChartIds.GANTT_BURNDOWN_CHART);
+        seleniumHandler.waitForChartRendered(ChartIds.BURNDOWN_CHART);
     }
 
 }

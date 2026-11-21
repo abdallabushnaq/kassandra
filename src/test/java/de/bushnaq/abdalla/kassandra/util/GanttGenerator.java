@@ -37,6 +37,7 @@ import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
 import de.bushnaq.abdalla.kassandra.service.SprintsOverviewService;
 import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
+import de.bushnaq.abdalla.kassandra.ui.util.selenium.FrontendCoverageCollector;
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
 import de.bushnaq.abdalla.util.GanttErrorHandler;
@@ -207,7 +208,11 @@ public class GanttGenerator extends EntityGenerator {
                 Files.write(outputDirectory.resolve(name + ".png"), png);
                 log.info("Saved {} chart to {}", name, outputDirectory.toAbsolutePath());
             } finally {
-                driver.quit();
+                try {
+                    FrontendCoverageCollector.collect(driver, "http://127.0.0.1:" + server.getAddress().getPort());
+                } finally {
+                    driver.quit();
+                }
             }
         } finally {
             server.stop(0);

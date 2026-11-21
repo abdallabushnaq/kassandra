@@ -54,6 +54,7 @@
         <npm.path>${env.PATH}</npm.path>
         <npm.production.command>run build:static:prod</npm.production.command>
         <npm.production.executable>${npm.executable}</npm.production.executable>
+        <npm.static.script>build:static:all</npm.static.script>
 
     </properties>
 
@@ -527,7 +528,7 @@
                             </environmentVariables>
                             <arguments>
                                 <argument>run</argument>
-                                <argument>build:static:all</argument>
+                                <argument>${npm.static.script}</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -639,6 +640,7 @@
                 </os>
             </activation>
             <properties>
+                <npm.static.script>build:static</npm.static.script>
                 <npm.install.command>"${user.home}/.vaadin/node/node_modules/npm/bin/npm-cli.js" install</npm.install.command>
                 <npm.install.executable>${user.home}/.vaadin/node/node.exe</npm.install.executable>
                 <npm.path>${user.home}/.vaadin/node;${env.Path}</npm.path>
@@ -660,7 +662,7 @@
                                     <arguments>
                                         <argument>${user.home}/.vaadin/node/node_modules/npm/bin/npm-cli.js</argument>
                                         <argument>run</argument>
-                                        <argument>build:static</argument>
+                                        <argument>${npm.static.script}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -668,6 +670,12 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>frontend-coverage</id>
+            <properties>
+                <npm.static.script>build:static:coverage</npm.static.script>
+            </properties>
         </profile>
 
         <profile>

@@ -214,8 +214,17 @@ class SeleniumHandler {
         if (driver != null) {
 //            ScreenShotCreator.takeScreenShot(driver, testInfo.getDisplayName(), testInfo.getTestMethod().get().getName());
 //            driver.close();//closing the browser will fail in headless mode
-            driver.quit();//quit the driver and close all windows
-            driver = null;
+            try {
+                if (Boolean.getBoolean("frontend.coverage")) {
+                    String port = System.getProperty("test.server.port");
+                    if (port == null)
+                        throw new IllegalStateException("Frontend coverage requires test.server.port");
+                    FrontendCoverageCollector.collect((ChromeDriver) driver, "http://localhost:" + port);
+                }
+            } finally {
+                driver.quit();//quit the driver and close all windows
+                driver = null;
+            }
         }
         log.trace("quit selenium driver");
     }

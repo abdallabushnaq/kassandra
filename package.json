@@ -21,6 +21,9 @@
   "scripts": {
     "build:static": "esbuild \"src/main/frontend/js/**/*.ts\" --format=esm --target=es2020 --outdir=target/classes/META-INF/resources/js/generated",
     "build:static:all": "npm run build:static && npm run build:static:prod",
+    "build:static:coverage": "node scripts/frontend-coverage-build.mjs",
+    "coverage:frontend": "node scripts/frontend-coverage-report.mjs",
+    "test:frontend-coverage": "node --test scripts/frontend-coverage.test.mjs",
     "build:static:watch": "esbuild \"src/main/frontend/js/**/*.ts\" --format=esm --target=es2020 --outdir=target/classes/META-INF/resources/js/generated --watch",
     "build:static:prod": "esbuild src/main/frontend/js/sprints-overview/sprints-overview-bundle.ts src/main/frontend/js/gantt/gantt-bundle.ts src/main/frontend/js/burndown/gantt-burndown-bundle.ts --bundle --format=iife --platform=browser --target=es2020 --outdir=target/classes/META-INF/resources/js/generated --minify",
     "typecheck:static": "tsc -p tsconfig.static.json"
@@ -40,8 +43,10 @@
     "@types/react-dom": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitejs/plugin-react": "6.1.2",
+    "babel-plugin-istanbul": "^8.0.0",
     "esbuild": "^0.28.2",
     "magic-string": "1.4.5",
+    "nyc": "^18.0.0",
     "rollup-plugin-brotli": "3.1.0",
     "rollup-plugin-visualizer": "7.1.1",
     "strip-css-comments": "5.0.0",
@@ -169,6 +174,6 @@
       "vite": "8.3.5",
       "vite-plugin-checker": "0.14.5"
     },
-    "hash": "4fa99bb9bb9cbed8ec023001839e1c94f0f4a66a845073112f9a0498ad7c8c05"
+    "hash": "160becba7e512b4bee69bbe141ad580f3b3bdb4328a2189c33afeb94a6814892"
   }
 }

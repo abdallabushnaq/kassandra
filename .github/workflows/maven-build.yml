@@ -61,6 +61,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Test frontend coverage collection
+        run: npm run test:frontend-coverage
+
       - name: Set up Chrome
         uses: browser-actions/setup-chrome@v1
         with:
@@ -91,7 +94,7 @@ jobs:
 
       - name: Run unit and headless integration tests
         run: |
-          mvn verify -P integration-test -Dselenium.headless=true -Der.diagram.output=test-results/entity-relationship-diagram.svg
+          mvn verify -P integration-test,frontend-coverage -Dfrontend.coverage=true -Dselenium.headless=true -Der.diagram.output=test-results/entity-relationship-diagram.svg
         env:
           # Set environment variables for headless testing
           SELENIUM_HEADLESS: "true"
@@ -121,7 +124,37 @@ jobs:
         if: always()
         with:
           files: ./target/site/jacoco/jacoco.xml
-          flags: tests
+          flags: java
+          disable_search: true
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+
+      - name: Generate TypeScript coverage report
+        id: frontend_coverage
+        if: always()
+        run: |
+          npm run coverage:frontend
+          test -s target/frontend-coverage/report/lcov.info
+          node -e '
+            const fs = require("fs");
+            const summary = JSON.parse(fs.readFileSync("target/frontend-coverage/report/coverage-summary.json", "utf8")).total;
+            const lines = ["## TypeScript coverage", "", "| Metric | Covered | Total | Coverage |", "| --- | ---: | ---: | ---: |"];
+            for (const metric of ["lines", "statements", "functions", "branches"]) {
+              const value = summary[metric];
+              lines.push(`| ${metric} | ${value.covered} | ${value.total} | ${value.pct}% |`);
+            }
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+          '
+
+      - name: Upload TypeScript coverage to Codecov
+        if: ${{ always() && steps.frontend_coverage.outcome == 'success' }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./target/frontend-coverage/report/lcov.info
+          flags: typescript
+          disable_search: true
           fail_ci_if_error: false
           verbose: true
         env:
@@ -164,4 +197,5 @@ jobs:
             target/surefire-reports/
             target/failsafe-reports/
             target/site/
+            target/frontend-coverage/report/
           retention-days: 7

@@ -18,6 +18,7 @@
 package de.bushnaq.abdalla.kassandra.ui.view;
 
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
+import de.bushnaq.abdalla.kassandra.ui.util.ChartIds;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,6 +107,7 @@ public class SprintListViewIT extends AbstractKeycloakUiTestUtil {
         // Create a project
         featureListViewTester.createFeatureConfirm(projectName);
         featureListViewTester.selectFeature(projectName);
+        seleniumHandler.waitForChartRendered(ChartIds.SPRINTS_OVERVIEW_CHART);
     }
 
     /**

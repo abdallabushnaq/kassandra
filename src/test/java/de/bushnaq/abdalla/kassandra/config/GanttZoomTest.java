@@ -27,6 +27,7 @@ import de.bushnaq.abdalla.kassandra.rest.dto.gantt.RelationDto;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.TaskDto;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.service.GanttChartService;
+import de.bushnaq.abdalla.kassandra.ui.util.selenium.FrontendCoverageCollector;
 import de.bushnaq.abdalla.kassandra.util.AbstractTestUtil;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.Tag;
@@ -220,7 +221,11 @@ public class GanttZoomTest extends AbstractTestUtil {
                     wait.until(ignored -> !driver.findElement(By.cssSelector(".burndown-point-readout")).isDisplayed());
                 }
             } finally {
-                driver.quit();
+                try {
+                    FrontendCoverageCollector.collect(driver, "http://127.0.0.1:" + server.getAddress().getPort());
+                } finally {
+                    driver.quit();
+                }
             }
         } finally {
             server.stop(0);
