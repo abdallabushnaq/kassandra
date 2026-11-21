@@ -8,7 +8,6 @@ package de.bushnaq.abdalla.kassandra.service;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.burndown.DayWork;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer;
 import de.bushnaq.abdalla.kassandra.report.dao.*;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -34,16 +33,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
-import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED;
-import static de.bushnaq.abdalla.kassandra.report.burndown.LegacyBurnDownRenderer.Y_AXIS_WIDTH;
 
 /**
  * Builds a {@link GanttBurndownChartDto} from a fully-loaded {@link Sprint} so that
  * the client-side {@code gantt-burndown-bundle.js} can render an interactive,
  * zoomable combined Gantt+Burndown chart without any further server calls.
- *
- * <p>The burndown section mirrors the computation done in Java's
- * {@link LegacyBurnDownRenderer}.
+ * <p>
  * The Gantt task rows reuse {@link GanttChartService}.
  */
 @Service
@@ -65,13 +60,14 @@ public class GanttBurndownChartService {
      * Seconds in a 7.5-hour working day (8:00–12:00, 13:00–16:30).
      */
     private static final long              SECONDS_PER_WORKING_DAY                                   = 75L * 6L * 60L; // 27000
+    public static final  String            WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED             = "Work outside allowed time boundaries occurred";
+    public static final  int               Y_AXIS_WIDTH                                              = 50;
     private final        DarkTheme         darkTheme;
     private final        GanttChartService ganttChartService;
     private final        LightTheme        lightTheme;
+    // ── Private helpers ─────────────────────────────────────────────────────────
     // ── Public API ─────────────────────────────────────────────────────────────
     public               Milestones        milestones;
-
-    // ── Private helpers ─────────────────────────────────────────────────────────
 
     @Autowired
     public GanttBurndownChartService(LightTheme lightTheme, DarkTheme darkTheme, GanttChartService ganttChartService) {
@@ -292,7 +288,6 @@ public class GanttBurndownChartService {
         // ── Build AuthorSeriesDto list ─────────────────────────────────────────
         // Sort authors by descending total estimated work (worked + remaining), matching
         // Java's AuthorsContribution.getSortedKeyList() / MapValueCopmparator behaviour,
-        // so that the stacking order in LegacyBurnDownRenderer.drawBurnDown() is faithful.
         List<UUID> sortedAuthorIds = new ArrayList<>(authorMap.keySet());
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
@@ -381,7 +376,6 @@ public class GanttBurndownChartService {
 
     /**
      * Computes gantt-derived planned burn-down guides and stores them in the DTO.
-     * Mirrors Java: {@code LegacyBurnDownRenderer.initGanttGuide()} +
      * {@code BurnDownGuide.convertToAccumulatedValues()}.
      */
     @Deprecated

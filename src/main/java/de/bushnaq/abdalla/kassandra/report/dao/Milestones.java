@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@Deprecated
 public class Milestones {
     private static final LocalDate dummy    = LocalDate.parse("1900-01-01");
     private final        DateUtil  dateUtil = new DateUtil();

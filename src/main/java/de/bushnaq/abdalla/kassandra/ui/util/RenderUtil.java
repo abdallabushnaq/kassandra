@@ -152,21 +152,21 @@ public class RenderUtil {
         return dao;
     }
 
-    /**
-     * Generates a BurnDown chart SVG for the given sprint and updates the provided Svg component.
-     *
-     * @param context the application context
-     * @param sprint  the sprint for which to generate the BurnDown chart
-     * @param svg     the Svg component to update with the BurnDown chart
-     * @throws Exception if an error occurs during BurnDown chart generation
-     */
-    public void generateBurnDownChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
-        List<Throwable>     exceptions = new ArrayList<>();
-        LegacyRenderDao     dao        = createBurndownRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
-        LegacyBurnDownChart chart      = new LegacyBurnDownChart(service, "/", dao);
-        RenderUtil.renderSvg(chart, svg);
-        svg.setId(BURNDOWN_CHART);
-    }
+//    /**
+//     * Generates a BurnDown chart SVG for the given sprint and updates the provided Svg component.
+//     *
+//     * @param context the application context
+//     * @param sprint  the sprint for which to generate the BurnDown chart
+//     * @param svg     the Svg component to update with the BurnDown chart
+//     * @throws Exception if an error occurs during BurnDown chart generation
+//     */
+//    public void generateBurnDownChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
+//        List<Throwable>     exceptions = new ArrayList<>();
+//        LegacyRenderDao     dao        = createBurndownRenderDao(context, sprint, "burn-down", ParameterOptions.getLocalNow(), 640, 400, "sprint-" + sprint.getId() + "/sprint.html", Y_AXIS_WIDTH);
+//        LegacyBurnDownChart chart      = new LegacyBurnDownChart(service, "/", dao);
+//        RenderUtil.renderSvg(chart, svg);
+//        svg.setId(BURNDOWN_CHART);
+//    }
 
     public LegacyGanttBurndownChart generateGanttBurnChartSvg(Context context, Sprint sprint, Svg svg) throws Exception {
         List<Throwable>          exceptions  = new ArrayList<>();
@@ -293,21 +293,21 @@ public class RenderUtil {
         }
     }
 
-    /**
-     * Renders a LegacyBurnDownChart to a Svg component.
-     *
-     * @param chart the LegacyBurnDownChart to render
-     * @param svg   the Svg component to update or create
-     */
-    private static void renderSvg(LegacyBurnDownChart chart, Svg svg) {
-        try (ByteArrayOutputStream outputStream = render(chart)) {
-            String svgString = outputStream.toString(StandardCharsets.UTF_8);
-            // Update existing Svg with new content
-            svg.setSvg(svgString);
-        } catch (Exception e) {
-            logger.error("Error creating Burn-Down chart", e);
-        }
-    }
+//    /**
+//     * Renders a LegacyBurnDownChart to a Svg component.
+//     *
+//     * @param chart the LegacyBurnDownChart to render
+//     * @param svg   the Svg component to update or create
+//     */
+//    private static void renderSvg(LegacyBurnDownChart chart, Svg svg) {
+//        try (ByteArrayOutputStream outputStream = render(chart)) {
+//            String svgString = outputStream.toString(StandardCharsets.UTF_8);
+//            // Update existing Svg with new content
+//            svg.setSvg(svgString);
+//        } catch (Exception e) {
+//            logger.error("Error creating Burn-Down chart", e);
+//        }
+//    }
 
     /**
      * Renders a Gantt chart to a Svg component.
