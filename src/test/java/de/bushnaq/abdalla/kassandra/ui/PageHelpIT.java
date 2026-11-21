@@ -485,6 +485,8 @@ class PageHelpIT extends AbstractKeycloakUiTestUtil {
             seleniumHandler.click(TaskCard.TASK_CARD_TITLE_ID_PREFIX + task.getKey());
             seleniumHandler.setTextField(TaskDialog.NAME_FIELD_ID, "Unsaved task help input");
             verifyDialogHelp(TaskDialog.HELP_BUTTON_ID, TaskDialog.TASK_DIALOG);
+            seleniumHandler.executeJavaScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});",
+                    seleniumHandler.findElement(By.id(TaskDialog.LOG_WORK_BUTTON_ID)));
             seleniumHandler.click(TaskDialog.LOG_WORK_BUTTON_ID);
             seleniumHandler.setTextField(WorklogDialog.TIME_SPENT_FIELD, "30m");
             verifyDialogHelp(WorklogDialog.HELP_BUTTON_ID, WorklogDialog.WORKLOG_DIALOG);

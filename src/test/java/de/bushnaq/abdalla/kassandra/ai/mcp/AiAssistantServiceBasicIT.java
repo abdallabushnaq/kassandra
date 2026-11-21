@@ -26,9 +26,12 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -120,6 +123,26 @@ public class AiAssistantServiceBasicIT extends AbstractMcpTest {
 
         // Clean up
         peg.productApi.getByName("TestMemory").ifPresent(p -> peg.productApi.deleteById(p.getId()));
+    }
+
+    /**
+     * Verifies streaming tool execution and subsequent conversation recall.
+     */
+    @Test
+    @Order(5)
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void test_05_StreamingToolAndMemory() {
+        var securityContext = SecurityContextHolder.getContext();
+        var chunks = aiAssistantService.streamQuery("admin-user", "Add a new product called StreamMemory.",
+                        TEST_CONVERSATION_ID, securityContext)
+                .collectList().block(Duration.ofMinutes(5));
+
+        assertNotNull(chunks);
+        assertFalse(chunks.isEmpty(), "Streaming should produce a response");
+        assertTrue(peg.productApi.getByName("StreamMemory").isPresent(), "Streaming should execute the product tool");
+
+        String response = processQuery("What is the name of the product you just created?");
+        assertTrue(response.contains("StreamMemory"), "The next request should retain the streamed conversation");
     }
 
 }

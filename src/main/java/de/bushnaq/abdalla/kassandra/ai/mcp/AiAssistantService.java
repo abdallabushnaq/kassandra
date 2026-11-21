@@ -113,7 +113,7 @@ public class AiAssistantService {
         return "Today is " + DateUtil.createDateString(ParameterOptions.getNow().toLocalDate(), DateTimeFormatter.ISO_LOCAL_DATE) + ". " + systemPrompt;
     }
 
-    private OpenAiChatOptions buildChatOptions() {
+    private OpenAiChatOptions.Builder buildChatOptions() {
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
         String                    mcpModel       = value(Keys.AI_MCP_MODEL, "");
         if (mcpModel != null && !mcpModel.isBlank()) {
@@ -122,7 +122,7 @@ public class AiAssistantService {
         optionsBuilder.temperature(decimal(Keys.AI_TEMPERATURE, 0));
         optionsBuilder.maxTokens(integer(Keys.AI_MAX_TOKENS, 20480));
         optionsBuilder.seed(integer(Keys.AI_SEED, 42));
-        return optionsBuilder.build();
+        return optionsBuilder;
     }
 
     private double decimal(String key, double fallback) {
@@ -307,7 +307,6 @@ public class AiAssistantService {
 
             // Create MessageChatMemoryAdvisor with conversation ID
             MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
-                    .conversationId(conversationId)
                     .build();
 
             Object[]                   userTools     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
@@ -330,6 +329,7 @@ public class AiAssistantService {
             java.util.Map<String, Object> toolContextMap = ToolContextHelper.buildContextMap(securityCtx, activityCtx);
 
             ChatResponse chatResponse = chatClient.prompt(userQuery)
+                    .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .toolContext(toolContextMap)
                     .options(buildChatOptions())
                     .call()
@@ -455,7 +455,6 @@ public class AiAssistantService {
         List<ThinkingStep> thinkingSteps = new ArrayList<>();
         ChatMemory         chatMemory    = getOrCreateMemory(conversationId);
         MessageChatMemoryAdvisor memoryAdvisor = MessageChatMemoryAdvisor.builder(chatMemory)
-                .conversationId(conversationId)
                 .build();
 
         Object[]                   toolBeans     = {this.userTools, userGroupTools, productTools, productAclTools, versionTools, featureTools, sprintTools};
@@ -477,6 +476,7 @@ public class AiAssistantService {
         StringBuilder accumulated = new StringBuilder();
 
         return chatClient.prompt(userQuery)
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .toolContext(toolContextMap)
                 .options(buildChatOptions())
                 .stream()

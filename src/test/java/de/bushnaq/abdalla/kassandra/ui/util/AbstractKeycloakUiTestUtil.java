@@ -103,6 +103,13 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean generateImages) throws Exception {
         super.generateProductsIfNeeded(testInfo, randomCase, false);
         refreshRestoredKeycloakProvider();
+        var provider = oidcProviderRepository.findAll().stream()
+                .filter(candidate -> KEYCLOAK_PROVIDER_NAME.equals(candidate.getDisplayName()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("The Keycloak test provider was not restored"));
+        var testUser = userRepository.findByEmail(TEST_USER_EMAIL)
+                .orElseThrow(() -> new IllegalStateException("The Keycloak test user was not restored"));
+        oidcIdentityService.linkIdentity(testUser.getId(), provider.getRegistrationId(), getKeycloakUserSubject(TEST_USER_EMAIL));
     }
 
     private static String getIssuerUri() {

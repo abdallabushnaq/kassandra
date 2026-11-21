@@ -10,11 +10,9 @@
     "noImplicitAny":    true,
     "noImplicitThis":   true,
     "noImplicitReturns":true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl":          "src/main/frontend/js"
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src/main/frontend/js/**/*.ts"
   ]
 }
-

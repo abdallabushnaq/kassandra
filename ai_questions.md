@@ -1,8 +1,17 @@
 # AI Questions
 
+# Update dependencies to latest versions
+
+Let's update spring boot from 4.0.1 to 4.2.0 and make sure all tests are still running.
+While we do that, we should also update spring-ai.version from 2.0.0-M2 to 2.1.0. Ensure AI test are still running
+correctly locally.
+Let's update vaadin from 25.0.13 to 25.3.5 and make sure all tests are still running.
+While we are doing that we should also update selenium, lombok and any other library that is outdated.
+I advise doing this step by step.
+
 # Include Integration tests for code coverage
 
-github does nto show integration tests in the list of tests is executed.
+github does not show integration tests in the list of tests is executed.
 It should be possible to run those tests and include them in the code coverage report.
 Some tests are excluded in the pom, but should actually be included in the code coverage report.
 

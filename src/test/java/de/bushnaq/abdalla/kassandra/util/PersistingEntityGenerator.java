@@ -39,7 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.ProjectCalendarException;
 import org.junit.jupiter.api.AfterEach;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.http.client.HttpCookieHandling;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.web.server.context.WebServerInitializedEvent;
 import org.springframework.context.event.EventListener;
@@ -93,7 +95,7 @@ public class PersistingEntityGenerator {
     protected           StableDiffusionService stableDiffusionService;
     public              TaskApi                taskApi;
     @Autowired
-    private             TestRestTemplate       testRestTemplate; // Use TestRestTemplate instead of RestTemplate
+    private             ObjectProvider<TestRestTemplate> testRestTemplateProvider;
     public              UserApi                userApi;
     public              UserGroupApi           userGroupApi;
     public              UserWorkWeekApi        userWorkWeekApi;
@@ -761,6 +763,7 @@ public class PersistingEntityGenerator {
     @EventListener
     public void onWebServerInitialized(WebServerInitializedEvent event) {
         init();
+        TestRestTemplate testRestTemplate = testRestTemplateProvider.getObject().withCookieHandling(HttpCookieHandling.DISABLE);
         ParameterOptions.setNow(OffsetDateTime.parse("2025-05-05T08:00:00+01:00"));
 
         // Obtain the actual random port from the event — available only after the server has bound.

@@ -22,7 +22,6 @@ import de.bushnaq.abdalla.kassandra.dto.Product;
 import de.bushnaq.abdalla.kassandra.dto.Version;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -163,7 +162,7 @@ public class AiAssistantServiceFeatureIT extends AbstractMcpTest {
         {
             processQuery("[Context: You are viewing the feature list of version '1.0.0' (versionId=3) of product 'Orion' (productId=3). Use versionId=3 when calling createFeature, updateFeature or any other feature tool that requires a versionId.]\n" +
                     "please rename 'dashboard' to 'Game Dashboard'.");
-            Assert.assertTrue(peg.featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
+            assertTrue(peg.featureApi.getByName(version.getId(), "Game Dashboard").isPresent()); //test
         }
 
     }

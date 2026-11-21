@@ -23,6 +23,8 @@ import de.bushnaq.abdalla.kassandra.ui.dialog.UserDialog;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.UserListView;
 import org.junit.jupiter.api.Assertions;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -61,6 +63,8 @@ public class UserListViewTester extends AbstractViewTester {
     }
 
     public void closeDialog(String cancelButton) {
+        ((JavascriptExecutor) seleniumHandler.getDriver()).executeScript("arguments[0].scrollIntoView({block: 'center'})",
+                seleniumHandler.findElement(By.id(cancelButton)));
         seleniumHandler.closeDialog(cancelButton);
         seleniumHandler.waitForElementToBeClickable(UserListView.USER_LIST_PAGE_TITLE);
     }

@@ -24,6 +24,7 @@ import com.vaadin.flow.shared.communication.PushMode;
 import com.vaadin.flow.theme.lumo.Lumo;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiDecisionAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration;
@@ -37,6 +38,7 @@ import java.time.Clock;
 @SpringBootApplication(exclude = {
         OpenAiAudioSpeechAutoConfiguration.class,
         OpenAiAudioTranscriptionAutoConfiguration.class,
+        OpenAiDecisionAutoConfiguration.class,
         OpenAiEmbeddingAutoConfiguration.class,
         OpenAiImageAutoConfiguration.class,
         OpenAiModerationAutoConfiguration.class

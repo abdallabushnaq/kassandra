@@ -49,11 +49,11 @@ assistant. It is a single-jar Spring Boot + Vaadin application backed by an embe
 |------------|----------------------------------------------------------------------------|
 | Language   | Java 25 (Amazon Corretto 25.0.1)                                           |
 | Build      | Apache Maven 3.8.5 (`pom.xml`)                                             |
-| Framework  | Spring Boot 4.0.1                                                          |
-| UI         | Vaadin 25.0.2 (Vaadin Flow + React frontend)                               |
+| Framework  | Spring Boot 4.2.0                                                          |
+| UI         | Vaadin 25.3.5 (Vaadin Flow + React frontend)                               |
 | Database   | H2 (file-backed in production, in-memory for tests)                        |
 | Security   | Spring Security + OIDC (Keycloak)                                          |
-| AI         | Spring AI 2.0.0-M2 (OpenAI-compatible endpoint, e.g. LMStudio)             |
+| AI         | Spring AI 2.1.0 (OpenAI-compatible endpoint, e.g. LMStudio)               |
 | Charts     | Apache Batik (SVG)                                                         |
 | Testing    | JUnit 5, Spring Boot Test, Selenium 4, Testcontainers + Keycloak container |
 | Code style | Spotless (Eclipse formatter for Java; Prettier 3.3.3 for TypeScript)       |
@@ -299,11 +299,11 @@ All design documents can be found in `../kassandra.wiki/`.
   wires up the `*ApiAdapter` beans. `AgentThinking` is a record injected as an extra argument by
   `AugmentedToolCallbackProvider` to capture the model's inner reasoning. `QueryResult` carries the final text response
   together with a list of `ThinkingStep` records for UI display. `SessionToolActivityContext` /
-  `ToolActivityContextHolder` stream per-step activity messages to the UI. Spring AI BOM `2.0.0-M2` is resolved from
-  the Spring Milestones repository.
+  `ToolActivityContextHolder` stream per-step activity messages to the UI. The OpenAI Java SDK expects a `/v1` base
+  path; the configured server URL is extended with that path when the chat model is created.
 - **Lombok:** Used extensively (`@Getter`, `@Setter`, `@Slf4j`, etc.). The compiler plugin configures it as an
   annotation processor path – do not add it as a regular dependency.
-- **SVG Charts:** Generated server-side with Apache Batik 1.18 and compared against reference files in
+- **SVG Charts:** Generated server-side with Apache Batik 1.20 and compared against reference files in
   `test-reference-results/` during chart regression tests.
 
 ---
@@ -327,8 +327,6 @@ All design documents can be found in `../kassandra.wiki/`.
 ## Common Pitfalls
 
 - **`eclipse-formatter.xml` must exist** at repo root for `spotless:check` / `spotless:apply` to succeed on Java files.
-- **Spring Milestones repository** is required to resolve `spring-ai-bom:2.0.0-M2` and related artifacts. It is declared
-  in `pom.xml` under `<repositories>`.
 - **`-Xshare:off`** is passed to Surefire via `argLine` to avoid JVM class sharing issues with Java 25.
 - **Test isolation:** Each test extends `AbstractTestUtil` (or a subclass), which truncates all H2 tables in
   `@BeforeEach`. If you add a new test that needs data, do not rely on data left by a previous test.
