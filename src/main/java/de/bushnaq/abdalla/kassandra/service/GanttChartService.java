@@ -20,7 +20,6 @@ package de.bushnaq.abdalla.kassandra.service;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dto.*;
-import de.bushnaq.abdalla.kassandra.report.burndown.LegacyRenderDao;
 import de.bushnaq.abdalla.kassandra.report.dao.CalendarSize;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.LightTheme;
@@ -131,7 +130,6 @@ public class GanttChartService {
      * Builds the complete DTO for the given sprint.
      *
      * <p>The {@code preRun} and {@code postRun} values mirror the same-named fields in
-     * {@link LegacyRenderDao}: the chart window
      * is extended by {@code preRun} days before the earliest task start and {@code postRun}
      * days after the latest task finish.  This leaves space for user names (left margin) and
      * task names that overflow the right edge of a bar.
