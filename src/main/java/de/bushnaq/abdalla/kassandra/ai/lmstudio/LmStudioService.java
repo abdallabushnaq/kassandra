@@ -41,7 +41,7 @@ import java.util.Optional;
  *   <li>Lists all models known to LM Studio.</li>
  *   <li>Unloads every currently-loaded model that is <em>not</em> the required one
  *       (freeing GPU/VRAM before the target model is loaded).</li>
- *   <li>Loads the required model if it is not already loaded.</li>
+ *   <li>Loads the required model with the configured context length if necessary.</li>
  * </ol>
  *
  * <p>If LM Studio is not reachable the method logs a warning and returns {@code false}
@@ -83,14 +83,14 @@ public class LmStudioService {
      *
      * <ol>
      *   <li>Fetches the current model list from LM Studio.</li>
-     *   <li>Unloads all loaded LLM instances that do not match {@code requiredModelId}.</li>
-     *   <li>Loads {@code requiredModelId} if it is not already loaded.</li>
+     *   <li>Unloads other LLM instances and target instances with a different context length.</li>
+     *   <li>Loads {@code requiredModelId} with the configured context length if necessary.</li>
      * </ol>
      *
      * @param requiredModelId the model key exactly as it appears in LM Studio
      *                        (e.g. {@code "mistralai/ministral-3-3b"})
-     * @return {@code true} if the model is loaded and ready, {@code false} if LM Studio
-     * is not reachable or the model is not found in the catalogue
+     * @return {@code true} if the model is loaded and ready, {@code false} if model
+     * management fails
      */
     public boolean ensureModelLoaded(String requiredModelId) {
         log.info("Ensuring LM Studio has model '{}' loaded (and only that model)", requiredModelId);
@@ -113,7 +113,9 @@ public class LmStudioService {
             return false;
         }
 
-        // Unload all other loaded LLM instances first to free VRAM
+        int contextLength = integer(Keys.LM_STUDIO_CONTEXT_LENGTH);
+        boolean targetReady = false;
+        // Unload other models and target instances with an incompatible context length.
         for (LmStudioModel model : models) {
             if (!"llm".equals(model.type()) && !"vlm".equals(model.type())) {
                 continue; // leave embedding models alone
@@ -121,18 +123,19 @@ public class LmStudioService {
             if (!model.isLoaded()) {
                 continue;
             }
-            if (requiredModelId.equals(model.key())) {
-                log.info("Model '{}' is already loaded – no action needed", requiredModelId);
-                continue;
-            }
-            // Unload each loaded instance of the wrong model
             for (LmStudioLoadedInstance instance : model.loadedInstances()) {
-                unloadModel(instance.id());
+                boolean matchingContext = contextLength <= 0 || (instance.config() != null
+                        && instance.config().contextLength() != null
+                        && instance.config().contextLength() == contextLength);
+                if (requiredModelId.equals(model.key()) && matchingContext) {
+                    targetReady = true;
+                } else if (!unloadModel(instance.id())) {
+                    return false;
+                }
             }
         }
 
-        // Load the target model if it is not already loaded
-        if (!target.get().isLoaded()) {
+        if (!targetReady) {
             return loadModel(requiredModelId);
         }
 
@@ -280,4 +283,3 @@ public class LmStudioService {
         return serverSettingsService.value(key);
     }
 }
-

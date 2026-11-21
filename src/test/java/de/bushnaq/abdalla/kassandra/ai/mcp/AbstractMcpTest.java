@@ -19,7 +19,8 @@ package de.bushnaq.abdalla.kassandra.ai.mcp;
 
 import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
-import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import de.bushnaq.abdalla.kassandra.util.RandomCase;
 import de.bushnaq.abdalla.kassandra.util.TestInfoUtil;
@@ -41,6 +42,7 @@ import java.util.List;
 import static de.bushnaq.abdalla.util.AnsiColorConstants.ANSI_BLUE;
 import static de.bushnaq.abdalla.util.AnsiColorConstants.ANSI_RESET;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public class AbstractMcpTest extends AbstractUiTestUtil {
@@ -48,7 +50,7 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
     @Autowired
     protected              AiAssistantService  aiAssistantService;
     @Autowired
-    private                KassandraProperties kassandraProperties;
+    private                ServerSettingsService serverSettingsService;
     @Autowired
     protected              LmStudioService     lmStudioService;
 
@@ -103,10 +105,9 @@ public class AbstractMcpTest extends AbstractUiTestUtil {
 
     @BeforeEach
     protected void setupTest() {
-        String mcpModel = kassandraProperties.getAi().getMcpModel();
-        if (mcpModel != null && !mcpModel.isBlank()) {
-            lmStudioService.ensureModelLoaded(mcpModel);
-        }
+        String mcpModel = serverSettingsService.value(Keys.AI_MCP_MODEL);
+        assertTrue(mcpModel != null && !mcpModel.isBlank(), "Assistant model must be configured");
+        assertTrue(lmStudioService.ensureModelLoaded(mcpModel), "Failed to load assistant model: " + mcpModel);
         aiAssistantService.clearConversation(TEST_CONVERSATION_ID);
         log.info("{}=== Running test with model: {} ==={}", ANSI_BLUE, aiAssistantService.getModelName(), ANSI_RESET);
     }

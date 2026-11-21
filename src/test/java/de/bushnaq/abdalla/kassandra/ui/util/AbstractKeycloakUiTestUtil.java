@@ -36,9 +36,13 @@ import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestContext;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.support.AbstractTestExecutionListener;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -57,6 +61,8 @@ import java.util.Map;
  * @author Abdalla Bushnaq
  */
 @Testcontainers
+@TestExecutionListeners(listeners = AbstractKeycloakUiTestUtil.CloseContextAfterClassListener.class,
+        mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     private static final String                               KEYCLOAK_CLIENT_ID     = "kassandra-client";
     private static final String                               KEYCLOAK_CLIENT_SECRET = "test-client-secret";
@@ -81,6 +87,33 @@ public class AbstractKeycloakUiTestUtil extends AbstractUiTestUtil {
     protected            PlatformTransactionManager           transactionManager;
     @Autowired
     protected            UserRepository                       userRepository;
+
+    /**
+     * Releases the shared test server port after each UI test class.
+     */
+    public static class CloseContextAfterClassListener extends AbstractTestExecutionListener {
+        /**
+         * Runs this listener last during class cleanup.
+         *
+         * @return the listener order
+         */
+        @Override
+        public int getOrder() {
+            return Ordered.HIGHEST_PRECEDENCE;
+        }
+
+        /**
+         * Closes the cached application context after the test class has finished.
+         *
+         * @param testContext the completed test class context
+         */
+        @Override
+        public void afterTestClass(TestContext testContext) {
+            if (testContext.hasApplicationContext()) {
+                testContext.markApplicationContextDirty(null);
+            }
+        }
+    }
 
     @BeforeAll
     static void beforeAll() {

@@ -116,8 +116,8 @@ public class ServerSettingsCatalogue {
 
         // Per-request AI model options.
         add(result, text(Keys.AI_INSIGHTS_MODEL, AI_MODELS, "Insights model", "Model identifier used to generate sprint insights.")
-//                .defaultValue("qwen/qwen3.5-9b")
-                .defaultValue("qwen/qwen3.8-27b")
+                .defaultValue("qwen/qwen3.5-9b")
+//                .defaultValue("qwen/qwen3.8-27b")
                 .maximumLength(200)
                 .build());
         add(result, text(Keys.AI_FILTER_MODEL, AI_MODELS, "Filter model", "Model identifier used to generate AI filters.")
@@ -126,8 +126,8 @@ public class ServerSettingsCatalogue {
                 .maximumLength(200)
                 .build());
         add(result, text(Keys.AI_MCP_MODEL, AI_MODELS, "Assistant model", "Model identifier used by the AI assistant.")
-//                .defaultValue("ministral-3-8b-reasoning-2512")
-                .defaultValue("qwen/qwen3.8-27b")
+                .defaultValue("ministral-3-8b-reasoning-2512")
+//                .defaultValue("qwen/qwen3.8-27b")
                 .maximumLength(200)
                 .build());
         add(result, decimal(Keys.AI_TEMPERATURE, AI_MODELS, "Temperature", "Sampling temperature used by the configured AI model.")
