@@ -46,6 +46,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.awt.Color;
 
@@ -151,12 +152,33 @@ public class AuditLogApiTest extends AbstractUiTestUtil {
         assertTrue(first.items().stream().anyMatch(event -> event.fieldChanges().stream()
                 .anyMatch(change -> change.contains("description: null -> Updated description"))));
         assertTrue(first.items().stream().allMatch(event -> !event.replay()));
-        AuditPage dated = auditLogApi.getPage(null, null, ParameterOptions.getNow().toInstant().toString().substring(0, 10),
+        Instant latestRevision = first.items().getFirst().timestamp();
+        AuditPage dated = auditLogApi.getPage(null, null, latestRevision.toString().substring(0, 10),
                 null, null, 0, 50);
-        assertTrue(dated.total() >= 2);
-        assertTrue(dated.items().stream().anyMatch(event -> "Audited team".equals(event.label())));
+        assertTrue(dated.items().stream().anyMatch(event -> event.revision() == first.items().getFirst().revision()
+                && "Audited team".equals(event.label())));
+        Instant earlierRevision = second.items().getFirst().timestamp();
+        AuditPage earlierDate = auditLogApi.getPage(null, null, earlierRevision.toString().substring(0, 10),
+                null, null, 0, 50);
+        assertTrue(earlierDate.items().stream().anyMatch(event -> event.revision() == second.items().getFirst().revision()
+                && "Audited team".equals(event.label())));
         assertEquals(0, auditLogApi.getPage(null, null, "Audited team",
-                ParameterOptions.getNow().toInstant().plus(1, ChronoUnit.DAYS), null, 0, 50).total());
+                latestRevision.plus(1, ChronoUnit.DAYS), null, 0, 50).total());
+    }
+
+    /**
+     * Searches by revision date even when the persistence clock has advanced past the planning clock.
+     */
+    @Test
+    @WithMockUser(username = "christopher.paul@kassandra.org", roles = "ADMIN")
+    public void filtersAndPagesChangesAfterPersistenceClockAdvances() {
+        OffsetDateTime previousTime = ParameterOptions.getNow();
+        try {
+            ParameterOptions.getPersistenceNow(previousTime.plusDays(2));
+            filtersAndPagesChanges();
+        } finally {
+            ParameterOptions.setNow(previousTime);
+        }
     }
 
     /**
