@@ -93,6 +93,7 @@ jobs:
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
 
       - name: Run unit and headless integration tests
+        id: tests
         run: |
           mvn verify -P integration-test,frontend-coverage -Dfrontend.coverage=true -Dselenium.headless=true -Der.diagram.output=test-results/entity-relationship-diagram.svg
         env:
@@ -107,13 +108,39 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
 
+      - name: Check coverage inputs
+        id: coverage_inputs
+        if: always()
+        run: |
+          if [ "${{ steps.tests.outcome }}" = "skipped" ] || [ -z "${{ steps.tests.outcome }}" ]; then
+            echo "::notice::Coverage reports skipped because tests did not run."
+            exit 0
+          fi
+          missing=0
+          if [ -s target/jacoco.exec ] && [ -d target/classes ]; then
+            echo "java=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No Java coverage data was produced."
+            missing=1
+          fi
+          if [ -s target/frontend-coverage/raw/baseline.json ] && compgen -G 'target/frontend-coverage/browser-*.json' > /dev/null; then
+            echo "typescript=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No TypeScript browser coverage data was produced."
+            missing=1
+          fi
+          if [ "$missing" -eq 1 ] && [ "${{ steps.tests.outcome }}" = "success" ]; then
+            echo "::error::Successful tests must produce both coverage reports."
+            exit 1
+          fi
+
       # Generate JaCoCo XML report
       - name: Generate coverage report
         id: coverage
         run: |
           mvn jacoco:report site -DskipTests
           test -s target/site/jacoco/jacoco.xml
-        if: always()
+        if: ${{ always() && steps.coverage_inputs.outputs.java == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
@@ -121,7 +148,7 @@ jobs:
       # Upload coverage reports to Codecov
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
-        if: always()
+        if: ${{ always() && steps.coverage.outcome == 'success' }}
         with:
           files: ./target/site/jacoco/jacoco.xml
           flags: java
@@ -133,7 +160,7 @@ jobs:
 
       - name: Generate TypeScript coverage report
         id: frontend_coverage
-        if: always()
+        if: ${{ always() && steps.coverage_inputs.outputs.typescript == 'true' }}
         run: |
           npm run coverage:frontend
           test -s target/frontend-coverage/report/lcov.info
