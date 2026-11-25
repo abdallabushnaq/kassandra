@@ -57,6 +57,18 @@ public class ServerSettingsService {
                 .orElse(category.enabledByDefault());
     }
 
+    /**
+     * Checks whether a settings category is enabled.
+     *
+     * @param categoryKey category key
+     * @return whether the category is enabled
+     * @throws IllegalArgumentException when the category is unknown
+     */
+    @Transactional
+    public boolean isCategoryEnabled(String categoryKey) {
+        return categoryEnabled(serverSettingsCatalogue.getCategory(categoryKey));
+    }
+
     private String categoryEnabledKey(ServerSettingsCatalogue.Category category) {
         return CATEGORY_ENABLED_KEY_PREFIX + category.key() + ".enabled";
     }

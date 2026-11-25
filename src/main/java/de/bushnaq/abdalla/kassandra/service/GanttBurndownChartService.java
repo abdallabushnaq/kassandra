@@ -111,6 +111,8 @@ public class GanttBurndownChartService {
         calculateAuthorContribution(sprint, worklogs, wlRemainingList, usersTotalContribution);
 
         calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, wlRemainingList, usersTotalContribution, usersWorkPerDayAccumulated);//TODO stop passing Milestonres as parameter
+        dto.seriesStart = milestones.firstMilestone;
+        dto.sprintId = sprint.getId();
 
 
         // Sort worklogs chronologically for correct running-total computation
@@ -821,7 +823,10 @@ public class GanttBurndownChartService {
     private boolean isPlannedWorkingDay(Sprint sprint, Task task, LocalDate day) {
         if (task.getEffectiveCalendar().isWorkingDate(day))
             return true;
-        User            user           = task.getAssignedUser();
+        return isSicknessOnlyWorkingDay(sprint, task.getAssignedUser(), day);
+    }
+
+    static boolean isSicknessOnlyWorkingDay(Sprint sprint, User user, LocalDate day) {
         ProjectCalendar sprintCalendar = sprint.getCalendar();
         // An owned sprint uses its owner's calendar; check its parent so the owner's sickness is not treated as a sprint-wide holiday.
         if (sprint.getUserId() != null && sprintCalendar.getParent() != null)

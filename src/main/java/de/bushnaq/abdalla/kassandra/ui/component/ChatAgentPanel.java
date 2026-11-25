@@ -18,11 +18,13 @@
 package de.bushnaq.abdalla.kassandra.ui.component;
 
 import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.markdown.Markdown;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -332,9 +334,15 @@ public class ChatAgentPanel extends VerticalLayout {
                 .set("padding", "user".equals(type) ? "4px 6px" : "1px 4px")
                 .set("margin-bottom", "2px");
 
-        Span icon    = new Span();
-        Span content = new Span(message);
-        content.getStyle().set("white-space", "pre-wrap");
+        Span      icon    = new Span();
+        Component content;
+        if ("ai".equals(type)) {
+            content = createAiMarkdown(message);
+        } else {
+            Span text = new Span(message);
+            text.getStyle().set("white-space", "pre-wrap");
+            content = text;
+        }
         if (contentId != null) {
             content.setId(contentId);
         }
@@ -380,6 +388,13 @@ public class ChatAgentPanel extends VerticalLayout {
         return messageDiv;
     }
 
+    private Markdown createAiMarkdown(String content) {
+        Markdown markdown = new Markdown(content);
+        markdown.setLineBreaks(true);
+        markdown.getStyle().set("overflow-x", "auto").set("overflow-wrap", "anywhere");
+        return markdown;
+    }
+
     private void handleQuery() {
         String query = queryInput.getValue();
         if (query == null || query.trim().isEmpty()) {
@@ -422,7 +437,7 @@ public class ChatAgentPanel extends VerticalLayout {
             });
 
             // Create the streaming bubble on the UI thread before subscribing
-            Span contentSpan = startAiStreamingBubble();
+            Markdown contentMarkdown = startAiStreamingBubble();
             ui.push();
 
             StringBuilder accumulator = new StringBuilder();
@@ -431,7 +446,7 @@ public class ChatAgentPanel extends VerticalLayout {
                     .doOnNext(token -> {
                         accumulator.append(token);
                         ui.access(() -> {
-                            contentSpan.setText(accumulator.toString());
+                            contentMarkdown.setContent(accumulator.toString());
                             scrollToBottom();
                             ui.push();
                         });
@@ -440,7 +455,7 @@ public class ChatAgentPanel extends VerticalLayout {
                         log.error("Streaming error during AI query", err);
                         ui.access(() -> {
                             // Replace the streaming bubble's content with an error indicator
-                            contentSpan.setText("⚠️ Error: " + err.getMessage());
+                            contentMarkdown.setContent("⚠️ Error: " + err.getMessage());
                             activityStreaming = false;
                             activityContext.setActivityListener(null);
                             submitButton.setEnabled(true);
@@ -453,7 +468,7 @@ public class ChatAgentPanel extends VerticalLayout {
                         ui.access(() -> {
                             // Apply cleaned text (removes any <think>…</think> remnants)
                             if (finalText != null && !finalText.isEmpty()) {
-                                contentSpan.setText(finalText);
+                                contentMarkdown.setContent(finalText);
                             }
                             snapshotMessage("ai", finalText != null ? finalText : accumulator.toString());
                             if (onAiReply != null) {
@@ -559,10 +574,9 @@ public class ChatAgentPanel extends VerticalLayout {
     }
 
     /**
-     * Creates an empty AI message bubble and returns the inner content Span so tokens
-     * can be appended to it in-place as they arrive from the streaming response.
+     * Creates an empty AI message bubble for streaming Markdown.
      */
-    private Span startAiStreamingBubble() {
+    private Markdown startAiStreamingBubble() {
         Div messageDiv = new Div();
         messageDiv.addClassNames(LumoUtility.BorderRadius.SMALL, LumoUtility.Background.SUCCESS_10);
         messageDiv.getStyle()
@@ -570,9 +584,8 @@ public class ChatAgentPanel extends VerticalLayout {
                 .set("margin-bottom", "2px");
         Span icon = new Span("🤖 Kassandra: ");
         icon.addClassNames(LumoUtility.FontWeight.SEMIBOLD);
-        Span content = new Span();
+        Markdown content = createAiMarkdown("");
         content.setId(AI_LAST_RESPONSE);
-        content.getStyle().set("white-space", "pre-wrap");
         messageDiv.add(icon, content);
         conversationHistory.add(messageDiv);
         scrollToBottom();

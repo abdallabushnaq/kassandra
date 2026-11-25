@@ -18,10 +18,11 @@
 package de.bushnaq.abdalla.kassandra.ui;
 
 import de.bushnaq.abdalla.kassandra.ai.stablediffusion.StableDiffusionService;
-import de.bushnaq.abdalla.kassandra.dto.Feature;
-import de.bushnaq.abdalla.kassandra.dto.Product;
-import de.bushnaq.abdalla.kassandra.dto.Sprint;
-import de.bushnaq.abdalla.kassandra.dto.Version;
+import de.bushnaq.abdalla.kassandra.ai.lmstudio.LmStudioService;
+import de.bushnaq.abdalla.kassandra.dto.*;
+import de.bushnaq.abdalla.kassandra.rest.api.ServerSettingsApi;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractKeycloakUiTestUtil;
 import de.bushnaq.abdalla.kassandra.ui.util.selenium.HumanizedSeleniumHandler;
 import de.bushnaq.abdalla.kassandra.ui.view.util.AboutViewTester;
@@ -70,6 +71,12 @@ public class Demo extends AbstractKeycloakUiTestUtil {
     private              ProductListViewTester    productListViewTester;
     @Autowired
     private              HumanizedSeleniumHandler seleniumHandler;
+    @Autowired
+    private              ServerSettingsApi        serverSettingsApi;
+    @Autowired
+    private              ServerSettingsCatalogue  serverSettingsCatalogue;
+    @Autowired
+    private              LmStudioService          lmStudioService;
     @Autowired
     private              VersionListViewTester    versionListViewTester;
 
@@ -142,6 +149,15 @@ public class Demo extends AbstractKeycloakUiTestUtil {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
+        String                     insightsModel = serverSettingsCatalogue.get(Keys.AI_INSIGHTS_MODEL).defaultValue();
+        ServerSettingUpdateRequest modelRequest  = new ServerSettingUpdateRequest();
+        modelRequest.setValue(insightsModel);
+        ServerSetting savedModel = serverSettingsApi.update(Keys.AI_INSIGHTS_MODEL, modelRequest);
+        logger.info("Demo configured Insights model: {}", savedModel.getValue());
+        serverSettingsApi.updateCategoryEnabled(ServerSettingsCatalogue.LM_STUDIO.key(), true);
+        if (!lmStudioService.ensureModelLoaded(savedModel.getValue())) {
+            throw new IllegalStateException("Could not load the Demo Insights model in LM Studio: " + savedModel.getValue());
+        }
         StableDiffusionService.setEnabled(true);
         generateProductsIfNeeded(testInfo, randomCase);
         printTables();

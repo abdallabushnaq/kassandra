@@ -27,10 +27,12 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.combobox.ComboBoxVariant;
 import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.combobox.MultiSelectComboBoxVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -48,6 +50,8 @@ import de.bushnaq.abdalla.kassandra.dto.*;
 import de.bushnaq.abdalla.kassandra.report.gantt.GanttUtil;
 import de.bushnaq.abdalla.kassandra.rest.api.*;
 import de.bushnaq.abdalla.kassandra.rest.dto.gantt.GanttBurndownChartDto;
+import de.bushnaq.abdalla.kassandra.service.BurndownExplanationService;
+import de.bushnaq.abdalla.kassandra.service.CapacityOverlapContributor;
 import de.bushnaq.abdalla.kassandra.service.GanttBurndownChartService;
 import de.bushnaq.abdalla.kassandra.ui.MainLayout;
 import de.bushnaq.abdalla.kassandra.ui.component.HelpDrawer;
@@ -102,6 +106,10 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     private final       FeatureApi                  featureApi;
     private final       Map<UUID, Feature>          featureMap                          = new HashMap<>();
     private             Div                         ganttBurndownChartContainer;
+    private             Button                      burndownBriefButton;
+    private             GanttBurndownChartDto       currentBurndownChart;
+    @Autowired
+    private             BurndownExplanationService  burndownExplanationService;
     @Autowired
     private             GanttBurndownChartService   ganttBurndownChartService;
     private final       GanttErrorHandler           ganttErrorHandler                   = new GanttErrorHandler();
@@ -324,6 +332,7 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
     }
 
     private void createGanttBurndownChart() {
+        currentBurndownChart = null;
         if (selectedSprints.size() != 1) {
             Div message = new Div();
             message.setText("Select exactly one sprint to display its Gantt and burndown chart.");
@@ -355,7 +364,9 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 "this.addEventListener('click', () => window.detachKassandraChart($0));",
                 GANTT_BURNDOWN_CONTAINER_ID);
 
-        HorizontalLayout chartActionLayout = new HorizontalLayout(openGanttBurndownChartButton);
+        burndownBriefButton = new Button("Burn-down brief", event -> showBurndownBrief(selectedSprint));
+        burndownBriefButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+        HorizontalLayout chartActionLayout = new HorizontalLayout(openGanttBurndownChartButton, burndownBriefButton);
         chartActionLayout.setPadding(false);
         chartActionLayout.setSpacing(false);
         chartActionLayout.setWidthFull();
@@ -730,6 +741,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
         if (ganttBurndownChartContainer == null) {
             return;
         }
+        currentBurndownChart = null;
+        burndownBriefButton.setEnabled(false);
         getUI().ifPresent(ui -> {
             boolean isDark = ui.getElement().getThemeList().contains(Lumo.DARK);
             try {
@@ -740,6 +753,8 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                         "import('/js/generated/burndown/gantt-burndown-bundle.js')" +
                                 ".then(() => window.mountGanttBurndownChart($0, JSON.parse($1), $2));",
                         GANTT_BURNDOWN_CONTAINER_ID, json, selectedSprint.getName() + " - Gantt and burndown chart");
+                currentBurndownChart = dto;
+                burndownBriefButton.setEnabled(true);
             } catch (Exception e) {
                 log.error("Failed to build Gantt burndown chart for sprint '{}'", selectedSprint.getName(), e);
                 ganttBurndownChartContainer.removeAll();
@@ -747,6 +762,33 @@ public class ActiveSprints extends Main implements AfterNavigationObserver {
                 clearDetachedChart();
             }
         });
+    }
+
+    private void showBurndownBrief(Sprint sprint) {
+        if (currentBurndownChart == null || selectedSprints.size() != 1 || !selectedSprints.contains(sprint))
+            return;
+        var brief = burndownExplanationService.explain(sprint, currentBurndownChart, null);
+        var comparison = brief.chart().comparison();
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Burn-down brief: " + sprint.getName());
+        dialog.add(new Paragraph(comparison == null ? "No comparable actual and guide values are available."
+                : String.format(Locale.getDefault(), "Through %s: %.1f hours remaining vs. %.1f hours on the recalculated guide (%+.1f hours).",
+                        brief.chart().throughDate(), comparison.actualRemainingSeconds() / 3600.0,
+                        comparison.guideRemainingSeconds() / 3600.0, comparison.gapSeconds() / 3600.0)));
+        dialog.add(new Paragraph("Earlier snapshots are not available yet, so estimate overruns and dependency blockers cannot be assessed."));
+        var capacity = brief.capacity();
+        String capacitySummary = capacity.overlaps().isEmpty() ? "No overlapping unplanned absences observed."
+                : "Review capacity: overlapping unplanned absences on " + capacity.overlaps().size() + " completed day(s).";
+        dialog.add(new Paragraph(capacity.coverage() != CapacityOverlapContributor.Coverage.AVAILABLE
+                ? "Capacity comparison unavailable."
+                : capacitySummary + (capacity.tasksWithMissingInputs() > 0 ? " Some tasks lack schedule or calendar data." : "")));
+        var outlook = brief.outlook();
+        dialog.add(new Paragraph(outlook.direction() == null ? "Release outlook comparison unavailable."
+                : "Release outlook: linear " + outlook.linearRelease().toLocalDate()
+                        + "; remaining-work scenario " + outlook.scheduledRelease().toLocalDate() + "."));
+        dialog.add(new Paragraph("Observations do not quantify how much of the gap they explain. No AI model was used."));
+        dialog.getFooter().add(new Button("Close", event -> dialog.close()));
+        dialog.open();
     }
 
     private void refreshUndoRedoToolbar() {

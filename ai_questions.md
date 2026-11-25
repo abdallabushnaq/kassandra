@@ -1,12 +1,29 @@
 # AI Questions
 
-# Removed Deprecated Classes
+# Better Synthetic Data
 
-There are many deprecated classes being used from spring boot or vaadin, like:
-@AutoConfigureTestRestTemplate.
-let's replace them with new supported alternatives.
+We need to generate better synthetic data for our tests with more variety of use cases.
 
-# Stable Diffusion Cache for our Tests
+1. excessive unplanned overlapping sick leaves (resource drain). We currently have a probability for this. Let's ensure
+   one of the sprints includes it.
+2. excessive tasks where actual work exceeded the maximum estimated work (underestimation) visible in the chart. We
+   currently have a probability for this. Let's ensure one of the sprints includes it.
+3. tasks that had to wait for their dependencies and therefore were delayed (domino effect) visible in the chart. We
+   currently have a probability for this to happen, but only due to underestimation. Let's ensure one of the sprints
+   includes it.
+4. tasks that where not started in-time, because their resources where busy in other projects that where delayed
+   (resource drain) visible in the chart. We currently cannot generate this kind of data, as we always burn down sprint
+   by sprint and do not take global resource utilization into account. Let's ensure one of the sprints
+   includes it.
+5. The linear `Extrapolated Sprint Release Date` is overly optimistic in burn-down charts that have more resources
+   burning down in the beginning than in the end. We do not generate this kind of sprint. Let's ensure one of the
+   sprints
+   includes it.
+6. The linear `Extrapolated Sprint Release Date` is overly pessimistic in burn-down charts that have less resources
+   burning down in the beginning than in the end. We do not generate this kind of sprint. Let's ensure one of the
+   sprints includes it.
+
+# Random Case Aware Stable Diffusion Cache for our Tests
 
 Let's make CacheAwareAvatarService use different cache folders for different RandomCases.
 If test is run with randomCase 1 and then with RandomCase 2, 2 will overwrite the results of randomCase 1.

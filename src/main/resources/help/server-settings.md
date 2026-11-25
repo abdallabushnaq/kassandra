@@ -32,6 +32,11 @@ setting's description and any restart notice rather than guessing from its key.
 AI model choices and service connections are separate: selecting a model does
 not by itself make an unavailable service reachable.
 
+For Insights, **Insights reasoning effort** defaults to the model's own setting.
+Low, medium and high are available when the model and server support them.
+When the LM Studio category is enabled, Insights loads its selected model using
+the configured context and load options; this can unload another model.
+
 ## Save one setting at a time
 
 ![History limit field](images/help/light/ServerSettingsView/server-setting-field-kassandra.undo-redo.history-limit.png)

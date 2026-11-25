@@ -22,6 +22,7 @@ import de.bushnaq.abdalla.kassandra.dto.ServerSettingTestResult;
 import de.bushnaq.abdalla.kassandra.dto.ServerSettingUpdateRequest;
 import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.service.ServerSettingsCatalogue.Keys;
+import de.bushnaq.abdalla.kassandra.service.ServerSettingsService;
 import de.bushnaq.abdalla.kassandra.ui.util.AbstractUiTestUtil;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,6 +56,8 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
 
     @Autowired
     private ServerSettingsApi serverSettingsApi;
+    @Autowired
+    private ServerSettingsService serverSettingsService;
 
     /**
      * Lists catalogued settings while keeping secret values undisclosed.
@@ -97,6 +102,25 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
                 .orElseThrow();
 
         assertFalse(assistantModel.isRestartRequired());
+    }
+
+    /**
+     * Exposes and validates the optional reasoning effort for Insights.
+     */
+    @Test
+    @WithMockUser(username = "admin-user", roles = "ADMIN")
+    public void administratorCanConfigureInsightsReasoningEffort() {
+        ServerSetting setting = serverSettingsApi.getAll().stream()
+                .filter(item -> Keys.AI_INSIGHTS_REASONING_EFFORT.equals(item.getKey()))
+                .findFirst().orElseThrow();
+        assertEquals("default", setting.getValue());
+        assertEquals(List.of("default", "low", "medium", "high"), setting.getOptions());
+        assertFalse(setting.isRestartRequired());
+        ServerSettingUpdateRequest request = new ServerSettingUpdateRequest();
+        request.setValue("medium");
+        assertEquals("medium", serverSettingsApi.update(setting.getKey(), request).getValue());
+        request.setValue("unsupported");
+        assertThrows(Exception.class, () -> serverSettingsApi.update(setting.getKey(), request));
     }
 
     /**
@@ -167,11 +191,13 @@ public class ServerSettingsApiTest extends AbstractUiTestUtil {
         request.setValue("4096");
 
         assertFalse(lmStudio.isCategoryEnabled());
+        assertFalse(serverSettingsService.isCategoryEnabled(lmStudio.getCategoryKey()));
         assertTrue(lmStudio.isCategoryAllowDisable());
         assertThrows(Exception.class, () -> serverSettingsApi.update(lmStudio.getKey(), request));
 
         serverSettingsApi.updateCategoryEnabled(lmStudio.getCategoryKey(), true);
 
+        assertTrue(serverSettingsService.isCategoryEnabled(lmStudio.getCategoryKey()));
         assertEquals("4096", serverSettingsApi.update(lmStudio.getKey(), request).getValue());
     }
 

@@ -149,7 +149,7 @@ public class ServerSettingsView extends VerticalLayout {
             field.setValue(Boolean.parseBoolean(setting.getValue()));
             return saveRow(setting, field, () -> Boolean.toString(field.getValue()), categoryEnabled);
         }
-        if ("LOG_LEVEL".equals(setting.getType())) {
+        if ("LOG_LEVEL".equals(setting.getType()) || "TEXT".equals(setting.getType()) && !setting.getOptions().isEmpty()) {
             Select<String> field = new Select<>();
             field.setItems(setting.getOptions());
             field.setValue(setting.getValue());

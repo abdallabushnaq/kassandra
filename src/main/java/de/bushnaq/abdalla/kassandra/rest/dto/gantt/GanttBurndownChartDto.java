@@ -17,10 +17,13 @@
 
 package de.bushnaq.abdalla.kassandra.rest.dto.gantt;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * DTO for the interactive client-side combined Gantt + Burndown chart rendered by
@@ -53,7 +56,7 @@ public class GanttBurndownChartDto {
      * Gantt-derived planned burn-down guide (without buffer — only tasks that
      * have impact on cost).
      * Element {@code d} is remaining work in seconds at the start of day {@code d}
-     * (day 0 = {@code burndownMetaDto.chartStart}).
+     * (day 0 = {@link #seriesStart}).
      * {@code null} when no Gantt task data is available.
      */
     public List<Long>            ganttGuideWithoutBuffer;
@@ -61,6 +64,16 @@ public class GanttBurndownChartDto {
      * Burndown chart metadata.
      */
     public BurndownMetaDto       meta    = new BurndownMetaDto();
+    /**
+     * Server-side date of slot zero in the actual and guide arrays, excluding chart padding.
+     */
+    @JsonIgnore
+    public LocalDate seriesStart;
+    /**
+     * Server-side sprint scope for pairing chart and task evidence.
+     */
+    @JsonIgnore
+    public UUID sprintId;
     /**
      * Gantt task rows for the bottom section (reuses {@link TaskDto}).
      */

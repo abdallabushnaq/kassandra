@@ -116,9 +116,16 @@ public class ServerSettingsCatalogue {
 
         // Per-request AI model options.
         add(result, text(Keys.AI_INSIGHTS_MODEL, AI_MODELS, "Insights model", "Model identifier used to generate sprint insights.")
-                .defaultValue("qwen/qwen3.5-9b")
+//                .defaultValue("qwen/qwen3.5-9b")
+                .defaultValue("essentialai/rnj-1")
+//                .defaultValue("google/gemma-4-12b-qat")
 //                .defaultValue("qwen/qwen3.8-27b")
                 .maximumLength(200)
+                .build());
+        add(result, text(Keys.AI_INSIGHTS_REASONING_EFFORT, AI_MODELS, "Insights reasoning effort",
+                "Reasoning effort for Insights requests, when supported by the model. Default leaves the model's setting unchanged.")
+                .defaultValue("default")
+                .options("default", "low", "medium", "high")
                 .build());
         add(result, text(Keys.AI_FILTER_MODEL, AI_MODELS, "Filter model", "Model identifier used to generate AI filters.")
 //                .defaultValue("qwen3.5-4b@q8_0")
@@ -369,7 +376,12 @@ public class ServerSettingsCatalogue {
                         throw new IllegalArgumentException(label + " must be one of " + String.join(", ", options));
                     }
                 }
-                case PASSWORD, TEXT -> maximumLength(label, maximum, value);
+                case PASSWORD, TEXT -> {
+                    maximumLength(label, maximum, value);
+                    if (type == Type.TEXT && !options.isEmpty() && !options.contains(value)) {
+                        throw new IllegalArgumentException(label + " must be one of " + String.join(", ", options));
+                    }
+                }
                 case URL -> {
                     maximumLength(label, maximum, value);
                     if (!value.matches("^https?://[^\\s]+$")) {
@@ -561,6 +573,10 @@ public class ServerSettingsCatalogue {
          * Sprint insights model identifier.
          */
         public static final String AI_INSIGHTS_MODEL                              = "kassandra.ai.insights-model";
+        /**
+         * Optional reasoning effort for sprint insights.
+         */
+        public static final String AI_INSIGHTS_REASONING_EFFORT                   = "kassandra.ai.insights-reasoning-effort";
         /**
          * AI request token limit.
          */

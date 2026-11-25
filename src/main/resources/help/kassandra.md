@@ -42,7 +42,8 @@ required. Review the request before sending.
 
 ![Response area](images/help/light/Kassandra/ai-response-area.png)
 
-The response area shows conversation messages and tool activity. Check the
+The response area shows conversation messages and tool activity. Assistant replies
+support Markdown formatting, including lists, tables, links and code blocks. Check the
 result against the actual planning pages when a change matters. After an error,
 inspect saved data before repeating a request that could already have applied
 some operations.
