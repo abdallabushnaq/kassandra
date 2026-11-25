@@ -42,7 +42,7 @@ public class ReportUtil {
      * @return
      */
     public static Double calcualteEfficiency(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked, Duration remaining) {
-        Duration duration = Duration.ofHours(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), now.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
+        Duration duration = Duration.ofMinutes(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), now.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
         if (!duration.isZero() && remaining != null && !worked.isZero()) {
             double efficiency = ((double) worked.getSeconds()) / duration.getSeconds();
             return efficiency;
@@ -53,9 +53,9 @@ public class ReportUtil {
     public static double calcualteExpectedProgress(LocalDateTime start, LocalDateTime now, LocalDateTime end) {
         //        logger.trace(String.format("start=%s now=%s end=%s", DateUtil.createDateString(start, DateUtil.sdfymdhm), DateUtil.createDateString(now, DateUtil.sdfymdhm), DateUtil.createDateString(end, DateUtil.sdfymdhm)));
         double   timeProgress   = 0;
-        Duration sprintDuration = Duration.ofHours(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
+        Duration sprintDuration = Duration.ofMinutes(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
         if (!sprintDuration.isZero()) {
-            Duration timePast = Duration.ofHours(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), now.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
+            Duration timePast = Duration.ofMinutes(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), now.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
 
             if (now.isAfter(end)) {
                 timeProgress = 1.0d;
@@ -81,9 +81,9 @@ public class ReportUtil {
     public static double calcualteExpectedProgress(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration worked, Duration originalEstimation,
                                                    Duration estimation, Duration remaining) {
         double   timeProgress   = 0;
-        Duration sprintDuration = Duration.ofHours(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
+        Duration sprintDuration = Duration.ofMinutes(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
         if (!sprintDuration.isZero() && remaining != null && !worked.isZero()) {
-            Duration timePast = Duration.ofHours(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), now.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
+            Duration timePast = Duration.ofMinutes(DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), now.toLocalDate()) * ONE_WORKING_DAY_MINUTES);
 
             if (now.isAfter(end)) {
                 timeProgress = 1.0d;
@@ -221,10 +221,10 @@ public class ReportUtil {
     /**
      * Calculates the forecast delay as a fraction of the scheduled working days.
      *
-     * @param start sprint start
-     * @param now observation time
-     * @param end planned sprint end
-     * @param worked effort already spent
+     * @param start     sprint start
+     * @param now       observation time
+     * @param end       planned sprint end
+     * @param worked    effort already spent
      * @param estimated total estimated effort
      * @return delay fraction, or {@code null} if a forecast cannot be calculated
      */
@@ -239,8 +239,8 @@ public class ReportUtil {
     /**
      * Calculates the delay of an actual or forecast release as a fraction of the scheduled working days.
      *
-     * @param start sprint start
-     * @param end planned sprint end
+     * @param start       sprint start
+     * @param end         planned sprint end
      * @param releaseDate actual or forecast release date
      * @return delay fraction, or {@code null} if the release date or scheduled working days are unavailable
      */
@@ -256,10 +256,10 @@ public class ReportUtil {
     /**
      * Formats the forecast delay in working time.
      *
-     * @param start sprint start
-     * @param now observation time
-     * @param end planned sprint end
-     * @param worked effort already spent
+     * @param start     sprint start
+     * @param now       observation time
+     * @param end       planned sprint end
+     * @param worked    effort already spent
      * @param estimated total estimated effort
      * @return formatted delay, or {@code null} if a forecast cannot be calculated
      */
@@ -273,8 +273,8 @@ public class ReportUtil {
     /**
      * Formats the delay of an actual or forecast release in working time.
      *
-     * @param start sprint start
-     * @param end planned sprint end
+     * @param start       sprint start
+     * @param end         planned sprint end
      * @param releaseDate actual or forecast release date
      * @return formatted delay, or {@code null} if the release date or scheduled working days are unavailable
      */
@@ -284,13 +284,6 @@ public class ReportUtil {
             return null;
         }
         return DateUtil.createWorkDayDurationString(Duration.ofMinutes(delayDays * ONE_WORKING_DAY_MINUTES), false, true, false);
-    }
-
-    private static Integer calculateScheduleDelayDays(LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate) {
-        if (releaseDate == null || DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) == 0) {
-            return null;
-        }
-        return DateUtil.calculateWorkingDaysIncluding(end.toLocalDate().plusDays(1), releaseDate.toLocalDate());
     }
 
     public static Duration calculateExtrapolatedTimeSpent(LocalDateTime start, LocalDateTime now, LocalDateTime end, Duration spent, Duration planned) {
@@ -328,6 +321,13 @@ public class ReportUtil {
         }
         return releaseDate;
 
+    }
+
+    private static Integer calculateScheduleDelayDays(LocalDateTime start, LocalDateTime end, LocalDateTime releaseDate) {
+        if (releaseDate == null || DateUtil.calculateWorkingDaysIncluding(start.toLocalDate(), end.toLocalDate()) == 0) {
+            return null;
+        }
+        return DateUtil.calculateWorkingDaysIncluding(end.toLocalDate().plusDays(1), releaseDate.toLocalDate());
     }
 
     public static String createPersonDayEfficiencyString(Double efficiency) {
