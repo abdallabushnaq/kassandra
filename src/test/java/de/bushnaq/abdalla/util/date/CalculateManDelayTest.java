@@ -41,7 +41,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.APRIL, 2, 8, 0);
         Duration worked    = Duration.ofMinutes(30 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(30 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         Assertions.assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(0L), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -56,7 +56,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.APRIL, 2, 8, 0);
         Duration worked    = Duration.ofMinutes(30 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(30 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(0L), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -71,7 +71,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 16, 8, 0);
         Duration worked    = Duration.ofMinutes(3 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(2 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(0L), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -86,7 +86,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(4 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(6 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(ReportUtil.ONE_WORKING_DAY_MINUTES), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -101,7 +101,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(6 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(4 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(-1 * ReportUtil.ONE_WORKING_DAY_MINUTES), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -116,7 +116,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES - 17);
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES + 17);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(17), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -131,7 +131,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(0), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -146,7 +146,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(0), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }
@@ -161,7 +161,7 @@ public class CalculateManDelayTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        Duration manDelay  = ReportUtil.calcualteManDelay(start, now, end, worked, worked.plus(remaining));
+        Duration manDelay  = ReportUtil.calculateManDelay(start, now, end, worked, worked.plus(remaining));
         assertEquals(DateUtil.createWorkDayDurationString(Duration.ofMinutes(0), false, true, false),
                 DateUtil.createWorkDayDurationString(manDelay, false, true, false));
     }

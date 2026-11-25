@@ -36,7 +36,7 @@ public class UtilCalculateProgressTest {
         Duration remaining = Duration.ofMinutes(0L);
         //        Long worked = new Long(10 * Util.ONE_WORKING_DAY_MILLIS);
         //        long remaining = 0 * Util.ONE_WORKING_DAY_MILLIS;
-        double progress = ReportUtil.calcualteProgress(worked, worked.plus(remaining));
+        double progress = ReportUtil.calculateProgress(worked, worked.plus(remaining));
         assertEquals(1.0, progress, EPSILON);
     }
 
@@ -46,7 +46,7 @@ public class UtilCalculateProgressTest {
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         //        Long worked = new Long(5 * Util.ONE_WORKING_DAY_MILLIS);
         //        long remaining = 5 * Util.ONE_WORKING_DAY_MILLIS;
-        double progress = ReportUtil.calcualteProgress(worked, worked.plus(remaining));
+        double progress = ReportUtil.calculateProgress(worked, worked.plus(remaining));
         assertEquals(0.5, progress, EPSILON);
     }
 
@@ -56,7 +56,7 @@ public class UtilCalculateProgressTest {
         Duration remaining = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         //        Long worked = new Long(0 * Util.ONE_WORKING_DAY_MILLIS);
         //        long remaining = 10 * Util.ONE_WORKING_DAY_MILLIS;
-        double progress = ReportUtil.calcualteProgress(worked, worked.plus(remaining));
+        double progress = ReportUtil.calculateProgress(worked, worked.plus(remaining));
         assertEquals(0.0, progress, EPSILON);
     }
 
@@ -66,7 +66,7 @@ public class UtilCalculateProgressTest {
         //        Duration remaining = null;
         //        Long worked = new Long(5 * Util.ONE_WORKING_DAY_MILLIS);
         //        Long remaining = null;
-        double progress = ReportUtil.calcualteProgress(worked, null);
+        double progress = ReportUtil.calculateProgress(worked, null);
         assertEquals(-1, progress, EPSILON);
     }
 
@@ -74,7 +74,7 @@ public class UtilCalculateProgressTest {
     public void nullWorkedTest() {
         Duration worked    = null;
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   progress  = ReportUtil.calcualteProgress(worked, remaining);
+        double   progress  = ReportUtil.calculateProgress(worked, remaining);
         assertEquals(-1, progress, EPSILON);
     }
 

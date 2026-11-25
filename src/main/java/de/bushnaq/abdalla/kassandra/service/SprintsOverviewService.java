@@ -190,7 +190,7 @@ public class SprintsOverviewService {
                 var estimated = DateUtil.add(s.getWorked(), s.getRemaining());
                 sd.progress = estimated == null || estimated.isZero()
                         ? null
-                        : ReportUtil.calcualteProgress(s.getWorked(), estimated);
+                        : ReportUtil.calculateProgress(s.getWorked(), estimated);
                 lane.sprints.add(sd);
             }
             dto.lanes.add(lane);

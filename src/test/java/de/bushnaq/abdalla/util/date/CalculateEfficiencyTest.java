@@ -41,7 +41,7 @@ public class CalculateEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.APRIL, 2, 8, 0);
         Duration worked    = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(0L);
-        double   eficency  = ReportUtil.calcualteEfficiency(start, now, end, worked, remaining);
+        double   eficency  = ReportUtil.calculateEfficiency(start, now, end, worked, remaining);
         assertEquals(10d / 30d, eficency, EPSILON);
     }
 
@@ -55,7 +55,7 @@ public class CalculateEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.APRIL, 2, 8, 0);
         Duration worked    = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(0L);
-        double   eficency  = ReportUtil.calcualteEfficiency(start, now, end, worked, remaining);
+        double   eficency  = ReportUtil.calculateEfficiency(start, now, end, worked, remaining);
         assertEquals(10d / 30d, eficency, EPSILON);
     }
 
@@ -69,7 +69,7 @@ public class CalculateEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 16, 8, 0);
         Duration worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   eficency  = ReportUtil.calcualteEfficiency(start, now, end, worked, remaining);
+        double   eficency  = ReportUtil.calculateEfficiency(start, now, end, worked, remaining);
         assertEquals(5d / 3d, eficency, EPSILON);
     }
 
@@ -83,7 +83,7 @@ public class CalculateEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(4 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(6 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   eficency  = ReportUtil.calcualteEfficiency(start, now, end, worked, remaining);
+        double   eficency  = ReportUtil.calculateEfficiency(start, now, end, worked, remaining);
         assertEquals(4d / 5d, eficency, EPSILON);
     }
 
@@ -97,7 +97,7 @@ public class CalculateEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(2 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(8 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   eficency  = ReportUtil.calcualteEfficiency(start, now, end, worked, remaining);
+        double   eficency  = ReportUtil.calculateEfficiency(start, now, end, worked, remaining);
         //        Long worked = new Long(2 * Util.ONE_WORKING_DAY_MILLIS);
         //        Long remaining = new Long(8 * Util.ONE_WORKING_DAY_MILLIS);
         //        double eficency = ReportUtil.calcualteEfficiency(start.getTimeInMillis(), now.getTimeInMillis(), end.getTimeInMillis(), worked, remaining);
@@ -114,7 +114,7 @@ public class CalculateEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(0L);
-        double   eficency  = ReportUtil.calcualteEfficiency(start, now, end, worked, remaining);
+        double   eficency  = ReportUtil.calculateEfficiency(start, now, end, worked, remaining);
         //        Long worked = new Long(10 * Util.ONE_WORKING_DAY_MILLIS);
         //        Long remaining = new Long(0 * Util.ONE_WORKING_DAY_MILLIS);
         //        double eficency = ReportUtil.calcualteEfficiency(start.getTimeInMillis(), now.getTimeInMillis(), end.getTimeInMillis(), worked, remaining);

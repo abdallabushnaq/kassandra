@@ -53,7 +53,7 @@ public class CalculateWorkDaysMillisecondsDelayTest {
         logger.info(String.format("worked =    %s", DateUtil.createDurationString(worked, false, true, true)));
         logger.info(String.format("remaining = %s", DateUtil.createDurationString(remaining, false, true, true)));
 
-        Duration calcualteWorkDaysMiliseconsDelay = ReportUtil.calcualteWorkDaysMiliseconsDelay(start, now, end, worked, null, null, remaining);
+        Duration calcualteWorkDaysMiliseconsDelay = ReportUtil.calculateWorkDaysMillisecondsDelay(start, now, end, worked, null, null, remaining);
 
         logger.info(String.format("Effort Estimate = %s", DateUtil.createWorkDayDurationString(worked.plus(remaining), false, true, false)));
 

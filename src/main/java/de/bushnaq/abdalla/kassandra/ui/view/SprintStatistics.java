@@ -84,13 +84,13 @@ public class SprintStatistics {
         this.remainingWorkDays = DateUtil.calculateWorkingDaysIncluding(currentTime, sprint.getEnd());
 
         // Progress calculations
-        this.expectedProgress = ReportUtil.calcualteExpectedProgress(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getOriginalEstimation(), effortEstimate, sprint.getRemaining());
-        this.actualProgress   = ReportUtil.calcualteProgress(sprint.getWorked(), effortEstimate);
+        this.expectedProgress = ReportUtil.calculateExpectedProgress(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getOriginalEstimation(), effortEstimate, sprint.getRemaining());
+        this.actualProgress   = ReportUtil.calculateProgress(sprint.getWorked(), effortEstimate);
 
         // Delay calculations
         this.currentEffortDelay   = ReportUtil.calcualteManDelayString(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), effortEstimate);
-        this.delayFraction        = ReportUtil.calcualteDelayFraction(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), effortEstimate);
-        this.currentScheduleDelay = DateUtil.createDurationString(ReportUtil.calcualteWorkDaysMiliseconsDelay(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getOriginalEstimation(), effortEstimate, sprint.getRemaining()), false, true, false);
+        this.delayFraction        = ReportUtil.calculateDelayFraction(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), effortEstimate);
+        this.currentScheduleDelay = DateUtil.createDurationString(ReportUtil.calculateWorkDaysMillisecondsDelay(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getOriginalEstimation(), effortEstimate, sprint.getRemaining()), false, true, false);
 
         this.extrapolatedDelayFraction = ReportUtil.calculateExtrapolatedScheduleDelayFraction(sprint.getStart(), sprint.getEnd(), sprint.getReleaseDate());
         if (extrapolatedDelayFraction != null)
@@ -98,8 +98,8 @@ public class SprintStatistics {
         else
             this.extrapolatedScheduleDelay = "NA";
         // Efficiency calculations
-        this.optimalEfficiency = ReportUtil.createPersonDayEfficiencyString(ReportUtil.calcualteOptimaleEfficiency(sprint.getStart(), sprint.getEnd(), effortEstimate));
-        this.currentEfficiency = ReportUtil.createPersonDayEfficiencyString(ReportUtil.calcualteEfficiency(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getRemaining()));
+        this.optimalEfficiency = ReportUtil.createPersonDayEfficiencyString(ReportUtil.calculateOptimalEfficiency(sprint.getStart(), sprint.getEnd(), effortEstimate));
+        this.currentEfficiency = ReportUtil.createPersonDayEfficiencyString(ReportUtil.calculateEfficiency(sprint.getStart(), currentTime, sprint.getEnd(), sprint.getWorked(), sprint.getRemaining()));
 
         // Status calculations
         this.status             = HtmlColor.calculateStatusColor(delayFraction);

@@ -40,7 +40,7 @@ public class CalculateOptimalEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.APRIL, 2, 8, 0);
         Duration worked    = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(0L);
-        double   eficency  = ReportUtil.calcualteOptimaleEfficiency(start, end, worked.plus(remaining));
+        double   eficency  = ReportUtil.calculateOptimalEfficiency(start, end, worked.plus(remaining));
         assertEquals(1d / 6d, eficency, EPSILON);
     }
 
@@ -53,7 +53,7 @@ public class CalculateOptimalEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.APRIL, 2, 8, 0);
         Duration worked    = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(0L);
-        double   eficency  = ReportUtil.calcualteOptimaleEfficiency(start, end, worked.plus(remaining));
+        double   eficency  = ReportUtil.calculateOptimalEfficiency(start, end, worked.plus(remaining));
         assertEquals(1d / 6d, eficency, EPSILON);
     }
 
@@ -66,7 +66,7 @@ public class CalculateOptimalEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 16, 8, 0);
         Duration worked    = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(5 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   eficency  = ReportUtil.calcualteOptimaleEfficiency(start, end, worked.plus(remaining));
+        double   eficency  = ReportUtil.calculateOptimalEfficiency(start, end, worked.plus(remaining));
         assertEquals(2.0d, eficency, EPSILON);
     }
 
@@ -79,7 +79,7 @@ public class CalculateOptimalEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(4 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(6 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   eficency  = ReportUtil.calcualteOptimaleEfficiency(start, end, worked.plus(remaining));
+        double   eficency  = ReportUtil.calculateOptimalEfficiency(start, end, worked.plus(remaining));
         assertEquals(1.0d, eficency, EPSILON);
     }
 
@@ -92,7 +92,7 @@ public class CalculateOptimalEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(2 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(8 * ReportUtil.ONE_WORKING_DAY_MINUTES);
-        double   eficency  = ReportUtil.calcualteOptimaleEfficiency(start, end, worked.plus(remaining));
+        double   eficency  = ReportUtil.calculateOptimalEfficiency(start, end, worked.plus(remaining));
         assertEquals(1.0d, eficency, EPSILON);
     }
 
@@ -105,7 +105,7 @@ public class CalculateOptimalEfficiencyTest {
         //        Calendar end = new GregorianCalendar(2018, Calendar.MARCH, 23, 8, 0);
         Duration worked    = Duration.ofMinutes(10 * ReportUtil.ONE_WORKING_DAY_MINUTES);
         Duration remaining = Duration.ofMinutes(0L);
-        double   eficency  = ReportUtil.calcualteOptimaleEfficiency(start, end, worked.plus(remaining));
+        double   eficency  = ReportUtil.calculateOptimalEfficiency(start, end, worked.plus(remaining));
         assertEquals(1.0d, eficency, EPSILON);
     }
 
