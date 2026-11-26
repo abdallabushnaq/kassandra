@@ -147,6 +147,29 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
         }
 
         GanttBurndownChartDto chart             = service.build(sprint, ParameterOptions.getLocalNow(), false);
+        assertEquals(sprint.getTasks().size(), chart.replayTasks.size());
+        int replayWorklogs = 0;
+        for (int i = 0; i < sprint.getTasks().size(); i++) {
+            Task task = sprint.getTasks().get(i);
+            GanttBurndownChartDto.ReplayTask replayTask = chart.replayTasks.get(i);
+            assertEquals(task.getResourceId(), replayTask.userId);
+            assertEquals(task.isImpactOnCost(), replayTask.impactOnCost);
+            assertEquals(task.getMinEstimate().toSeconds(), replayTask.initialEstimateSeconds);
+            assertEquals(task.getWorklogs().size(), replayTask.worklogs.size());
+            assertEquals(task.getTimeSpent().toSeconds(),
+                    replayTask.worklogs.stream().mapToLong(worklog -> worklog.timeSpentSeconds).sum());
+            if (!replayTask.worklogs.isEmpty())
+                assertEquals(task.getRemainingEstimate().toSeconds(), replayTask.worklogs.getLast().remainingEstimateSeconds);
+            replayWorklogs += replayTask.worklogs.size();
+            for (GanttBurndownChartDto.ReplayWorklog worklog : replayTask.worklogs) {
+                assertTrue(task.getWorklogs().stream().anyMatch(original ->
+                        original.getStart().equals(worklog.start)
+                                && original.getAuthorId().equals(worklog.authorId)
+                                && original.getTimeSpent().toSeconds() == worklog.timeSpentSeconds
+                                && original.getTimeRemainingEstimate().toSeconds() == worklog.remainingEstimateSeconds));
+            }
+        }
+        assertTrue(replayWorklogs > 0, "Generated sprint has worklogs to replay");
         int                   alignedTaskColors = 0;
         for (AuthorSeriesDto author : chart.authors) {
             TaskDto assignedTask = chart.tasks.stream()

@@ -61,10 +61,40 @@ public class GanttBurndownExcelExportServiceTest {
         }
     }
 
+    @Test
+    void preservesEmptyAndExplicitFutureSlots() throws Exception {
+        GanttBurndownChartDto chart = new GanttBurndownChartDto();
+        chart.meta.sprintName = "Sprint 1";
+        chart.meta.chartStart = LocalDateTime.of(2026, 8, 3, 0, 0);
+        chart.meta.chartEnd = LocalDateTime.of(2026, 8, 8, 0, 0);
+        chart.meta.now = chart.meta.chartStart;
+        chart.meta.totalDays = 6;
+        chart.seriesStart = chart.meta.chartStart.toLocalDate();
+        AuthorSeriesDto author = new AuthorSeriesDto();
+        author.userName = "Alice";
+        author.workPerDay = List.of(0L, 3600L, 0L, 0L, 1800L, 0L);
+        author.tooltipPerDay = List.of("", "work", "", "", "work", "zero-duration worklog");
+        chart.authors.add(author);
+
+        byte[] bytes = new GanttBurndownExcelExportService().export(chart);
+
+        try (Workbook workbook = WorkbookFactory.create(new ByteArrayInputStream(bytes))) {
+            var sheet = workbook.getSheet("Burndown");
+            assertEquals(1.0, sheet.getRow(3).getCell(1).getNumericCellValue());
+            assertEquals(0.0, sheet.getRow(4).getCell(1).getNumericCellValue());
+            assertEquals(1.5, sheet.getRow(5).getCell(1).getNumericCellValue());
+            assertEquals(1.5, sheet.getRow(6).getCell(1).getNumericCellValue());
+        }
+    }
+
     private AuthorSeriesDto author(String name, List<Long> values, long totalWorked, long totalRemaining) {
         AuthorSeriesDto author = new AuthorSeriesDto();
         author.userName = name;
-        author.accumulatedWorkPerDay.addAll(values);
+        long previous = 0;
+        for (Long value : values) {
+            author.workPerDay.add(value - previous);
+            previous = value;
+        }
         author.totalWorkedSeconds = totalWorked;
         author.totalRemainingSeconds = totalRemaining;
         return author;

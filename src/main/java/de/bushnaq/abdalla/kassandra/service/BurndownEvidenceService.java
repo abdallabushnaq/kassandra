@@ -234,7 +234,7 @@ public class BurndownEvidenceService {
             long estimated = author.totalWorkedSeconds + author.totalRemainingSeconds;
             if (estimated == 0)
                 continue;
-            Long worked = valueAt(author.accumulatedWorkPerDay, slot);
+            Long worked = valueAt(author.toAccumulatedWorkPerDay(), slot);
             if (worked == null)
                 return unavailable(now, through, Coverage.NO_ACTUAL_POINT);
             actual += estimated - worked;

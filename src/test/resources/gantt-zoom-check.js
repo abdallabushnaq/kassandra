@@ -738,13 +738,20 @@ export async function verifyGanttInspection(gantt, combined) {
                 data.meta.maxWorkedSeconds = 40500;
                 data.meta.estimatedBestWorkSeconds = 40500;
                 data.authors = [
-                    {userName: 'Alice', color: 0xff336699, totalWorkedSeconds: 18000, totalRemainingSeconds: 9000,
-                        accumulatedWorkPerDay: [0, 3600, 7200, 7200, 10800, 14400, 18000, ...Array(20).fill(18000)], tooltipPerDay: []},
-                    {userName: 'Bob', color: 0xffaa6633, totalWorkedSeconds: 7200, totalRemainingSeconds: 6300,
-                        accumulatedWorkPerDay: [0, 1800, 1800, 3600, 3600, 5400, 7200, ...Array(20).fill(7200)], tooltipPerDay: []},
-                    {userName: 'Carol', color: 0xff448855, totalWorkedSeconds: 3600, totalRemainingSeconds: 0,
-                        accumulatedWorkPerDay: [0, ...Array(26).fill(3600)], tooltipPerDay: []},
+                    {userId: 'alice', userName: 'Alice', color: 0xff336699, totalWorkedSeconds: 18000, totalRemainingSeconds: 9000,
+                        workPerDay: [0, 3600, 3600, 0, 3600, 3600, 3600, ...Array(20).fill(0)], tooltipPerDay: []},
+                    {userId: 'bob', userName: 'Bob', color: 0xffaa6633, totalWorkedSeconds: 7200, totalRemainingSeconds: 6300,
+                        workPerDay: [0, 1800, 0, 1800, 0, 1800, 1800, ...Array(20).fill(0)], tooltipPerDay: []},
+                    {userId: 'carol', userName: 'Carol', color: 0xff448855, totalWorkedSeconds: 3600, totalRemainingSeconds: 0,
+                        workPerDay: [0, 3600, ...Array(25).fill(0)], tooltipPerDay: []},
                 ];
+                data.replayTasks = data.authors.map(author => ({
+                    userId: author.userId,
+                    impactOnCost: true,
+                    initialEstimateSeconds: author.totalWorkedSeconds + author.totalRemainingSeconds,
+                    worklogs: [{start: '2025-06-06T08:00:00', timeSpentSeconds: author.totalWorkedSeconds,
+                        remainingEstimateSeconds: author.totalRemainingSeconds}],
+                }));
                 const mount = (dayWidth = 40, visualScale = 1) => {
                     state(dayWidth, visualScale);
                     document.getElementById('chart').style.width = '1600px';
@@ -817,18 +824,146 @@ export async function verifyGanttInspection(gantt, combined) {
                 assertCondition(document.querySelector('.burndown-point-readout').textContent.includes('Alice: 6h 30m'),
                     'author inspection after zoom', 'Alice: 6h 30m', document.querySelector('.burndown-point-readout').textContent);
                 window.disposeKassandraChart('chart');
-                data.authors[2].accumulatedWorkPerDay[1] = 3599;
+                data.authors[2].workPerDay[1] = 3599;
                 mount();
                 hover(document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Bob']"));
                 assertCondition(document.querySelector('.burndown-point-readout').textContent.includes('Carol: 0m'),
                     'subpixel-separated authors remain inspectable', 'Carol: 0m', document.querySelector('.burndown-point-readout').textContent);
                 window.disposeKassandraChart('chart');
-                data.authors[2].accumulatedWorkPerDay[1] = 3600;
-                data.authors[1].accumulatedWorkPerDay[1] = undefined;
+                data.authors[2].workPerDay[1] = 3600;
+                data.authors[1].workPerDay[1] = undefined;
                 mount();
                 assertEqual(document.querySelectorAll(".burndown-actual-point[data-date='2025-06-01']").length, 0,
                     'incomplete day has no misleading total or author points');
                 window.disposeKassandraChart('chart');
-                data.authors[1].accumulatedWorkPerDay[1] = 1800;
+                data.authors[1].workPerDay[1] = 1800;
+                mount();
+                const slider = () => document.querySelector('[data-replay-slider]');
+                assertPresent(slider(), 'replay slider visible with weekdays');
+                const endDay = Number(slider().getAttribute('aria-valuemax'));
+                assertCondition(endDay >= 2, 'replay slider has several days', 'at least two', endDay);
+                window.disposeKassandraChart('chart');
+
+                const normalAuthors = data.authors;
+                const normalReplayTasks = data.replayTasks;
+                const normalGuideWithoutBuffer = data.ganttGuideWithoutBuffer;
+                const normalGuideWithBuffer = data.ganttGuideWithBuffer;
+                data.ganttGuideWithoutBuffer = null;
+                data.ganttGuideWithBuffer = null;
+                data.authors = [{
+                    userId: 'replay', userName: 'Replay', color: 0xff336699,
+                    totalWorkedSeconds: 36000, totalRemainingSeconds: 9000,
+                    workPerDay: [0, 27000, 0, 9000, ...Array(24).fill(0)], tooltipPerDay: [],
+                }];
+                data.replayTasks = [{
+                    userId: 'replay', impactOnCost: true, initialEstimateSeconds: 54000,
+                    worklogs: [
+                        {authorId: 'replay', start: '2025-06-01T08:00:00', timeSpentSeconds: 27000, remainingEstimateSeconds: 54000},
+                        {authorId: 'replay', start: '2025-06-03T08:00:00', timeSpentSeconds: 9000, remainingEstimateSeconds: 9000},
+                        {authorId: 'replay', start: '2025-06-03T08:00:00', timeSpentSeconds: 0, remainingEstimateSeconds: 1000},
+                    ],
+                }];
+                const replayWorklogs = data.replayTasks[0].worklogs;
+                data.replayTasks[0].worklogs = [];
+                data.authors[0].workPerDay.fill(0);
+                mount();
+                assertPresent(slider(), 'unstarted sprint renders replay slider');
+                assertAbsent(document.querySelector('.burndown-actual-work'), 'unstarted sprint has no actual-work bars');
+                assertAbsent(document.querySelector('.burndown-actual-point'), 'unstarted sprint has no actual points');
+                assertCondition([...document.querySelectorAll('svg text')].some(element => /^\d+pd$/.test(element.textContent.trim())),
+                    'unstarted sprint retains y-axis', 'person-day tick', 'no person-day tick');
+                assertPresent(document.querySelector('svg line[stroke-dasharray="3"]'), 'unstarted sprint retains guide');
+                window.disposeKassandraChart('chart');
+                data.replayTasks[0].worklogs = replayWorklogs;
+                data.authors[0].workPerDay[1] = 27000;
+                data.authors[0].workPerDay[3] = 9000;
+                mount();
+                slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'replay selects day before first milestone');
+                assertEqual(slider().getAttribute('aria-valuetext'), 'Saturday 31 May 2025', 'pre-work replay date');
+                assertAbsent(document.querySelector('.burndown-actual-work'), 'pre-work replay has no actual-work bars');
+                assertAbsent(document.querySelector(".burndown-actual-point[data-date='2025-05-31']"),
+                    'pre-work replay has no actual point');
+                assertPresent(document.querySelector('svg line[stroke-dasharray="3"]'), 'pre-work replay retains guide');
+                assertAbsent(document.querySelector(".burndown-actual-point[data-date='2025-06-01']"),
+                    'pre-work replay excludes first-day work');
+                assertCondition(![...document.querySelectorAll('svg title')]
+                    .some(title => title.textContent.startsWith('R = Release (Estimated release date)')),
+                    'no release forecast without work', 'no release milestone', 'release milestone');
+                slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === 0, 'replay selects first day');
+                const firstPoint = document.querySelector(".burndown-actual-point[data-date='2025-06-01']");
+                assertPresent(firstPoint, 'first replay day actual point');
+                assertPresent(document.querySelector('.burndown-actual-work polygon'), 'first worklog restores actual-work bars');
+                assertEqual(firstPoint.dataset.seconds, '54000', 'first replay day uses its remaining estimate');
+                assertAbsent(document.querySelector(".burndown-actual-point[data-date='2025-06-02']"),
+                    'future points excluded from replay');
+                const maxTick = () => Math.max(...[...document.querySelectorAll('svg text')]
+                    .map(element => element.textContent.trim()).filter(text => /^\d+pd$/.test(text))
+                    .map(text => Number.parseInt(text, 10)));
+                const firstMaxTick = maxTick();
+                const releaseX = () => [...document.querySelectorAll('svg title')]
+                    .filter(title => title.textContent.startsWith('R = Release (Estimated release date)'))
+                    .map(title => title.parentElement?.getAttribute('x')).join(',');
+                const firstRelease = releaseX();
+                for (let day = 1; day <= 2; day++) {
+                    slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true}));
+                    await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === day, 'replay advances one day');
+                    if (day === 1)
+                        assertEqual(document.querySelector(".burndown-actual-point[data-date='2025-06-02']").dataset.seconds,
+                            '54000', 'replay retains the latest estimate on days without worklogs');
+                }
+                assertEqual(document.querySelector(".burndown-actual-point[data-date='2025-06-03']").dataset.seconds,
+                    '9000', 'replay uses the latest task estimate');
+                assertCondition(maxTick() < firstMaxTick, 'y-axis uses selected-day worked plus remaining', firstMaxTick, maxTick());
+                assertCondition(releaseX() !== firstRelease, 'release forecast changes with replay', firstRelease, releaseX());
+                slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'replay returns to pre-work day');
+                assertAbsent(document.querySelector('.burndown-actual-work'), 'returning to pre-work removes actual-work bars');
+                assertAbsent(document.querySelector('.burndown-actual-point'), 'returning to pre-work removes actual points');
+                window.disposeKassandraChart('chart');
+
+                data.replayTasks[0].worklogs.unshift(
+                    {authorId: 'replay', start: '2025-05-31T08:00:00', timeSpentSeconds: 0, remainingEstimateSeconds: 54000});
+                mount();
+                slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'replay selects zero-duration worklog');
+                assertPresent(document.querySelector(".burndown-actual-point[data-date='2025-05-31']"),
+                    'zero-duration worklog still produces an actual point');
+                window.disposeKassandraChart('chart');
+                data.replayTasks[0].worklogs.shift();
+
+                data.authors.push({
+                    userId: 'other', userName: 'Other', color: 0xffaa6633,
+                    totalWorkedSeconds: 9000, totalRemainingSeconds: 0,
+                    workPerDay: [0, 9000, ...Array(26).fill(0)], tooltipPerDay: [],
+                });
+                data.replayTasks[0].worklogs.unshift(
+                    {authorId: 'other', start: '2025-05-31T08:00:00', timeSpentSeconds: 9000, remainingEstimateSeconds: 36000});
+                mount();
+                slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'replay selects earlier worklog');
+                assertEqual(document.querySelector(".burndown-actual-point[data-date='2025-05-31']").dataset.seconds,
+                    '36000', 'pre-milestone replay includes earlier work and its remaining estimate');
+                window.disposeKassandraChart('chart');
+
+                const normalPreRun = data.meta.preRun;
+                data.meta.preRun = 0;
+                mount();
+                slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'pre-work replay without padding');
+                const replayClip = document.querySelector(slider().getAttribute('clip-path').slice(4, -1) + ' rect');
+                assertCondition(Number(slider().querySelector('circle').getAttribute('cx'))
+                    >= Number(replayClip.getAttribute('x')) + 6, 'pre-work slider knob is visible without padding',
+                    'inside the plot', slider().querySelector('circle').getAttribute('cx'));
+                window.disposeKassandraChart('chart');
+                data.meta.preRun = normalPreRun;
+                mount(10);
+                assertAbsent(slider(), 'replay slider hidden without weekdays');
+                window.disposeKassandraChart('chart');
+                data.authors = normalAuthors;
+                data.replayTasks = normalReplayTasks;
+                data.ganttGuideWithoutBuffer = normalGuideWithoutBuffer;
+                data.ganttGuideWithBuffer = normalGuideWithBuffer;
                 mount();
             }

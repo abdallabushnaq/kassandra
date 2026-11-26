@@ -21,28 +21,31 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * Per-author accumulated work series for the stacked burndown polygon.
+ * Per-author daily work series for the stacked burndown polygon.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthorSeriesDto {
 
     /**
-     * Cumulative work in seconds, one element per chart day.
-     * Element {@code d} = total seconds worked by this author from day 0 up to and
-     * including end of day {@code d − 1}. Element 0 is always 0.
-     * Length = {@code totalDays + 3}.
-     * Mirrors Java: {@code usersWorkPerDayAccumulated.get(user)[d].duration.getSeconds()}.
+     * User ID used to associate task estimates with the assigned author.
      */
-    public List<Long>   accumulatedWorkPerDay = new ArrayList<>();
+    public UUID userId;
+    /**
+     * Work in seconds, one element per chart day.
+     * Element {@code d} contains work on day {@code d - 1}; element 0 is always 0.
+     * Length = {@code totalDays + 3}.
+     */
+    public List<Long>   workPerDay = new ArrayList<>();
     /**
      * Bar fill color in {@code #rrggbbaa} format.
      * Matches the associated Gantt task fill color: the user color lightened by 50% with the theme's task transparency.
      */
     public long         color;
     /**
-     * Tooltip HTML for each day-slot (parallel to {@link #accumulatedWorkPerDay}).
+     * Tooltip HTML for each day-slot (parallel to {@link #workPerDay}).
      * Element {@code d} = HTML for work logged <em>on</em> day {@code d − 1}.
      * {@code null}/empty at slots where no work was logged.
      */
@@ -59,4 +62,21 @@ public class AuthorSeriesDto {
      * Author display name (for legend and tooltips).
      */
     public String       userName;
+
+    /**
+     * Accumulates the daily work series for server-side consumers.
+     *
+     * @return cumulative work in seconds for each day slot
+     */
+    public List<Long> toAccumulatedWorkPerDay() {
+        List<Long> accumulated = new ArrayList<>(workPerDay.size());
+        long total = 0;
+        for (Long work : workPerDay) {
+            if (work == null)
+                throw new IllegalStateException("Daily work series contains a missing value");
+            total += work;
+            accumulated.add(total);
+        }
+        return accumulated;
+    }
 }

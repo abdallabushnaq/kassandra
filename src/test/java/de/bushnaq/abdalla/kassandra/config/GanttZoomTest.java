@@ -239,6 +239,19 @@ public class GanttZoomTest extends AbstractTestUtil {
                     assertTrue(upperReadout.contains("Carol: 0m"));
                     new Actions(driver).moveByOffset(30, 30).perform();
                     wait.until(ignored -> !driver.findElement(By.cssSelector(".burndown-point-readout")).isDisplayed());
+                    WebElement slider = driver.findElement(By.cssSelector("[data-replay-slider]"));
+                    int selectedDay = Integer.parseInt(slider.getAttribute("aria-valuenow"));
+                    WebElement knob = slider.findElement(By.cssSelector("circle"));
+                    new Actions(driver).clickAndHold(knob).moveByOffset(-80, 0).release().perform();
+                    wait.until(ignored -> Integer.parseInt(driver.findElement(By.cssSelector("[data-replay-slider]"))
+                            .getAttribute("aria-valuenow")) < selectedDay);
+                    slider = driver.findElement(By.cssSelector("[data-replay-slider]"));
+                    int currentDay = Integer.parseInt(slider.getAttribute("aria-valuenow"));
+                    int dayWidth = (int) Math.round(Double.parseDouble(slider.getAttribute("data-day-width")));
+                    new Actions(driver).clickAndHold(slider.findElement(By.cssSelector("circle")))
+                            .moveByOffset(-(currentDay + 1) * dayWidth, 0).release().perform();
+                    wait.until(ignored -> "-1".equals(driver.findElement(By.cssSelector("[data-replay-slider]"))
+                            .getAttribute("aria-valuenow")));
                 }
             } finally {
                 try {

@@ -26,6 +26,12 @@ import {UserCalendarDto} from '../../gantt/dto/UserCalendarDto';
 export interface GanttBurndownChartDto {
     meta: BurndownMetaDto;
     authors: AuthorSeriesDto[];
+    replayTasks: {
+        userId?: string | null;
+        impactOnCost: boolean;
+        initialEstimateSeconds: number;
+        worklogs: { authorId?: string | null; start: string; timeSpentSeconds: number; remainingEstimateSeconds: number | null }[];
+    }[];
     ganttGuideWithoutBuffer?: number[] | null;
     ganttGuideWithBuffer?: number[] | null;
     calendars: UserCalendarDto[];

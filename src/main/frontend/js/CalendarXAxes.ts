@@ -18,6 +18,7 @@ import type {IRenderer} from './IRenderer.js';
 import type {CalendarAxesZoomSettings} from './CalendarAxesZoomSettings.js';
 
 export class CalendarXAxes {
+    additionalBottomHeight = 0;
     parent: IRenderer;
     priRun: number;
     postRun: number;
@@ -91,7 +92,7 @@ export class CalendarXAxes {
         if (this.milestonesVisible()) {
             height += this.milestone.getFlagHeight();
         }
-        return height;
+        return height + this.additionalBottomHeight;
     }
 
     drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {
@@ -287,17 +288,17 @@ export class CalendarXAxes {
             this.milestone.flagY = y;
             this.milestone.y = this.milestone.flagY + this.milestone.flagHeight;
             this.dayOfWeek.setY(this.milestone.y);
-            this.dayOfMonth.setY(this.dayOfWeek.getY() + this.dayOfWeek.getHeight());
+            this.dayOfMonth.setY(this.dayOfWeek.getY() + this.dayOfWeek.getHeight() + this.additionalBottomHeight);
             if (this.isDayOfWeekVisible()) {
                 this.week.setY(this.isDayOfMonthVisible()
                     ? this.dayOfMonth.getY() + this.dayOfMonth.getHeight()
-                    : this.dayOfWeek.getY() + this.dayOfWeek.getHeight());
+                    : this.dayOfWeek.getY() + this.dayOfWeek.getHeight() + this.additionalBottomHeight);
             } else {
                 this.week.setY(this.milestone.y + this.milestone.height);
             }
             this.month.setY(this.isWeekVisible()
                 ? this.week.getY() + this.week.getHeight()
-                : this.dayOfWeek.getY() + this.dayOfWeek.getHeight());
+                : this.dayOfWeek.getY() + this.dayOfWeek.getHeight() + this.additionalBottomHeight);
             this.year.setY(this.month.getY() + this.month.getHeight());
         } else {
             if (CalendarSize.YEARS === this.calendarSize) {

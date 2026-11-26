@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -76,12 +77,13 @@ public class GanttBurndownExcelExportService {
         createHeaderCell(header, column, "Gantt guide without buffer - remaining (h)", headerStyle);
 
         int dayCount = calculateDayCount(chart);
+        List<List<Long>> actualSeries = chart.authors.stream().map(author -> accumulatedForExport(chart, author)).toList();
         for (int day = 0; day < dayCount; day++) {
             Row row = sheet.createRow(day + 1);
             row.createCell(0).setCellValue(chart.meta.chartStart.toLocalDate().plusDays(day).format(DATE_FORMAT));
             double actualTotal = 0;
             for (int authorIndex = 0; authorIndex < chart.authors.size(); authorIndex++) {
-                double actual = secondsToHours(valueAt(chart.authors.get(authorIndex).accumulatedWorkPerDay, day));
+                double actual = secondsToHours(valueAt(actualSeries.get(authorIndex), day));
                 row.createCell(authorIndex + 1).setCellValue(actual);
                 actualTotal += actual;
             }
@@ -151,10 +153,26 @@ public class GanttBurndownExcelExportService {
     private int calculateDayCount(GanttBurndownChartDto chart) {
         int dayCount = chart.meta.totalDays;
         for (AuthorSeriesDto author : chart.authors) {
-            dayCount = Math.max(dayCount, author.accumulatedWorkPerDay.size());
+            dayCount = Math.max(dayCount, author.workPerDay.size());
         }
         dayCount = Math.max(dayCount, chart.ganttGuideWithBuffer == null ? 0 : chart.ganttGuideWithBuffer.size());
         return Math.max(dayCount, chart.ganttGuideWithoutBuffer == null ? 0 : chart.ganttGuideWithoutBuffer.size());
+    }
+
+    private List<Long> accumulatedForExport(GanttBurndownChartDto chart, AuthorSeriesDto author) {
+        List<Long> accumulated = author.toAccumulatedWorkPerDay();
+        if (chart.meta.now != null && chart.seriesStart != null) {
+            long nowDay = Math.min(author.workPerDay.size() - 4L,
+                    ChronoUnit.DAYS.between(chart.seriesStart, chart.meta.now.toLocalDate()));
+            // The original series leaves empty future slots at zero but retains explicit future worklogs.
+            for (int i = (int) Math.max(0, nowDay + 3); i < accumulated.size(); i++) {
+                boolean hasWorklog = i < author.tooltipPerDay.size() && author.tooltipPerDay.get(i) != null
+                        && !author.tooltipPerDay.get(i).isEmpty();
+                if (!hasWorklog && author.workPerDay.get(i) == 0)
+                    accumulated.set(i, 0L);
+            }
+        }
+        return accumulated;
     }
 
     private CellStyle createHeaderStyle(Workbook workbook) {

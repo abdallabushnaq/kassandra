@@ -5,10 +5,11 @@
  * DTO representing a series of work data for a single author in a burndown chart.
  */
 export interface AuthorSeriesDto {
+    userId?: string | null;
     userName?: string | null;
     color: number;
     totalWorkedSeconds: number;
     totalRemainingSeconds: number;
-    accumulatedWorkPerDay: number[];
+    workPerDay: number[];
     tooltipPerDay: (string | null)[];
 }

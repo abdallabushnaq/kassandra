@@ -11,6 +11,22 @@ This allows a user to replay the burndown chart and see how the burndown chart e
 To allow TypeScript to do this, it needs to know when work was logged.
 GanttBurndownChartService calculates usersWorkPerDayAccumulated and hands that over to the TS code.
 This pre-cooking needs to be done now in TS code, so that we can draw the chart for any given day.
+Let's keep the code very similar to the java code, almost line-by-lline to make code review easier.
+Also take over any code comment.
+The slider basically controls what worklogs are taking into consideration.
+Keep the chart, guide, extrapolated release all the same.
+just change the worklogs that are taken into consideration.
+Keep the rest of the calculation as it is.
+The maximum of the y-axis in BurndownRenderer maxWorked.
+This value is first set to sprint.getWorked () + sprint.getRemaining () in GanttBurndownChartService.build.
+sprint.getWorked () is calculated as the sum of all tasks timeSpent (see Sprint.propagateTimeTracking).
+A task timeSpend is calculated as the sum of all worklog.getTimeSpent () (see Task.addWorklog).
+sprint.getRemaining () is calculated as the sum of all tasks remainingEstimate (see Sprint.propagateTimeTracking).
+A task remainingEstimate is calculated as the last worklog.getTimeSpent () (see Task.addWorklog).
+So, when we slide the slider back to a previous day, we need to recalculate sprint.getWorked () and sprint.getRemaining
+().
+sprint.getWorked () will only include worklog.getTimeSpent () of work logged until the slide day.
+sprint.getRemaining () will only include the worklog.getTimeSpent () of the slide day.
 
 # Add Chart Zoom-O-Meter
 

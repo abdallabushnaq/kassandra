@@ -333,7 +333,7 @@ class BurndownEvidenceServiceTest {
     @Test
     void doesNotCompareAnIncompleteAuthorSeriesOrMissingGuide() {
         GanttBurndownChartDto chart = chart();
-        chart.authors.get(0).accumulatedWorkPerDay = List.of(0L, 3600L);
+        chart.authors.get(0).workPerDay = List.of(0L, 3600L);
         var missingActual = service.capture(chart);
         assertEquals(BurndownEvidenceService.Coverage.NO_ACTUAL_POINT, missingActual.coverage());
         assertNull(missingActual.comparison());
@@ -825,7 +825,11 @@ class BurndownEvidenceServiceTest {
         AuthorSeriesDto author = new AuthorSeriesDto();
         author.totalWorkedSeconds = worked;
         author.totalRemainingSeconds = remaining;
-        author.accumulatedWorkPerDay = accumulated;
+        long previous = 0;
+        for (Long value : accumulated) {
+            author.workPerDay.add(value - previous);
+            previous = value;
+        }
         return author;
     }
 }

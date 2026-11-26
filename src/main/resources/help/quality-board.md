@@ -46,6 +46,13 @@ guarantee of delivery dates.
 Zoom in to reveal additional Gantt task and milestone details and dependency
 lines; zooming out simplifies the task bars.
 
+When weekdays are visible, drag the replay slider below them to show worklogs
+through an earlier day. The remaining estimate and release forecast are
+recalculated for that day. The earliest position is the day before the first
+milestone. If no work has been logged yet, the chart shows the guide and
+initial estimate scale without actual-work bars.
+Use the arrow keys, Home or End when the slider is focused.
+
 Hover over an author's actual-work dot in the burn-down plot to see the day's
 total remaining work and the author's share. Overlapping dots list all authors
 at that boundary. Values reflect recorded work through the end of the day (or

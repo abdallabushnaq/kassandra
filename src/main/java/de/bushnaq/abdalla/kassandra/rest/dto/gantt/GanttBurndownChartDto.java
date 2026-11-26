@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +40,7 @@ import java.util.UUID;
 public class GanttBurndownChartDto {
 
     /**
-     * Per-author accumulated work series for the stacked burndown bars.
+     * Per-author daily work series for the stacked burndown bars.
      * Sorted by author name for consistent legend ordering.
      */
     public List<AuthorSeriesDto> authors = new ArrayList<>();
@@ -65,6 +66,10 @@ public class GanttBurndownChartDto {
      */
     public BurndownMetaDto       meta    = new BurndownMetaDto();
     /**
+     * Task estimates and dated worklogs used for replay.
+     */
+    public List<ReplayTask> replayTasks = new ArrayList<>();
+    /**
      * Server-side date of slot zero in the actual and guide arrays, excluding chart padding.
      */
     @JsonIgnore
@@ -79,6 +84,32 @@ public class GanttBurndownChartDto {
      */
     public List<TaskDto>         tasks   = new ArrayList<>();
 
-    // ── Nested classes ──────────────────────────────────────────────────────
+    /**
+     * The initial estimate and worklogs of a task.
+     */
+    public static class ReplayTask {
+        /** The user assigned to the task, or null if unassigned. */
+        public UUID userId;
+        /** Whether the task contributes to sprint effort. */
+        public boolean impactOnCost;
+        /** Initial task estimate in seconds. */
+        public long initialEstimateSeconds;
+        /** Worklogs sorted by start time. */
+        public List<ReplayWorklog> worklogs = new ArrayList<>();
+    }
+
+    /**
+     * A dated worklog and its remaining estimate snapshot.
+     */
+    public static class ReplayWorklog {
+        /** The author who logged the work. */
+        public UUID authorId;
+        /** Worklog start time. */
+        public LocalDateTime start;
+        /** Time spent in seconds. */
+        public long timeSpentSeconds;
+        /** Remaining estimate in seconds. */
+        public Long remainingEstimateSeconds;
+    }
 
 }

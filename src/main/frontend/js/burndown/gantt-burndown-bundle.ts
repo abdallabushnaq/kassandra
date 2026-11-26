@@ -61,6 +61,8 @@ export function createGanttBurndownChart(
     const inspection = new GanttTaskInteraction(container, gantt, theme);
     const viewport = inspection.viewport;
     const points = new BurndownPointInteraction(viewport, burndown);
+    let replayPointer: number | null = null;
+    let restoreReplayFocus = false;
 
     function ensureTooltip(): HTMLDivElement {
         let tooltip = viewport.querySelector<HTMLDivElement>('.gantt-burndown-tooltip');
@@ -118,6 +120,10 @@ export function createGanttBurndownChart(
             ensureTooltip();
             inspection.afterRender();
             points.afterRender();
+            if (restoreReplayFocus) {
+                viewport.querySelector<SVGElement>('[data-replay-slider]')?.focus();
+                restoreReplayFocus = false;
+            }
         },
         initialScrollOffset: (dayWidth, containerWidth) => {
             const referenceDate = gantt.currentDate || burndown.currentDate || new Date(data.meta.sprintStart);
@@ -126,6 +132,67 @@ export function createGanttBurndownChart(
             return Math.max(0, Math.min(gantt.days - visibleDays, todayIdx - visibleDays * 0.2));
         },
     });
+    const updateReplayFromPointer = (event: PointerEvent): void => {
+        const slider = viewport.querySelector<SVGGElement>('[data-replay-slider]');
+        const matrix = slider?.getScreenCTM();
+        if (!slider || !matrix)
+            return;
+        const position = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+        const startX = Number(slider.getAttribute('data-start-x'));
+        const minX = Number(slider.getAttribute('data-min-x'));
+        const dayWidth = Number(slider.getAttribute('data-day-width'));
+        const dayIndex = position.x < startX && minX > startX - dayWidth
+            ? (position.x <= (minX + startX) / 2 ? -1 : 0)
+            : (position.x - startX) / dayWidth;
+        if (burndown.setReplayDayIndex(dayIndex))
+            interactiveChart.schedule();
+    };
+    interactiveChart.addEventListener('pointerdown', (event => {
+        const pointer = event as PointerEvent;
+        if (pointer.button !== 0 || !(pointer.target instanceof Element)
+            || !pointer.target.closest('[data-replay-slider]'))
+            return;
+        replayPointer = pointer.pointerId;
+        viewport.setPointerCapture(pointer.pointerId);
+        updateReplayFromPointer(pointer);
+        pointer.preventDefault();
+    }) as EventListener);
+    interactiveChart.addEventListener('pointermove', (event => {
+        const pointer = event as PointerEvent;
+        if (pointer.pointerId === replayPointer)
+            updateReplayFromPointer(pointer);
+    }) as EventListener);
+    const finishReplayPointer = (event: Event): void => {
+        const pointer = event as PointerEvent;
+        if (pointer.pointerId !== replayPointer)
+            return;
+        replayPointer = null;
+        if (viewport.hasPointerCapture(pointer.pointerId))
+            viewport.releasePointerCapture(pointer.pointerId);
+    };
+    interactiveChart.addEventListener('pointerup', finishReplayPointer);
+    interactiveChart.addEventListener('pointercancel', finishReplayPointer);
+    interactiveChart.addEventListener('lostpointercapture', finishReplayPointer);
+    interactiveChart.addEventListener('keydown', (event => {
+        const key = event as KeyboardEvent;
+        if (!(key.target instanceof Element) || !key.target.closest('[data-replay-slider]'))
+            return;
+        const slider = key.target.closest('[data-replay-slider]')!;
+        const current = Number(slider.getAttribute('aria-valuenow'));
+        let next: number;
+        switch (key.key) {
+            case 'ArrowLeft': case 'ArrowDown': next = current - 1; break;
+            case 'ArrowRight': case 'ArrowUp': next = current + 1; break;
+            case 'Home': next = Number(slider.getAttribute('aria-valuemin')); break;
+            case 'End': next = Number(slider.getAttribute('aria-valuemax')); break;
+            default: return;
+        }
+        key.preventDefault();
+        if (burndown.setReplayDayIndex(next)) {
+            restoreReplayFocus = true;
+            interactiveChart.schedule();
+        }
+    }) as EventListener);
     interactiveChart.addEventListener('mousemove', handleMouseMove as EventListener);
     interactiveChart.addEventListener('mouseleave', hideTooltip as EventListener);
     interactiveChart.addEventListener('pointermove', (event => points.handlePointerMove(event as PointerEvent)) as EventListener);
