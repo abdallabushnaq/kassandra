@@ -53,6 +53,8 @@ import org.springframework.web.server.ServerErrorException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.awt.*;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.*;
 import java.util.*;
 import java.util.List;
@@ -644,10 +646,12 @@ public class PersistingEntityGenerator {
     /**
      * Injects sick leave into a sprint's most heavily assigned critical-path developer.
      *
-     * @param sprint sprint whose leveled critical path determines the absences
+     * @param sprint     sprint whose leveled critical path determines the absences
+     * @param sickDayLog file to which the injection outcome is appended
+     * @throws IOException if the injection outcome cannot be written to the log
      */
-    public void injectSickDays(Sprint sprint) {
-        offDayGenerator.injectSickDays(sprint, getSprints(), getUsers());
+    public void injectSickDays(Sprint sprint, Path sickDayLog) throws IOException {
+        offDayGenerator.injectSickDays(sprint, getSprints(), getUsers(), sickDayLog);
     }
 
 

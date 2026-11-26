@@ -26,6 +26,7 @@ import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.dto.Worklog;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +35,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.awt.Color;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -57,7 +60,7 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    void injectedSicknessTargetsCriticalWorkAndDelaysWorklogs() {
+    void injectedSicknessTargetsCriticalWorkAndDelaysWorklogs(@TempDir Path tempDir) throws Exception {
         ParameterOptions.setNow(OffsetDateTime.parse("2026-02-01T08:00:00+01:00"));
         LocalDate start = LocalDate.of(2026, 1, 12);
         User criticalUser = peg.addUser("Critical Developer", "kristen.hubbell@kassandra.org", "USER", "de", "nw",
@@ -79,9 +82,15 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
         otherSprint.initialize();
         otherSprint.initUserMap(List.of(copy));
 
-        offDayGenerator.injectSickDays(sprint, List.of(sprint, otherSprint), peg.getUsers());
+        Path sickDayLog = tempDir.resolve("SickLeaveInjectionTest-sick-days.log");
+        offDayGenerator.injectSickDays(sprint, List.of(sprint, otherSprint), peg.getUsers(), sickDayLog);
 
         List<LocalDate> expected = List.of(start.plusDays(1), start.plusDays(2), start.plusDays(3));
+        String logContents = Files.readString(sickDayLog);
+        assertTrue(logContents.contains("Sprint: Critical sprint"));
+        assertTrue(logContents.contains("User: Critical Developer (kristen.hubbell@kassandra.org)"));
+        assertTrue(logContents.contains("Sick days: " + expected));
+        assertTrue(logContents.contains("Status: injected"));
         assertEquals(expected, criticalUser.getOffDays().stream()
                 .filter(offDay -> offDay.getType() == OffDayType.SICK)
                 .map(OffDay::getFirstDay).sorted().toList());
@@ -123,7 +132,7 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
 
     @Test
     @WithMockUser(username = "admin-user", roles = "ADMIN")
-    void injectedSicknessSkipsExistingAbsencesAndUnassignedCriticalTasks() {
+    void injectedSicknessSkipsExistingAbsencesAndUnassignedCriticalTasks(@TempDir Path tempDir) throws Exception {
         ParameterOptions.setNow(OffsetDateTime.parse("2026-02-01T08:00:00+01:00"));
         LocalDate start = LocalDate.of(2026, 1, 12);
         User user = peg.addUser("Critical Developer", "kristen.hubbell@kassandra.org", "USER", "de", "nw",
@@ -135,7 +144,8 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
         peg.addOffDay(user, start.plusDays(2), start.plusDays(2), OffDayType.VACATION);
         task(sprint, user, start, 5, Duration.ofMinutes(5 * 450), true);
 
-        offDayGenerator.injectSickDays(sprint, List.of(sprint), peg.getUsers());
+        Path sickDayLog = tempDir.resolve("SickLeaveInjectionTest-sick-days.log");
+        offDayGenerator.injectSickDays(sprint, List.of(sprint), peg.getUsers(), sickDayLog);
 
         assertEquals(List.of(start.plusDays(1), start.plusDays(3)), user.getOffDays().stream()
                 .filter(offDay -> offDay.getType() == OffDayType.SICK)
@@ -144,7 +154,12 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
 
         Sprint emptySprint = new Sprint();
         emptySprint.setName("No critical work");
-        offDayGenerator.injectSickDays(emptySprint, List.of(emptySprint), peg.getUsers());
+        offDayGenerator.injectSickDays(emptySprint, List.of(emptySprint), peg.getUsers(), sickDayLog);
+        String logContents = Files.readString(sickDayLog);
+        assertTrue(logContents.contains("Sprint: Absences"));
+        assertTrue(logContents.contains("User: Critical Developer (kristen.hubbell@kassandra.org)"));
+        assertTrue(logContents.contains("Sprint: No critical work | Status: skipped"));
+        assertTrue(logContents.contains("Reason: no assigned, scheduled critical-path leaf tasks"));
         assertEquals(3, user.getOffDays().size());
     }
 

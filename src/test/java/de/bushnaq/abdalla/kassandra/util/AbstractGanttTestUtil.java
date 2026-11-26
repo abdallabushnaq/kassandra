@@ -47,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -328,10 +329,20 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         // Plans have already been leveled and saved: sickness is an unplanned event and must
         // not move the original task dates. Use a separate seeded stream so these decisions
         // are reproducible without changing the random values used to generate worklogs.
+        Path sickDayLog = Path.of("test-results",
+                testInfo.getTestClass().orElseThrow().getSimpleName() + "-sick-days.log");
+        Files.createDirectories(sickDayLog.getParent());
+        Files.writeString(sickDayLog, "Sick-day injection for " + testInfo.getTestClass().orElseThrow().getSimpleName()
+                        + System.lineSeparator(), StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         Random sicknessRandom = new Random(randomCase.getSeed());
         for (Sprint sprint : peg.getSprints()) {
             if (sicknessRandom.nextFloat() < randomCase.getSickSprintProbability()) {
-                peg.injectSickDays(sprint);
+                peg.injectSickDays(sprint, sickDayLog);
+            } else {
+                Files.writeString(sickDayLog, "Sprint: " + sprint.getName() + " | Status: not selected for sick leave"
+                                + System.lineSeparator(), StandardCharsets.UTF_8,
+                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             }
         }
         // injectSickDays updates all in-memory copies of an affected user's calendar before

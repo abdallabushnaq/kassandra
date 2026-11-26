@@ -41,6 +41,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -299,7 +304,7 @@ public class OffDayGenerator {
      * @param sprints generated sprints whose user copies and calendars must receive the absences
      * @param users generated users whose copies and calendars must also receive the absences
      */
-    void injectSickDays(Sprint sprint, Collection<Sprint> sprints, Collection<User> users) {
+    void injectSickDays(Sprint sprint, Collection<Sprint> sprints, Collection<User> users, Path logFile) throws IOException {
         // Only scheduled, assigned cost-bearing leaf tasks on the calculated critical path
         // contribute. Exclude stories, milestones, delivery buffers and incomplete plans.
         List<Task> criticalTasks = sprint.getTasks().stream()
@@ -322,6 +327,8 @@ public class OffDayGenerator {
                 .findFirst().orElse(null);
         if (user == null) {
             log.info("No assigned critical-path work in sprint '{}'; skipping sick leave.", sprint.getName());
+            appendSickDayLog(logFile, "Sprint: " + sprint.getName()
+                    + " | Status: skipped | Reason: no assigned, scheduled critical-path leaf tasks");
             return;
         }
 
@@ -341,6 +348,8 @@ public class OffDayGenerator {
         }
         if (plannedDays.isEmpty()) {
             log.info("No available critical-path work days for '{}' in sprint '{}'; skipping sick leave.", user.getName(), sprint.getName());
+            appendSickDayLog(logFile, "Sprint: " + sprint.getName() + " | User: " + user.getName() + " (" + user.getEmail()
+                    + ") | Status: skipped | Reason: no available critical-path work days");
             return;
         }
         // Round half up for odd-sized sets, then take the centered slice. If the unused
@@ -349,6 +358,8 @@ public class OffDayGenerator {
         int count = (days.size() + 1) / 2;
         int first = (days.size() - count) / 2;
         List<LocalDate> sickDays = days.subList(first, first + count);
+        appendSickDayLog(logFile, "Sprint: " + sprint.getName() + " | User: " + user.getName() + " (" + user.getEmail()
+                + ") | Sick days: " + sickDays + " | Status: injecting");
         // Buffer individual working dates rather than a single range: the selected dates
         // may be separated by non-working days or existing off days. The batch flush saves
         // them and replaces the temporary in-memory entries with server-returned records.
@@ -387,6 +398,13 @@ public class OffDayGenerator {
             }
         }
         log.info("Injected {} sick days for '{}' on the critical path of sprint '{}'.", sickDays.size(), user.getName(), sprint.getName());
+        appendSickDayLog(logFile, "Sprint: " + sprint.getName() + " | User: " + user.getName() + " (" + user.getEmail()
+                + ") | Status: injected | Sick days: " + sickDays);
+    }
+
+    private void appendSickDayLog(Path logFile, String message) throws IOException {
+        Files.writeString(logFile, message + System.lineSeparator(), StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
 
     private static int generateUserYearSeed(User saved, int year) {
