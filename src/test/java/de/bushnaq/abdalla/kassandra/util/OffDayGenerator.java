@@ -20,6 +20,8 @@ package de.bushnaq.abdalla.kassandra.util;
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
 import de.bushnaq.abdalla.kassandra.dto.OffDay;
 import de.bushnaq.abdalla.kassandra.dto.OffDayType;
+import de.bushnaq.abdalla.kassandra.dto.Sprint;
+import de.bushnaq.abdalla.kassandra.dto.Task;
 import de.bushnaq.abdalla.kassandra.dto.User;
 import de.bushnaq.abdalla.kassandra.rest.api.OffDayApi;
 import de.bushnaq.abdalla.kassandra.rest.api.UserApi;
@@ -39,12 +41,21 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -271,6 +282,111 @@ public class OffDayGenerator {
                 flushOffDayBuffer(user);
             }
         }
+    }
+
+    /**
+     * Adds unplanned sick leave after the sprint has been leveled, without changing its planned
+     * dates. The assigned developer with the most estimated work on critical leaf tasks is chosen,
+     * because an absence on that path is more likely to delay the sprint. Half of that developer's
+     * available critical-task dates are marked sick, centered in chronological task-date order.
+     * This can delay the sprint, but does not guarantee an overrun.
+     *
+     * <p>The new off days are persisted and propagated to every supplied in-memory copy of the
+     * user and its calendar. The worklog simulation can then observe the absences even when
+     * different sprints hold different user instances.</p>
+     *
+     * @param sprint the already-leveled sprint whose critical work is inspected
+     * @param sprints generated sprints whose user copies and calendars must receive the absences
+     * @param users generated users whose copies and calendars must also receive the absences
+     */
+    void injectSickDays(Sprint sprint, Collection<Sprint> sprints, Collection<User> users) {
+        // Only scheduled, assigned cost-bearing leaf tasks on the calculated critical path
+        // contribute. Exclude stories, milestones, delivery buffers and incomplete plans.
+        List<Task> criticalTasks = sprint.getTasks().stream()
+                .filter(task -> task.isTask() && task.getChildTasks().isEmpty() && task.isImpactOnCost() && task.isCritical())
+                .filter(task -> task.getResourceId() != null && sprint.getUser(task.getResourceId()) != null)
+                .filter(task -> task.getStart() != null && task.getFinish() != null && task.getFinish().isAfter(task.getStart()))
+                .toList();
+        // Sum the planned minimum estimates, not task durations: duration also reflects
+        // resource availability and is not the amount of work assigned to the developer.
+        Map<UUID, Duration> workByUser = new HashMap<>();
+        for (Task task : criticalTasks) {
+            workByUser.merge(task.getResourceId(), task.getMinEstimate(), Duration::plus);
+        }
+        // Break equal-work ties by stable user attributes rather than random UUIDs, so the
+        // same seeded fixture selects the same developer on subsequent generations.
+        User user = workByUser.keySet().stream()
+                .map(sprint::getUser)
+                .sorted(Comparator.<User, Duration>comparing(candidate -> workByUser.get(candidate.getId())).reversed()
+                        .thenComparing(User::getName).thenComparing(User::getEmail))
+                .findFirst().orElse(null);
+        if (user == null) {
+            log.info("No assigned critical-path work in sprint '{}'; skipping sick leave.", sprint.getName());
+            return;
+        }
+
+        // Collect distinct calendar dates with scheduled critical work. The user's existing
+        // calendar excludes weekends, holidays, vacations and previously injected absences;
+        // a date with multiple tasks still represents only one potential sick day.
+        TreeSet<LocalDate> plannedDays = new TreeSet<>();
+        for (Task task : criticalTasks) {
+            if (!user.getId().equals(task.getResourceId())) {
+                continue;
+            }
+            for (LocalDate day = task.getStart().toLocalDate(); day.atStartOfDay().isBefore(task.getFinish()); day = day.plusDays(1)) {
+                if (user.getCalendar().isWorkingDate(day)) {
+                    plannedDays.add(day);
+                }
+            }
+        }
+        if (plannedDays.isEmpty()) {
+            log.info("No available critical-path work days for '{}' in sprint '{}'; skipping sick leave.", user.getName(), sprint.getName());
+            return;
+        }
+        // Round half up for odd-sized sets, then take the centered slice. If the unused
+        // dates cannot be split evenly, the extra date is left at the end of the sequence.
+        List<LocalDate> days = new ArrayList<>(plannedDays);
+        int count = (days.size() + 1) / 2;
+        int first = (days.size() - count) / 2;
+        List<LocalDate> sickDays = days.subList(first, first + count);
+        // Buffer individual working dates rather than a single range: the selected dates
+        // may be separated by non-working days or existing off days. The batch flush saves
+        // them and replaces the temporary in-memory entries with server-returned records.
+        for (LocalDate day : sickDays) {
+            addOffDayToBuffer(user, day, day, OffDayType.SICK);
+        }
+        flushOffDayBuffer(user);
+
+        // Generated users and sprint user maps can contain distinct DTO instances for the
+        // same database user. Find all of them by identity so equal IDs do not collapse copies.
+        List<OffDay> savedDays = user.getOffDays().stream()
+                .filter(offDay -> offDay.getType() == OffDayType.SICK && sickDays.contains(offDay.getFirstDay()))
+                .toList();
+        Set<User> copies = Collections.newSetFromMap(new IdentityHashMap<>());
+        copies.addAll(users);
+        for (Sprint other : sprints) {
+            copies.addAll(other.getUserMap().values());
+        }
+        // Different DTOs can also share a calendar. Add each exception once per calendar,
+        // including the selected user's calendar, which the buffer already updated.
+        Set<ProjectCalendar> calendars = Collections.newSetFromMap(new IdentityHashMap<>());
+        calendars.add(user.getCalendar());
+        for (User copy : copies) {
+            if (copy == user || !user.getId().equals(copy.getId())) {
+                continue;
+            }
+            for (OffDay offDay : savedDays) {
+                if (!copy.getOffDays().contains(offDay)) {
+                    copy.addOffday(offDay);
+                }
+            }
+            if (copy.getCalendar() != null && calendars.add(copy.getCalendar())) {
+                for (LocalDate day : sickDays) {
+                    copy.getCalendar().addCalendarException(day, day).setName(OffDayType.SICK.name());
+                }
+            }
+        }
+        log.info("Injected {} sick days for '{}' on the critical path of sprint '{}'.", sickDays.size(), user.getName(), sprint.getName());
     }
 
     private static int generateUserYearSeed(User saved, int year) {

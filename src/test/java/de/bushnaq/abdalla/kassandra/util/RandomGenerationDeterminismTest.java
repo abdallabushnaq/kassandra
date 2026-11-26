@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.util;
 
+import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.Tag;
@@ -34,6 +35,7 @@ import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("UnitTest")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -58,6 +60,7 @@ public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
                 .numberOfUsersPerSprint(2, 4)
                 .numberOfTasks(1, 1)
                 .seed(7)
+                .sickSprintProbability(1f)
                 .build();
     }
 
@@ -70,6 +73,8 @@ public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
             generateProductsIfNeeded(testInfo, randomCase(), true);
         }
 
+        assertTrue(peg.getUsers().stream().flatMap(user -> user.getOffDays().stream())
+                .anyMatch(offDay -> offDay.getType() == OffDayType.SICK), "The generated dataset should include sick leave");
         String trace = Files.readString(traceFile);
         assertFalse(trace.isBlank(), "The generation should produce random values");
         if (run == 2) {

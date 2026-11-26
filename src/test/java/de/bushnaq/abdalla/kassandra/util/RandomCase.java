@@ -48,6 +48,7 @@ public class RandomCase {
     @Getter(AccessLevel.NONE)
     private final MinMaxNumber   numberOfVersions;
     private final long           seed;
+    private final float          sickSprintProbability;
     private final LocalDate      startDate;
     @Getter(AccessLevel.NONE)
     private final MinMaxNumber   taskDurationDays;
@@ -65,6 +66,7 @@ public class RandomCase {
         taskDurationDays       = builder.taskDurationPerDay;
         now                    = builder.now;
         seed                   = builder.seed;
+        sickSprintProbability  = builder.sickSprintProbability;
         startDate              = builder.startDate;
         testCaseIndex          = builder.testCaseIndex;
     }
@@ -173,6 +175,7 @@ public class RandomCase {
         private MinMaxNumber   numberOfUsersPerSprint = new MinMaxNumber(0, 0);
         private MinMaxNumber   numberOfVersions       = new MinMaxNumber(0, 0);
         private long           seed;
+        private float          sickSprintProbability  = 0.5f;
         private LocalDate      startDate;
         private MinMaxNumber   taskDurationPerDay     = new MinMaxNumber(0, 0);
         private int            testCaseIndex;
@@ -301,6 +304,20 @@ public class RandomCase {
          */
         public RandomCaseBuilder seed(long seed) {
             this.seed = seed;
+            return this;
+        }
+
+        /**
+         * Sets the probability that a sprint receives a critical-path sick leave.
+         *
+         * @param probability probability between zero and one, inclusive
+         * @return this builder
+         */
+        public RandomCaseBuilder sickSprintProbability(float probability) {
+            if (!Float.isFinite(probability) || probability < 0f || probability > 1f) {
+                throw new IllegalArgumentException("Sick sprint probability must be between 0 and 1");
+            }
+            sickSprintProbability = probability;
             return this;
         }
 

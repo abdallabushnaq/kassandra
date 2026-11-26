@@ -641,6 +641,15 @@ public class PersistingEntityGenerator {
         offDayGenerator.generateRandomSickDays(users);
     }
 
+    /**
+     * Injects sick leave into a sprint's most heavily assigned critical-path developer.
+     *
+     * @param sprint sprint whose leveled critical path determines the absences
+     */
+    public void injectSickDays(Sprint sprint) {
+        offDayGenerator.injectSickDays(sprint, getSprints(), getUsers());
+    }
+
 
     public TreeSet<Availability> getAvailabilities() {
         return eg.getAvailabilities();

@@ -244,7 +244,8 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean forceGeneration) throws Exception {
         ParameterOptions.setNow(randomCase.getNow());
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
-        // Include generation settings so range changes cannot load stale cached data.
+        // Include all generation settings, including the sick-sprint probability, so a change
+        // to the simulation cannot reuse a snapshot generated with different settings.
         String snapshotConfigHash = Integer.toUnsignedString(randomCase.toString().hashCode(), 16);
         String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex() + "-" +
                 snapshotConfigHash;
@@ -324,10 +325,17 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
             }
         }
         ParameterOptions.setNow(randomCase.getNow());
-        List<User> usersSortedByName = peg.getUsers().stream()
-                .sorted(Comparator.comparing(User::getName).thenComparing(User::getEmail))
-                .toList();
-        peg.generateRandomSickDays(usersSortedByName);
+        // Plans have already been leveled and saved: sickness is an unplanned event and must
+        // not move the original task dates. Use a separate seeded stream so these decisions
+        // are reproducible without changing the random values used to generate worklogs.
+        Random sicknessRandom = new Random(randomCase.getSeed());
+        for (Sprint sprint : peg.getSprints()) {
+            if (sicknessRandom.nextFloat() < randomCase.getSickSprintProbability()) {
+                peg.injectSickDays(sprint);
+            }
+        }
+        // injectSickDays updates all in-memory copies of an affected user's calendar before
+        // worklog generation, which skips sick days and may therefore finish after the plan.
         //TODO sprint user calendars are not initialized with user off days.
         BurnDownUtil.generateWorkLogs(peg);
         log.trace("Generated synthetic data in " + DateUtil.createDurationString(Duration.ofMillis(System.currentTimeMillis() - startTime), true, true, false));
