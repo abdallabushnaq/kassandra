@@ -112,7 +112,7 @@ public class GanttBurndownChartService {
 
         calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, wlRemainingList, usersTotalContribution, usersWorkPerDayAccumulated);//TODO stop passing Milestonres as parameter
         dto.seriesStart = milestones.firstMilestone;
-        dto.sprintId = sprint.getId();
+        dto.sprintId    = sprint.getId();
 
 
         // Sort worklogs chronologically for correct running-total computation
@@ -122,7 +122,6 @@ public class GanttBurndownChartService {
         LocalDateTime chartStart = GanttChartService.getChartStart(sprint, now, preRun).atStartOfDay();
         LocalDateTime chartEnd   = GanttChartService.getChartEnd(sprint, now, postRun).atStartOfDay();
         int           totalDays  = DateUtil.calculateDays(milestones.firstMilestone, this.milestones.lastMilestone) + 1 + preRun + postRun;
-//        (int) ChronoUnit.DAYS.between(chartStart, chartEnd) + 1;
 
         // ── Milestone dates ─────────────────────────────────────────────────────
         LocalDateTime firstWorklogDt   = null;
@@ -172,67 +171,12 @@ public class GanttBurndownChartService {
         // ── Collect unique authors (worklogs first, then worklogRemaining) ─────
         // Use LinkedHashMap to preserve insertion order (matches Java's sorted-key-list order)
         Map<UUID, User> authorMap = new LinkedHashMap<>();
-//        Map<UUID, Long> workedSecs    = new HashMap<>();
-//        Map<UUID, Long> remainingSecs = new HashMap<>();
-//
+
         for (Worklog w : sortedWorklogs) {
             User u = sprint.getUser(w.getAuthorId());
             if (u != null)
                 authorMap.put(u.getId(), u);
         }
-//        for (WorklogRemaining wr : wlRemainingList) {
-//            User u = wr.getAuthor();
-//            if (u != null) {
-//                authorMap.put(u.getId(), u);
-//                remainingSecs.merge(u.getId(), wr.getRemaining().getSeconds(), Long::sum);
-//            }
-//        }
-//        for (UUID id : authorMap.keySet()) {
-//            workedSecs.put(id, 0L);
-//        }
-//
-//        // ── Per-author accumulated work arrays ─────────────────────────────────
-//        int arrayLen = totalDays + 3;
-//        Map<UUID, long[]>   workArrays = new LinkedHashMap<>();
-//        Map<UUID, String[]> tooltipArr = new LinkedHashMap<>();
-//
-//        for (UUID id : authorMap.keySet()) {
-//            workArrays.put(id, new long[arrayLen]);
-//            tooltipArr.put(id, new String[arrayLen]);
-//        }
-//
-//        // Running totals per author (for accumulation)
-//        Map<UUID, Long> running = new HashMap<>();
-//        for (UUID id : authorMap.keySet()) running.put(id, 0L);
-//
-//        for (Worklog w : sortedWorklogs) {
-//            User u = sprint.getUser(w.getAuthorId());
-//            if (u == null) continue;
-//            UUID id = u.getId();
-//
-//            long newTotal = running.getOrDefault(id, 0L) + w.getTimeSpent().getSeconds();
-//            running.put(id, newTotal);
-//            workedSecs.merge(id, w.getTimeSpent().getSeconds(), Long::sum);
-//
-//            // Day offset from chartStart
-//            LocalDate workDay = w.getStart().toLocalDate();
-//            int       day     = (int) ChronoUnit.DAYS.between(chartStart.toLocalDate(), workDay);
-//            if (day < 0) day = 0;
-//
-//            if (day + 1 < arrayLen) {
-//                workArrays.get(id)[day + 1] = newTotal;
-//                                              lastDayWithValue = Math.max(day, lastDayWithValue);
-//
-//                // Build tooltip entry: "key | duration | comment"
-//                Task   t       = sprint.getTaskById(w.getTaskId());
-//                String key     = (t != null) ? t.getKey() : "?";
-//                String dur     = formatDuration(w.getTimeSpent());
-//                String comment = w.getComment() != null ? w.getComment() : "";
-//                String entry   = key + "\t" + "<b>" + dur + "</b>" + "\t" + comment;
-//                String prev    = tooltipArr.get(id)[day + 1];
-//                tooltipArr.get(id)[day + 1] = (prev != null && !prev.isEmpty()) ? prev + "\n" + entry : entry;
-//            }
-//        }
         if (!usersTotalContribution.isEmpty()) {
             for (User user : usersTotalContribution.getSortedKeyList()) {
                 AuthorSeriesDto a = new AuthorSeriesDto();
@@ -241,7 +185,6 @@ public class GanttBurndownChartService {
                 if (userColor == null) {
                     a.color = theme.burndownTheme.getAuthorColor(28).getRGB();
                 } else {
-//                    Color lightened = ColorUtil.lightenColor(userColor, 0.3f);
                     Color lightened = userColor;
                     a.color = new Color(lightened.getRed(), lightened.getGreen(), lightened.getBlue(), theme.ganttTheme.taskTransparency).getRGB();
                 }
@@ -253,11 +196,6 @@ public class GanttBurndownChartService {
                     a.accumulatedWorkPerDay.add(dw.duration.toSeconds());
                     a.tooltipPerDay.add(DayWork.transactionsToTooltips(dw.transactions, user.getName(), calendarFromDayIndex(i)));
                 }
-//                String[] tt = tooltipArr.get(user.getId());
-//                for (int d = 0; d < arrayLen; d++) {
-//                    a.tooltipPerDay.add(buildTooltip(tt[d], user.getName()));
-//                }
-//
                 dto.authors.add(a);
             }
         }
@@ -275,18 +213,6 @@ public class GanttBurndownChartService {
             nowDayIndex = Math.max(0, Math.min(nowDayIndex, totalDays - 1));
         }
 
-//        // Forward-fill each author's array up to nowDayIndex + 2
-//        for (UUID id : authorMap.keySet()) {
-//            long[] aw   = workArrays.get(id);
-//            long   last = 0;
-//            for (int i = 1; i < arrayLen; i++) {
-//                if (i <= nowDayIndex + 2) {
-//                    if (aw[i] == 0 || last > aw[i]) aw[i] = last;
-//                    last = aw[i];
-//                }
-//            }
-//        }
-
         // ── Build AuthorSeriesDto list ─────────────────────────────────────────
         // Sort authors by descending total estimated work (worked + remaining), matching
         // Java's AuthorsContribution.getSortedKeyList() / MapValueCopmparator behaviour,
@@ -296,42 +222,6 @@ public class GanttBurndownChartService {
                 sortedAuthorIds.add(user.getId());
             }
         }
-
-
-//        sortedAuthorIds.sort((a1, a2) -> {
-//            long t1 = workedSecs.getOrDefault(a1, 0L) + remainingSecs.getOrDefault(a1, 0L);
-//            long t2 = workedSecs.getOrDefault(a2, 0L) + remainingSecs.getOrDefault(a2, 0L);
-//            return Long.compare(t2, t1);
-//        });
-//
-//        int colorIdx = 0;
-//        for (UUID id : sortedAuthorIds) {
-//            User                                  u = authorMap.get(id);
-//            GanttBurndownChartDto.AuthorSeriesDto a = new GanttBurndownChartDto.AuthorSeriesDto();
-//            a.userName              = u.getName();
-//            a.totalWorkedSeconds    = workedSecs.getOrDefault(id, 0L);
-//            a.totalRemainingSeconds = remainingSecs.getOrDefault(id, 0L);
-//
-//            // Color: lighten user color by 75% towards white, alpha = 128 (~50%)
-//            Color userColor = u.getColor();
-//            if (userColor == null) {
-//                int ci = colorIdx % theme.burndownTheme.burnDownColor.length;
-//                userColor = theme.burndownTheme.burnDownColor[ci];
-//            }
-//            Color lightened = ColorUtil.lightenColor(userColor, 0.75f);
-//            a.color = colorToHexWithAlpha(lightened, 128);
-//
-//            // Arrays
-//            long[]   aw = workArrays.get(id);
-//            String[] tt = tooltipArr.get(id);
-//            for (int d = 0; d < arrayLen; d++) {
-//                a.accumulatedWorkPerDay.add(aw[d]);
-//                a.tooltipPerDay.add(buildTooltip(tt[d], u.getName()));
-//            }
-//
-//            dto.authors.add(a);
-//            colorIdx++;
-//        }
 
 
         // ── Gantt guides ───────────────────────────────────────────────────────
@@ -353,25 +243,12 @@ public class GanttBurndownChartService {
             }
         }
 
-//        buildGanttGuides(sprint, chartStart, totalDays, dto);
-
-        // Raise maxWorked if guides exceed it
-//        if (dto.ganttGuideWithoutBuffer != null && !dto.ganttGuideWithoutBuffer.isEmpty()) {
-//            long gMax = dto.ganttGuideWithoutBuffer.get(0);
-//            if (gMax > meta.maxWorkedSeconds)
-//                meta.maxWorkedSeconds = gMax;
-//        }
-//        if (dto.ganttGuideWithBuffer != null && !dto.ganttGuideWithBuffer.isEmpty()) {
-//            long gMax = dto.ganttGuideWithBuffer.get(0);
-//            if (gMax > meta.maxWorkedSeconds)
-//                meta.maxWorkedSeconds = gMax;
-//        }
 
         // ── Gantt task rows (delegate to GanttChartService) ───────────────────
         GanttChartDto ganttDto = ganttChartService.build(sprint, now, dark, preRun, postRun);
-        dto.calendars      = ganttDto.calendars;
-        dto.tasks          = ganttDto.tasks;
-        dto.meta.ganttZoom = ganttDto.meta.ganttZoom;
+        dto.calendars             = ganttDto.calendars;
+        dto.tasks                 = ganttDto.tasks;
+        dto.meta.ganttZoom        = ganttDto.meta.ganttZoom;
         dto.meta.calendarAxesZoom = ganttDto.meta.calendarAxesZoom;
 
         return dto;
@@ -589,121 +466,113 @@ public class GanttBurndownChartService {
                 if (stop.isBefore(start) || stop.isEqual(start)) {
                     sprint.exceptions.add(new ErrorException(String.format("Task %s finish time has to be after start time. Ignoring task.", task.getName())));
                 } else {
-                    //                    Duration duration0 = task.getDuration();
-//                    for (User assignment : task.getAssignedUser())
-                    {
-//                        Resource resource =  assignment.getResource();
+                    Number availability = task.getAvailability();
+                    if (/*resource != null &&*/ availability != null) {
+                        int  startDayIndex = calculateDayIndex(start);
+                        int  stopDayIndex  = calculateDayIndex(stop);
+                        long oneDay        = 75 * SECONDS_PER_HOUR / 10;
+                        //                            long oneHour = SECONDS_PER_HOUR;
+                        if (stopDayIndex == startDayIndex) {
+                            // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
+                            // start time might not be in the morning at exactly 8:00
+                            // stop time might not be in the afternoon 15:30
+                            LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(start);
+                            LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(start);
+                            if (start.isBefore(lunchStartTime) || start.isEqual(lunchStartTime)) {
+                                // if(start <= 12:00)
+                                if (stop.isBefore(lunchStartTime) || stop.isEqual(lunchStartTime)) {
+                                    // if(stop <= 12:00)
+                                    // (stop - start)/7.5
+                                    double   fraction = (double) Duration.between(start, stop).getSeconds() / oneDay;
+                                    Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                    if (print)
+                                        System.out.printf("[1] %s start & stop <= 12:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                    guide.add(startDayIndex, work);
+                                } else if (stop.isAfter(lunchStopTime) || stop.isEqual(lunchStopTime)) {
+                                    // if(stop >= 13:00)
+                                    // ( stop - start -1h )/7.5
+                                    double   fraction = (double) Duration.between(start, stop).minusHours(1).getSeconds() / oneDay;
+                                    Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                    if (print)
+                                        System.out.printf("[2] %s start <= 12:00 & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                    guide.add(startDayIndex, work);
+                                } else {
+                                    throw new Exception(String.format("Task %s stop within lunch time", task.getName()));
+                                }
+                            } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
+                                // if(start >= 13:00 && stop >= 13:00)
+                                // (stop - Start))/7.5
+                                double   fraction = ((double) Duration.between(start, stop).getSeconds()) / oneDay;
+                                Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                if (print)
+                                    System.out.printf("[3] %s start >= 13:00 & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                guide.add(startDayIndex, work);
+                            } else {
+                                throw new Exception(String.format("Task %s stop before start", task.getName()));
+                            }
 
-//                        Number availability = assignment.getUnits();
-                        Number availability = task.getAvailability();
-                        if (/*resource != null &&*/ availability != null) {
-                            int  startDayIndex = calculateDayIndex(start);
-                            int  stopDayIndex  = calculateDayIndex(stop);
-                            long oneDay        = 75 * SECONDS_PER_HOUR / 10;
-                            //                            long oneHour = SECONDS_PER_HOUR;
-                            if (stopDayIndex == startDayIndex) {
-                                // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
+                        } else {
+                            // start
+                            {
+                                // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 -  16:30 (7.5h, with lunch time at 12:00)
                                 // start time might not be in the morning at exactly 8:00
-                                // stop time might not be in the afternoon 15:30
                                 LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(start);
                                 LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(start);
                                 if (start.isBefore(lunchStartTime) || start.isEqual(lunchStartTime)) {
-                                    // if(start <= 12:00)
-                                    if (stop.isBefore(lunchStartTime) || stop.isEqual(lunchStartTime)) {
-                                        // if(stop <= 12:00)
-                                        // (stop - start)/7.5
-                                        double   fraction = (double) Duration.between(start, stop).getSeconds() / oneDay;
-                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        if (print)
-                                            System.out.printf("[1] %s start & stop <= 12:00 fraction=%f work=%s%n", task.getName(), fraction, work);
-                                        guide.add(startDayIndex, work);
-                                    } else if (stop.isAfter(lunchStopTime) || stop.isEqual(lunchStopTime)) {
-                                        // if(stop >= 13:00)
-                                        // ( stop - start -1h )/7.5
-                                        double   fraction = (double) Duration.between(start, stop).minusHours(1).getSeconds() / oneDay;
-                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        if (print)
-                                            System.out.printf("[2] %s start <= 12:00 & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
-                                        guide.add(startDayIndex, work);
-                                    } else {
-                                        throw new Exception(String.format("Task %s stop within lunch time", task.getName()));
-                                    }
-                                } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
-                                    // if(start >= 13:00 && stop >= 13:00)
-                                    // (stop - Start))/7.5
-                                    double   fraction = ((double) Duration.between(start, stop).getSeconds()) / oneDay;
+                                    double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).minusHours(1).getSeconds()) / oneDay;
                                     Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
                                     if (print)
-                                        System.out.printf("[3] %s start >= 13:00 & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                        System.out.printf("[4] %s start <= 12:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
+                                    guide.add(startDayIndex, work);
+                                } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
+                                    double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).getSeconds()) / oneDay;
+                                    Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                    if (print)
+                                        System.out.printf("[5] %s start  >= 13:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
                                     guide.add(startDayIndex, work);
                                 } else {
-                                    throw new Exception(String.format("Task %s stop before start", task.getName()));
-                                }
-
-                            } else {
-                                // start
-                                {
-                                    // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 -  16:30 (7.5h, with lunch time at 12:00)
-                                    // start time might not be in the morning at exactly 8:00
-                                    LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(start);
-                                    LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(start);
-                                    if (start.isBefore(lunchStartTime) || start.isEqual(lunchStartTime)) {
-                                        double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).minusHours(1).getSeconds()) / oneDay;
-                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        if (print)
-                                            System.out.printf("[4] %s start <= 12:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
-                                        guide.add(startDayIndex, work);
-                                    } else if (start.isAfter(lunchStopTime) || start.isEqual(lunchStopTime)) {
-                                        double   fraction = ((double) Duration.between(start.toLocalTime(), LocalTime.of(16, 30)).getSeconds()) / oneDay;
-                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        if (print)
-                                            System.out.printf("[5] %s start  >= 13:00 & stop > today fraction=%f work=%s%n", task.getName(), fraction, work);
-                                        guide.add(startDayIndex, work);
-                                    } else {
-                                        throw new Exception(String.format("Task %s start within lunch time", task.getName()));
-                                    }
-                                }
-                                // end
-                                {
-                                    // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
-                                    // last day, stop time might not be in the afternoon 16:30
-                                    LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(stop);
-                                    LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(stop);
-                                    if (stop.isBefore(lunchStartTime) || stop.isEqual(lunchStartTime)) {
-                                        // if(stop <= 12:00)
-                                        // (stop - 8:00)/7.5
-                                        double   fraction = ((double) Duration.between(LocalTime.of(8, 0), stop.toLocalTime()).getSeconds()) / oneDay;
-                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        if (print)
-                                            System.out.printf("[6] %s start < today & stop <= 12:00 fraction=%f work=%s%n", task.getName(), fraction, work);
-                                        guide.add(stopDayIndex, work);
-                                    } else if (stop.isAfter(lunchStopTime) || stop.isEqual(lunchStopTime)) {
-                                        // if(stop >= 13:00)
-                                        // (stop - 8:00 -1h)/7.5
-                                        double   fraction = ((double) Duration.between(LocalTime.of(8, 0), stop.toLocalTime()).minusHours(1).getSeconds()) / oneDay;
-                                        Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
-                                        if (print)
-                                            System.out.printf("[7] %s start < today & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
-                                        guide.add(stopDayIndex, work);
-                                    } else {
-                                        throw new Exception(String.format("Task %s stop within lunch time", task.getName()));
-                                    }
+                                    throw new Exception(String.format("Task %s start within lunch time", task.getName()));
                                 }
                             }
-                            if (startDayIndex + 1 < stopDayIndex) {
-                                for (int index = startDayIndex + 1; index < stopDayIndex; index++) {
-                                    LocalDate today = calculateDayFromIndex(index);
-                                    if (isPlannedWorkingDay(sprint, task, today)) {
-                                        Duration work = Duration.ofSeconds((long) (availability.doubleValue() * SECONDS_PER_WORKING_DAY));
-                                        if (print)
-                                            System.out.printf("[8] %s start < today & stop > today fraction=1.0 work=%s%n", task.getName(), work);
-                                        guide.add(index, work);
-                                    }
+                            // end
+                            {
+                                // ---We assume that a task is worked on every day from 8:00 - 12:00, 13:00 - 16:30 (7.5h, with lunch time at 12:00)
+                                // last day, stop time might not be in the afternoon 16:30
+                                LocalDateTime lunchStartTime = DateUtil.calculateLunchStartTime(stop);
+                                LocalDateTime lunchStopTime  = DateUtil.calculateLunchStopTime(stop);
+                                if (stop.isBefore(lunchStartTime) || stop.isEqual(lunchStartTime)) {
+                                    // if(stop <= 12:00)
+                                    // (stop - 8:00)/7.5
+                                    double   fraction = ((double) Duration.between(LocalTime.of(8, 0), stop.toLocalTime()).getSeconds()) / oneDay;
+                                    Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                    if (print)
+                                        System.out.printf("[6] %s start < today & stop <= 12:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                    guide.add(stopDayIndex, work);
+                                } else if (stop.isAfter(lunchStopTime) || stop.isEqual(lunchStopTime)) {
+                                    // if(stop >= 13:00)
+                                    // (stop - 8:00 -1h)/7.5
+                                    double   fraction = ((double) Duration.between(LocalTime.of(8, 0), stop.toLocalTime()).minusHours(1).getSeconds()) / oneDay;
+                                    Duration work     = Duration.ofSeconds((long) ((fraction * availability.doubleValue() * SECONDS_PER_WORKING_DAY)));
+                                    if (print)
+                                        System.out.printf("[7] %s start < today & stop >= 13:00 fraction=%f work=%s%n", task.getName(), fraction, work);
+                                    guide.add(stopDayIndex, work);
+                                } else {
+                                    throw new Exception(String.format("Task %s stop within lunch time", task.getName()));
+                                }
+                            }
+                        }
+                        if (startDayIndex + 1 < stopDayIndex) {
+                            for (int index = startDayIndex + 1; index < stopDayIndex; index++) {
+                                LocalDate today = calculateDayFromIndex(index);
+                                if (isPlannedWorkingDay(sprint, task, today)) {
+                                    Duration work = Duration.ofSeconds((long) (availability.doubleValue() * SECONDS_PER_WORKING_DAY));
+                                    if (print)
+                                        System.out.printf("[8] %s start < today & stop > today fraction=1.0 work=%s%n", task.getName(), work);
+                                    guide.add(index, work);
                                 }
                             }
                         }
                     }
-
                 }
             }
         }
@@ -713,23 +582,23 @@ public class GanttBurndownChartService {
         return milestones.firstMilestone.plusDays(dayIndex);
     }
 
-    /**
-     * Converts a Java {@link Color} to a 6-digit hex string (#rrggbb).
-     */
-    static String colorToHex(Color color) {
-        if (color == null) return "#000000";
-        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
-    }
+//    /**
+//     * Converts a Java {@link Color} to a 6-digit hex string (#rrggbb).
+//     */
+//    static String colorToHex(Color color) {
+//        if (color == null) return "#000000";
+//        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+//    }
 
-    /**
-     * Converts a Java {@link Color} to an 8-digit hex string (#rrggbbaa),
-     * using the supplied alpha value (0–255).
-     */
-    static String colorToHexWithAlpha(Color color, int alpha) {
-        if (color == null) return "#000000ff";
-        int a = Math.max(0, Math.min(255, alpha));
-        return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), a);
-    }
+//    /**
+//     * Converts a Java {@link Color} to an 8-digit hex string (#rrggbbaa),
+//     * using the supplied alpha value (0–255).
+//     */
+//    static String colorToHexWithAlpha(Color color, int alpha) {
+//        if (color == null) return "#000000ff";
+//        int a = Math.max(0, Math.min(255, alpha));
+//        return String.format("#%02x%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue(), a);
+//    }
 
     /**
      * Converts a per-day work array to a dwindling (remaining work) array.
@@ -766,30 +635,24 @@ public class GanttBurndownChartService {
             if (isHideNow(now, sprint.getEnd(), sprint.isClosed())) {
                 milestones.remove("N");
             }
-//        if (firstWorklog != null && (sprint.getStart() == null || !firstWorklog.toLocalDate().isEqual(sprint.getStart().toLocalDate()))) {
-//            milestones.add(firstWorklog.toLocalDate(), "F", "First punch-in", Color.blue);
-//        }
-//        if (lastWorklog != null && (sprint.getEnd() == null || !lastWorklog.toLocalDate().isEqual(sprint.getEnd().toLocalDate()))) {
-//            milestones.add(lastWorklog.toLocalDate(), "L", "Last punch-out", Color.blue);
-//        }
             milestones.calculate();
             // milestones.print();//debugging code
         }
     }
 
-    /**
-     * Formats a Duration as "Xh Ym".
-     * Mirrors Java: {@code DateUtil.create24hDurationString(duration, false, true, false)}.
-     */
-    @Deprecated
-    private static String formatDuration(Duration d) {
-        long totalSecs = d.getSeconds();
-        long hours     = totalSecs / 3600;
-        long minutes   = (totalSecs % 3600) / 60;
-        if (hours > 0 && minutes > 0) return hours + "h " + minutes + "m";
-        if (hours > 0) return hours + "h";
-        return minutes + "m";
-    }
+//    /**
+//     * Formats a Duration as "Xh Ym".
+//     * Mirrors Java: {@code DateUtil.create24hDurationString(duration, false, true, false)}.
+//     */
+//    @Deprecated
+//    private static String formatDuration(Duration d) {
+//        long totalSecs = d.getSeconds();
+//        long hours     = totalSecs / 3600;
+//        long minutes   = (totalSecs % 3600) / 60;
+//        if (hours > 0 && minutes > 0) return hours + "h " + minutes + "m";
+//        if (hours > 0) return hours + "h";
+//        return minutes + "m";
+//    }
 
     /**
      * Initialize BurnDownGuide object from gantt chart of this project to visualize
