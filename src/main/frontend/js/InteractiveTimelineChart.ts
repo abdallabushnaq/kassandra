@@ -23,7 +23,12 @@ export interface TimelineChart {
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void;
 
-    updateTimelineCaption(dayWidth: number, visualScale: number): void;
+    updateTimelineCaption(
+        dayWidth: number,
+        visualScale: number,
+        minEffectiveDayWidth: number,
+        maxEffectiveDayWidth: number,
+    ): void;
 
     render(container: HTMLElement): void;
 
@@ -97,6 +102,7 @@ interface DragState {
 const VISUAL_ZOOM_STEP = 1.1;
 const VISUAL_ZOOM_MIN = 0.1;
 const VISUAL_ZOOM_MAX = 10.0;
+const MAX_EFFECTIVE_DAY_WIDTH = 32;
 const ZOOM_INDICATOR_DURATION_MS = 1500;
 const LAZY_REDRAW_DURATION_MS = 100;
 
@@ -163,7 +169,8 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
 
     constructor(private readonly options: InteractiveTimelineChartOptions<TChart>) {
         this.dayWidth = options.defaultDayWidth;
-        this.visualScale = options.initialVisualScale ?? this.DEFAULT_SCALE;
+        this.visualScale = this.constrainVisualScale(options.initialVisualScale ?? this.DEFAULT_SCALE);
+        this.dayWidth = this.constrainDayWidth(this.dayWidth);
         this.restoreViewState();
         this.registerEventListeners();
         this.observeResize();
@@ -222,8 +229,9 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     private restoreViewState(): void {
         const saved = loadViewState(this.options.containerId);
         if (saved) {
-            this.dayWidth = this.constrainDayWidth(saved.dayWidth);
-            this.visualScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, saved.visualScale ?? this.DEFAULT_SCALE));
+            this.dayWidth = Math.max(this.options.minDayWidth, Math.min(this.options.maxDayWidth, saved.dayWidth));
+            this.visualScale = this.constrainVisualScale(saved.visualScale ?? this.DEFAULT_SCALE);
+            this.dayWidth = this.constrainDayWidth(this.dayWidth);
             this.scrollOffset = saved.scrollOffset;
             this.scrollYOffset = saved.scrollYOffset ?? 0;
             this.constrainScrollOffset();
@@ -242,7 +250,13 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     }
 
     private constrainDayWidth(dayWidth: number): number {
-        return Math.max(this.options.minDayWidth, Math.min(this.options.maxDayWidth, dayWidth));
+        const maxDayWidth = Math.min(this.options.maxDayWidth, MAX_EFFECTIVE_DAY_WIDTH / this.visualScale);
+        return Math.max(this.options.minDayWidth, Math.min(maxDayWidth, dayWidth));
+    }
+
+    private constrainVisualScale(visualScale: number): number {
+        const maxVisualScale = Math.min(VISUAL_ZOOM_MAX, MAX_EFFECTIVE_DAY_WIDTH / this.dayWidth);
+        return Math.max(VISUAL_ZOOM_MIN, Math.min(maxVisualScale, visualScale));
     }
 
     private constrainScrollOffset(): void {
@@ -279,7 +293,12 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     private redrawChart(): void {
         this.renderedScrollOffset = this.scrollOffset;
         this.options.beforeRender?.();
-        this.options.chart.updateTimelineCaption(this.dayWidth, this.visualScale);
+        this.options.chart.updateTimelineCaption(
+            this.dayWidth,
+            this.visualScale,
+            this.options.minDayWidth * VISUAL_ZOOM_MIN,
+            MAX_EFFECTIVE_DAY_WIDTH,
+        );
         for (const renderer of this.options.chart.renderers)
             renderer.visualScale = this.visualScale;
         this.options.chart.updateViewState(
@@ -334,7 +353,8 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             this.zoomIndicator.style.pointerEvents = 'none';
             this.options.container.appendChild(this.zoomIndicator);
         }
-        this.zoomIndicator.textContent = `Day width: ${this.dayWidth.toFixed(1)} px\nZoom: ${Math.round(this.visualScale * 100)}%`;
+        this.zoomIndicator.textContent =
+            `Day width: ${(this.dayWidth * this.visualScale).toFixed(1)} px\nZoom: ${Math.round(this.visualScale * 100)}%`;
         if (this.zoomIndicatorHideTimerId)
             clearTimeout(this.zoomIndicatorHideTimerId);
         this.zoomIndicatorHideTimerId = setTimeout(() => {
@@ -365,7 +385,7 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
             const rect = this.options.container.getBoundingClientRect();
             const cursorX = event.clientX - rect.left;
             const delta = event.deltaY < 0 ? VISUAL_ZOOM_STEP : 1 / VISUAL_ZOOM_STEP;
-            const newScale = Math.max(VISUAL_ZOOM_MIN, Math.min(VISUAL_ZOOM_MAX, this.visualScale * delta));
+            const newScale = this.constrainVisualScale(this.visualScale * delta);
             const scaleFactor = newScale / this.visualScale;
             const newVisualPanX = cursorX * (1 - scaleFactor) + this.visualPanX * scaleFactor;
             this.visualScale = newScale;

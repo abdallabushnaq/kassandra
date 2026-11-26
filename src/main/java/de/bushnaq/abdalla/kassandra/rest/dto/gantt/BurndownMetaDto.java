@@ -52,6 +52,10 @@ public class BurndownMetaDto {
      */
     public KassandraProperties.Gantt ganttZoom;
     /**
+     * Effective-day-width thresholds for calendar-axis details.
+     */
+    public KassandraProperties.CalendarAxes calendarAxesZoom = new KassandraProperties.CalendarAxes();
+    /**
      * F milestone: date of the first worklog entry. {@code null} if no worklogs.
      */
     public LocalDateTime firstWorklogDate;

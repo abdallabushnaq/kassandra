@@ -477,6 +477,95 @@ export async function verifyGanttZoom(gantt, combined) {
             assertPresent(document.querySelector('#chart svg'), `${type} chart SVG`);
         };
 
+        render({...settings(0), renderTaskBorderAtDayWidth: 13.5, renderMilestoneBorderAtDayWidth: 16.5}, 20, 1.5);
+        const meter = document.querySelector('.zoom-meter');
+        const track = meter?.querySelector('.zoom-meter-track');
+        const currentMarker = meter?.querySelector('.zoom-meter-current');
+        const svg = document.querySelector('#chart svg');
+        const captionTitle = svg.querySelector('text');
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = 'normal 18px sans-serif';
+        const leftTextEnd = 3 + context.measureText(captionTitle.textContent).width + 8;
+        const availableGap = Number(svg.getAttribute('width')) - 4 - 350 - leftTextEnd;
+        if (availableGap >= 256)
+            assertPresent(track, `${type} zoom meter track with available gap ${availableGap}`);
+        else
+            assertAbsent(meter, `${type} meter omitted with available gap ${availableGap}`);
+        if (track) {
+            assertEqual(track.getAttribute('width'), '256', `${type} zoom meter width`);
+            assertEqual(track.getAttribute('height'), '14', `${type} zoom meter height`);
+            assertEqual(Number(track.getAttribute('data-max-effective-day-width')), 32,
+                `${type} maximum effective day width`);
+            const isDarkTheme = source.meta.theme.themeVariance.toLowerCase() === 'dark';
+            assertEqual(track.getAttribute('stroke'), isDarkTheme ? '#64748b' : '#94a3b8',
+                `${type} zoom meter border color`);
+            assertPresent(currentMarker, `${type} current zoom marker`);
+            assertEqual(currentMarker.getAttribute('stroke'), isDarkTheme ? '#fb7185' : '#e11d48',
+                `${type} current zoom color`);
+            assertEqual(Number(currentMarker.getAttribute('data-effective-day-width')), 30,
+                `${type} current zoom includes visual scale`);
+            const timelineHint = [...svg.querySelectorAll('text')]
+                .find(element => element.textContent.includes('Shift + mouse wheel:'));
+            assertPresent(timelineHint, `${type} timeline zoom hint`);
+            assertCondition(timelineHint.textContent.includes('(30px)'), `${type} hint reports effective day width`,
+                '(30px)', timelineHint.textContent);
+            const minWidth = Number(track.getAttribute('data-min-effective-day-width'));
+            const maxWidth = Number(track.getAttribute('data-max-effective-day-width'));
+            const expectedMarkerX = Number(track.getAttribute('x'))
+                + ((30 - minWidth) / (maxWidth - minWidth)) * Number(track.getAttribute('width'));
+            assertCondition(Math.abs(Number(currentMarker.getAttribute('x1')) - expectedMarkerX) < 1e-7,
+                `${type} current zoom marker position`, expectedMarkerX, currentMarker.getAttribute('x1'));
+            const borderThreshold = [...meter.querySelectorAll('.zoom-meter-threshold')]
+                .find(line => Number(line.getAttribute('data-effective-day-width')) === 13.5);
+            assertPresent(borderThreshold, `${type} task border threshold marker`);
+            assertEqual(borderThreshold.getAttribute('stroke'), isDarkTheme ? '#cbd5e1' : '#475569',
+                `${type} threshold color`);
+            assertEqual(borderThreshold.querySelector('title').textContent, 'Task borders',
+                `${type} task border threshold tooltip`);
+            assertCondition(!borderThreshold.querySelector('title').textContent.includes('appear'),
+                `${type} task border threshold tooltip omits "appear"`);
+            const borderHitArea = [...meter.querySelectorAll('.zoom-meter-threshold-hit-area')]
+                .find(area => Number(area.getAttribute('data-effective-day-width')) === 13.5);
+            assertPresent(borderHitArea, `${type} task border threshold hover area`);
+            assertEqual(borderHitArea.getAttribute('width'), '6', `${type} threshold hover target width`);
+            assertEqual(borderHitArea.getAttribute('pointer-events'), 'all', `${type} threshold hover target`);
+            assertEqual(borderHitArea.querySelector('title').textContent, 'Task borders',
+                `${type} task border threshold hover tooltip`);
+            const sharedThreshold = [...meter.querySelectorAll('.zoom-meter-threshold')]
+                .find(line => Number(line.getAttribute('data-effective-day-width')) === 16.5);
+            assertPresent(sharedThreshold, `${type} shared calendar/detail threshold marker`);
+            assertEqual(sharedThreshold.querySelector('title').textContent,
+                'Milestone borders\nDay-of-week labels and grid', `${type} multiline threshold tooltip`);
+            assertEqual(sharedThreshold.querySelector('title').textContent.includes('px'), false,
+                `${type} threshold tooltip omits width`);
+        }
+
+        render(settings(0), 20, 10);
+        const cappedTrack = document.querySelector('.zoom-meter-track');
+        const cappedMarker = document.querySelector('.zoom-meter-current');
+        const cappedTimelineHint = [...document.querySelectorAll('#chart svg text')]
+            .find(element => element.textContent.includes('Shift + mouse wheel:'));
+        assertPresent(cappedTimelineHint, `${type} capped timeline zoom hint`);
+        assertCondition(cappedTimelineHint.textContent.includes('(32px)'), `${type} zoom capped at 32 effective px/day`,
+            '(32px)', cappedTimelineHint.textContent);
+        if (cappedTrack) {
+            assertEqual(Number(cappedTrack.getAttribute('data-max-effective-day-width')), 32,
+                `${type} capped meter maximum`);
+            assertEqual(Number(cappedMarker.getAttribute('data-effective-day-width')), 32,
+                `${type} capped marker position`);
+        }
+
+        const host = document.getElementById('chart');
+        const originalWidth = host.style.width;
+        try {
+            host.style.width = '600px';
+            render(settings(0));
+            assertAbsent(document.querySelector('.zoom-meter'), `${type} meter omitted when caption gap is too narrow`);
+        } finally {
+            host.style.width = originalWidth;
+        }
+
         for (const [key, visible] of Object.entries(features)) {
             const configuredThreshold = source.meta.ganttZoom[key];
             for (const [threshold, expected] of [

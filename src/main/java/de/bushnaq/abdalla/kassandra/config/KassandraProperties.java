@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (C) 2025-2025 Abdalla Bushnaq
+ * Copyright (C) 2025-2026 Abdalla Bushnaq
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -49,6 +49,14 @@ public class KassandraProperties {
      */
     private        Gantt    gantt                  = new Gantt();
     /**
+     * Bound from {@code kassandra.sprint-overview.*}.
+     */
+    private        SprintOverview sprintOverview   = new SprintOverview();
+    /**
+     * Bound from {@code kassandra.calendar-axes.*}.
+     */
+    private        CalendarAxes calendarAxes       = new CalendarAxes();
+    /**
      * Static holder so plain DTOs (e.g. User) can access the value without injection.
      * -- GETTER --
      * Get the number of months to look ahead for holidays.
@@ -80,6 +88,8 @@ public class KassandraProperties {
     @PostConstruct
     void init() {
         gantt.validate();
+        sprintOverview.validate();
+        calendarAxes.validate();
         holidayLookAheadMonths = holidays.getLookAheadMonths();
     }
 
@@ -165,6 +175,52 @@ public class KassandraProperties {
         private static void validateThreshold(String name, double value) {
             if (!Double.isFinite(value) || value < 0)
                 throw new IllegalArgumentException("kassandra.gantt." + name + " must be finite and non-negative");
+        }
+    }
+
+    /**
+     * Minimum effective day widths, in pixels, for sprint overview details.
+     */
+    @Data
+    public static class SprintOverview {
+        private int renderSprintEndDateAtDayWidth   = 8;
+        private int renderSprintProgressAtDayWidth  = 8;
+        private int renderSprintStartDateAtDayWidth = 8;
+        private int renderSprintStatusAtDayWidth    = 8;
+
+        private void validate() {
+            validateThreshold("render-sprint-end-date-at-day-width", renderSprintEndDateAtDayWidth);
+            validateThreshold("render-sprint-progress-at-day-width", renderSprintProgressAtDayWidth);
+            validateThreshold("render-sprint-start-date-at-day-width", renderSprintStartDateAtDayWidth);
+            validateThreshold("render-sprint-status-at-day-width", renderSprintStatusAtDayWidth);
+        }
+
+        private static void validateThreshold(String name, int value) {
+            if (value < 0)
+                throw new IllegalArgumentException("kassandra.sprint-overview." + name + " must be non-negative");
+        }
+    }
+
+    /**
+     * Minimum effective day widths, in pixels, for calendar-axis details.
+     */
+    @Data
+    public static class CalendarAxes {
+        private double dayOfMonthMinDayWidth = 20;
+        private double dayOfWeekMinDayWidth  = 16;
+        private double monthMinDayWidth      = 2;
+        private double weekMinDayWidth       = 2;
+
+        private void validate() {
+            validateThreshold("day-of-month-min-day-width", dayOfMonthMinDayWidth);
+            validateThreshold("day-of-week-min-day-width", dayOfWeekMinDayWidth);
+            validateThreshold("month-min-day-width", monthMinDayWidth);
+            validateThreshold("week-min-day-width", weekMinDayWidth);
+        }
+
+        private static void validateThreshold(String name, double value) {
+            if (!Double.isFinite(value) || value < 0)
+                throw new IllegalArgumentException("kassandra.calendar-axes." + name + " must be finite and non-negative");
         }
     }
 

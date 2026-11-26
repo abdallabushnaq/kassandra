@@ -43,6 +43,10 @@ public class GanttMetaDto {
      */
     public KassandraProperties.Gantt ganttZoom;
     /**
+     * Effective-day-width thresholds for calendar-axis details.
+     */
+    public KassandraProperties.CalendarAxes calendarAxesZoom = new KassandraProperties.CalendarAxes();
+    /**
      * Current date/time (for the "now" marker line).
      */
     public LocalDateTime             now;

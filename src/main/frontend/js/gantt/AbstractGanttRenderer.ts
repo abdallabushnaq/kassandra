@@ -15,6 +15,7 @@ import {FontMetrics} from "../FontMetrics.js";
 import {FontSpec} from "../FontSpec.js";
 import {AbstractChart} from '../AbstractChart.js';
 import {GraphColorUtil} from "../GraphColorUtil.js";
+import type {CalendarAxesZoomSettings} from '../CalendarAxesZoomSettings.js';
 
 // ── Constants (mirrors Java LegacyAbstractGanttRenderer field declarations) ────────
 export const LINE_HEIGHT = 18;
@@ -60,8 +61,8 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     // }
 
     protected constructor(chart: AbstractChart/*, milestones: Milestones*/, preRun: number, postRun: number,
-                          protected readonly ganttZoom: GanttZoomSettings) {
-        super(chart/*, milestones*/, preRun, postRun);
+                          protected readonly ganttZoom: GanttZoomSettings, calendarAxesZoom: CalendarAxesZoomSettings) {
+        super(chart/*, milestones*/, preRun, postRun, calendarAxesZoom);
         this.dayWidth = DEFAULT_DW;
         this.chartStart = null;
         // this.totalDays = 0;

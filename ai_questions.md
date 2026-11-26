@@ -1,5 +1,32 @@
 # AI Questions
 
+# Add Replay-Slider to Burndown Chart
+
+This slider sits in the x-axis chart part under the burndown week days and only when weekdays are visible.
+It is a slider that usually has a nob below today's day or the last day of the chart.
+The slider is interactive.
+A user can slide the slider back to any previous day in the chart and the chart will redraw to only show work input
+until that day.
+This allows a user to replay the burndown chart and see how the burndown chart evolved over time.
+To allow TypeScript to do this, it needs to know when work was logged.
+GanttBurndownChartService calculates usersWorkPerDayAccumulated and hands that over to the TS code.
+This pre-cooking needs to be done now in TS code, so that we can draw the chart for any given day.
+
+# Add Chart Zoom-O-Meter
+
+Each of our charts has a CaptionElement and FooterElement area.
+The CaptionElement shows a leftText and a rightText.
+We now want to add a Zoom-O-Meter.
+This new element shows a rectangle of header height and a fixed width, lets make it 256px for now.
+The left side symbolizes the minimum zoom level, which the right side symbolizes the highest zoom level.
+A red vertical red line shows the current zoom level.
+black/gray vertical lines show xxx-at-day-width thresholds that trigger some visual element appearance.
+Example:
+If kassandra.gantt.render-task-border-at-day-width=20, then at zoom level 20, we draw that line. if the red zoom level
+is further right, we draw task borders.
+every threshold has a tooltip that explains what it triggers.
+The number of thresholds depends on the type of chart.
+
 # Better Synthetic Data
 
 We need to generate better synthetic data for our tests with more variety of use cases.

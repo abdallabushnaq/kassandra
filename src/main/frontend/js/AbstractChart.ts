@@ -10,6 +10,7 @@ import {CaptionElement} from './CaptionElement.js';
 import {FooterElement} from './FooterElement.js';
 import {SvgUtils} from './SvgUtils.js';
 import {Theme} from './theme/Theme.js';
+import {ZoomThreshold} from './ZoomThreshold.js';
 
 
 export abstract class AbstractChart extends AbstractCanvas {
@@ -19,6 +20,7 @@ export abstract class AbstractChart extends AbstractCanvas {
     renderers: AbstractRenderer[];
     protected captionElement: CaptionElement;
     protected footerElement: FooterElement;
+    private readonly zoomThresholds: ZoomThreshold[];
 
     /**
      * @param captionLeftText   Chart title text shown at the left corner
@@ -29,6 +31,7 @@ export abstract class AbstractChart extends AbstractCanvas {
      * @param _column           Grid column (not used in SVG rendering)
      * @param _imageName        File name hint (not used in interactive rendering)
      * @param theme             Theme instance
+     * @param zoomThresholds    Rendering thresholds displayed in the caption zoom meter
      */
     protected constructor(
         captionLeftText: string | null,
@@ -39,10 +42,12 @@ export abstract class AbstractChart extends AbstractCanvas {
         _column: string,
         _imageName: string,
         theme: Theme,
+        zoomThresholds: ZoomThreshold[] = [],
     ) {
         super(theme);
         this.captionElement = new CaptionElement(captionLeftText, captionRightText, relateCssPath, theme);
         this.footerElement = new FooterElement(footerLeftText, footerRightText, theme);
+        this.zoomThresholds = zoomThresholds;
         this.renderers = [];
         // this.firstDayX = 0;
     }
@@ -60,9 +65,23 @@ export abstract class AbstractChart extends AbstractCanvas {
         this.captionElement?.draw(svg);
     }
 
-    /** Updates the timeline metrics shown with the caption interaction hints. */
-    public updateTimelineCaption(dayWidth: number, visualScale: number): void {
-        this.captionElement.updateTimelineMetrics(dayWidth, visualScale);
+    /**
+     * Updates the timeline metrics and zoom meter shown in the caption.
+     *
+     * @param dayWidth current unscaled day width
+     * @param visualScale current visual zoom scale
+     * @param minEffectiveDayWidth minimum effective on-screen day width
+     * @param maxEffectiveDayWidth maximum effective on-screen day width
+     */
+    public updateTimelineCaption(
+        dayWidth: number,
+        visualScale: number,
+        minEffectiveDayWidth: number,
+        maxEffectiveDayWidth: number,
+    ): void {
+        this.captionElement.updateTimelineMetrics(
+            dayWidth, visualScale, minEffectiveDayWidth, maxEffectiveDayWidth, this.zoomThresholds,
+        );
     }
 
     override drawFooter(svg: SVGElement): void {

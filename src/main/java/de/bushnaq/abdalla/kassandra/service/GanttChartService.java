@@ -175,6 +175,7 @@ public class GanttChartService {
         dto.meta.theme        = ThemeDto.fromTheme(theme);
         dto.meta.calendarSize = CalendarSize.YEARS;
         dto.meta.ganttZoom    = kassandraProperties.getGantt();
+        dto.meta.calendarAxesZoom = kassandraProperties.getCalendarAxes();
 
 
         // ── Task rows ─────────────────────────────────────────────────────

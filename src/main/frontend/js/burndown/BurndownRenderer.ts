@@ -94,7 +94,7 @@ export class BurndownRenderer extends AbstractRenderer {
         // legacyCalendarXAxes. milestones starts empty here; createMilestones() (called below from
         // processingInit) populates it, mirroring LegacyBurnDownRenderer(LegacyRenderDao) -> processingInit(dao)
         // -> createMilestones(...).
-        super(chart/*, new Milestones([])*/, meta.preRun || 0, meta.postRun || 0);
+        super(chart/*, new Milestones([])*/, meta.preRun || 0, meta.postRun || 0, meta.calendarAxesZoom);
 
         this.data = data;
         // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — LegacyBurnDownRenderer

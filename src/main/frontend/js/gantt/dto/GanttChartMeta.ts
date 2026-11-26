@@ -3,6 +3,7 @@
 
 import {CalendarSize} from "../../CalendarSize.js";
 import {GanttZoomSettings} from './GanttZoomSettings.js';
+import type {CalendarAxesZoomSettings} from '../../CalendarAxesZoomSettings.js';
 
 /**
  * DTO representing metadata for a Gantt chart.
@@ -21,5 +22,6 @@ export interface GanttChartMeta {
     postRun?: number;
     calendarSize: CalendarSize;
     ganttZoom: GanttZoomSettings;
+    calendarAxesZoom: CalendarAxesZoomSettings;
     theme?: Record<string, unknown>;
 }

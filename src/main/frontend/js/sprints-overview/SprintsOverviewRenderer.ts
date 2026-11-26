@@ -71,7 +71,7 @@ export class SprintsOverviewRenderer extends AbstractRenderer {
         const currentDate = new Date(data.meta.now);
 
 
-        super(chart, preRun, postRun);
+        super(chart, preRun, postRun, data.meta.calendarAxesZoom);
         const milestonesList: Milestone[] = [
             new Milestone(currentDate, 'N', 'Now (current date)', false),
             new Milestone(DateUtils.getDayMidnight(chartStart), 'S', 'Start (Start of project)', false),

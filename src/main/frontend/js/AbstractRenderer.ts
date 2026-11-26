@@ -20,6 +20,7 @@ import {FontSpec} from "./FontSpec.js";
 import {AbstractChart} from "./AbstractChart.js";
 import {Milestone} from './Milestone.js';
 import {GraphColorUtil} from "./GraphColorUtil.js";
+import type {CalendarAxesZoomSettings} from './CalendarAxesZoomSettings.js';
 
 export abstract class AbstractRenderer implements IRenderer {
     protected static readonly STANDARD_LINE_STROKE_WIDTH: number = 3.1;
@@ -41,7 +42,13 @@ export abstract class AbstractRenderer implements IRenderer {
     containerWidth: number;
     containerHeight: number;
 
-    protected constructor(chart: AbstractChart, /*milestones: Milestones,*/ preRun: number, postRun: number) {
+    protected constructor(
+        chart: AbstractChart,
+        /*milestones: Milestones,*/
+        preRun: number,
+        postRun: number,
+        calendarAxesZoom: CalendarAxesZoomSettings,
+    ) {
         this.chart = chart;
         this.chartWidth = 0;
         this.chartHeight = 400;
@@ -55,7 +62,7 @@ export abstract class AbstractRenderer implements IRenderer {
         this.postRun = postRun;
         this.calendarAtBottom = false;
         this.diagram = new GraphSquare();
-        this.calendarXAxes = new CalendarXAxes(this, preRun, postRun);
+        this.calendarXAxes = new CalendarXAxes(this, preRun, postRun, calendarAxesZoom);
         this.containerWidth = 800;
         this.containerHeight = 600;
     }

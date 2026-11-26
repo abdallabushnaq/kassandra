@@ -65,7 +65,7 @@ export class GanttRenderer extends AbstractGanttRenderer {
         //     milestonesList.length > 0 ? milestonesList[milestonesList.length - 1].time : chartStart,
         // );
 
-        super(chart/*, milestones*/, data.meta.preRun || 0, data.meta.postRun || 0, data.meta.ganttZoom);
+        super(chart/*, milestones*/, data.meta.preRun || 0, data.meta.postRun || 0, data.meta.ganttZoom, data.meta.calendarAxesZoom);
         this.createMilestonesFromMeta(data.meta);
 
         this.data = data;

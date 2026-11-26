@@ -385,7 +385,8 @@ public class GanttGenerator extends EntityGenerator {
         SprintRepository repository = mock(SprintRepository.class);
         when(repository.findAll()).thenReturn(List.of(sprintDao));
         StableDiffusionConfig  config          = new StableDiffusionConfig();
-        SprintsOverviewService overviewService = new SprintsOverviewService(repository, new LightTheme(config), new DarkTheme(config));
+        SprintsOverviewService overviewService = new SprintsOverviewService(
+                repository, new LightTheme(config), new DarkTheme(config), new KassandraProperties());
         String json = new JacksonConfig().jsonMapper().writeValueAsString(
                 overviewService.getOverview(ParameterOptions.getLocalNow(), null, testTheme == ETheme.dark));
         captureJsChart(Path.of(testFolder), "/js/generated/sprints-overview/sprints-overview-bundle.js", "mountSprintsOverviewChart", json, chartName(testInfo) + "-overview-chart-projectOverviewChart", ChartIds.SPRINTS_OVERVIEW_CHART, visualScale, false);

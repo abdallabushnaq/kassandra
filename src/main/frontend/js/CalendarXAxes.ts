@@ -15,11 +15,7 @@ import {CalendarMilestoneElement} from './CalendarMilestoneElement.js';
 import {CalendarSize} from './CalendarSize.js';
 import {RenderLayer} from './RenderLayer.js';
 import type {IRenderer} from './IRenderer.js';
-
-const DAY_OF_MONTH_MIN_DAY_WIDTH = 20;
-const DAY_OF_WEEK_MIN_DAY_WIDTH = 16;
-const MONTH_MIN_DAY_WIDTH = 2;
-const WEEK_MIN_DAY_WIDTH = 2;
+import type {CalendarAxesZoomSettings} from './CalendarAxesZoomSettings.js';
 
 export class CalendarXAxes {
     parent: IRenderer;
@@ -35,11 +31,13 @@ export class CalendarXAxes {
     calendarSize: CalendarSize;
     width: number;
     x: number;
+    private readonly zoomSettings: CalendarAxesZoomSettings;
 
-    constructor(parent: IRenderer, priRun: number, postRun: number) {
+    constructor(parent: IRenderer, priRun: number, postRun: number, zoomSettings: CalendarAxesZoomSettings) {
         this.parent = parent;
         this.priRun = priRun;
         this.postRun = postRun;
+        this.zoomSettings = zoomSettings;
 
         const margin = 4;
         this.year = new CalendarElement(new FontSpec('sans-serif', 14, 'normal'), null, null, 13 + margin);
@@ -341,19 +339,19 @@ export class CalendarXAxes {
     }
 
     isDayBarsVisible(): boolean {
-        return this.getEffectiveDayWidth() >= DAY_OF_WEEK_MIN_DAY_WIDTH;
+        return this.getEffectiveDayWidth() >= this.zoomSettings.dayOfWeekMinDayWidth;
     }
 
     isDayOfMonthVisible(): boolean {
-        return this.getEffectiveDayWidth() >= DAY_OF_MONTH_MIN_DAY_WIDTH;
+        return this.getEffectiveDayWidth() >= this.zoomSettings.dayOfMonthMinDayWidth;
     }
 
     isDayOfWeekVisible(): boolean {
-        return this.getEffectiveDayWidth() >= DAY_OF_WEEK_MIN_DAY_WIDTH;
+        return this.getEffectiveDayWidth() >= this.zoomSettings.dayOfWeekMinDayWidth;
     }
 
     isMonthVisible(): boolean {
-        return CalendarSize.YEARS === this.calendarSize && this.getEffectiveDayWidth() >= MONTH_MIN_DAY_WIDTH;
+        return CalendarSize.YEARS === this.calendarSize && this.getEffectiveDayWidth() >= this.zoomSettings.monthMinDayWidth;
     }
 
     isYearVisible(): boolean {
@@ -361,7 +359,7 @@ export class CalendarXAxes {
     }
 
     isWeekVisible(): boolean {
-        return CalendarSize.YEARS === this.calendarSize && this.getEffectiveDayWidth() >= WEEK_MIN_DAY_WIDTH;
+        return CalendarSize.YEARS === this.calendarSize && this.getEffectiveDayWidth() >= this.zoomSettings.weekMinDayWidth;
     }
 
     milestonesVisible(): boolean {

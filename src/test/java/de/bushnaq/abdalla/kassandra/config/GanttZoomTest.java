@@ -79,7 +79,15 @@ import static org.mockito.Mockito.when;
         "kassandra.gantt.render-milestone-start-date-at-day-width=14.5",
         "kassandra.gantt.render-milestone-start-time-at-day-width=15.5",
         "kassandra.gantt.render-milestone-border-at-day-width=16.5",
-        "kassandra.gantt.render-dependencies-at-day-width=17.5"
+        "kassandra.gantt.render-dependencies-at-day-width=17.5",
+        "kassandra.sprint-overview.render-sprint-end-date-at-day-width=9",
+        "kassandra.sprint-overview.render-sprint-progress-at-day-width=10",
+        "kassandra.sprint-overview.render-sprint-start-date-at-day-width=11",
+        "kassandra.sprint-overview.render-sprint-status-at-day-width=12",
+        "kassandra.calendar-axes.day-of-month-min-day-width=20.5",
+        "kassandra.calendar-axes.day-of-week-min-day-width=16.5",
+        "kassandra.calendar-axes.month-min-day-width=2.5",
+        "kassandra.calendar-axes.week-min-day-width=3.5"
 })
 @WithMockUser(username = "admin-user", roles = "ADMIN")
 public class GanttZoomTest extends AbstractTestUtil {
@@ -133,6 +141,16 @@ public class GanttZoomTest extends AbstractTestUtil {
         assertEquals(15.5, zoom.getRenderMilestoneStartTimeAtDayWidth(), "milestone start time zoom threshold");
         assertEquals(16.5, zoom.getRenderMilestoneBorderAtDayWidth(), "milestone border zoom threshold");
         assertEquals(17.5, zoom.getRenderDependenciesAtDayWidth(), "dependency zoom threshold");
+        KassandraProperties.SprintOverview sprintOverviewZoom = properties.getSprintOverview();
+        assertEquals(9, sprintOverviewZoom.getRenderSprintEndDateAtDayWidth(), "sprint end date zoom threshold");
+        assertEquals(10, sprintOverviewZoom.getRenderSprintProgressAtDayWidth(), "sprint progress zoom threshold");
+        assertEquals(11, sprintOverviewZoom.getRenderSprintStartDateAtDayWidth(), "sprint start date zoom threshold");
+        assertEquals(12, sprintOverviewZoom.getRenderSprintStatusAtDayWidth(), "sprint status zoom threshold");
+        KassandraProperties.CalendarAxes calendarAxesZoom = properties.getCalendarAxes();
+        assertEquals(20.5, calendarAxesZoom.getDayOfMonthMinDayWidth(), "day-of-month zoom threshold");
+        assertEquals(16.5, calendarAxesZoom.getDayOfWeekMinDayWidth(), "day-of-week zoom threshold");
+        assertEquals(2.5, calendarAxesZoom.getMonthMinDayWidth(), "month zoom threshold");
+        assertEquals(3.5, calendarAxesZoom.getWeekMinDayWidth(), "week zoom threshold");
 
         LocalDateTime start  = LocalDateTime.parse("2025-06-01T08:00:00");
         LocalDateTime end    = LocalDateTime.parse("2025-06-15T16:30:00");
@@ -149,6 +167,8 @@ public class GanttZoomTest extends AbstractTestUtil {
         GanttBurndownChartDto combined = burndownService.build(sprint, now, false);
         assertEquals(zoom, gantt.meta.ganttZoom, "standalone Gantt DTO zoom settings");
         assertEquals(zoom, combined.meta.ganttZoom, "combined chart DTO zoom settings");
+        assertEquals(calendarAxesZoom, gantt.meta.calendarAxesZoom, "standalone Gantt calendar-axis zoom settings");
+        assertEquals(calendarAxesZoom, combined.meta.calendarAxesZoom, "combined chart calendar-axis zoom settings");
         assertEquals(Color.blue.getRGB(), gantt.meta.theme.ganttTheme.progressColor,
                 "standalone Gantt theme progress color");
         assertEquals(Color.blue.getRGB(), combined.meta.theme.ganttTheme.progressColor,
@@ -322,6 +342,12 @@ public class GanttZoomTest extends AbstractTestUtil {
         assertThrows(IllegalArgumentException.class, invalid::init, "NaN zoom threshold must be rejected");
         invalid.getGantt().setRenderTaskProgressBarAtDayWidth(Double.POSITIVE_INFINITY);
         assertThrows(IllegalArgumentException.class, invalid::init, "infinite zoom threshold must be rejected");
+        invalid.getGantt().setRenderTaskProgressBarAtDayWidth(20);
+        invalid.getSprintOverview().setRenderSprintProgressAtDayWidth(-1);
+        assertThrows(IllegalArgumentException.class, invalid::init, "negative sprint overview threshold must be rejected");
+        invalid.getSprintOverview().setRenderSprintProgressAtDayWidth(8);
+        invalid.getCalendarAxes().setDayOfWeekMinDayWidth(Double.NaN);
+        assertThrows(IllegalArgumentException.class, invalid::init, "NaN calendar-axis threshold must be rejected");
     }
 
     private static TaskDto task(String id, String name, String start, String finish, int row) {

@@ -22,6 +22,7 @@ import {BurndownRenderer} from './BurndownRenderer.js';
 import {CalendarSize} from '../CalendarSize.js';
 import {GanttChartDto} from '../gantt/dto/GanttChartDto.js';
 import {GanttBurndownChartDto} from './dto/GanttBurndownChartDto.js';
+import {toGanttZoomThresholds} from '../ZoomThreshold.js';
 
 export class GanttBurndownChart extends AbstractChart {
     static readonly CHART_ID = 'gantt-burndown-chart';
@@ -29,7 +30,8 @@ export class GanttBurndownChart extends AbstractChart {
 
     constructor(data: GanttBurndownChartDto, theme: Theme) {
         super('Gantt Burndown Chart', AbstractChart.TIMELINE_CONTROLS_HINT + ';Click task: inspect, Esc: clear',
-            data.meta.copyright, data.meta.sprintName || '', '', '', GanttBurndownChart.CHART_ID, theme);
+            data.meta.copyright, data.meta.sprintName || '', '', '', GanttBurndownChart.CHART_ID, theme,
+            toGanttZoomThresholds(data.meta.ganttZoom, data.meta.calendarAxesZoom));
         this.addRenderer(new BurndownRenderer(this, data));
         const ganttData: GanttChartDto = {
             calendars: data.calendars || [],
@@ -48,6 +50,7 @@ export class GanttBurndownChart extends AbstractChart {
                 postRun: data.meta.postRun,
                 theme: data.meta.theme,
                 ganttZoom: data.meta.ganttZoom,
+                calendarAxesZoom: data.meta.calendarAxesZoom,
                 calendarSize: CalendarSize.MONTHS
             },
         };

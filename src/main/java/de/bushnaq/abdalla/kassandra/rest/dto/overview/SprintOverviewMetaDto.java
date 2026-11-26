@@ -17,6 +17,7 @@
 
 package de.bushnaq.abdalla.kassandra.rest.dto.overview;
 
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.rest.dto.theme.ThemeDto;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,8 @@ public class SprintOverviewMetaDto {
     public String        copyright;
     public Integer       laneCount;
     public LocalDateTime now;
+    /** Effective-day-width thresholds for calendar-axis details. */
+    public KassandraProperties.CalendarAxes calendarAxesZoom = new KassandraProperties.CalendarAxes();
     /** Day-width thresholds used to adapt sprint details to the current zoom level. */
     public SprintOverviewZoomSettings zoomSettings = new SprintOverviewZoomSettings();
     /**

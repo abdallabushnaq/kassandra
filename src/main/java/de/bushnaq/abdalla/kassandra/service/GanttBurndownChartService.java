@@ -372,6 +372,7 @@ public class GanttBurndownChartService {
         dto.calendars      = ganttDto.calendars;
         dto.tasks          = ganttDto.tasks;
         dto.meta.ganttZoom = ganttDto.meta.ganttZoom;
+        dto.meta.calendarAxesZoom = ganttDto.meta.calendarAxesZoom;
 
         return dto;
     }

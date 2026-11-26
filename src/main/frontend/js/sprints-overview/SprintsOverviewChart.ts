@@ -7,6 +7,7 @@ import {CalendarSize} from '../CalendarSize.js';
 import {Theme} from '../theme/Theme.js';
 import {SprintsOverviewRenderer} from './SprintsOverviewRenderer.js';
 import {SprintOverviewDto} from './dto/SprintOverviewDto.js';
+import {toSprintOverviewZoomThresholds} from '../ZoomThreshold.js';
 
 export class SprintsOverviewChart extends AbstractChart {
     static readonly CHART_ID = 'sprints-overview-chart';
@@ -21,6 +22,7 @@ export class SprintsOverviewChart extends AbstractChart {
             '',
             SprintsOverviewChart.CHART_ID,
             theme,
+            toSprintOverviewZoomThresholds(data.meta.zoomSettings, data.meta.calendarAxesZoom),
         );
         this.addRenderer(new SprintsOverviewRenderer(this, data, 5, 5));
     }

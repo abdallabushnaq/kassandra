@@ -1,6 +1,7 @@
 package de.bushnaq.abdalla.kassandra.service;
 
 import de.bushnaq.abdalla.kassandra.ParameterOptions;
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.report.dao.theme.DarkTheme;
@@ -29,16 +30,19 @@ import java.util.List;
 public class SprintsOverviewService {
 
     private final DarkTheme        darkTheme;
+    private final KassandraProperties properties;
     private final LightTheme       lightTheme;
     private final SprintRepository sprintRepository;
 
     @Autowired
     public SprintsOverviewService(SprintRepository sprintRepository,
                                   LightTheme lightTheme,
-                                  DarkTheme darkTheme) {
+                                  DarkTheme darkTheme,
+                                  KassandraProperties properties) {
         this.sprintRepository = sprintRepository;
         this.lightTheme       = lightTheme;
         this.darkTheme        = darkTheme;
+        this.properties       = properties;
     }
 
     private <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c) {
@@ -91,6 +95,12 @@ public class SprintsOverviewService {
 
         SprintOverviewDto dto = new SprintOverviewDto();
         dto.meta.now = now;
+        dto.meta.calendarAxesZoom = properties.getCalendarAxes();
+        KassandraProperties.SprintOverview zoomSettings = properties.getSprintOverview();
+        dto.meta.zoomSettings.renderSprintEndDateAtDayWidth   = zoomSettings.getRenderSprintEndDateAtDayWidth();
+        dto.meta.zoomSettings.renderSprintProgressAtDayWidth  = zoomSettings.getRenderSprintProgressAtDayWidth();
+        dto.meta.zoomSettings.renderSprintStartDateAtDayWidth = zoomSettings.getRenderSprintStartDateAtDayWidth();
+        dto.meta.zoomSettings.renderSprintStatusAtDayWidth    = zoomSettings.getRenderSprintStatusAtDayWidth();
 
         // find chart extents
         // Start with sensible defaults. Previously maxDate was initialized to 1900-01-01 which
@@ -218,5 +228,3 @@ public class SprintsOverviewService {
     }
 
 }
-
-

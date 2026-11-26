@@ -7,13 +7,15 @@ import {AbstractChart} from '../AbstractChart.js';
 import {Theme} from '../theme/Theme.js';
 import {GanttRenderer} from './GanttRenderer.js';
 import {GanttChartDto} from './dto/GanttChartDto.js';
+import {toGanttZoomThresholds} from '../ZoomThreshold.js';
 
 export class GanttChart extends AbstractChart {
     static readonly CHART_ID = 'gantt-chart';
 
     constructor(data: GanttChartDto, theme: Theme) {
         super('Gantt Chart', AbstractChart.TIMELINE_CONTROLS_HINT + ';Click task: inspect, Esc: clear',
-            data.meta.copyright, data.meta.sprintName || '', '', '', GanttChart.CHART_ID, theme);
+            data.meta.copyright, data.meta.sprintName || '', '', '', GanttChart.CHART_ID, theme,
+            toGanttZoomThresholds(data.meta.ganttZoom, data.meta.calendarAxesZoom));
         this.addRenderer(new GanttRenderer(this, data, 5, 5));
     }
 

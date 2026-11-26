@@ -1,5 +1,6 @@
 package de.bushnaq.abdalla.kassandra.service;
 
+import de.bushnaq.abdalla.kassandra.config.KassandraProperties;
 import de.bushnaq.abdalla.kassandra.dao.SprintDAO;
 import de.bushnaq.abdalla.kassandra.dto.Status;
 import de.bushnaq.abdalla.kassandra.repository.FeatureRepository;
@@ -34,6 +35,8 @@ public class SprintsOverviewServiceTest {
     @InjectMocks
     SprintsOverviewService service;
     @Mock
+    KassandraProperties properties;
+    @Mock
     SprintRepository       sprintRepository;
     @Mock
     VersionRepository      versionRepository;
@@ -67,6 +70,18 @@ public class SprintsOverviewServiceTest {
         b.setStatus(Status.STARTED);
 
         when(sprintRepository.findAll()).thenReturn(List.of(a, b));
+        KassandraProperties.SprintOverview zoomSettings = new KassandraProperties.SprintOverview();
+        zoomSettings.setRenderSprintEndDateAtDayWidth(9);
+        zoomSettings.setRenderSprintProgressAtDayWidth(10);
+        zoomSettings.setRenderSprintStartDateAtDayWidth(11);
+        zoomSettings.setRenderSprintStatusAtDayWidth(12);
+        when(properties.getSprintOverview()).thenReturn(zoomSettings);
+        KassandraProperties.CalendarAxes calendarAxesZoom = new KassandraProperties.CalendarAxes();
+        calendarAxesZoom.setDayOfMonthMinDayWidth(20.5);
+        calendarAxesZoom.setDayOfWeekMinDayWidth(16.5);
+        calendarAxesZoom.setMonthMinDayWidth(2.5);
+        calendarAxesZoom.setWeekMinDayWidth(3.5);
+        when(properties.getCalendarAxes()).thenReturn(calendarAxesZoom);
 
         SprintOverviewDto dto = service.getOverview(LocalDateTime.of(2026, 6, 6, 0, 0), null, true);
 
@@ -75,9 +90,10 @@ public class SprintsOverviewServiceTest {
         // lane 0 should contain first sprint
         assertEquals(1, dto.lanes.get(0).sprints.size());
         assertEquals(0.25, dto.lanes.get(0).sprints.get(0).progress, 0.0001);
-        assertEquals(8, dto.meta.zoomSettings.renderSprintStartDateAtDayWidth);
-        assertEquals(8, dto.meta.zoomSettings.renderSprintEndDateAtDayWidth);
-        assertEquals(8, dto.meta.zoomSettings.renderSprintProgressAtDayWidth);
-        assertEquals(8, dto.meta.zoomSettings.renderSprintStatusAtDayWidth);
+        assertEquals(11, dto.meta.zoomSettings.renderSprintStartDateAtDayWidth);
+        assertEquals(9, dto.meta.zoomSettings.renderSprintEndDateAtDayWidth);
+        assertEquals(10, dto.meta.zoomSettings.renderSprintProgressAtDayWidth);
+        assertEquals(12, dto.meta.zoomSettings.renderSprintStatusAtDayWidth);
+        assertEquals(calendarAxesZoom, dto.meta.calendarAxesZoom);
     }
 }
