@@ -737,18 +737,28 @@ export async function verifyGanttInspection(gantt, combined) {
                 const data = structuredClone(source);
                 data.meta.maxWorkedSeconds = 40500;
                 data.meta.estimatedBestWorkSeconds = 40500;
+                const remainingHistory = (totalWorkedSeconds, totalRemainingSeconds, workPerDay) => {
+                    let remaining = totalWorkedSeconds + totalRemainingSeconds;
+                    return workPerDay.map((work, index) => {
+                        if (index > 0) remaining -= work;
+                        return remaining;
+                    });
+                };
                 data.authors = [
                     {userName: 'Alice', color: 0xff336699, totalWorkedSeconds: 18000, totalRemainingSeconds: 9000,
-                        accumulatedWorkPerDay: [0, 3600, 7200, 7200, 10800, 14400, 18000, ...Array(20).fill(18000)], tooltipPerDay: []},
+                        workPerDay: [0, 3600, 3600, 0, 3600, 3600, 3600, ...Array(20).fill(0)],
+                        remainingWorkPerDay: remainingHistory(18000, 9000, [0, 3600, 3600, 0, 3600, 3600, 3600, ...Array(20).fill(0)]), tooltipPerDay: []},
                     {userName: 'Bob', color: 0xffaa6633, totalWorkedSeconds: 7200, totalRemainingSeconds: 6300,
-                        accumulatedWorkPerDay: [0, 1800, 1800, 3600, 3600, 5400, 7200, ...Array(20).fill(7200)], tooltipPerDay: []},
+                        workPerDay: [0, 1800, 0, 1800, 0, 1800, 1800, ...Array(20).fill(0)],
+                        remainingWorkPerDay: remainingHistory(7200, 6300, [0, 1800, 0, 1800, 0, 1800, 1800, ...Array(20).fill(0)]), tooltipPerDay: []},
                     {userName: 'Carol', color: 0xff448855, totalWorkedSeconds: 3600, totalRemainingSeconds: 0,
-                        accumulatedWorkPerDay: [0, ...Array(26).fill(3600)], tooltipPerDay: []},
+                        workPerDay: [0, 3600, ...Array(25).fill(0)],
+                        remainingWorkPerDay: remainingHistory(3600, 0, [0, 3600, ...Array(25).fill(0)]), tooltipPerDay: []},
                 ];
-                const mount = (dayWidth = 40, visualScale = 1) => {
+                const mount = (dayWidth = 40, visualScale = 1, chartData = data) => {
                     state(dayWidth, visualScale);
                     document.getElementById('chart').style.width = '1600px';
-                    window.mountGanttBurndownChart('chart', data, 'Burn-down inspection');
+                    window.mountGanttBurndownChart('chart', chartData, 'Burn-down inspection');
                 };
                 const hover = point => {
                     const svg = point.ownerSVGElement;
@@ -817,18 +827,97 @@ export async function verifyGanttInspection(gantt, combined) {
                 assertCondition(document.querySelector('.burndown-point-readout').textContent.includes('Alice: 6h 30m'),
                     'author inspection after zoom', 'Alice: 6h 30m', document.querySelector('.burndown-point-readout').textContent);
                 window.disposeKassandraChart('chart');
-                data.authors[2].accumulatedWorkPerDay[1] = 3599;
+                data.authors[2].workPerDay[1] = 3599;
                 mount();
                 hover(document.querySelector(".burndown-actual-point[data-date='2025-06-01'][data-author='Bob']"));
                 assertCondition(document.querySelector('.burndown-point-readout').textContent.includes('Carol: 0m'),
                     'subpixel-separated authors remain inspectable', 'Carol: 0m', document.querySelector('.burndown-point-readout').textContent);
                 window.disposeKassandraChart('chart');
-                data.authors[2].accumulatedWorkPerDay[1] = 3600;
-                data.authors[1].accumulatedWorkPerDay[1] = undefined;
+                data.authors[2].workPerDay[1] = 3600;
+                data.authors[1].workPerDay[1] = undefined;
                 mount();
                 assertEqual(document.querySelectorAll(".burndown-actual-point[data-date='2025-06-01']").length, 0,
                     'incomplete day has no misleading total or author points');
                 window.disposeKassandraChart('chart');
-                data.authors[1].accumulatedWorkPerDay[1] = 1800;
+                data.authors[1].workPerDay[1] = 1800;
+                mount();
+                const replaySlider = document.querySelector('[data-replay-slider]');
+                assertPresent(replaySlider, 'weekday-visible burndown replay slider');
+                const replayEndDayIndex = Number(replaySlider.getAttribute('aria-valuemax'));
+                assertCondition(replayEndDayIndex > 0, 'replay slider spans multiple days', 'positive day range', replayEndDayIndex);
+                replaySlider.dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(document.querySelector('[data-replay-slider]')?.getAttribute('aria-valuenow')) === 0,
+                    'replay slider moves to the first day');
+                const releaseMarkerXs = () => [...document.querySelectorAll('svg title')]
+                    .filter(title => title.textContent.startsWith('R = Release (Estimated release date)'))
+                    .map(title => title.parentElement?.getAttribute('x'));
+                const firstDayReleaseXs = releaseMarkerXs();
+                document.querySelector('[data-replay-slider]').dispatchEvent(
+                    new KeyboardEvent('keydown', {key: 'End', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(document.querySelector('[data-replay-slider]')?.getAttribute('aria-valuenow'))
+                    === replayEndDayIndex, 'replay slider moves to the last available day');
+                const lastDayReleaseXs = releaseMarkerXs();
+                assertCondition(JSON.stringify(firstDayReleaseXs) !== JSON.stringify(lastDayReleaseXs),
+                    'replay slider updates the projected release date', firstDayReleaseXs, lastDayReleaseXs);
+                window.disposeKassandraChart('chart');
+
+                const createEstimateReplayData = updateDayIndex => {
+                    const replayData = structuredClone(data);
+                    replayData.meta.maxWorkedSeconds = 108000;
+                    replayData.meta.estimatedBestWorkSeconds = 108000;
+                    replayData.ganttGuideWithoutBuffer = null;
+                    replayData.ganttGuideWithBuffer = null;
+                    const workPerDay = [0, 27000, ...Array(62).fill(0)];
+                    const remainingWorkPerDay = Array(workPerDay.length).fill(54000);
+                    replayData.authors = [{
+                        userName: 'Replay', color: 0xff336699, totalWorkedSeconds: 27000, totalRemainingSeconds: 54000,
+                        workPerDay, remainingWorkPerDay, tooltipPerDay: [],
+                    }];
+                    if (updateDayIndex !== null)
+                        remainingWorkPerDay[updateDayIndex + 1] = 81000;
+                    return replayData;
+                };
+                const selectReplayDay = async dayIndex => {
+                    document.querySelector('[data-replay-slider]').dispatchEvent(
+                        new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
+                    await waitFor(() => Number(document.querySelector('[data-replay-slider]')?.getAttribute('aria-valuenow')) === 0,
+                        'estimate replay moves to the first day');
+                    for (let index = 0; index < dayIndex; index++) {
+                        document.querySelector('[data-replay-slider]').dispatchEvent(
+                            new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true}));
+                        await waitFor(() => Number(document.querySelector('[data-replay-slider]')?.getAttribute('aria-valuenow')) === index + 1,
+                            'estimate replay advances one day');
+                    }
+                };
+                const readMaxDayTick = () => Math.max(...[...document.querySelectorAll('svg text')]
+                    .map(label => label.textContent.trim())
+                    .filter(label => /^\d+pd$/.test(label))
+                    .map(label => Number.parseInt(label, 10)));
+                const updateDayIndex = Math.max(0, replayEndDayIndex - 1);
+                const estimateBeforeUpdate = createEstimateReplayData(null);
+                mount(40, 1, estimateBeforeUpdate);
+                await selectReplayDay(updateDayIndex);
+                const baselineEstimateReleaseXs = releaseMarkerXs();
+                const baselineEstimateYAxis = readMaxDayTick();
+                window.disposeKassandraChart('chart');
+
+                const estimateAfterUpdate = createEstimateReplayData(updateDayIndex);
+                mount(40, 1, estimateAfterUpdate);
+                await selectReplayDay(updateDayIndex);
+                assertCondition(JSON.stringify(baselineEstimateReleaseXs) !== JSON.stringify(releaseMarkerXs()),
+                    'remaining-estimate update changes the projected release date', baselineEstimateReleaseXs, releaseMarkerXs());
+                assertCondition(readMaxDayTick() > baselineEstimateYAxis,
+                    'remaining-estimate update expands the y-axis for worked plus remaining effort', baselineEstimateYAxis, readMaxDayTick());
+                document.querySelector('[data-replay-slider]').dispatchEvent(
+                    new KeyboardEvent('keydown', {key: 'End', bubbles: true, cancelable: true}));
+                await waitFor(() => Number(document.querySelector('[data-replay-slider]')?.getAttribute('aria-valuenow'))
+                    === replayEndDayIndex, 'estimate replay moves past the remaining-work update');
+                assertEqual(readMaxDayTick(), baselineEstimateYAxis,
+                    'y-axis follows the selected day instead of retaining an earlier estimate peak');
+                window.disposeKassandraChart('chart');
+
+                mount(10);
+                assertAbsent(document.querySelector('[data-replay-slider]'), 'replay slider hidden when weekdays are not visible');
+                window.disposeKassandraChart('chart');
                 mount();
             }

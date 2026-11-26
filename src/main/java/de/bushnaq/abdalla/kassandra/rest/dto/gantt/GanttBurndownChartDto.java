@@ -39,7 +39,7 @@ import java.util.UUID;
 public class GanttBurndownChartDto {
 
     /**
-     * Per-author accumulated work series for the stacked burndown bars.
+     * Per-author daily work series for the stacked burndown bars.
      * Sorted by author name for consistent legend ordering.
      */
     public List<AuthorSeriesDto> authors = new ArrayList<>();

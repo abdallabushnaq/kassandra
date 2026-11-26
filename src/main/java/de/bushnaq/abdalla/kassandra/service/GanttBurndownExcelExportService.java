@@ -76,12 +76,14 @@ public class GanttBurndownExcelExportService {
         createHeaderCell(header, column, "Gantt guide without buffer - remaining (h)", headerStyle);
 
         int dayCount = calculateDayCount(chart);
+        List<List<Long>> authorAccumulatedWork = chart.authors.stream()
+                .map(AuthorSeriesDto::toAccumulatedWorkPerDay).toList();
         for (int day = 0; day < dayCount; day++) {
             Row row = sheet.createRow(day + 1);
             row.createCell(0).setCellValue(chart.meta.chartStart.toLocalDate().plusDays(day).format(DATE_FORMAT));
             double actualTotal = 0;
             for (int authorIndex = 0; authorIndex < chart.authors.size(); authorIndex++) {
-                double actual = secondsToHours(valueAt(chart.authors.get(authorIndex).accumulatedWorkPerDay, day));
+                double actual = secondsToHours(valueAt(authorAccumulatedWork.get(authorIndex), day));
                 row.createCell(authorIndex + 1).setCellValue(actual);
                 actualTotal += actual;
             }
@@ -151,7 +153,7 @@ public class GanttBurndownExcelExportService {
     private int calculateDayCount(GanttBurndownChartDto chart) {
         int dayCount = chart.meta.totalDays;
         for (AuthorSeriesDto author : chart.authors) {
-            dayCount = Math.max(dayCount, author.accumulatedWorkPerDay.size());
+            dayCount = Math.max(dayCount, author.workPerDay.size());
         }
         dayCount = Math.max(dayCount, chart.ganttGuideWithBuffer == null ? 0 : chart.ganttGuideWithBuffer.size());
         return Math.max(dayCount, chart.ganttGuideWithoutBuffer == null ? 0 : chart.ganttGuideWithoutBuffer.size());

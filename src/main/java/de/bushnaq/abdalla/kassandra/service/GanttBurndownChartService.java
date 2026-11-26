@@ -104,19 +104,21 @@ public class GanttBurndownChartService {
         List<Worklog>          worklogs                   = sprint.getWorklogs() != null ? sprint.getWorklogs() : List.of();
         List<WorklogRemaining> wlRemainingList            = sprint.getWorklogRemaining() != null ? sprint.getWorklogRemaining() : List.of();
         AuthorsContribution    usersTotalContribution     = new AuthorsContribution();
-        Map<User, DayWork[]>   usersWorkPerDayAccumulated = new HashMap<>();// work per author and day, were every day has the amount of work done at all previous days, first day has 0 work done
+        Map<User, DayWork[]>   usersWorkPerDay = new HashMap<>();// work per author and day
 
 
         createMilestones(sprint, now);
         calculateAuthorContribution(sprint, worklogs, wlRemainingList, usersTotalContribution);
 
-        calculateUserWorkPerDayAccumulated(sprint, milestones, worklogs, wlRemainingList, usersTotalContribution, usersWorkPerDayAccumulated);//TODO stop passing Milestonres as parameter
+        calculateUserWorkPerDay(sprint, milestones, worklogs, usersTotalContribution, usersWorkPerDay);//TODO stop passing Milestonres as parameter
         dto.seriesStart = milestones.firstMilestone;
         dto.sprintId = sprint.getId();
 
 
         // Sort worklogs chronologically for correct running-total computation
         List<Worklog> sortedWorklogs = worklogs.stream().sorted(Comparator.comparing(Worklog::getStart)).toList();
+        Map<User, long[]> usersRemainingWorkPerDay = calculateRemainingWorkPerDay(sprint, sortedWorklogs,
+                wlRemainingList, usersWorkPerDay);
 
         // ── Chart window ────────────────────────────────────────────────────────
         LocalDateTime chartStart = GanttChartService.getChartStart(sprint, now, preRun).atStartOfDay();
@@ -247,11 +249,15 @@ public class GanttBurndownChartService {
                 }
                 a.totalRemainingSeconds = usersTotalContribution.get(user).remaining.toSeconds();
                 a.totalWorkedSeconds    = usersTotalContribution.get(user).worked.toSeconds();
-                a.accumulatedWorkPerDay = new ArrayList<Long>();
-                for (int i = 0; i < usersWorkPerDayAccumulated.get(user).length; i++) {
-                    DayWork dw = usersWorkPerDayAccumulated.get(user)[i];
-                    a.accumulatedWorkPerDay.add(dw.duration.toSeconds());
-                    a.tooltipPerDay.add(DayWork.transactionsToTooltips(dw.transactions, user.getName(), calendarFromDayIndex(i)));
+                a.workPerDay = new ArrayList<>();
+                a.remainingWorkPerDay = new ArrayList<>();
+                long[] remainingWorkPerDay = usersRemainingWorkPerDay.get(user);
+                for (int i = 0; i < usersWorkPerDay.get(user).length; i++) {
+                    DayWork dw = usersWorkPerDay.get(user)[i];
+                    a.workPerDay.add(dw == null ? 0 : dw.duration.toSeconds());
+                    a.remainingWorkPerDay.add(remainingWorkPerDay[i]);
+                    a.tooltipPerDay.add(DayWork.transactionsToTooltips(
+                            dw == null ? List.of() : dw.transactions, user.getName(), calendarFromDayIndex(i)));
                 }
 //                String[] tt = tooltipArr.get(user.getId());
 //                for (int d = 0; d < arrayLen; d++) {
@@ -485,7 +491,49 @@ public class GanttBurndownChartService {
         return calculateDayIndex(date.toLocalDate());
     }
 
-    public void calculateUserWorkPerDayAccumulated(Sprint sprint, Milestones milestones, List<Worklog> worklog, List<WorklogRemaining> worklogRemaining, AuthorsContribution usersTotalContribution, Map<User, DayWork[]> usersWorkPerDayAccumulated) {
+    private Map<User, long[]> calculateRemainingWorkPerDay(Sprint sprint, List<Worklog> sortedWorklogs,
+                                                            List<WorklogRemaining> worklogRemaining,
+                                                            Map<User, DayWork[]> usersWorkPerDay) {
+        Map<User, long[]> remainingWorkByUser = new HashMap<>();
+        for (Map.Entry<User, DayWork[]> entry : usersWorkPerDay.entrySet()) {
+            remainingWorkByUser.put(entry.getKey(), new long[entry.getValue().length]);
+        }
+
+        Map<UUID, List<Worklog>> worklogsByTask = new HashMap<>();
+        for (Worklog worklog : sortedWorklogs) {
+            worklogsByTask.computeIfAbsent(worklog.getTaskId(), ignored -> new ArrayList<>()).add(worklog);
+        }
+
+        for (WorklogRemaining taskRemaining : worklogRemaining) {
+            Task task = sprint.getTaskById(taskRemaining.getIssueId());
+            User author = taskRemaining.getAuthor();
+            long[] remainingPerDay = remainingWorkByUser.get(author);
+            if (task == null || remainingPerDay == null) {
+                log.warn("Cannot build remaining-work history for task {}", taskRemaining.getIssueId());
+                continue;
+            }
+
+            List<Worklog> taskWorklogs = worklogsByTask.getOrDefault(task.getId(), List.of());
+            int nextWorklog = 0;
+            long remainingSeconds = task.getMinEstimate() == null ? 0 : task.getMinEstimate().toSeconds();
+            for (int dayIndex = 0; dayIndex < remainingPerDay.length; dayIndex++) {
+                LocalDate chartDay = milestones.firstMilestone.plusDays(dayIndex - 1L);
+                while (nextWorklog < taskWorklogs.size()
+                        && !taskWorklogs.get(nextWorklog).getStart().toLocalDate().isAfter(chartDay)) {
+                    Worklog worklog = taskWorklogs.get(nextWorklog++);
+                    if (worklog.getTimeRemainingEstimate() == null) {
+                        throw new IllegalStateException("Worklog " + worklog.getId() + " has no remaining-estimate snapshot");
+                    }
+                    remainingSeconds = worklog.getTimeRemainingEstimate().toSeconds();
+                }
+                remainingPerDay[dayIndex] += remainingSeconds;
+            }
+        }
+        return remainingWorkByUser;
+    }
+
+    private void calculateUserWorkPerDay(Sprint sprint, Milestones milestones, List<Worklog> worklog,
+                                         AuthorsContribution usersTotalContribution, Map<User, DayWork[]> usersWorkPerDay) {
         this.milestones = milestones;
         LocalDate lastDate = LocalDate.MIN;
         if (worklog != null) {
@@ -499,83 +547,41 @@ public class GanttBurndownChartService {
             milestones.add(lastDate, "L", "last value + 1", Color.red, true);
             milestones.calculate();
         }
-        Map<User, Duration> authorWorkSum = new HashMap<>();// total work done by any author
-        for (User user : usersTotalContribution.getSortedKeyList()) {
-            if (authorWorkSum.get(user) == null) {
-                authorWorkSum.put(user, Duration.ZERO);
-            }
-        }
         int days = DateUtil.calculateDays(milestones.firstMilestone, milestones.lastMilestone) + 1;
         if (worklog != null) {
-            int lastDayIndexWithValue = 0;// the last day any author has data
-            System.out.println("========================================================================================");
             for (Worklog work : worklog) {
-//                if (sprint.getTaskById(work.getTaskId()).getKey().equals("T-2"))
-//                if (sprint.getUser(work.getAuthorId()).getName().equals("Jennifer Holleman")) {
-//                    System.out.println("start=" + work.getStart() + " " + DateUtil.createDurationString(work.getTimeSpent(), false, true, true) + " " + sprint.getUser(work.getAuthorId()).getName());
-//                }
-                Duration  aws     = authorWorkSum.get(sprint.getUser(work.getAuthorId()));
-                DayWork[] dayWork = usersWorkPerDayAccumulated.get(sprint.getUser(work.getAuthorId()));
+                User      user    = sprint.getUser(work.getAuthorId());
+                DayWork[] dayWork = usersWorkPerDay.get(user);
                 if (dayWork == null) {
                     // create a list of work per day for authors that have worked
                     dayWork    = new DayWork[days + 3];// first value is 0
                     dayWork[0] = new DayWork();
-                    usersWorkPerDayAccumulated.put(sprint.getUser(work.getAuthorId()), dayWork);
+                    usersWorkPerDay.put(user, dayWork);
                 }
-                aws = aws.plus(work.getTimeSpent());
-                authorWorkSum.put(sprint.getUser(work.getAuthorId()), aws);
                 int day = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.toDayPrecision(work.getStart())));
                 if (day < 0) {
                     // ignore any data before first day of sprint
                     day = 0;
                 }
                 if (day < days) {
-                    {
-                        if (dayWork[day + 1] != null) {
-                            dayWork[day + 1].setDuration(aws);
-                            dayWork[day + 1].add(sprint, work);
-                        } else {
-                            dayWork[day + 1] = new DayWork(aws);// every day has the amount of work done at that day and all days before that
-                            dayWork[day + 1].add(sprint, work);
-                        }
-                        if (!aws.isZero()) {
-                            lastDayIndexWithValue = Math.max(day, lastDayIndexWithValue);
-                        }
+                    if (dayWork[day + 1] == null) {
+                        dayWork[day + 1] = new DayWork();
                     }
+                    dayWork[day + 1].setDuration(dayWork[day + 1].duration.plus(work.getTimeSpent()));
+                    dayWork[day + 1].add(sprint, work);
                 } else {
-//                    numberOfWorkExceptions++;
                     log.error(WORK_OUTSIDE_ALLOWED_TIME_BOUNDARIES_OCCURRED);
                 }
-
             }
-            System.out.println("========================================================================================");
         }
-        int nowDayIndex = (DateUtil.calculateDays(milestones.firstMilestone, DateUtil.min(milestones.lastMilestone, milestones.get("N").time)));
         for (User user : usersTotalContribution.getSortedKeyList()) {
-            Duration  last = Duration.ZERO;
-            DayWork[] aw   = usersWorkPerDayAccumulated.get(user);
+            DayWork[] aw = usersWorkPerDay.get(user);
             if (aw == null) {
                 // create a list of work per day for authors that have no work done yet and thus
                 // where missed in the above use case involving worklog
                 aw    = new DayWork[days + 3];
                 aw[0] = new DayWork();
-                usersWorkPerDayAccumulated.put(user, aw);
-            }
-            // fill in empty parts of the days list
-            for (int i = 1; i < usersWorkPerDayAccumulated.get(user).length; i++) {
-                if (i <= nowDayIndex + 2) {
-                    if (usersWorkPerDayAccumulated.get(user)[i] == null
-                            || last.toSeconds() > usersWorkPerDayAccumulated.get(user)[i].duration.toSeconds()) {
-                        usersWorkPerDayAccumulated.get(user)[i] = new DayWork(last);
-                    }
-                    last = usersWorkPerDayAccumulated.get(user)[i].duration;
-                } else {
-                    // ignore anything after today (only makes sense in a test scenario, where we
-                    // simulate a now time in the past)
-                    if (usersWorkPerDayAccumulated.get(user)[i] == null) {
-                        usersWorkPerDayAccumulated.get(user)[i] = new DayWork(Duration.ZERO);
-                    }
-                }
+                usersWorkPerDay.put(user, aw);
             }
         }
     }

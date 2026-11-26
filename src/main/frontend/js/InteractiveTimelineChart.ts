@@ -430,6 +430,8 @@ export class InteractiveTimelineChart<TChart extends TimelineChart> implements C
     };
 
     private handlePointerDown = (event: PointerEvent): void => {
+        if (event.target instanceof Element && event.target.closest('[data-replay-slider]'))
+            return;
         if (event.button !== 0 || this.dragState || (this.options.onActivate && !event.isPrimary))
             return;
         this.dragState = {

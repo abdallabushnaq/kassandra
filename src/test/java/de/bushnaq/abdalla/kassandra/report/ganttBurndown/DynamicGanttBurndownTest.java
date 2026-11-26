@@ -45,6 +45,7 @@ import java.awt.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -90,6 +91,44 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
         g.generateGanttChart(testInfo, sprint.getId(), testFolder);
         g.testTheme = ETheme.dark;
         g.generateGanttChart(testInfo, sprint.getId(), testFolder);
+    }
+
+    /** Verifies that each worklog's remaining estimate is used from its logged day onward. */
+    @Test
+    public void recordsRemainingEstimateHistory() throws Exception {
+        GanttGenerator g = new GanttGenerator(service);
+        User user = g.addUser("estimate-history-user", 1f);
+        Sprint sprint = g.addSprint();
+        Task task = g.addTask("[1] Estimate history", "2d", null, user, sprint, null, null);
+        g.initializeSprint(sprint);
+        g.levelResources(null, sprint, null);
+
+        long workdaySeconds = Duration.ofHours(7).plusMinutes(30).getSeconds();
+        Worklog worklog = new Worklog();
+        worklog.setSprintId(sprint.getId());
+        worklog.setTaskId(task.getId());
+        worklog.setAuthorId(user.getId());
+        worklog.setStart(task.getStart().plusDays(1));
+        worklog.setTimeSpent(Duration.ofSeconds(workdaySeconds));
+        worklog.setTimeRemainingEstimate(Duration.ofSeconds(workdaySeconds * 2));
+        task.addWorklog(worklog);
+        g.getWorklogs().add(worklog);
+        g.initializeSprint(sprint);
+
+        GanttBurndownChartDto chart = service.build(sprint, ParameterOptions.getLocalNow(), false);
+        AuthorSeriesDto author = chart.authors.stream()
+                .filter(series -> user.getName().equals(series.userName))
+                .findFirst()
+                .orElseThrow();
+        int worklogIndex = Math.toIntExact(ChronoUnit.DAYS.between(
+                chart.seriesStart, worklog.getStart().toLocalDate())) + 1;
+        int beforeWorklogIndex = worklogIndex - 1;
+
+        assertEquals(task.getMinEstimate().toSeconds(), author.remainingWorkPerDay.get(beforeWorklogIndex));
+        assertEquals(workdaySeconds * 2, author.remainingWorkPerDay.get(worklogIndex));
+        assertEquals(workdaySeconds, author.workPerDay.get(worklogIndex));
+        assertEquals(workdaySeconds * 3,
+                author.workPerDay.get(worklogIndex) + author.remainingWorkPerDay.get(worklogIndex));
     }
 
     @Test

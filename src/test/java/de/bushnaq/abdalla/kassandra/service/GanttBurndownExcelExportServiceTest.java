@@ -41,8 +41,8 @@ public class GanttBurndownExcelExportServiceTest {
         chart.meta.chartStart = LocalDateTime.of(2026, 8, 3, 0, 0);
         chart.meta.chartEnd = LocalDateTime.of(2026, 8, 5, 0, 0);
         chart.meta.totalDays = 3;
-        chart.authors.add(author("Alice", List.of(0L, 3600L, 7200L), 7200L, 3600L));
-        chart.authors.add(author("Bob", List.of(0L, 1800L, 3600L), 3600L, 7200L));
+        chart.authors.add(author("Alice", List.of(0L, 3600L, 3600L), 7200L, 3600L));
+        chart.authors.add(author("Bob", List.of(0L, 1800L, 1800L), 3600L, 7200L));
         chart.ganttGuideWithBuffer = List.of(14400L, 10800L, 7200L);
         chart.ganttGuideWithoutBuffer = List.of(10800L, 7200L, 3600L);
 
@@ -64,7 +64,7 @@ public class GanttBurndownExcelExportServiceTest {
     private AuthorSeriesDto author(String name, List<Long> values, long totalWorked, long totalRemaining) {
         AuthorSeriesDto author = new AuthorSeriesDto();
         author.userName = name;
-        author.accumulatedWorkPerDay.addAll(values);
+        author.workPerDay.addAll(values);
         author.totalWorkedSeconds = totalWorked;
         author.totalRemainingSeconds = totalRemaining;
         return author;

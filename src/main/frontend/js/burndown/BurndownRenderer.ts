@@ -33,6 +33,7 @@ const SECONDS_PER_WORKING_DAY = 75 * 6 * 60;
 /** Mirrors Java: public static final int Y_AXIS_WIDTH = 50; */
 export const Y_AXIS_WIDTH = 50;
 const STANDARD_LINE_STROKE_WIDTH = 3;
+const REPLAY_SLIDER_HEIGHT = 18;
 
 /**
  * Fixed plot (diagram) height in pixels. Mirrors Java's {@code dao.chartHeight}, which is
@@ -62,6 +63,13 @@ export class BurndownRenderer extends AbstractRenderer {
     readonly data: GanttBurndownChartDto;
     actualInspectionPoints: readonly ActualInspectionPoint[] = [];
     inspectionLayer: SVGGElement | null = null;
+    private accumulatedWorkPerDay: number[][] = [];
+    private replayRemainingWorkPerDay: number[][] = [];
+    private replayDayIndex = 0;
+    private replayInitialized = false;
+    private replayEndDate: Date | null = null;
+    private replayTotalEstimate = 0;
+    private readonly originalReleaseDate: Date | null;
 
     // ── fields mirroring LegacyBurnDownRenderer.java ──────────────────────────────
     /**
@@ -80,11 +88,9 @@ export class BurndownRenderer extends AbstractRenderer {
     ganttWorkWithBufferPerDayAccumulated: number[] | null = null;
     /** min work per day, were every day has the amount of work planned at that day and all days before that */
     ganttWorkWithoutBufferPerDayAccumulated: number[] | null = null;
-    private readonly eBestWork: number;
     private readonly eWorstWork: number | null;
     private extrapolationColor!: number | null;
-    private readonly maxActualWorked: number;
-    private readonly maxWorked!: number;
+    private maxWorked = 0;
     private readonly sprintClosed: boolean;
     private readonly calendarSize: CalendarSize;
 
@@ -97,6 +103,7 @@ export class BurndownRenderer extends AbstractRenderer {
         super(chart/*, new Milestones([])*/, meta.preRun || 0, meta.postRun || 0, meta.calendarAxesZoom);
 
         this.data = data;
+        this.originalReleaseDate = meta.releaseDate ? DateUtils.getDayMidnight(meta.releaseDate) : null;
         // Java: init(dao) -> initSize(dao.firstDayX, true, dao.calendarSize) — LegacyBurnDownRenderer
         // always draws its own calendar at the BOTTOM of its plot area, so that it sits directly
         // above the Gantt chart's own (top) calendar when the two are stacked in LegacyGanttBurndownChart.
@@ -111,17 +118,6 @@ export class BurndownRenderer extends AbstractRenderer {
         this.sprintClosed = meta.sprintClosed;
         this.ganttWorkWithoutBufferPerDayAccumulated = data.ganttGuideWithoutBuffer || null;
         this.ganttWorkWithBufferPerDayAccumulated = data.ganttGuideWithBuffer || null;
-        // was the estimation in the gantt chart actually bigger than the current estimation?
-        this.maxActualWorked = meta.maxWorkedSeconds;
-        this.maxWorked = meta.maxWorkedSeconds;
-        if (this.ganttWorkWithoutBufferPerDayAccumulated) {
-            this.maxWorked = Math.max(this.maxWorked, this.ganttWorkWithoutBufferPerDayAccumulated[0]);
-        }
-        if (this.ganttWorkWithBufferPerDayAccumulated) {
-            this.maxWorked = Math.max(this.maxWorked, this.ganttWorkWithBufferPerDayAccumulated[0]);
-        }
-        // this.maxWorked = meta.maxWorkedSeconds;
-        this.eBestWork = meta.estimatedBestWorkSeconds;
         this.eWorstWork = null; // dao.estimatedWorstWork has no DTO equivalent yet
         this.calendarSize = data.meta.calendarSize;
 
@@ -172,26 +168,34 @@ export class BurndownRenderer extends AbstractRenderer {
         this.drawCalendar(svg, true, this.containerWidth);
         this.drawMilestones(svg);
         this.createBurnDownChart(svg);
+        this.drawReplaySlider(svg);
     }
 
     // ── Java: protected void createMilestones(LocalDateTime start, LocalDateTime now, LocalDateTime end,
 
     // ── Java: public void init(LegacyRenderDao dao) ──
     public init(): void {
+        this.calculateDayWidth();
+        this.calendarXAxes.additionalBottomHeight = this.calendarXAxes.isDayOfWeekVisible() ? REPLAY_SLIDER_HEIGHT : 0;
         // Java: initSize(dao.firstDayX, true, dao.calendarSize) — sizing happens per-draw() in this
         // interactive port instead (see draw()), since containerWidth/dayWidth can change on
         // zoom/pan/resize, unlike the static Java export.
         this.initSize(this.data.meta.firstDayX, true, this.calendarSize, this.containerWidth);
-        const rMilestone = this.milestones.get('R');
-        const eMilestone = this.milestones.get('E');
-        if (rMilestone && eMilestone && rMilestone.time.getTime() > eMilestone.time.getTime()) {
-            this.extrapolationColor = this.theme.burndownTheme.delayEventColor;
+        const replayEndDayIndex = this.getReplayEndDayIndex();
+        if (!this.replayInitialized) {
+            const initialDate = this.currentDate ?? this.milestones.lastMilestone!;
+            this.replayDayIndex = Math.min(
+                replayEndDayIndex,
+                Math.max(0, DateUtils.calculateDays(this.milestones.firstMilestone!, initialDate)),
+            );
+            this.replayInitialized = true;
         } else {
-            this.extrapolationColor = this.theme.burndownTheme.inTimeColor;
+            this.replayDayIndex = Math.min(this.replayDayIndex, replayEndDayIndex);
         }
-        // Java: calculateAuthorContribution(...), the per-day usersWorkPerDayAccumulated construction,
-        // and the final milestones.add("L", ..., hidden=true) refinement are all pre-computed
-        // server-side in GanttBurndownChartService and delivered via data.authors / data.ganttGuide*.
+        this.calculateAccumulatedWorkPerDay();
+        this.updateReplayForecast();
+        // GanttBurndownChartService provides daily work and remaining-estimate snapshots; this renderer
+        // accumulates work and uses estimate snapshots through the selected replay day.
     }
 
     // ── Java: private void processingInit(LegacyRenderDao dao) ──
@@ -211,6 +215,7 @@ export class BurndownRenderer extends AbstractRenderer {
         const lastWorklog = meta.lastWorklogDate ? DateUtils.getDayMidnight(new Date(meta.lastWorklogDate)) : null;
         const release = meta.releaseDate ? DateUtils.getDayMidnight(new Date(meta.releaseDate)) : null;
         this.createMilestones(start, now, end, firstWorklog, lastWorklog, release);
+        this.replayEndDate = new Date(this.milestones.lastMilestone);
     }
 
     /**
@@ -226,6 +231,8 @@ export class BurndownRenderer extends AbstractRenderer {
 
     // ── Java: protected int calculateAuthorGraphHeight(Duration authorDelta, Duration authorEstimated, Duration sumEstimated) ──
     private calculateAuthorGraphHeight(authorDeltaSeconds: number, authorEstimatedSeconds: number, sumEstimatedSeconds: number): number {
+        if (authorEstimatedSeconds <= 0 || sumEstimatedSeconds <= 0)
+            return 0;
         const maxAuthorGraphHeight = (this.diagram.height * authorEstimatedSeconds) / sumEstimatedSeconds;
         return ((authorEstimatedSeconds - authorDeltaSeconds) * maxAuthorGraphHeight) / authorEstimatedSeconds;
     }
@@ -238,6 +245,213 @@ export class BurndownRenderer extends AbstractRenderer {
     // ── Java: private LocalDate calendarFromDayIndex(int dayIndex) ──
     private calendarFromDayIndex(dayIndex: number): Date {
         return DateUtils.addDay(this.milestones.firstMilestone!, dayIndex);
+    }
+
+    /**
+     * Selects the replay day and recalculates the accumulated work and release forecast.
+     *
+     * @param dayIndex Zero-based day index relative to the first chart day
+     * @return Whether the selected day changed
+     */
+    public setReplayDayIndex(dayIndex: number): boolean {
+        const replayDayIndex = Math.max(0, Math.min(this.getReplayEndDayIndex(), Math.round(dayIndex)));
+        if (replayDayIndex === this.replayDayIndex)
+            return false;
+        this.replayDayIndex = replayDayIndex;
+        this.calculateAccumulatedWorkPerDay();
+        this.updateReplayForecast();
+        return true;
+    }
+
+    private getReplayEndDayIndex(): number {
+        const lastDay = this.replayEndDate ?? this.milestones.lastMilestone!;
+        const latestAvailableDay = this.currentDate && this.currentDate.getTime() < lastDay.getTime()
+            ? this.currentDate
+            : lastDay;
+        return Math.max(0, DateUtils.calculateDays(this.milestones.firstMilestone!, latestAvailableDay));
+    }
+
+    private updateReplayForecast(): void {
+        const releaseDate = this.calculateReplayReleaseDate();
+        let releaseMilestone = this.milestones.get('R');
+        if (releaseDate) {
+            if (!releaseMilestone) {
+                this.milestones.add(releaseDate, 'R', 'Release (Estimated release date)');
+                releaseMilestone = this.milestones.get('R');
+            }
+            if (releaseMilestone) {
+                releaseMilestone.time = releaseDate;
+                releaseMilestone.hidden = false;
+            }
+        } else if (releaseMilestone) {
+            releaseMilestone.time = this.originalReleaseDate ?? this.replayEndDate ?? releaseMilestone.time;
+            releaseMilestone.hidden = true;
+        }
+        this.milestones.calculate();
+        this.days = this.calculateMaxDays();
+
+        const endMilestone = this.milestones.get('E');
+        this.extrapolationColor = releaseMilestone && !releaseMilestone.hidden && endMilestone
+            && releaseMilestone.time.getTime() > endMilestone.time.getTime()
+            ? this.theme.burndownTheme.delayEventColor
+            : this.theme.burndownTheme.inTimeColor;
+    }
+
+    private calculateReplayReleaseDate(): Date | null {
+        const startDate = this.milestones.get('S')?.time;
+        if (!startDate)
+            return null;
+
+        const replayDate = DateUtils.addDay(this.milestones.firstMilestone!, this.replayDayIndex);
+        const workingDaysSpent = DateUtils.calculateWorkingDaysIncluding(startDate, replayDate);
+        const replayArrayIndex = this.replayDayIndex + 1;
+        let workedSeconds = 0;
+        for (const authorWork of this.accumulatedWorkPerDay) {
+            const authorWorkedSeconds = authorWork[replayArrayIndex];
+            if (!Number.isFinite(authorWorkedSeconds))
+                return null;
+            workedSeconds += authorWorkedSeconds;
+        }
+        if (workedSeconds <= 0)
+            return null;
+
+        if (!Number.isFinite(this.replayTotalEstimate) || this.replayTotalEstimate <= 0)
+            return null;
+        const expectedWorkingDays = Math.ceil(this.replayTotalEstimate * workingDaysSpent / workedSeconds);
+        if (expectedWorkingDays > 300)
+            return null;
+
+        let releaseDate = DateUtils.getDayMidnight(startDate);
+        if (expectedWorkingDays > 2) {
+            let workingDaysIndex = 1;
+            while (workingDaysIndex < expectedWorkingDays) {
+                if (DateUtils.isWorkDay(releaseDate))
+                    workingDaysIndex++;
+                releaseDate = DateUtils.addDay(releaseDate, 1);
+            }
+            while (!DateUtils.isWorkDay(releaseDate))
+                releaseDate = DateUtils.addDay(releaseDate, 1);
+        }
+        return releaseDate;
+    }
+
+    private calculateAccumulatedWorkPerDay(): void {
+        const lastDayIndex = this.replayDayIndex + 1;
+        this.accumulatedWorkPerDay = this.data.authors.map(author => {
+            const accumulated: number[] = new Array(author.workPerDay.length);
+            accumulated[0] = 0;
+            let last = 0;
+            let hasCompleteHistory = true;
+            for (let i = 1; i < author.workPerDay.length; i++) {
+                if (i <= lastDayIndex) {
+                    const dailyWork = author.workPerDay[i];
+                    if (hasCompleteHistory && Number.isFinite(dailyWork)) {
+                        last += dailyWork;
+                        accumulated[i] = last;
+                    } else {
+                        accumulated[i] = Number.NaN;
+                        hasCompleteHistory = false;
+                    }
+                } else {
+                    // Fill in empty parts of the days list with the last known total.
+                    accumulated[i] = last;
+                }
+            }
+            return accumulated;
+        });
+        this.replayRemainingWorkPerDay = this.data.authors.map(author => {
+            const remaining: number[] = new Array(author.workPerDay.length);
+            let last = Number.NaN;
+            let hasCompleteHistory = true;
+            for (let i = 0; i < author.workPerDay.length; i++) {
+                if (i <= lastDayIndex) {
+                    const estimate = author.remainingWorkPerDay[i];
+                    if (hasCompleteHistory && Number.isFinite(estimate)) {
+                        last = estimate;
+                        remaining[i] = estimate;
+                    } else {
+                        remaining[i] = Number.NaN;
+                        hasCompleteHistory = false;
+                    }
+                } else {
+                    remaining[i] = last;
+                }
+            }
+            return remaining;
+        });
+
+        let replayTotalEstimate = 0;
+        let hasCompleteReplayEstimate = true;
+        let lastCompleteReplayEstimate = 0;
+        for (let dayIndex = 0; dayIndex <= lastDayIndex; dayIndex++) {
+            let dayEstimate = 0;
+            let hasCompleteDayEstimate = true;
+            for (let authorIndex = 0; authorIndex < this.data.authors.length; authorIndex++) {
+                const worked = this.accumulatedWorkPerDay[authorIndex][dayIndex];
+                const remaining = this.replayRemainingWorkPerDay[authorIndex][dayIndex];
+                if (!Number.isFinite(worked) || !Number.isFinite(remaining)) {
+                    hasCompleteDayEstimate = false;
+                    break;
+                }
+                dayEstimate += worked + remaining;
+            }
+            if (hasCompleteDayEstimate) {
+                lastCompleteReplayEstimate = dayEstimate;
+                if (dayIndex === lastDayIndex)
+                    replayTotalEstimate = dayEstimate;
+            } else if (dayIndex === lastDayIndex) {
+                hasCompleteReplayEstimate = false;
+            }
+        }
+        this.replayTotalEstimate = hasCompleteReplayEstimate ? replayTotalEstimate : Number.NaN;
+        this.maxWorked = hasCompleteReplayEstimate ? replayTotalEstimate : lastCompleteReplayEstimate;
+    }
+
+    private drawReplaySlider(svg: SVGElement): void {
+        if (!this.calendarXAxes.isDayOfWeekVisible())
+            return;
+
+        const startDay = this.milestones.firstMilestone!;
+        const maxDayIndex = this.getReplayEndDayIndex();
+        const dayWidth = this.calendarXAxes.dayOfWeek.getWidth();
+        const firstDayX = this.diagram.x + dayWidth / 2;
+        const startX = firstDayX + (this.calendarXAxes.priRun - this.scrollOffset) * dayWidth;
+        const endX = startX + maxDayIndex * dayWidth;
+        const selectedX = startX + this.replayDayIndex * dayWidth;
+        const y = this.calendarXAxes.year.getY() + this.calendarXAxes.year.getHeight() + REPLAY_SLIDER_HEIGHT / 2;
+        const slider = SvgUtils.createGroup({
+            class: 'burndown-replay-slider',
+            'data-replay-slider': 'true',
+            'data-min-x': String(startX),
+            'data-max-x': String(endX),
+            'data-min-day-index': '0',
+            'data-max-day-index': String(maxDayIndex),
+            role: 'slider',
+            tabindex: '0',
+            focusable: 'true',
+            'aria-label': 'Replay burndown chart',
+            'aria-valuemin': '0',
+            'aria-valuemax': String(maxDayIndex),
+            'aria-valuenow': String(this.replayDayIndex),
+            'aria-valuetext': DateUtils.addDay(startDay, this.replayDayIndex).toLocaleDateString(),
+            style: 'cursor: ew-resize; touch-action: none;',
+        });
+        svg.appendChild(slider);
+
+        const trackColor = ColorUtils.intToHex(this.theme.ganttTheme.gridColor);
+        const progressColor = ColorUtils.intToHex(this.theme.burndownTheme.borderColor);
+        slider.appendChild(SvgUtils.createLine(startX, y, endX, y, {
+            stroke: trackColor, 'stroke-width': '4', 'stroke-linecap': 'round',
+            'pointer-events': 'stroke',
+        }));
+        slider.appendChild(SvgUtils.createLine(startX, y, selectedX, y, {
+            stroke: progressColor, 'stroke-width': '4', 'stroke-linecap': 'round',
+            'pointer-events': 'none',
+        }));
+        slider.appendChild(SvgUtils.createCircle(selectedX, y, 6, {
+            fill: progressColor, stroke: trackColor, 'stroke-width': '2',
+            'pointer-events': 'all',
+        }));
     }
 
     // ── Java: protected boolean isPlannedBurnDownGuideAvailable() ──
@@ -296,7 +510,8 @@ export class BurndownRenderer extends AbstractRenderer {
                 this.drawPlannedBurnDownGuide(svg, firstDayX, this.ganttWorkWithBufferPerDayAccumulated!);
             } else {
                 // ---linear guide
-                this.drawOptimalBurnDownGuide(svg, firstDayX, this.eBestWork);
+                if (Number.isFinite(this.replayTotalEstimate))
+                    this.drawOptimalBurnDownGuide(svg, firstDayX, this.replayTotalEstimate);
             }
 
             if (this.eWorstWork != null) {
@@ -305,9 +520,9 @@ export class BurndownRenderer extends AbstractRenderer {
 
             // release extrapolation (Velocity)
             const releaseMilestone = this.milestones.get('R');
-            if (releaseMilestone) {
+            if (releaseMilestone && !releaseMilestone.hidden) {
                 const x1 = startX - this.dayWidth / 2 + 1;
-                const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHeight(this.maxActualWorked);
+                const y1 = this.diagram.y + this.diagram.height - this.calculateGraphHeight(this.replayTotalEstimate);
                 const x = firstDayX + (DateUtils.calculateDays(firstDay, releaseMilestone.time) - this.scrollOffset + this.calendarXAxes.priRun) * this.dayWidth + this.dayWidth / 2;
                 this.drawDottedGuideLine(svg, x1, y1, x, this.diagram.y + this.diagram.height, ColorUtils.intToHex(this.extrapolationColor));
                 // svg.appendChild(SvgUtils.createLine(x1, y1, x, this.diagram.y + this.diagram.height, {
@@ -365,8 +580,7 @@ export class BurndownRenderer extends AbstractRenderer {
 
         const authors = this.data.authors; // Java: usersTotalContribution.getSortedKeyList() (pre-sorted server-side)
 
-        const nMilestone = this.milestones.get('N');
-        const nowTime = nMilestone ? nMilestone.time : (this.currentDate ?? this.milestones.lastMilestone!);
+        const nowTime = this.calendarFromDayIndex(this.replayDayIndex);
         const maxLastOrNow = nowTime.getTime() > this.milestones.lastMilestone!.getTime() ? nowTime : this.milestones.lastMilestone!;
         const minLastOrNow = nowTime.getTime() < this.milestones.lastMilestone!.getTime() ? nowTime : this.milestones.lastMilestone!;
 
@@ -375,7 +589,7 @@ export class BurndownRenderer extends AbstractRenderer {
         const graphHeight = new Array<number>(days + 3).fill(0);
         const remaining = new Array<number>(days + 3).fill(0);
         const valid = new Array<boolean>(days + 3).fill(true);
-        const reportingDay = this.currentDate ?? DateUtils.getDayMidnight(new Date());
+        const reportingDay = this.calendarFromDayIndex(this.replayDayIndex);
         const lastDayIndex = Math.min(DateUtils.calculateDays(firstDay, minLastOrNow),
             DateUtils.calculateDays(firstDay, reportingDay));
         const authorPoints = new Map<number, { authorName: string; authorSeconds: number; y: number }[]>();
@@ -383,8 +597,19 @@ export class BurndownRenderer extends AbstractRenderer {
 
         let authorIndex = 0;
         for (const author of authors) {
-            const authorEstimatedWork = author.totalWorkedSeconds + author.totalRemainingSeconds;
-            if (authorEstimatedWork === 0) {
+            const accumulatedWorkPerDay = this.accumulatedWorkPerDay[authorIndex];
+            const remainingWorkPerDay = this.replayRemainingWorkPerDay[authorIndex];
+            const maxDayIndex = DateUtils.calculateDays(firstDay, minLastOrNow);
+            let hasVisibleEstimate = false;
+            for (let dayIndex = 0; dayIndex <= maxDayIndex; dayIndex++) {
+                if (Number.isFinite(accumulatedWorkPerDay[dayIndex])
+                    && Number.isFinite(remainingWorkPerDay[dayIndex])
+                    && accumulatedWorkPerDay[dayIndex] + remainingWorkPerDay[dayIndex] > 0) {
+                    hasVisibleEstimate = true;
+                    break;
+                }
+            }
+            if (!hasVisibleEstimate) {
                 authorIndex++;
                 continue;
             }
@@ -392,8 +617,6 @@ export class BurndownRenderer extends AbstractRenderer {
 
             let yesterdayX = 0, yesterdayY = 0, yesterdayY2 = 0;
             let lastX = 0, lastY = 0, lastY2 = 0;
-            const nowDayIndex = DateUtils.calculateDays(firstDay, minLastOrNow);
-            const maxDayIndex = nowDayIndex;
 
             for (let dayIndex = 0; dayIndex <= maxDayIndex + 2; dayIndex++) {
                 const x = firstDayX + (dayIndex - this.scrollOffset + this.calendarXAxes.priRun) * this.calendarXAxes.dayOfWeek.getWidth();
@@ -401,21 +624,24 @@ export class BurndownRenderer extends AbstractRenderer {
                 let tooltip: string | null = null;
                 let y = 0;
                 if (dayIndex <= maxDayIndex + 2) {
-                    // const arrIndex = this.toArrayIndex(dayIndex);
-                    currentDayAuthorGraphHeight = this.calculateAuthorGraphHeight(author.accumulatedWorkPerDay[dayIndex], authorEstimatedWork, this.maxWorked);
-                    if (Number.isFinite(author.accumulatedWorkPerDay[dayIndex]))
-                        remaining[dayIndex] += authorEstimatedWork - author.accumulatedWorkPerDay[dayIndex];
-                    else
+                    const worked = accumulatedWorkPerDay[dayIndex];
+                    const remainingEstimate = remainingWorkPerDay[dayIndex];
+                    if (Number.isFinite(worked) && Number.isFinite(remainingEstimate)) {
+                        const estimatedWork = worked + remainingEstimate;
+                        currentDayAuthorGraphHeight = this.calculateAuthorGraphHeight(worked, estimatedWork, this.maxWorked);
+                        remaining[dayIndex] += remainingEstimate;
+                    } else {
                         valid[dayIndex] = false;
+                    }
                     y = this.diagram.y + this.diagram.height - graphHeight[dayIndex] - currentDayAuthorGraphHeight;
                     const pointX = x - this.dayWidth / 2;
                     if (dayIndex >= 1 && dayIndex <= lastDayIndex + 1
                         && pointX >= this.diagram.x && pointX <= this.containerWidth
-                        && Number.isFinite(author.accumulatedWorkPerDay[dayIndex]) && Number.isFinite(y)) {
+                        && Number.isFinite(worked) && Number.isFinite(remainingEstimate) && Number.isFinite(y)) {
                         const points = authorPoints.get(dayIndex) ?? [];
                         points.push({
                             authorName: author.userName || 'Unknown',
-                            authorSeconds: authorEstimatedWork - author.accumulatedWorkPerDay[dayIndex],
+                            authorSeconds: remainingEstimate,
                             y,
                         });
                         authorPoints.set(dayIndex, points);

@@ -31,6 +31,7 @@ export class CalendarXAxes {
     calendarSize: CalendarSize;
     width: number;
     x: number;
+    additionalBottomHeight: number;
     private readonly zoomSettings: CalendarAxesZoomSettings;
 
     constructor(parent: IRenderer, priRun: number, postRun: number, zoomSettings: CalendarAxesZoomSettings) {
@@ -56,6 +57,7 @@ export class CalendarXAxes {
         this.calendarSize = CalendarSize.YEARS;
         this.width = 0;
         this.x = 0;
+        this.additionalBottomHeight = 0;
     }
 
     /**
@@ -91,7 +93,7 @@ export class CalendarXAxes {
         if (this.milestonesVisible()) {
             height += this.milestone.getFlagHeight();
         }
-        return height;
+        return height + this.additionalBottomHeight;
     }
 
     drawCalendar(svgGroup: SVGElement, drawDays: boolean, viewportWidth: number): void {

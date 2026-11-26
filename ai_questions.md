@@ -11,6 +11,8 @@ This allows a user to replay the burndown chart and see how the burndown chart e
 To allow TypeScript to do this, it needs to know when work was logged.
 GanttBurndownChartService calculates usersWorkPerDayAccumulated and hands that over to the TS code.
 This pre-cooking needs to be done now in TS code, so that we can draw the chart for any given day.
+Let's keep the code very similar to the java code, almost line-by-lline to make code review easier.
+Also take over any code comment.
 
 # Add Chart Zoom-O-Meter
 

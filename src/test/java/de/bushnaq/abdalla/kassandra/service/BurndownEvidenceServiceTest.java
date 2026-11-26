@@ -333,7 +333,7 @@ class BurndownEvidenceServiceTest {
     @Test
     void doesNotCompareAnIncompleteAuthorSeriesOrMissingGuide() {
         GanttBurndownChartDto chart = chart();
-        chart.authors.get(0).accumulatedWorkPerDay = List.of(0L, 3600L);
+        chart.authors.get(0).workPerDay = List.of(0L, 3600L);
         var missingActual = service.capture(chart);
         assertEquals(BurndownEvidenceService.Coverage.NO_ACTUAL_POINT, missingActual.coverage());
         assertNull(missingActual.comparison());
@@ -816,16 +816,16 @@ class BurndownEvidenceServiceTest {
         chart.meta.now = chart.seriesStart.plusDays(2).atTime(13, 30);
         chart.ganttGuideWithBuffer = List.of(21600L, 14400L, 10800L, 7200L);
         chart.ganttGuideWithoutBuffer = List.of(18000L, 10800L, 7200L, 3600L);
-        chart.authors.add(author(7200, 3600, List.of(0L, 3600L, 7200L, 7200L)));
-        chart.authors.add(author(5400, 5400, List.of(0L, 0L, 1800L, 5400L)));
+        chart.authors.add(author(7200, 3600, List.of(0L, 3600L, 3600L, 0L)));
+        chart.authors.add(author(5400, 5400, List.of(0L, 0L, 1800L, 3600L)));
         return chart;
     }
 
-    private static AuthorSeriesDto author(long worked, long remaining, List<Long> accumulated) {
+    private static AuthorSeriesDto author(long worked, long remaining, List<Long> workPerDay) {
         AuthorSeriesDto author = new AuthorSeriesDto();
         author.totalWorkedSeconds = worked;
         author.totalRemainingSeconds = remaining;
-        author.accumulatedWorkPerDay = accumulated;
+        author.workPerDay = workPerDay;
         return author;
     }
 }
