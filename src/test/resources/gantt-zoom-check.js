@@ -574,7 +574,7 @@ export async function verifyGanttZoom(gantt, combined) {
                 [Math.max(0, configuredThreshold - 0.01), true],
             ]) {
                 render({...settings(0), [key]: threshold}, configuredThreshold);
-                const expectedVisibility = key === 'renderTaskProgressBarAtDayWidth' ? false : expected;
+                const expectedVisibility = key === 'renderTaskProgressBarAtDayWidth' && type === 'gantt' ? false : expected;
                 assertEqual(visible(), expectedVisibility, `${type} ${key} visibility at threshold ${threshold}`);
             }
         }
@@ -625,7 +625,10 @@ export async function verifyGanttZoom(gantt, combined) {
         const taskTooltip = taskTitle.textContent;
         assertCondition(taskTooltip.includes('Alpha'), `${type} task tooltip includes task name`,
             'contains "Alpha"', taskTooltip);
-        assertAbsent(group(taskId).querySelector('.task-progress-bar'), `${type} progress bar`);
+        if (type === 'combined')
+            assertPresent(group(taskId).querySelector('.task-progress-bar'), `${type} progress bar`);
+        else
+            assertAbsent(group(taskId).querySelector('.task-progress-bar'), `${type} progress bar`);
         assertAbsent(group(shortTaskId).querySelector('.task-progress-bar'), `${type} zero-progress task bar`);
         assertAbsent(group(taskId).querySelector('rect[fill="#000000"]'), `${type} hidden progress marker`);
         assertEqual(group(taskId).querySelectorAll('.task-border').length, 4, `${type} solid task-border count`);
@@ -745,7 +748,8 @@ export async function verifyGanttInspection(gantt, combined) {
                     {userId: 'carol', userName: 'Carol', color: 0xff448855, totalWorkedSeconds: 3600, totalRemainingSeconds: 0,
                         workPerDay: [0, 3600, ...Array(25).fill(0)], tooltipPerDay: []},
                 ];
-                data.replayTasks = data.authors.map(author => ({
+                data.replayTasks = data.authors.map((author, index) => ({
+                    taskId: [taskId, shortTaskId, storyId][index],
                     userId: author.userId,
                     impactOnCost: true,
                     initialEstimateSeconds: author.totalWorkedSeconds + author.totalRemainingSeconds,
@@ -856,7 +860,7 @@ export async function verifyGanttInspection(gantt, combined) {
                     workPerDay: [0, 27000, 0, 9000, ...Array(24).fill(0)], tooltipPerDay: [],
                 }];
                 data.replayTasks = [{
-                    userId: 'replay', impactOnCost: true, initialEstimateSeconds: 54000,
+                    taskId, userId: 'replay', impactOnCost: true, initialEstimateSeconds: 54000,
                     worklogs: [
                         {authorId: 'replay', start: '2025-06-01T08:00:00', timeSpentSeconds: 27000, remainingEstimateSeconds: 54000},
                         {authorId: 'replay', start: '2025-06-03T08:00:00', timeSpentSeconds: 9000, remainingEstimateSeconds: 9000},
@@ -877,9 +881,30 @@ export async function verifyGanttInspection(gantt, combined) {
                 data.replayTasks[0].worklogs = replayWorklogs;
                 data.authors[0].workPerDay[1] = 27000;
                 data.authors[0].workPerDay[3] = 9000;
+                data.replayTasks.push({
+                    taskId: shortTaskId, impactOnCost: false, initialEstimateSeconds: 3600,
+                    worklogs: [
+                        {start: '2025-06-01T08:00:00', timeSpentSeconds: 1800, remainingEstimateSeconds: 1800},
+                        {start: '2025-06-02T08:00:00', timeSpentSeconds: 0, remainingEstimateSeconds: 900},
+                        {start: '2025-06-03T08:00:00', timeSpentSeconds: 1800, remainingEstimateSeconds: 0},
+                    ],
+                });
                 mount();
+                const progressText = () => group(taskId).querySelector('.task-progress-text')?.textContent;
+                const progressBar = () => group(taskId).querySelector('.task-progress-bar');
+                const detailsProgress = () => [...document.querySelectorAll('.gantt-task-details dt')]
+                    .find(term => term.textContent === 'Progress')?.nextElementSibling?.textContent;
+                assertEqual(progressText(), '80%', 'initial Gantt progress uses worklogs through current day');
+                const completedOtherWidth = Number(group(shortTaskId).querySelector('.task-progress-bar').getAttribute('width'));
+                const finalBarWidth = Number(progressBar().getAttribute('width'));
+                await selectTask(taskId);
+                assertEqual(detailsProgress(), '80%', 'selected task displays replay progress');
                 slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
                 await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'replay selects day before first milestone');
+                assertEqual(progressText(), undefined, 'pre-work Gantt progress text is hidden');
+                assertAbsent(progressBar(), 'pre-work Gantt progress bar is hidden');
+                assertAbsent(group(shortTaskId).querySelector('.task-progress-bar'), 'pre-work non-cost task has no progress bar');
+                assertEqual(detailsProgress(), '0%', 'selected task details update to pre-work progress');
                 assertEqual(slider().getAttribute('aria-valuetext'), 'Saturday 31 May 2025', 'pre-work replay date');
                 assertAbsent(document.querySelector('.burndown-actual-work'), 'pre-work replay has no actual-work bars');
                 assertAbsent(document.querySelector(".burndown-actual-point[data-date='2025-05-31']"),
@@ -894,6 +919,15 @@ export async function verifyGanttInspection(gantt, combined) {
                 await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === 0, 'replay selects first day');
                 const firstPoint = document.querySelector(".burndown-actual-point[data-date='2025-06-01']");
                 assertPresent(firstPoint, 'first replay day actual point');
+                assertEqual(progressText(), '33%', 'first-day Gantt progress uses worked and remaining');
+                assertEqual(detailsProgress(), '33%', 'selected task details update to first-day progress');
+                assertCondition(Number(progressBar().getAttribute('width')) < finalBarWidth,
+                    'first-day progress bar is shorter than final bar', `less than ${finalBarWidth}`, progressBar().getAttribute('width'));
+                assertCondition(Math.abs(Number(group(shortTaskId).querySelector('.task-progress-bar').getAttribute('width'))
+                    - completedOtherWidth / 2) < 1e-7, 'non-cost task progress is replayed independently',
+                    completedOtherWidth / 2, group(shortTaskId).querySelector('.task-progress-bar').getAttribute('width'));
+                assertCondition(group(taskId).querySelector('.task-body title').textContent.includes('Progress: 33%'),
+                    'task tooltip uses replay progress', 'Progress: 33%', group(taskId).querySelector('.task-body title').textContent);
                 assertPresent(document.querySelector('.burndown-actual-work polygon'), 'first worklog restores actual-work bars');
                 assertEqual(firstPoint.dataset.seconds, '54000', 'first replay day uses its remaining estimate');
                 assertAbsent(document.querySelector(".burndown-actual-point[data-date='2025-06-02']"),
@@ -909,18 +943,26 @@ export async function verifyGanttInspection(gantt, combined) {
                 for (let day = 1; day <= 2; day++) {
                     slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowRight', bubbles: true, cancelable: true}));
                     await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === day, 'replay advances one day');
-                    if (day === 1)
+                    if (day === 1) {
                         assertEqual(document.querySelector(".burndown-actual-point[data-date='2025-06-02']").dataset.seconds,
                             '54000', 'replay retains the latest estimate on days without worklogs');
+                        assertCondition(Math.abs(Number(group(shortTaskId).querySelector('.task-progress-bar').getAttribute('width'))
+                            - completedOtherWidth * 2 / 3) < 1e-7, 'estimate-only worklog updates non-cost task progress',
+                            completedOtherWidth * 2 / 3, group(shortTaskId).querySelector('.task-progress-bar').getAttribute('width'));
+                    }
                 }
                 assertEqual(document.querySelector(".burndown-actual-point[data-date='2025-06-03']").dataset.seconds,
                     '9000', 'replay uses the latest task estimate');
+                assertEqual(progressText(), '80%', 'Gantt progress reflects latest estimate');
+                assertEqual(detailsProgress(), '80%', 'selected task details follow latest estimate');
+                assertEqual(Number(progressBar().getAttribute('width')), finalBarWidth, 'progress bar returns to final width');
                 assertCondition(maxTick() < firstMaxTick, 'y-axis uses selected-day worked plus remaining', firstMaxTick, maxTick());
                 assertCondition(releaseX() !== firstRelease, 'release forecast changes with replay', firstRelease, releaseX());
                 slider().dispatchEvent(new KeyboardEvent('keydown', {key: 'Home', bubbles: true, cancelable: true}));
                 await waitFor(() => Number(slider()?.getAttribute('aria-valuenow')) === -1, 'replay returns to pre-work day');
                 assertAbsent(document.querySelector('.burndown-actual-work'), 'returning to pre-work removes actual-work bars');
                 assertAbsent(document.querySelector('.burndown-actual-point'), 'returning to pre-work removes actual points');
+                assertEqual(detailsProgress(), '0%', 'selected task details return to pre-work progress');
                 window.disposeKassandraChart('chart');
 
                 data.replayTasks[0].worklogs.unshift(

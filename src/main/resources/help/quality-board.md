@@ -47,9 +47,9 @@ Zoom in to reveal additional Gantt task and milestone details and dependency
 lines; zooming out simplifies the task bars.
 
 When weekdays are visible, drag the replay slider below them to show worklogs
-through an earlier day. The remaining estimate and release forecast are
-recalculated for that day. The earliest position is the day before the first
-milestone. If no work has been logged yet, the chart shows the guide and
+through an earlier day. Gantt task progress, the remaining estimate and release
+forecast are recalculated for that day. The earliest position is the day before
+the first milestone. If no work has been logged yet, the chart shows the guide and
 initial estimate scale without actual-work bars.
 Use the arrow keys, Home or End when the slider is focused.
 

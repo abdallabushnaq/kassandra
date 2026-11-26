@@ -31,6 +31,7 @@ export class GanttTaskInteraction {
     private selection: GanttTaskSelection | null = null;
     private chart: ChartHandle | null = null;
     private focusedTaskId: string | null = null;
+    private progressValue: HTMLElement | null = null;
 
     constructor(container: HTMLElement, private readonly renderer: GanttRenderer, theme: Theme) {
         for (const task of renderer.tasks)
@@ -122,6 +123,12 @@ export class GanttTaskInteraction {
     }
 
     afterRender(): void {
+        const selected = this.selection && this.tasksById.get(this.selection.taskId);
+        if (selected && this.progressValue) {
+            const progress = selected.progress == null ? 'Unavailable' : `${Math.round(selected.progress * 100)}%`;
+            if (this.progressValue.textContent !== progress)
+                this.progressValue.textContent = progress;
+        }
         if (this.focusedTaskId && (document.activeElement === document.body || document.activeElement === this.viewport)) {
             const task = Array.from(this.viewport.querySelectorAll<SVGGElement>('[data-task-id]'))
                 .find(group => group.getAttribute('data-task-id') === this.focusedTaskId);
@@ -136,6 +143,7 @@ export class GanttTaskInteraction {
             if (this.panel.contains(document.activeElement))
                 this.viewport.focus({preventScroll: true});
             this.selection = null;
+            this.progressValue = null;
             this.panel.hidden = true;
             this.panel.replaceChildren();
             delete this.layout.dataset.selectedTaskId;
@@ -175,12 +183,13 @@ export class GanttTaskInteraction {
         });
         header.append(title, close);
         const fields = document.createElement('dl');
-        const detail = (label: string, value: string | null | undefined): void => {
+        const detail = (label: string, value: string | null | undefined): HTMLElement => {
             const term = document.createElement('dt');
             term.textContent = label;
             const description = document.createElement('dd');
             description.textContent = value || 'Unavailable';
             fields.append(term, description);
+            return description;
         };
         detail('Type', task.story ? 'Story' : task.milestone ? 'Milestone' : 'Task');
         detail('Start', task.start ? DateUtils.toLocalYMDHMString(task.start, this.renderer.dateTimeFormat) : null);
@@ -188,7 +197,7 @@ export class GanttTaskInteraction {
         detail('Assignee', task.assignedUserName);
         detail('Availability', task.assignedUserAvailability);
         detail('Location', [task.assignedUserCountry, task.assignedUserState].filter(Boolean).join(', '));
-        detail('Progress', task.progress == null ? null : `${Math.round(task.progress * 100)}%`);
+        this.progressValue = detail('Progress', task.progress == null ? null : `${Math.round(task.progress * 100)}%`);
         detail('Critical', task.critical == null ? null : task.critical ? 'Yes' : 'No');
         detail('Manually scheduled', task.manuallyScheduled == null ? null : task.manuallyScheduled ? 'Yes' : 'No');
         detail('Notes', task.notes);

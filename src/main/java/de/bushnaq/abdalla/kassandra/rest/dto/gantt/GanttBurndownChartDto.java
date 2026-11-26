@@ -88,6 +88,8 @@ public class GanttBurndownChartDto {
      * The initial estimate and worklogs of a task.
      */
     public static class ReplayTask {
+        /** The task ID, used to match the replay snapshot to its Gantt row. */
+        public UUID taskId;
         /** The user assigned to the task, or null if unassigned. */
         public UUID userId;
         /** Whether the task contributes to sprint effort. */

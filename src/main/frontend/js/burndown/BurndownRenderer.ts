@@ -93,6 +93,7 @@ export class BurndownRenderer extends AbstractRenderer {
     private hasReplayWorklogs = false;
     private accumulatedWorkPerDay: number[][] = [];
     private replayAuthorEstimates: number[] = [];
+    private readonly replayTaskProgress = new Map<string, number>();
     private readonly replayClipId = `burndown-replay-clip-${nextReplayClipId++}`;
     private readonly sprintClosed: boolean;
     private readonly calendarSize: CalendarSize;
@@ -244,6 +245,11 @@ export class BurndownRenderer extends AbstractRenderer {
         return true;
     }
 
+    /** Returns the task progress calculated from worklogs through the selected day. */
+    public getReplayTaskProgress(): ReadonlyMap<string, number> {
+        return this.replayTaskProgress;
+    }
+
     private calculateReplay(): void {
         const selectedSlot = this.replayDayIndex + 1;
         const replayDate = DateUtils.addDay(this.milestones.firstMilestone, this.replayDayIndex);
@@ -252,8 +258,10 @@ export class BurndownRenderer extends AbstractRenderer {
         let worked = 0;
         let remaining = 0;
         let lastWorklog: Date | null = null;
+        this.replayTaskProgress.clear();
         for (const task of this.data.replayTasks) {
             let taskRemaining = task.initialEstimateSeconds;
+            let taskWorked = 0;
             let lastEstimateTime = Number.NEGATIVE_INFINITY;
             for (const worklog of task.worklogs) {
                 const timestamp = new Date(worklog.start);
@@ -262,17 +270,18 @@ export class BurndownRenderer extends AbstractRenderer {
                     break;
                 if (selectedSlot === 0 && worklog.authorId)
                     earlyWorkByAuthor.set(worklog.authorId, (earlyWorkByAuthor.get(worklog.authorId) ?? 0) + worklog.timeSpentSeconds);
-                if (task.impactOnCost) {
-                    worked += worklog.timeSpentSeconds;
-                    if (timestamp.getTime() > lastEstimateTime) {
-                        taskRemaining = worklog.remainingEstimateSeconds ?? task.initialEstimateSeconds;
-                        lastEstimateTime = timestamp.getTime();
-                    }
+                taskWorked += worklog.timeSpentSeconds;
+                if (timestamp.getTime() > lastEstimateTime) {
+                    taskRemaining = worklog.remainingEstimateSeconds ?? task.initialEstimateSeconds;
+                    lastEstimateTime = timestamp.getTime();
                 }
                 if (!lastWorklog || date > lastWorklog)
                     lastWorklog = date;
             }
+            const taskEstimate = taskWorked + taskRemaining;
+            this.replayTaskProgress.set(task.taskId, taskEstimate === 0 ? 0 : taskWorked / taskEstimate);
             if (task.impactOnCost) {
+                worked += taskWorked;
                 remaining += taskRemaining;
                 if (task.userId)
                     remainingByUser.set(task.userId, (remainingByUser.get(task.userId) ?? 0) + taskRemaining);

@@ -27,6 +27,7 @@ export interface GanttBurndownChartDto {
     meta: BurndownMetaDto;
     authors: AuthorSeriesDto[];
     replayTasks: {
+        taskId: string;
         userId?: string | null;
         impactOnCost: boolean;
         initialEstimateSeconds: number;

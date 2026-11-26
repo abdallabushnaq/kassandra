@@ -239,12 +239,15 @@ public class GanttZoomTest extends AbstractTestUtil {
                     assertTrue(upperReadout.contains("Carol: 0m"));
                     new Actions(driver).moveByOffset(30, 30).perform();
                     wait.until(ignored -> !driver.findElement(By.cssSelector(".burndown-point-readout")).isDisplayed());
+                    By taskProgress = By.cssSelector("[data-task-id='00000000-0000-0000-0000-000000000001'] .task-progress-bar");
+                    assertEquals(1, driver.findElements(taskProgress).size(), "task has progress before slider drag");
                     WebElement slider = driver.findElement(By.cssSelector("[data-replay-slider]"));
                     int selectedDay = Integer.parseInt(slider.getAttribute("aria-valuenow"));
                     WebElement knob = slider.findElement(By.cssSelector("circle"));
                     new Actions(driver).clickAndHold(knob).moveByOffset(-80, 0).release().perform();
                     wait.until(ignored -> Integer.parseInt(driver.findElement(By.cssSelector("[data-replay-slider]"))
                             .getAttribute("aria-valuenow")) < selectedDay);
+                    assertTrue(driver.findElements(taskProgress).isEmpty(), "slider drag updates task progress");
                     slider = driver.findElement(By.cssSelector("[data-replay-slider]"));
                     int currentDay = Integer.parseInt(slider.getAttribute("aria-valuenow"));
                     int dayWidth = (int) Math.round(Double.parseDouble(slider.getAttribute("data-day-width")));

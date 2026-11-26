@@ -152,6 +152,7 @@ public class DynamicGanttBurndownTest extends AbstractGanttTester {
         for (int i = 0; i < sprint.getTasks().size(); i++) {
             Task task = sprint.getTasks().get(i);
             GanttBurndownChartDto.ReplayTask replayTask = chart.replayTasks.get(i);
+            assertEquals(task.getId(), replayTask.taskId);
             assertEquals(task.getResourceId(), replayTask.userId);
             assertEquals(task.isImpactOnCost(), replayTask.impactOnCost);
             assertEquals(task.getMinEstimate().toSeconds(), replayTask.initialEstimateSeconds);

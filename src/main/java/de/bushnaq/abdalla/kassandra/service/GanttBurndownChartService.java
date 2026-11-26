@@ -201,6 +201,7 @@ public class GanttBurndownChartService {
         }
         for (Task task : sprint.getTasks()) {
             GanttBurndownChartDto.ReplayTask replayTask = new GanttBurndownChartDto.ReplayTask();
+            replayTask.taskId = task.getId();
             replayTask.userId = task.getResourceId();
             replayTask.impactOnCost = task.isImpactOnCost();
             replayTask.initialEstimateSeconds = task.getMinEstimate().toSeconds();

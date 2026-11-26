@@ -54,7 +54,9 @@ export class GanttBurndownChart extends AbstractChart {
                 calendarSize: CalendarSize.MONTHS
             },
         };
-        this.addRenderer(new GanttRenderer(this, ganttData, data.meta.preRun || 0, data.meta.postRun || 0));
+        const gantt = new GanttRenderer(this, ganttData, data.meta.preRun || 0, data.meta.postRun || 0);
+        gantt.showProgressBar = true;
+        this.addRenderer(gantt);
     }
 
     updateViewState(dayWidth: number, scrollOffset: number, containerWidth: number, containerHeight: number): void {
@@ -72,6 +74,12 @@ export class GanttBurndownChart extends AbstractChart {
         burndown.init();
 
         const gantt = this.renderers[1] as GanttRenderer;
+        const progress = burndown.getReplayTaskProgress();
+        for (const task of gantt.tasks) {
+            const replayProgress = progress.get(String(task.id));
+            if (replayProgress !== undefined)
+                task.progress = replayProgress;
+        }
         gantt.dayWidth = dayWidth;
         gantt.calculateDayWidth();//TODO handle day width on LegacyAbstractRenderer level
         gantt.scrollOffset = scrollOffset;

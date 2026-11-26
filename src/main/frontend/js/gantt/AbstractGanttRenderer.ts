@@ -24,8 +24,8 @@ const RELATION_STROKE_WIDTH = 2;
 const RESOURCE_NAME_TO_TASK_GAP = 3;
 export const SECONDS_PER_DAY = 85 * 6 * 60; // 30600
 export const TASK_BODY_MARGIN = 3;
-// const TASK_PROGRESS_HEIGHT = 1;
-// const TASK_PROGRESS_BOTTOM_GAP = 1;
+const TASK_PROGRESS_HEIGHT = 1;
+const TASK_PROGRESS_BOTTOM_GAP = 1;
 const TASK_NAME_TO_TASK_GAP = 5 + 8;        // 13
 const NONE_WORKING_DAY_FONT_SIZE = 22;
 
@@ -42,6 +42,7 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
     // totalDays: number;
     currentDate: Date | null;
     tasks: TaskDto[];
+    showProgressBar = false;
     _calendarH: number;
     _taskById: Record<string, TaskDto>;
     // 24-hour format
@@ -572,22 +573,15 @@ export abstract class AbstractGanttRenderer extends AbstractRenderer {
                     }
                 }
 
-                // Progress bar
-                // if (progress > 0.0 && this.showDetail(this.ganttZoom.renderTaskProgressBarAtDayWidth)) {
-                //     const progressFill = ColorUtils.intToHex(this.theme.ganttTheme.progressColor);
-                //     const progressW = (x2 - x1) * progress;
-                //     if (progressW > 0) {
-                //         const pRect = SvgUtils.createRect(x1, y1 + h - TASK_PROGRESS_BOTTOM_GAP - TASK_PROGRESS_HEIGHT, progressW, TASK_PROGRESS_HEIGHT, {
-                //             class: 'task-progress-bar',
-                //             fill: progressFill
-                //         });
-                //         pRect.appendChild(SvgUtils.createTitle(tooltip));
-                //         g.appendChild(pRect);
-                //         // if (progress < 1.0) {
-                //         //     g.appendChild(SvgUtils.createRect(x1 + progressW, y - th / 2 + 2, 1, th - 4, {fill: '#000000'}));
-                //         // }
-                //     }
-                // }
+                if (this.showProgressBar && progress > 0 && this.showDetail(this.ganttZoom.renderTaskProgressBarAtDayWidth)) {
+                    const progressW = (x2 - x1) * progress;
+                    const pRect = SvgUtils.createRect(x1, y1 + h - TASK_PROGRESS_BOTTOM_GAP - TASK_PROGRESS_HEIGHT, progressW, TASK_PROGRESS_HEIGHT, {
+                        class: 'task-progress-bar',
+                        fill: ColorUtils.intToHex(this.theme.ganttTheme.progressColor),
+                    });
+                    pRect.appendChild(SvgUtils.createTitle(tooltip));
+                    g.appendChild(pRect);
+                }
             }
         } else {
             const aY1 = y - th / 2 + 1;
