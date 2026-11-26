@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.report.dao;
 
 import de.bushnaq.abdalla.kassandra.dto.Task;
 
+@Deprecated
 public class Conflict {
     public boolean originalConflict;
     public String  projectName;

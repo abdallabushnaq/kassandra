@@ -64,6 +64,7 @@ public class Util {
         }
     }
 
+    @Deprecated
     public static String columnIdtoExcelColumnName(int number) {
         final StringBuilder sb = new StringBuilder();
 
@@ -76,6 +77,7 @@ public class Util {
         return sb.reverse().toString();
     }
 
+    @Deprecated
     public static Set<String> createColumnSet(PreparedStatement preparedStatement) throws SQLException {
         Set<String>       columns = new HashSet<>();
         ResultSetMetaData md      = preparedStatement.getMetaData();
@@ -86,10 +88,12 @@ public class Util {
         return columns;
     }
 
+    @Deprecated
     public static String createTestCaseString(Long testCases) {
         return testCases + " tc";
     }
 
+    @Deprecated
     public static String extractParameters(final String aStringToParse, final Map<String, Integer> aParameterList) {
         int _lastParameterIndex = 1;
         aParameterList.clear();
@@ -115,6 +119,7 @@ public class Util {
         return _stringToParse.toString();
     }
 
+    @Deprecated
     public static void fillpatternRect(Graphics2D graphics2d, int x, int y, int width, int height, BufferedImage img) {
         TexturePaint tp = new TexturePaint(img, new Rectangle(0, 0, 4, 4));
         graphics2d.setPaint(tp);
@@ -139,6 +144,7 @@ public class Util {
         return populatedCopyRight;
     }
 
+    @Deprecated
     public static String[] getCsvList(ResultSet rs, String columnName) throws SQLException {
         String result = rs.getString(columnName);
         if (rs.wasNull()) {
@@ -147,6 +153,7 @@ public class Util {
         return result.split("\\|", -1);
     }
 
+    @Deprecated
     public static Range getIntersection(LocalDateTime os, LocalDateTime of, LocalDateTime ps, LocalDateTime pf) {
         //o   |      |
         //i   ------
@@ -175,6 +182,7 @@ public class Util {
         return null;
     }
 
+    @Deprecated
     public static String longToString(final Long aValue, final boolean aCreateLeadingZero) {
         if (aValue != null) {
             if (!aCreateLeadingZero || (aValue > 9)) {
@@ -187,6 +195,7 @@ public class Util {
         }
     }
 
+    @Deprecated
     public static String putCsvList(String[] list) {
         StringBuilder result = new StringBuilder();
         if (list != null) {

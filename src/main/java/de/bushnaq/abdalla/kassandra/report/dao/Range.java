@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.report.dao;
 
 import java.time.LocalDateTime;
 
+@Deprecated
 public class Range {
     public LocalDateTime end;
 
