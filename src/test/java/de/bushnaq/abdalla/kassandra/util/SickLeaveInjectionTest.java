@@ -83,14 +83,13 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
         otherSprint.initUserMap(List.of(copy));
 
         Path sickDayLog = tempDir.resolve("SickLeaveInjectionTest-sick-days.log");
-        offDayGenerator.injectSickDays(sprint, List.of(sprint, otherSprint), peg.getUsers(), sickDayLog);
+        SnapshotLogGenerator snapshotLogGenerator = new SnapshotLogGenerator(sickDayLog);
+        snapshotLogGenerator.create();
+        offDayGenerator.injectSickDays(sprint, List.of(sprint, otherSprint), peg.getUsers(), snapshotLogGenerator);
 
         List<LocalDate> expected = List.of(start.plusDays(1), start.plusDays(2), start.plusDays(3));
-        String logContents = Files.readString(sickDayLog);
-        assertTrue(logContents.contains("Sprint: Critical sprint"));
-        assertTrue(logContents.contains("User: Critical Developer (kristen.hubbell@kassandra.org)"));
-        assertTrue(logContents.contains("Sick days: " + expected));
-        assertTrue(logContents.contains("Status: injected"));
+        assertEquals(expected, snapshotLogGenerator.getSickDays("Critical sprint"));
+        assertEquals("Sprint: Critical sprint | Sick days: " + expected + System.lineSeparator(), Files.readString(sickDayLog));
         assertEquals(expected, criticalUser.getOffDays().stream()
                 .filter(offDay -> offDay.getType() == OffDayType.SICK)
                 .map(OffDay::getFirstDay).sorted().toList());
@@ -145,21 +144,22 @@ class SickLeaveInjectionTest extends AbstractGanttTestUtil {
         task(sprint, user, start, 5, Duration.ofMinutes(5 * 450), true);
 
         Path sickDayLog = tempDir.resolve("SickLeaveInjectionTest-sick-days.log");
-        offDayGenerator.injectSickDays(sprint, List.of(sprint), peg.getUsers(), sickDayLog);
+        SnapshotLogGenerator snapshotLogGenerator = new SnapshotLogGenerator(sickDayLog);
+        snapshotLogGenerator.create();
+        offDayGenerator.injectSickDays(sprint, List.of(sprint), peg.getUsers(), snapshotLogGenerator);
 
-        assertEquals(List.of(start.plusDays(1), start.plusDays(3)), user.getOffDays().stream()
+        List<LocalDate> expectedSickDays = List.of(start.plusDays(1), start.plusDays(3));
+        assertEquals(expectedSickDays, snapshotLogGenerator.getSickDays("Absences"));
+        assertEquals(expectedSickDays, user.getOffDays().stream()
                 .filter(offDay -> offDay.getType() == OffDayType.SICK)
                 .map(OffDay::getFirstDay).sorted().toList());
         assertEquals(3, peg.userApi.getById(user.getId()).getOffDays().size());
 
         Sprint emptySprint = new Sprint();
         emptySprint.setName("No critical work");
-        offDayGenerator.injectSickDays(emptySprint, List.of(emptySprint), peg.getUsers(), sickDayLog);
-        String logContents = Files.readString(sickDayLog);
-        assertTrue(logContents.contains("Sprint: Absences"));
-        assertTrue(logContents.contains("User: Critical Developer (kristen.hubbell@kassandra.org)"));
-        assertTrue(logContents.contains("Sprint: No critical work | Status: skipped"));
-        assertTrue(logContents.contains("Reason: no assigned, scheduled critical-path leaf tasks"));
+        offDayGenerator.injectSickDays(emptySprint, List.of(emptySprint), peg.getUsers(), snapshotLogGenerator);
+        assertEquals(List.of(), snapshotLogGenerator.getSickDays("No critical work"));
+        assertThrows(IllegalArgumentException.class, () -> snapshotLogGenerator.getSickDays("Unknown sprint"));
         assertEquals(3, user.getOffDays().size());
     }
 

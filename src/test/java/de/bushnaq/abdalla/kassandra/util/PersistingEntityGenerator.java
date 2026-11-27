@@ -647,11 +647,11 @@ public class PersistingEntityGenerator {
      * Injects sick leave into a sprint's most heavily assigned critical-path developer.
      *
      * @param sprint     sprint whose leveled critical path determines the absences
-     * @param sickDayLog file to which the injection outcome is appended
+     * @param snapshotLogGenerator generator that records the sprint's sick-day outcome
      * @throws IOException if the injection outcome cannot be written to the log
      */
-    public void injectSickDays(Sprint sprint, Path sickDayLog) throws IOException {
-        offDayGenerator.injectSickDays(sprint, getSprints(), getUsers(), sickDayLog);
+    public void injectSickDays(Sprint sprint, SnapshotLogGenerator snapshotLogGenerator) throws IOException {
+        offDayGenerator.injectSickDays(sprint, getSprints(), getUsers(), snapshotLogGenerator);
     }
 
 
