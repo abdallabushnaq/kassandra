@@ -245,10 +245,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
     protected void generateProductsIfNeeded(TestInfo testInfo, RandomCase randomCase, boolean forceGeneration) throws Exception {
         ParameterOptions.setNow(randomCase.getNow());
         String testCaseName = this.getClass().getName() + "-" + testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex();
-        // Include all generation settings, including the sick-sprint probability, so a change
-        // to the simulation cannot reuse a snapshot generated with different settings.
-        String snapshotConfigHash = Integer.toUnsignedString(randomCase.toString().hashCode(), 16);
-        String snapshotName       = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex() + "-" + snapshotConfigHash;
+        String snapshotName = randomCase.generateName();
         // Try to find and load an existing database snapshot
         if (forceGeneration) {
             logger.info("Forcing fresh test data generation and skipping existing snapshots.");
@@ -262,7 +259,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         // If no snapshot was found or loading failed, generate data the regular way
         if (!dataLoaded) {
             logger.info("Generating fresh test data (this might take a few minutes)...");
-            generateProductsInternal(testInfo, randomCase);
+            generateProductsInternal(testInfo, randomCase, snapshotName);
             // After successful data generation, export a snapshot for future test runs
             databaseStateManager.exportDatabaseSnapshot(snapshotName);
         } else {
@@ -276,7 +273,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         }
     }
 
-    private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase) throws Exception {
+    private void generateProductsInternal(TestInfo testInfo, RandomCase randomCase, String snapshotName) throws Exception {
         log.trace("----------------------------------------------------------------------------------------------------");
         long startTime = System.currentTimeMillis();
         peg.random.setSeed(randomCase.getSeed());
@@ -328,10 +325,9 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         // Plans have already been leveled and saved: sickness is an unplanned event and must
         // not move the original task dates. Use a separate seeded stream so these decisions
         // are reproducible without changing the random values used to generate worklogs.
-        Path sickDayLog = Path.of("test-results",
-                testInfo.getTestClass().orElseThrow().getSimpleName() + "-sick-days.log");
+        Path sickDayLog = Path.of("test-database-snapshots", snapshotName + ".log");
         Files.createDirectories(sickDayLog.getParent());
-        Files.writeString(sickDayLog, "Sick-day injection for " + testInfo.getTestClass().orElseThrow().getSimpleName()
+        Files.writeString(sickDayLog, "Sick-day injection for " + snapshotName
                         + System.lineSeparator(), StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         Random sicknessRandom = new Random(randomCase.getSeed());

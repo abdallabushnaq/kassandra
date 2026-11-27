@@ -1,5 +1,22 @@
 # AI Questions
 
+# Make sick-days.log More Structured
+
+We currently write a log of our sick-days synthetic data generation.
+AbstractGanttTestUtil.generateProductsInternal starts the file.
+OffDayGenerator.appendSickDayLog creates the log entries the tests will need to read.
+
+Take a look at our last lgo file `test-results/Demo-sick-days.log`. The sick days are mentioned 2 times, once with
+Status: injecting and once with Status: injected.
+Some sprints have Status: not selected for sick leave.
+The first line mentions the test name, which we no longer need, as we already implemented a name change to match the
+database snapshot.
+
+Tests will need to read that data for test expectation validation.  
+We need a format where tests can find a sprint and the sick-days as a list easily.
+
+Let's move the code that creates the file and logs entries into its own class SnapshotLogGenerator.
+
 # Rename Test DB snapshots
 
 Currently, our integration tests generate database snapshots of the synthetic data they generate to reuse on the next

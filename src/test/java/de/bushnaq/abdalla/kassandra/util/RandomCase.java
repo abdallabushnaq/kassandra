@@ -81,6 +81,32 @@ public class RandomCase {
     }
 
     /**
+     * Generates a stable filename-safe name for snapshots created from this case.
+     *
+     * @return the name identifying the generated data settings
+     */
+    public String generateName() {
+        return String.join("_",
+                formatRange(numberOfFeatures),
+                formatRange(numberOfSprints),
+                formatRange(numberOfTasks),
+                formatRange(numberOfProducts),
+                formatRange(numberOfVersions),
+                formatRange(numberOfStories),
+                formatRange(numberOfUsers),
+                formatRange(numberOfUsersPerSprint),
+                formatRange(taskDurationDays),
+                String.valueOf(sickSprintProbability),
+                String.valueOf(startDate),
+                String.valueOf(now).replace(':', '-'),
+                String.valueOf(seed)) + ".snapshot";
+    }
+
+    private String formatRange(MinMaxNumber range) {
+        return range.min() == range.max() ? String.valueOf(range.min()) : range.min() + "-" + range.max();
+    }
+
+    /**
      * Returns the feature-count range.
      *
      * @return the feature-count range

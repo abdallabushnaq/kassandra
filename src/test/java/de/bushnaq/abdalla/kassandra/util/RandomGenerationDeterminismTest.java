@@ -21,6 +21,7 @@ import de.bushnaq.abdalla.kassandra.dto.OffDayType;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.RepetitionInfo;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -44,6 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("test")
 public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
     private static final Path TRACE_DIRECTORY = Path.of("test-results", "random-generation");
+
+    @Test
+    void generatedNameIncludesDataGenerationParameters() {
+        assertEquals("1_2_1_1_1_1_4_2-4_1-5_1.0_2026-02-01_2026-03-23T08-00+01-00_7.snapshot",
+                randomCase().generateName());
+    }
 
     private RandomCase randomCase() {
         return RandomCase.builder()
@@ -73,6 +80,8 @@ public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
             generateProductsIfNeeded(testInfo, randomCase(), true);
         }
 
+        assertTrue(Files.exists(Path.of("test-database-snapshots", randomCase().generateName() + ".log")),
+                "The sick-day log should be stored beside its snapshot");
         assertTrue(peg.getUsers().stream().flatMap(user -> user.getOffDays().stream())
                 .anyMatch(offDay -> offDay.getType() == OffDayType.SICK), "The generated dataset should include sick leave");
         String trace = Files.readString(traceFile);
