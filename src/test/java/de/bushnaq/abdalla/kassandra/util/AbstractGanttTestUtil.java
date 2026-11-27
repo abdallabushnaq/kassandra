@@ -248,8 +248,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         // Include all generation settings, including the sick-sprint probability, so a change
         // to the simulation cannot reuse a snapshot generated with different settings.
         String snapshotConfigHash = Integer.toUnsignedString(randomCase.toString().hashCode(), 16);
-        String snapshotName = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex() + "-" +
-                snapshotConfigHash;
+        String snapshotName       = testInfo.getTestClass().get().getSimpleName() + "-" + randomCase.getTestCaseIndex() + "-" + snapshotConfigHash;
         // Try to find and load an existing database snapshot
         if (forceGeneration) {
             logger.info("Forcing fresh test data generation and skipping existing snapshots.");

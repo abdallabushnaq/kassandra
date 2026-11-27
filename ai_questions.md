@@ -1,9 +1,35 @@
 # AI Questions
 
+# Rename Test DB snapshots
+
+Currently, our integration tests generate database snapshots of the synthetic data they generate to reuse on the next
+run. These snapshots are stored in 'test-database-snapshots' and are named after the test class that generated them.
+
+We want to rename these snapshots to match the RandomCase parameters it used to generate that data.
+This way, snapshots can be reused between tests, if they use the exact same parameters.
+
+In parallel, we also generate a log for generated sick-days sickDayLog. Let's change that name too to match
+the <snapshotName>.log. Let's also store it in the same folder as the snapshot, as we will need it as input for later
+tests.
+
+## Example
+
+Demo uses RandomCases.listRandomCases.
+We can then use a snapshotName (AbstractGanttTestUtil.generateProductsInternal) like <numberOfFeatures>
+_<numberOfSprints>_<numberOfTasksPerSprint>_...snapshot.
+In this case we would end up with something like 8_8_1_2_1_2_1_5-...snapshot.
+We no longer need to use the hash.
+
+Let's add a method to RandomCase.generateName () that will return such a name.
+
+Implement this for Demo and GenerateScreenshotsIT.
+
+# Create Introduction Video for our Interactive Charts
+
 # Add Replay-Slider to Burndown Chart
 
 This slider sits in the x-axis chart part under the burndown week days and only when weekdays are visible.
-It is a slider that usually has a nob below today's day or the last day of the chart.
+It is a slider that usually has a knob below today's day or the last day of the chart.
 The slider is interactive.
 A user can slide the slider back to any previous day in the chart and the chart will redraw to only show work input
 until that day.
