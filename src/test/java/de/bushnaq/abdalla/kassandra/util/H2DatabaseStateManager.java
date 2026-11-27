@@ -19,6 +19,7 @@ package de.bushnaq.abdalla.kassandra.util;
 
 import de.bushnaq.abdalla.profiler.Profiler;
 import de.bushnaq.abdalla.profiler.SampleType;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +45,19 @@ import java.util.List;
  */
 @Component
 public class H2DatabaseStateManager {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
-    private static final String            SNAPSHOTS_DIR  = "test-database-snapshots";
-    private static final Logger            logger         = LoggerFactory.getLogger(H2DatabaseStateManager.class);
+    private static final DateTimeFormatter DATE_FORMATTER  = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+    private static final String            SNAPSHOTS_DIR   = "test-database-snapshots";
+    private static final Logger            logger          = LoggerFactory.getLogger(H2DatabaseStateManager.class);
+    /**
+     * -- SETTER --
+     * Configures whether exported snapshot filenames include a timestamp.
+     *
+     * @param appendTimestamp true to append a timestamp to the snapshot filename
+     */
+    @Setter
+    private              boolean           appendTimestamp = false;
     @Autowired
     private              DataSource        dataSource;
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
     @Value("${spring.datasource.password}")
@@ -111,9 +119,8 @@ public class H2DatabaseStateManager {
                     snapshotsDir.mkdirs();
                 }
 
-                // Create a timestamped filename for the snapshot
-                String timestamp = LocalDateTime.now().format(DATE_FORMATTER);
-                String filename  = SNAPSHOTS_DIR + File.separator + snapshotName + "_" + timestamp + ".zip";
+                String timestamp = appendTimestamp ? "_" + LocalDateTime.now().format(DATE_FORMATTER) : "";
+                String filename  = SNAPSHOTS_DIR + File.separator + snapshotName + timestamp + ".zip";
 
                 // Execute the SCRIPT command
                 try (Connection conn = dataSource.getConnection()) {
@@ -145,7 +152,7 @@ public class H2DatabaseStateManager {
                 return null;
             }
 
-            File[] files = snapshotsDir.listFiles((dir, name) -> name.startsWith(snapshotName + "_") && name.endsWith(".zip"));
+            File[] files = snapshotsDir.listFiles((dir, name) -> (name.equals(snapshotName + ".zip") || name.startsWith(snapshotName + "_")) && name.endsWith(".zip"));
             if (files == null || files.length == 0) {
                 return null;
             }
@@ -198,4 +205,5 @@ public class H2DatabaseStateManager {
             return false;
         }
     }
+
 }

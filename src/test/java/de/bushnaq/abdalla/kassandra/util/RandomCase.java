@@ -23,6 +23,8 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 /**
  * Holds the randomized generation settings for one test case.
@@ -30,6 +32,9 @@ import java.time.OffsetDateTime;
 @Getter
 @ToString(callSuper = false)
 public class RandomCase {
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd", Locale.ROOT);
+    private static final DateTimeFormatter NOW_FORMATTER  = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH-mm", Locale.ROOT);
+
     private final OffsetDateTime now;
     @Getter(AccessLevel.NONE)
     private final MinMaxNumber   numberOfFeatures;
@@ -81,38 +86,50 @@ public class RandomCase {
     }
 
     /**
-     * Generates a stable filename-safe name for snapshots created from this case.
-     *
-     * @return the name identifying the generated data settings
-     */
-    public String generateName() {
-        return String.join("_",
-                formatRange(numberOfFeatures),
-                formatRange(numberOfSprints),
-                formatRange(numberOfTasks),
-                formatRange(numberOfProducts),
-                formatRange(numberOfVersions),
-                formatRange(numberOfStories),
-                formatRange(numberOfUsers),
-                formatRange(numberOfUsersPerSprint),
-                formatRange(taskDurationDays),
-                String.valueOf(sickSprintProbability),
-                String.valueOf(startDate),
-                String.valueOf(now).replace(':', '-'),
-                String.valueOf(seed)) + ".snapshot";
-    }
-
-    private String formatRange(MinMaxNumber range) {
-        return range.min() == range.max() ? String.valueOf(range.min()) : range.min() + "-" + range.max();
-    }
-
-    /**
      * Returns the feature-count range.
      *
      * @return the feature-count range
      */
     public MinMaxNumber features() {
         return numberOfFeatures;
+    }
+
+    private String formatDate(LocalDate date) {
+        return date == null ? "0000-00-00" : date.format(DATE_FORMATTER);
+    }
+
+    private String formatNow(OffsetDateTime timestamp) {
+        if (timestamp == null) {
+            return "0000-00-00T00-00";
+        }
+        return timestamp.format(NOW_FORMATTER);
+    }
+
+    private String formatRange(MinMaxNumber range) {
+        return "{" + String.format(Locale.ROOT, "%02d-%02d", range.min(), range.max()) + "}";
+    }
+
+    /**
+     * Generates a stable filename-safe name for snapshots created from this case.
+     *
+     * @return the name identifying the generated data settings
+     */
+    public String generateName() {
+        return String.join("_",
+                "P" + formatRange(numberOfProducts),
+                "V" + formatRange(numberOfVersions),
+                "F" + formatRange(numberOfFeatures),
+                "S" + formatRange(numberOfSprints),
+                "St" + formatRange(numberOfStories),
+                "T" + formatRange(numberOfTasks),
+                "TD" + formatRange(taskDurationDays),
+                "U" + formatRange(numberOfUsers),
+                "UpS" + formatRange(numberOfUsersPerSprint),
+                String.format(Locale.ROOT, "%%%03d", Math.round(sickSprintProbability * 100)),
+                "S{" + formatDate(startDate) + "}",
+                // Colons are invalid in Windows filenames; keep a fixed-width, minute-resolution time.
+                "N{" + formatNow(now) + "}",
+                String.format(Locale.ROOT, "s%02d", seed)) + ".snapshot";
     }
 
     /**
@@ -220,8 +237,12 @@ public class RandomCase {
          *
          * @param now the current timestamp
          * @return this builder
+         * @throws IllegalArgumentException if the year is outside the four-digit snapshot-name format
          */
         public RandomCaseBuilder now(OffsetDateTime now) {
+            if (now != null) {
+                validateYear(now.getYear(), "now");
+            }
             this.now = now;
             return this;
         }
@@ -327,8 +348,12 @@ public class RandomCase {
          *
          * @param seed the random seed
          * @return this builder
+         * @throws IllegalArgumentException if the seed is outside the range 0-99
          */
         public RandomCaseBuilder seed(long seed) {
+            if (seed < 0 || seed > 99) {
+                throw new IllegalArgumentException("Seed must be between 0 and 99");
+            }
             this.seed = seed;
             return this;
         }
@@ -352,8 +377,12 @@ public class RandomCase {
          *
          * @param startDate the start date
          * @return this builder
+         * @throws IllegalArgumentException if the year is outside the four-digit snapshot-name format
          */
         public RandomCaseBuilder startDate(LocalDate startDate) {
+            if (startDate != null) {
+                validateYear(startDate.getYear(), "startDate");
+            }
             this.startDate = startDate;
             return this;
         }
@@ -379,6 +408,12 @@ public class RandomCase {
         public RandomCaseBuilder testCaseIndex(int testCaseIndex) {
             this.testCaseIndex = testCaseIndex;
             return this;
+        }
+
+        private void validateYear(int year, String fieldName) {
+            if (year < 0 || year > 9999) {
+                throw new IllegalArgumentException(fieldName + " year must be between 0000 and 9999");
+            }
         }
     }
 }

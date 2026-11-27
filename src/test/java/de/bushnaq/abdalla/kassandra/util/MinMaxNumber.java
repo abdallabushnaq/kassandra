@@ -25,15 +25,15 @@ package de.bushnaq.abdalla.kassandra.util;
  */
 public record MinMaxNumber(int min, int max) {
     /**
-     * Creates a non-negative inclusive range.
+     * Creates an inclusive range whose bounds fit the two-digit snapshot-name format.
      *
      * @param min the minimum value
      * @param max the inclusive maximum value
-     * @throws IllegalArgumentException if either bound is negative or {@code max} is less than {@code min}
+     * @throws IllegalArgumentException if the bounds do not satisfy {@code 0 <= min <= max <= 99}
      */
     public MinMaxNumber {
-        if (min < 0 || max < min) {
-            throw new IllegalArgumentException("Min/max range must satisfy 0 <= min <= max");
+        if (min < 0 || max < min || max > 99) {
+            throw new IllegalArgumentException("Min/max range must satisfy 0 <= min <= max <= 99");
         }
     }
 }
