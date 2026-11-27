@@ -2,8 +2,39 @@
 
 ## New Direction
 
-Create as much insights as possible using java, then ask the model to summarize it focusing on the most important
+Create as many insights as possible using java, then ask the model to summarize it focusing on the most important
 insights and describing it to someone missing context.
+
+# Unplanned Sick-leave-Impact Detection and Evaluation
+
+Let's write a service that detects impact of unplanned-sick-leave to a given sprint.
+It will need to find the critical path (task.isCritical ()) and evaluate if the task-user-calendar has a sick-leave
+record for any day of that task. This will delay the task by the number of days of sick-leave. The delay will be
+propagated to all dependent tasks.
+We measure sprint impact by 2 different values:
+
+1. Schedule-Delay caused by this factor (sum of delay of all tasks on the critical path).
+2. Effort-Delay caused by this factor (sum of delay of all tasks).
+
+Let's use SnapshotLogGenerator.getSickDays to test if our detector found the correct days.
+SprintInsightsGeneratorIT is using synthetic data from RandomCases with a sick-leave probability of 50% per sprint.
+We could run the test with a probability of 0% to generate an alternative sprints that have no delay impact caused by
+sick-leave.
+This way we can test if our detection algorithm works correctly.
+
+## Plan
+
+write a test in SprintInsightsGeneratorIT that generates 2 different snapshots:
+
+- One with 100% sick-leave probability and
+- one with 0% sick-leave probability.
+
+1. iterate over all sprints in the snapshot with the 100% probability.
+2. calculate PrintImpact using the Sick-leave-Impact-Contributor.
+3. test if our algorithm found all sick-leave days by comparing with SnapshotLogGenerator.getSickDays.
+4. test if our algorithm calculated the impact correctly by comparing the results with the snapshot with 0% probability.
+
+# History
 
 SprintInsightsGenerator was a first try to generate insights from sprint data. We used the same data available to a
 human project-manager on the QualityBoard view.
@@ -79,48 +110,6 @@ by the largest individual overrun. A dependency link
 does not establish that an overrun caused a blocker. Aggregate capacity counts and the forward
 release outlook stay separate, and the brief does not subtract any signal from the chart gap.
 
-# Direction
-
-**Question**: I am confused. You wrote 4 contributors, but the result of each is different and not comparable with each
-other. In the end members of the team want to understand what caused the main delay, so that we can think about
-countermeasures. For that we need to have comparability between the contributors.
-A good candidate would have been person days of delay.
-Can you explain in short the reasoning behind your approach?   
-Is there something I am missing?
-please do not change any code.
-
-**Answer**: You’re not missing anything. The contributors were designed to surface evidence worth investigating, not to
-measure what caused the most delay. Estimate overruns report extra logged effort; dependency blockers identify
-unfinished handoffs; sickness overlap counts simultaneous absences. The release forecast is different again: it looks
-forward and isn’t evidence of a past cause. The brief ranks what to review first, not what had the biggest impact.
-Person-days are a good common unit for effort or capacity lost, but not necessarily for release delay. Losing two
-person-days on work that had room to slip might not move the release at all; one blocked handoff can move it by several
-days. If the team wants to prioritize countermeasures by delivery impact, I’d compare working days of release delay:
-replay the same historical schedule with and without each factor, using a saved baseline and reliable history. Those
-estimates can overlap, so they shouldn’t simply be added. The current prototype doesn’t make that comparison, and AI
-ranking can’t fill in the missing evidence.
-
-## Model evaluation and background execution
-
-Keep Qwen3.8-27B as the first candidate. Use Qwen3.5-9B as a comparison, not as a replacement based on
-inference speed alone. The initial LM Studio probes established native JSON output, not consistent
-ranking quality. The one improvement over the current deterministic brief favored an unfinished
-overrun over a resolved one, a preference the baseline can also implement.
-
-Evaluate both models through the same Spring AI selector on frozen evidence packets, against a
-deterministic baseline that also accounts for unfinished work. Include competing signals, similar
-curves with different drivers, and cases that require abstention. Define acceptable leading evidence
-groups and review actions before running the holdout. Repeat identical requests with the model build,
-quantization, runtime, prompt, schema, and generation settings pinned; separately shuffle candidate
-order to check for position bias. Measure agreement on the leading evidence and action, appropriate
-abstention, and fallbacks. A model must improve the review decision over the baseline consistently;
-well-formed JSON and faster inference are not enough.
-
-If a model passes, run selection off the chart request path, for example from a scheduled job on new
-snapshots. Reuse the validated result for unchanged evidence and model configuration. Keep the
-deterministic brief available when no current AI result exists, and never present a result from an
-older snapshot as current.
-
 `BurndownExplanationGenerator.select(Brief)` is the opt-in evaluation path. It sends bounded groups
 with request-local aliases and asks for at most three ranked IDs using native JSON Schema. Java
 rejects unknown or repeated IDs and incomplete responses; the deterministic brief is always
@@ -158,33 +147,6 @@ The baseline matched three of four fixture expectations. Qwen's only improvement
 capacity-versus-resolved-overrun case, where reversing candidate order removed that improvement.
 That comparison uses a task-first evaluation convention, so it does not establish an advantage
 over a baseline that also prioritizes capacity ahead of resolved overruns.
-
-## Demo and handoff
-
-In **Active Sprints**, select one sprint and click **Burn-down brief** beside the chart controls.
-The preview uses the same chart and shows the completed-day gap, aggregate capacity observations,
-and the separate release outlook. It does not call a model. Without persisted earlier snapshots,
-the preview reports estimate-overrun and dependency-blocker history as unavailable.
-
-Next: persist comparable snapshots and add scoped task evidence to the preview. Compare the
-selector with a stronger Java baseline on a de-identified holdout and use blinded manager review
-before enabling background AI selection. Keep cross-project contention and numerical historical
-gap attribution deferred until there is reliable evidence for them.
-
-## Insights page summaries
-
-The Insights page streams Markdown reports as they are generated. **Sprint Summary** lists started
-sprints with positive logged effort and sends only the selected sprint's statistics and task facts
-to the configured insights model. Its prompt asks for a self-contained explanation grounded in
-those facts; it does not use the burn-down evidence selector or infer historical causes.
-Delivery-buffer entries are identified as schedule reserve, not unfinished work. Critical findings
-may use the theme's error color with an explicit textual label.
-
-When the LM Studio settings category is enabled, Insights loads its configured model using the
-shared LM Studio context and load settings before streaming. This may unload another loaded model.
-Otherwise the configured OpenAI-compatible endpoint manages model availability. The Insights
-reasoning-effort setting defaults to the model's behavior; low, medium and high are sent only when
-selected and require model/server support.
 
 To debug streamed Insights requests, set
 `logging.level.de.bushnaq.abdalla.kassandra.ai.insights.SprintInsightsGenerator=DEBUG`.

@@ -46,11 +46,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -76,141 +72,8 @@ import java.util.concurrent.ExecutionException;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Slf4j
 public class SprintInsightsGeneratorIT extends AbstractKeycloakUiTestUtil {
-    /**
-     * Sample sprint statistics data for testing (reduced size matching @JsonIgnore fields)
-     */
-    private static final String                  SAMPLE_SPRINT_STATISTICS_DATA = """
-            [
-              {
-                "currentEfficiency" : "85% Person",
-                "currentEffortDelay" : "2h 15m",
-                "currentScheduleDelay" : "1d 3h",
-                "delayFraction" : 0.12,
-                "effortEstimateDisplay" : "4d 3h 0m",
-                "effortRemainingDisplay" : "4h 48m",
-                "effortSpentDisplay" : "3d 22h 12m",
-                "extrapolatedDelayFraction" : 0.08,
-                "extrapolatedReleaseDate" : "2025.01.03",
-                "extrapolatedScheduleDelay" : "1d 2h",
-                "extrapolatedStatus" : "WARNING",
-                "optimalEfficiency" : "120% Person",
-                "remainingWorkDays" : 2,
-                "sprintEndDate" : "2024-12-27T11:30:00",
-                "sprintName" : "paris",
-                "sprintStartDate" : "2024-12-06T08:00:00",
-                "status" : "WARNING",
-                "totalWorkDays" : 15,
-                "isActualReleaseDate" : false,
-                "releaseDateLabel" : "Extrapolated Sprint Release Date",
-                "actualProgressDisplay" : "95%",
-                "expectedProgressDisplay" : "88%",
-                "releaseDateStatus" : "WARNING",
-                "currentEffortDelayDisplay" : "2h 15m (12%)",
-                "extrapolatedScheduleDelayDisplay" : "1d 2h (8%)"
-              },
-              {
-                "currentEfficiency" : "110% Person",
-                "currentEffortDelay" : "0m",
-                "currentScheduleDelay" : "0m",
-                "delayFraction" : 0.0,
-                "effortEstimateDisplay" : "2d 5h 0m",
-                "effortRemainingDisplay" : "0h",
-                "effortSpentDisplay" : "2d 5h 0m",
-                "extrapolatedDelayFraction" : 0.0,
-                "extrapolatedReleaseDate" : "2024.11.15",
-                "extrapolatedScheduleDelay" : "0m",
-                "extrapolatedStatus" : "GOOD",
-                "optimalEfficiency" : "100% Person",
-                "remainingWorkDays" : 0,
-                "sprintEndDate" : "2024-11-15T17:00:00",
-                "sprintName" : "london",
-                "sprintStartDate" : "2024-11-01T08:00:00",
-                "status" : "GOOD",
-                "totalWorkDays" : 10,
-                "isActualReleaseDate" : true,
-                "releaseDateLabel" : "Actual Sprint Release Date",
-                "actualProgressDisplay" : "100%",
-                "expectedProgressDisplay" : "100%",
-                "releaseDateStatus" : "GOOD",
-                "currentEffortDelayDisplay" : "0m (0%)",
-                "extrapolatedScheduleDelayDisplay" : "0m (0%)"
-              },
-              {
-                "currentEfficiency" : "125% Person",
-                "currentEffortDelay" : "-2h 15m",
-                "currentScheduleDelay" : "-1h 30m",
-                "delayFraction" : -0.05,
-                "effortEstimateDisplay" : "1d 2h 0m",
-                "effortRemainingDisplay" : "0h",
-                "effortSpentDisplay" : "1d 2h 0m",
-                "extrapolatedDelayFraction" : 0.0,
-                "extrapolatedReleaseDate" : "2024.10.31",
-                "extrapolatedScheduleDelay" : "0m",
-                "extrapolatedStatus" : "GOOD",
-                "optimalEfficiency" : "90% Person",
-                "remainingWorkDays" : 0,
-                "sprintEndDate" : "2024-10-31T17:00:00",
-                "sprintName" : "tokyo",
-                "sprintStartDate" : "2024-10-25T08:00:00",
-                "status" : "GOOD",
-                "totalWorkDays" : 5,
-                "isActualReleaseDate" : true,
-                "releaseDateLabel" : "Actual Sprint Release Date",
-                "actualProgressDisplay" : "100%",
-                "expectedProgressDisplay" : "100%",
-                "releaseDateStatus" : "GOOD",
-                "currentEffortDelayDisplay" : "-2h 15m (-5%)",
-                "extrapolatedScheduleDelayDisplay" : "0m (0%)"
-              },
-              {
-                "currentEfficiency" : "0% Person",
-                "currentEffortDelay" : "0m",
-                "currentScheduleDelay" : "0m",
-                "delayFraction" : 0.0,
-                "effortEstimateDisplay" : "6d 1h 0m",
-                "effortRemainingDisplay" : "6d 1h 0m",
-                "effortSpentDisplay" : "0h",
-                "extrapolatedDelayFraction" : null,
-                "extrapolatedReleaseDate" : "2025.03.05",
-                "extrapolatedScheduleDelay" : "NA",
-                "extrapolatedStatus" : "GOOD",
-                "optimalEfficiency" : "150% Person",
-                "remainingWorkDays" : 20,
-                "sprintEndDate" : "2025-02-28T17:00:00",
-                "sprintName" : "newyork",
-                "sprintStartDate" : "2025-02-01T08:00:00",
-                "status" : "GOOD",
-                "totalWorkDays" : 20,
-                "isActualReleaseDate" : false,
-                "releaseDateLabel" : "Extrapolated Sprint Release Date",
-                "actualProgressDisplay" : "0%",
-                "expectedProgressDisplay" : "0%",
-                "releaseDateStatus" : "GOOD",
-                "currentEffortDelayDisplay" : "0m (0%)",
-                "extrapolatedScheduleDelayDisplay" : "NA"
-              }
-            ]
-            """;
     @Autowired
-    private              SprintInsightsGenerator sprintInsightsGenerator;
-    //    @Test
-//    public void testGenerateQuickSummary() {
-//        System.out.println("\n=== Testing Quick Sprint Summary ===");
-//
-//        try {
-//            String summary = sprintInsightsGenerator.generateQuickSummary(SAMPLE_SPRINT_STATISTICS_DATA);
-//
-//            System.out.println("Quick Summary:");
-//            System.out.println(summary);
-//
-//            // Basic validation
-//            assert summary != null && !summary.trim().isEmpty() : "Summary should not be empty";
-//
-//        } catch (Exception e) {
-//            System.err.println("Error generating quick summary: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
+    private SprintInsightsGenerator sprintInsightsGenerator;
 
     private String generateJson(SprintStatistics sprintStatistics) {
         // Create a separate ObjectMapper that respects @JsonIgnore annotations for AI insights
@@ -221,24 +84,6 @@ public class SprintInsightsGeneratorIT extends AbstractKeycloakUiTestUtil {
         String jsonString = jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sprintStatistics);
 //        log.info("Generated JSON for {} sprints", sprintStatistics.size());
         return jsonString;
-    }
-
-    private static List<RandomCase> listRandomCases() {
-        RandomCase[] randomCases = new RandomCase[]{//
-                RandomCase.builder()
-                        .testCaseIndex(3)
-                        .now(OffsetDateTime.parse("2025-08-11T08:00:00+01:00"))
-                        .startDate(LocalDate.parse("2025-08-04"))
-                        .numberOfProducts(2, 2)
-                        .numberOfVersions(2, 2)
-                        .numberOfFeatures(2, 2)
-                        .numberOfSprints(1, 4)
-                        .taskDurationPerDay(1, 5).numberOfStories(1, 7)
-                        .numberOfUsers(1, 8).numberOfUsersPerSprint(1, 8)
-                        .numberOfTasks(1, 6).seed(7)
-                        .build()//
-        };
-        return Arrays.stream(randomCases).toList();
     }
 
     private List<SprintStatistics> loadData() {
@@ -325,106 +170,25 @@ public class SprintInsightsGeneratorIT extends AbstractKeycloakUiTestUtil {
         return sprint;
     }
 
-//    @Test
-//    public void testEstimationAccuracyAnalysis() {
-//        System.out.println("\n=== Testing Estimation Accuracy Analysis ===");
-//
-//        try {
-//            String question = "How accurate are our sprint estimations? Are we consistently over or under-estimating?";
-//            String analysis = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
-//
-//            System.out.println("Question: " + question);
-//            System.out.println("Analysis:");
-//            System.out.println(analysis);
-//
-//        } catch (Exception e) {
-//            System.err.println("Error generating estimation analysis: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-
-//    @Test
-//    public void testGenerateFocusedInsights() {
-//        System.out.println("\n=== Testing Focused Sprint Insights ===");
-//
-//        try {
-//            String question        = "Which sprints are at risk of missing their deadlines and why?";
-//            String focusedInsights = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
-//
-//            System.out.println("Question: " + question);
-//            System.out.println("Focused Insights:");
-//            System.out.println(focusedInsights);
-//
-//            // Basic validation
-//            assert focusedInsights != null && !focusedInsights.trim().isEmpty() : "Focused insights should not be empty";
-//
-//        } catch (Exception e) {
-//            System.err.println("Error generating focused insights: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-
-//    @Test
-//    public void testGenerateInsights() {
-//        System.out.println("=== Testing General Sprint Insights ===");
-//
-//        try {
-//            String insights = sprintInsightsGenerator.generateInsights(SAMPLE_SPRINT_STATISTICS_DATA);
-//            System.out.println("Generated Insights:");
-//            System.out.println(insights);
-//
-//            // Basic validation
-//            assert insights != null && !insights.trim().isEmpty() : "Insights should not be empty";
-//
-//        } catch (Exception e) {
-//            System.err.println("Error generating insights: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-
     @ParameterizedTest
-    @MethodSource("listRandomCases")
+    @MethodSource("de.bushnaq.abdalla.kassandra.ui.RandomCases#listRandomCases")
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     public void testGenerateInsights(RandomCase randomCase, TestInfo testInfo) throws Exception {
         TestInfoUtil.setTestMethod(testInfo, testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         TestInfoUtil.setTestCaseIndex(testInfo, randomCase.getTestCaseIndex());
         setTestCaseName(this.getClass().getName(), testInfo.getTestMethod().get().getName() + "-" + randomCase.getTestCaseIndex());
         generateProductsIfNeeded(testInfo, randomCase);
-        try {
-            List<SprintStatistics> sprintStatistics = loadData();
-            for (SprintStatistics sprintStatistic : sprintStatistics) {
-                String result = sprintInsightsGenerator.generateInsights(generateJson(sprintStatistic));
-                assert result != null && !result.trim().isEmpty() : "Summary should not be empty";
-                break;
-            }
-
-
-//            System.out.println("Quick Summary:");
-//            System.out.println(result);
-
-            // Basic validation
-
-        } catch (Exception e) {
-            System.err.println("Error generating quick summary: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-//    @Test
-//    public void testWorkloadPatternsAnalysis() {
-//        System.out.println("\n=== Testing Workload Patterns Analysis ===");
-//
 //        try {
-//            String question = "What patterns can you identify in our sprint workload and team velocity?";
-//            String analysis = sprintInsightsGenerator.generateFocusedInsights(SAMPLE_SPRINT_STATISTICS_DATA, question);
-//
-//            System.out.println("Question: " + question);
-//            System.out.println("Analysis:");
-//            System.out.println(analysis);
-//
+//            List<SprintStatistics> sprintStatistics = loadData();
+//            for (SprintStatistics sprintStatistic : sprintStatistics) {
+//                String result = sprintInsightsGenerator.generateInsights(generateJson(sprintStatistic));
+//                assert result != null && !result.trim().isEmpty() : "Summary should not be empty";
+//                break;
+//            }
 //        } catch (Exception e) {
-//            System.err.println("Error generating workload analysis: " + e.getMessage());
+//            System.err.println("Error generating quick summary: " + e.getMessage());
 //            e.printStackTrace();
 //        }
-//    }
+    }
+
 }
