@@ -15,7 +15,8 @@ database snapshot.
 Tests will need to read that data for test expectation validation.  
 We need a format where tests can find a sprint and the sick-days as a list easily.
 
-Let's move the code that creates the file and logs entries into its own class SnapshotLogGenerator.
+Let's move the code that creates the file and logs entries into its own class SnapshotLogGenerator. Let's also add code
+that will read the file and return a list of sick days for a specific sprint name parameter.
 
 # Rename Test DB snapshots
 
