@@ -54,6 +54,7 @@ public class RandomCase {
     private final MinMaxNumber   numberOfVersions;
     private final long           seed;
     private final float          sickSprintProbability;
+    private final float          worklogDelayProbability;
     private final LocalDate      startDate;
     @Getter(AccessLevel.NONE)
     private final MinMaxNumber   taskDurationDays;
@@ -72,6 +73,7 @@ public class RandomCase {
         now                    = builder.now;
         seed                   = builder.seed;
         sickSprintProbability  = builder.sickSprintProbability;
+        worklogDelayProbability = builder.worklogDelayProbability;
         startDate              = builder.startDate;
         testCaseIndex          = builder.testCaseIndex;
     }
@@ -126,6 +128,7 @@ public class RandomCase {
                 "U" + formatRange(numberOfUsers),
                 "UpS" + formatRange(numberOfUsersPerSprint),
                 String.format(Locale.ROOT, "%%%03d", Math.round(sickSprintProbability * 100)),
+                String.format(Locale.ROOT, "DLY%03d", Math.round(worklogDelayProbability * 100)),
                 "S{" + formatDate(startDate) + "}",
                 // Colons are invalid in Windows filenames; keep a fixed-width, minute-resolution time.
                 "N{" + formatNow(now) + "}",
@@ -219,6 +222,7 @@ public class RandomCase {
         private MinMaxNumber   numberOfVersions       = new MinMaxNumber(0, 0);
         private long           seed;
         private float          sickSprintProbability  = 0.5f;
+        private float          worklogDelayProbability = 0.5f;
         private LocalDate      startDate;
         private MinMaxNumber   taskDurationPerDay     = new MinMaxNumber(0, 0);
         private int            testCaseIndex;
@@ -369,6 +373,20 @@ public class RandomCase {
                 throw new IllegalArgumentException("Sick sprint probability must be between 0 and 1");
             }
             sickSprintProbability = probability;
+            return this;
+        }
+
+        /**
+         * Sets the probability that a sprint's generated worklogs exceed task estimates.
+         *
+         * @param probability overrun probability between zero and one, inclusive
+         * @return this builder
+         */
+        public RandomCaseBuilder worklogDelayProbability(float probability) {
+            if (!Float.isFinite(probability) || probability < 0f || probability > 1f) {
+                throw new IllegalArgumentException("Worklog delay probability must be between 0 and 1");
+            }
+            worklogDelayProbability = probability;
             return this;
         }
 

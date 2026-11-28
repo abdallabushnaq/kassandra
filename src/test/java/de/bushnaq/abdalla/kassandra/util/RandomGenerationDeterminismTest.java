@@ -44,11 +44,12 @@ public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
     void generatedNameIncludesDataGenerationParameters() {
         RandomCase randomCase    = randomCase();
         String     generatedName = randomCase.generateName();
-        String     expectedName  = "P{01-01}_V{01-01}_F{01-01}_S{02-02}_St{01-01}_T{01-01}_TD{01-05}_U{04-04}_UpS{02-04}_%100_S{2026-02-01}_N{2026-03-23T08-00}_s07.snapshot";
+        String     expectedName  = "P{01-01}_V{01-01}_F{01-01}_S{02-02}_St{01-01}_T{01-01}_TD{01-05}_U{04-04}_UpS{02-04}_%100_DLY050_S{2026-02-01}_N{2026-03-23T08-00}_s07.snapshot";
         assertEquals(expectedName, generatedName);
         assertEquals(generatedName, randomCase(1, 1, 7, OffsetDateTime.parse("2026-03-23T08:00:00.123456789+01:00")).generateName());
         assertEquals(generatedName, randomCase(1, 1, 7, OffsetDateTime.parse("2026-03-23T08:00:59.123456789+01:00")).generateName());
         assertTrue(RandomCase.builder().sickSprintProbability(0.5f).build().generateName().contains("_%050_"));
+        assertTrue(RandomCase.builder().worklogDelayProbability(0f).build().generateName().contains("_DLY000_"));
         assertEquals(generatedName.length(), randomCase(10, 12, 42, OffsetDateTime.parse("2026-03-23T08:00:00+01:00")).generateName().length());
     }
 
@@ -57,6 +58,8 @@ public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
         assertThrows(IllegalArgumentException.class, () -> new MinMaxNumber(0, 100));
         assertThrows(IllegalArgumentException.class, () -> RandomCase.builder().seed(100));
         assertThrows(IllegalArgumentException.class, () -> RandomCase.builder().seed(-1));
+        assertThrows(IllegalArgumentException.class, () -> RandomCase.builder().worklogDelayProbability(1.1f));
+        assertThrows(IllegalArgumentException.class, () -> RandomCase.builder().worklogDelayProbability(Float.NaN));
         assertThrows(IllegalArgumentException.class, () -> RandomCase.builder().startDate(LocalDate.of(10000, 1, 1)));
         assertThrows(IllegalArgumentException.class,
                 () -> RandomCase.builder().now(OffsetDateTime.parse("+10000-01-01T00:00:00Z")));

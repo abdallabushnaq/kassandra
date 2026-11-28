@@ -35,24 +35,20 @@ import java.util.UUID;
 @Slf4j
 public class BurnDownUtil {
     /**
-     * Probability that a sprint runs with zero delay (on schedule).
-     */
-    private static final float DELAY_PROBABILITY = 0.5f;
-
-    /**
      * Maximum over-run factor applied to {@code maxEstimate} when a sprint is delayed.
      */
     private static final float MAX_DELAY_FACTOR = 0.6f;
 
-    public static void generateWorkLogs(PersistingEntityGenerator peg) throws Exception {
+    public static void generateWorkLogs(PersistingEntityGenerator peg, RandomCase randomCase) throws Exception {
         log.info("--------------------------");
         log.info("Generating work logs start");
         for (Sprint sprint : peg.getSprints()) {
             log.info("--------------------------");
             log.info("Generating work logs start for {}", sprint.getName());
 //            sprint.initializeCalendars();//make sure the new exceptions are in the user calendars.
-            // ~60 % of sprints run on schedule; ~40 % carry a delay of up to MAX_DELAY_FACTOR.
-            float delay = peg.random.nextFloat() < (1f - DELAY_PROBABILITY) ? 0.0f : peg.random.nextFloat() * MAX_DELAY_FACTOR;
+            // Apply the configured estimate-overrun probability while preserving the generator's seeded random sequence.
+            float delay = peg.random.nextFloat() >= (1f - randomCase.getWorklogDelayProbability())
+                    ? peg.random.nextFloat() * MAX_DELAY_FACTOR : 0.0f;
             log.debug("Sprint '{}' delay factor: {}", sprint.getName(), delay);
             generateWorklogs(peg, sprint, delay, ParameterOptions.getLocalNow());
             log.info("--------------------------");

@@ -137,20 +137,49 @@ public class GanttGenerator extends EntityGenerator {
      * @throws Exception if chart data, browser rendering, or file output fails
      */
     public void generateGanttBurndownChart(Sprint sprint, String testFolder, String name, double visualScale) throws Exception {
-        captureGanttBurndownChart(sprint, testFolder, name, visualScale, true);
+        generateGanttBurndownChart(sprint, testFolder, name, visualScale, true);
+    }
+
+    /**
+     * Generates a combined Gantt and burndown chart from a prepared sprint, optionally omitting the SVG file.
+     * The sprint's users, tasks, worklogs, calendars, and calculated state must already be initialized.
+     *
+     * @param sprint      prepared sprint to render
+     * @param testFolder  output directory for the chart
+     * @param name        output filename stem without an extension
+     * @param visualScale initial visual scale for the chart
+     * @param saveSvg     whether to write the SVG alongside the PNG
+     * @throws Exception if chart data, browser rendering, or file output fails
+     */
+    public void generateGanttBurndownChart(Sprint sprint, String testFolder, String name, double visualScale,
+                                           boolean saveSvg) throws Exception {
+        captureGanttBurndownChart(sprint, testFolder, name, visualScale, true, saveSvg);
     }
 
     private void captureGanttBurndownChart(Sprint sprint, String testFolder, String name, double visualScale, boolean fitTimeline) throws Exception {
+        captureGanttBurndownChart(sprint, testFolder, name, visualScale, fitTimeline, true);
+    }
+
+    private void captureGanttBurndownChart(Sprint sprint, String testFolder, String name, double visualScale,
+                                           boolean fitTimeline, boolean saveSvg) throws Exception {
         StableDiffusionConfig     config       = new StableDiffusionConfig();
         LightTheme                lightTheme   = new LightTheme(config);
         DarkTheme                 darkTheme    = new DarkTheme(config);
         GanttChartService         ganttService = new GanttChartService(lightTheme, darkTheme, new KassandraProperties());
         GanttBurndownChartService chartService = new GanttBurndownChartService(lightTheme, darkTheme, ganttService);
         String                    json         = new JacksonConfig().jsonMapper().writeValueAsString(chartService.build(sprint, ParameterOptions.getLocalNow(), testTheme == ETheme.dark));
-        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart", json, name, ChartIds.GANTT_BURNDOWN_CHART, visualScale, fitTimeline);
+        captureJsChart(Path.of(testFolder), "/js/generated/burndown/gantt-burndown-bundle.js", "mountGanttBurndownChart",
+                json, name, ChartIds.GANTT_BURNDOWN_CHART, visualScale, fitTimeline, saveSvg);
     }
 
-    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name, String expected, double visualScale, boolean fitTimeline) throws IOException {
+    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name,
+                                       String expected, double visualScale, boolean fitTimeline) throws IOException {
+        captureJsChart(outputDirectory, module, mount, json, name, expected, visualScale, fitTimeline, true);
+    }
+
+    private static void captureJsChart(Path outputDirectory, String module, String mount, String json, String name,
+                                       String expected, double visualScale, boolean fitTimeline, boolean saveSvg)
+            throws IOException {
         Files.createDirectories(outputDirectory);
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", GanttGenerator::serveChartResource);
@@ -197,7 +226,9 @@ public class GanttGenerator extends EntityGenerator {
                 if (!(result instanceof Map<?, ?> response) || !(response.get("svg") instanceof String svg)) {
                     throw new IllegalStateException("Failed to render " + name + " chart: " + result);
                 }
-                Files.writeString(outputDirectory.resolve(name + ".svg"), svg, StandardCharsets.UTF_8);
+                if (saveSvg) {
+                    Files.writeString(outputDirectory.resolve(name + ".svg"), svg, StandardCharsets.UTF_8);
+                }
                 WebElement    chart = driver.findElement(By.cssSelector("#chart svg"));
                 resizeViewportToFit(driver, chart);
                 byte[]        png   = chart.getScreenshotAs(OutputType.BYTES);

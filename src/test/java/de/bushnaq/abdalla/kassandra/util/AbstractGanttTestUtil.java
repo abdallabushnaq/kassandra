@@ -338,7 +338,7 @@ public class AbstractGanttTestUtil extends AbstractTestUtil {
         // injectSickDays updates all in-memory copies of an affected user's calendar before
         // worklog generation, which skips sick days and may therefore finish after the plan.
         //TODO sprint user calendars are not initialized with user off days.
-        BurnDownUtil.generateWorkLogs(peg);
+        BurnDownUtil.generateWorkLogs(peg, randomCase);
         log.trace("Generated synthetic data in " + DateUtil.createDurationString(Duration.ofMillis(System.currentTimeMillis() - startTime), true, true, false));
         log.trace("----------------------------------------------------------------------------------------------------");
     }

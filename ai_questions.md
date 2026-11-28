@@ -4,6 +4,24 @@
 
 # Create Introduction Video for our Interactive Charts
 
+Take a look at RearrangeStoriesAndTasksIntroductionVideo11IT as a good example for how to create an introduction video.
+We use narration to explain what we are doing and show the UI of the software.
+Now we want to create an introduction video for our new interactive charts.
+Let's use Quality board BurndownGantt chart with the London sprint.
+Explain to the user who you are and where we are.
+Then detach the chart so that we can concentrate on that part.
+The video capturing needs to use that new tab.
+We want to show:
+the 3 types of zooming, ctrl+mouse-wheel, shift+mouse-wheel, alt+mouse-wheel.
+We need to explain the zoom-o-meeter.
+We need to show how some elements will only be visible as certain zoom levels.
+The zool level is visible in the right corner fo every chart.
+We can select a task in the Gantt chart, details will be visible in teh right panel including all the dependencies.
+We can move th mouse over the burndown chart and every chart point below the mouse pointer gets highlighted, and it
+value
+shown in a tooltip.
+Show all that asd explain it to create a helpfully video.
+
 # Better Synthetic Data
 
 We need to generate better synthetic data for our tests with more variety of use cases.
