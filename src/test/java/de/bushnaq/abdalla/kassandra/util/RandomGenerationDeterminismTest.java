@@ -65,6 +65,17 @@ public class RandomGenerationDeterminismTest extends AbstractGanttTestUtil {
                 () -> RandomCase.builder().now(OffsetDateTime.parse("+10000-01-01T00:00:00Z")));
     }
 
+    @Test
+    void withProbabilitiesPreservesUnchangedSettings() {
+        RandomCase original = randomCase();
+        RandomCase changed = original.withProbabilities(builder -> builder.sickSprintProbability(0.25f));
+
+        assertEquals(0.25f, changed.getSickSprintProbability(), 0.0001f);
+        assertEquals(original.getWorklogDelayProbability(), changed.getWorklogDelayProbability());
+        assertEquals(original.generateName().replace("_%100_", "_%025_"), changed.generateName());
+        assertEquals(1f, original.getSickSprintProbability(), 0.0001f);
+    }
+
     @RepeatedTest(2)
     @WithMockUser(username = "admin-user", roles = "ADMIN")
     void generatedRandomValuesMatchAcrossRuns(TestInfo testInfo, RepetitionInfo repetitionInfo) throws Exception {

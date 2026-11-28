@@ -48,9 +48,10 @@
 | kassandra.ai.filter                      | VersionAiFilterIT.java                                       | src      |       44 |       15 |       50 |      248 |      357 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.insights                    | BurndownExplanationGenerator.java                            | src      |       21 |       35 |       32 |      173 |      261 |
+| kassandra.ai.insights                    | SickLeaveSimulationIT.java                                   | src      |       25 |       11 |       24 |      216 |      276 |
 | kassandra.ai.insights                    | SickLeaveWorklogSimulator.java                               | src      |       33 |        0 |       24 |      266 |      323 |
+| kassandra.ai.insights                    | SprintEvaluation.java                                        | src      |        4 |        7 |       16 |        8 |       35 |
 | kassandra.ai.insights                    | SprintInsightsGenerator.java                                 | src      |       55 |       51 |       18 |      238 |      362 |
-| kassandra.ai.insights                    | SprintInsightsGeneratorIT.java                               | src      |       49 |       11 |       56 |      407 |      523 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
 | kassandra.ai.lmstudio                    | LmStudioCapabilities.java                                    | src      |        6 |        3 |       16 |       12 |       37 |
 | kassandra.ai.lmstudio                    | LmStudioInstanceConfig.java                                  | src      |        9 |        3 |       16 |       17 |       45 |
@@ -667,9 +668,11 @@
 | kassandra.util                           | NameGenerator.java                                           | src      |       29 |       22 |       25 |      202 |      278 |
 | kassandra.util                           | OffDayGenerator.java                                         | src      |       36 |       37 |       52 |      305 |      430 |
 | kassandra.util                           | PersistingEntityGenerator.java                               | src      |      129 |      123 |       74 |      830 |     1156 |
-| kassandra.util                           | RandomCase.java                                              | src      |       38 |      168 |       17 |      214 |      437 |
-| kassandra.util                           | RandomGenerationDeterminismTest.java                         | src      |       11 |        0 |       16 |       85 |      112 |
+| kassandra.util                           | RandomCase.java                                              | src      |       40 |      174 |       17 |      240 |      471 |
+| kassandra.util                           | RandomGenerationDeterminismTest.java                         | src      |       13 |        0 |       16 |       94 |      123 |
 | kassandra.util                           | SickLeaveInjectionTest.java                                  | src      |       18 |        0 |       16 |      156 |      190 |
+| kassandra.util                           | SimulatorUtil.java                                           | src      |       23 |      102 |       16 |      210 |      351 |
+| kassandra.util                           | SimulatorUtilTest.java                                       | src      |       16 |        0 |       16 |      102 |      134 |
 | kassandra.util                           | SnapshotLogGenerator.java                                    | src      |        9 |       35 |       16 |       59 |      119 |
 | kassandra.util                           | TestInfoUtil.java                                            | src      |       15 |       86 |       16 |       51 |      168 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
@@ -749,5 +752,5 @@
 | util                                     | TaskUtil.java                                                | src      |       17 |       13 |      139 |      108 |      277 |
 | util                                     | Util.java                                                    | src      |       21 |        0 |       30 |      171 |      222 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+
-| 74 package(s)                            | 674 file(s)                                                  | java     |    13812 |    15692 |    17567 |    81644 |   128715 |
+| 74 package(s)                            | 677 file(s)                                                  | java     |    13835 |    15807 |    17583 |    81808 |   129033 |
 +------------------------------------------+--------------------------------------------------------------+----------+----------+----------+----------+----------+----------+

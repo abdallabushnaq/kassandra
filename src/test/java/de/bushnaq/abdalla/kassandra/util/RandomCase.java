@@ -25,6 +25,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Holds the randomized generation settings for one test case.
@@ -94,6 +96,38 @@ public class RandomCase {
      */
     public MinMaxNumber features() {
         return numberOfFeatures;
+    }
+
+    /**
+     * Creates a copy of this case with selected generation settings changed.
+     *
+     * @param configuration updates to apply to a copy of this case's builder
+     * @return the configured copy
+     */
+    public RandomCase withProbabilities(Consumer<RandomCaseBuilder> configuration) {
+        Objects.requireNonNull(configuration, "configuration");
+        RandomCaseBuilder builder = copyBuilder();
+        configuration.accept(builder);
+        return builder.build();
+    }
+
+    private RandomCaseBuilder copyBuilder() {
+        return new RandomCaseBuilder()
+                .testCaseIndex(testCaseIndex)
+                .now(now)
+                .startDate(startDate)
+                .numberOfProducts(numberOfProducts.min(), numberOfProducts.max())
+                .numberOfVersions(numberOfVersions.min(), numberOfVersions.max())
+                .numberOfFeatures(numberOfFeatures.min(), numberOfFeatures.max())
+                .numberOfSprints(numberOfSprints.min(), numberOfSprints.max())
+                .taskDurationPerDay(taskDurationDays.min(), taskDurationDays.max())
+                .numberOfStories(numberOfStories.min(), numberOfStories.max())
+                .numberOfUsers(numberOfUsers.min(), numberOfUsers.max())
+                .numberOfUsersPerSprint(numberOfUsersPerSprint.min(), numberOfUsersPerSprint.max())
+                .numberOfTasks(numberOfTasks.min(), numberOfTasks.max())
+                .seed(seed)
+                .sickSprintProbability(sickSprintProbability)
+                .worklogDelayProbability(worklogDelayProbability);
     }
 
     private String formatDate(LocalDate date) {
